@@ -1,0 +1,202 @@
+#ifndef I3CLSIMSTEPSTORE_H_INCLUDED
+#define I3CLSIMSTEPSTORE_H_INCLUDED
+
+/**
+ * The I3CLSimStepStore class stores I3CLSimStep objects
+ * indexed by a photon multiplicity. Arbitrarily sized bunches 
+ * of steps can be retrieved. They will be clustered by
+ * multiplicity.
+ */
+
+#include "icetray/I3TrayHeaders.h"
+#include "clsim/I3CLSimStep.h"
+
+#include <stdint.h>
+
+#include <vector>
+#include <deque>
+
+#include <boost/foreach.hpp>
+#include <boost/pool/pool_alloc.hpp> 
+
+template <typename U, class T>
+class I3CLSimTemplateStore 
+{
+private:
+    //typedef std::deque<T, boost::fast_pool_allocator<T> > TDequeType;
+    typedef std::deque<T> TDequeType;
+    
+public:
+    
+    // TODO: static_assert: U==unsigned integer (8,16,32 or 64 bit)
+    // TODO: static_assert: max<U> <= max<std::size_t>
+    
+    I3CLSimTemplateStore(std::size_t initialSize):
+    bins_(initialSize, NULL),
+    currentSize_(0)
+    {
+        for (std::size_t i=0;i<initialSize;++i)
+        {
+            bins_[i] = new TDequeType();
+        }
+    }
+
+    I3CLSimTemplateStore():
+    currentSize_(0)
+    {
+    }
+    
+    ~I3CLSimTemplateStore()
+    {
+        BOOST_FOREACH(TDequeType *ptr, bins_)
+        {
+            delete ptr; // NULL-pointer deletion is valid (and a no-op)
+        }
+        
+    }
+    
+    /**
+     * inserts a copy of 
+     */
+    inline void insert_copy(U index, const T &value)
+    {
+        insert_new(index) = value;
+    }
+    
+    /**
+     * inserts a default-constructed instance of the class at a certain index and
+     * returns a reference to it
+     */
+    inline T &insert_new(U index)
+    {
+        // re-size the number of bins if necessary
+        if (index >= bins_.size()) 
+        {
+            const std::size_t oldSize = bins_.size();
+            const std::size_t newSize = static_cast<std::size_t>(index+1);
+
+            bins_.resize(newSize, NULL);
+            
+            for (std::size_t i = oldSize; i < newSize; ++i)
+            {
+                bins_[i] = new TDequeType();
+            }
+        }
+        
+        //if (!bins_[index])
+        //    log_fatal("Internal logic error, index=%lu", static_cast<unsigned long int>(index));
+        
+        bins_[index]->push_back(T());
+        ++currentSize_;
+        
+        return bins_[index]->back();
+    }
+    
+    inline std::size_t size() const
+    {
+        return currentSize_;
+    }
+
+    inline bool empty() const
+    {
+        return (currentSize_==0);
+    }
+    
+    inline TDequeType &operator[](U index)
+    {
+        return *(bins_[index]);
+    }
+
+    inline const TDequeType &operator[](U index) const
+    {
+        return *(bins_[index]);
+    }
+    
+    inline TDequeType &at(U index)
+    {
+        return *(bins_.at(index));
+    }
+
+    inline const TDequeType &at(U index) const
+    {
+        return *(bins_.at(index));
+    }
+    
+    /**
+     * takes a number of entries, copies them into a vector
+     * (sorted by index) and pops them from this container.
+     * If less than the specified number of entries exist in
+     * this container, it is fully emptied.
+     *
+     * All current entries in the vector are removed.
+     */
+    inline void pop_bunch_to_vector(std::size_t size, std::vector<T> &vect)
+    {
+        const std::size_t realSize = std::min(size, currentSize_);
+        vect.clear();
+        if (realSize==0) return;
+
+        std::size_t itemsPopped=0;
+        
+        BOOST_FOREACH(TDequeType *ptr, bins_)
+        {
+            TDequeType &currentQueue = *ptr;
+
+            for (;;)
+            {
+                if (currentQueue.empty()) break;
+
+                vect.push_back(currentQueue.front());   // insert into vector
+                currentQueue.pop_front();               // remove from deque
+                ++itemsPopped;
+                
+                if (itemsPopped>=realSize) break; // are we finished yet?
+            }
+            if (itemsPopped>=realSize) break; // are we finished yet?
+        }
+        
+        if (itemsPopped > currentSize_)
+        {
+            // something is seriously wrong
+            log_fatal("Internal implementation error.");
+        }
+        
+        currentSize_ -= itemsPopped;
+    }
+
+    /**
+     * takes a number of entries, copies them into a vector
+     * (sorted by index) and pops them from this container.
+     * If less than the specified number of entries exist in
+     * this container, the remaining entries are filled with
+     * copies of a template.
+     *
+     * All current entries in the vector are removed.
+     */
+    inline void pop_bunch_to_vector(std::size_t size, std::vector<T> &vect, const T &temp)
+    {
+        vect.clear();
+        vect.reserve(size);
+        pop_bunch_to_vector(size, vect);
+        const std::size_t realEntries = vect.size();
+
+        // fill the remainder of the vector with copies
+        // of the template
+        for (std::size_t i=realEntries; i<size; ++i)
+        {
+            vect.push_back(temp);
+        }
+    }
+    
+private:
+    std::vector<TDequeType *> bins_;
+    std::size_t currentSize_;
+};
+
+
+typedef I3CLSimTemplateStore<uint32_t, I3CLSimStep> I3CLSimStepStore;
+
+I3_POINTER_TYPEDEFS(I3CLSimStepStore);
+
+
+#endif //I3CLSIMSTEPSTORE_H_INCLUDED
