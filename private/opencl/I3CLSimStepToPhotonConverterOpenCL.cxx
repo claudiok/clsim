@@ -428,6 +428,11 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
 	//BuildOptions += "-cl-unsafe-math-optimizations ";
 	BuildOptions += "-cl-fast-relaxed-math ";
 
+    // only valid if extension "cl_nv_compiler_options" is present
+	//BuildOptions += "-cl-nv-verbose ";          // Passed on to ptxas as --verbose
+	//BuildOptions += "-cl-nv-maxrregcount=60 ";  // Passed on to ptxas as --maxrregcount <N>
+	//BuildOptions += "-cl-nv-opt-level=3 ";     // Passed on to ptxas as --opt-level <N>
+    
     if (useNativeMath_) {BuildOptions += "-DUSE_NATIVE_MATH ";}
     
 	cl::Program program;
@@ -455,7 +460,7 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
         log_error("Build Log: %s", boost::lexical_cast<std::string>(program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device)).c_str());
         log_error("==============================");
 		
-        throw;
+        throw I3CLSimStepToPhotonConverter_exception("OpenCL error: could build the OpenCL program!");;
 	}
     log_debug("code compiled.");
     

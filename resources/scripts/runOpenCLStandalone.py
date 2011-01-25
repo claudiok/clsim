@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 import time
+import random
+import numpy
+import math
 
 from icecube import icetray, dataclasses, dataio, phys_services, clsim
 from I3Tray import I3Units
@@ -27,7 +30,7 @@ conv.Compile()
 #print conv.GetFullSource()
 
 conv.workgroupSize = conv.maxWorkgroupSize
-conv.maxNumWorkitems = conv.maxWorkgroupSize * 100
+conv.maxNumWorkitems = conv.maxWorkgroupSize * 3000
 
 photonsPerStep = 200
 repetitions = 10
@@ -38,13 +41,14 @@ print "maximum number of work items is", conv.maxNumWorkitems
 
 conv.Initialize()
 
-print "making fake steps"
+numSteps = conv.maxNumWorkitems
+print "making", numSteps, "fake steps"
 
 myStep = clsim.I3CLSimStep()
-myStep.x = 0.*I3Units.m
-myStep.y = 0.*I3Units.m
-myStep.z = 0.*I3Units.m
-myStep.SetDirXYZ(1.,0.,0.)
+myStep.x = 20.*I3Units.m
+myStep.y = -50.*I3Units.m
+myStep.z = 70.*I3Units.m
+myStep.SetDirXYZ(1.,1.,0.) # will automatically be normalized
 myStep.beta = 1.
 myStep.length = 1.*I3Units.mm
 myStep.id = 0
@@ -53,10 +57,16 @@ myStep.weight = 1.
 myStep.time = 0.*I3Units.ns
 
 steps = clsim.I3CLSimStepSeries()
-for i in range(conv.maxNumWorkitems):
+for i in range(numSteps):
     steps.append(myStep)
+    steps[-1].theta = numpy.arccos(rng.Uniform(-1.,1.))
+    steps[-1].phi = rng.Uniform(0.,2.*math.pi)
+    steps[-1].x = rng.Uniform(-200.*I3Units.m,200.*I3Units.m)
+    steps[-1].y = rng.Uniform(-200.*I3Units.m,200.*I3Units.m)
+    steps[-1].z = rng.Uniform(-200.*I3Units.m,200.*I3Units.m)
+    steps[-1].id = i
 
-print "sending steps to GPU"
+print "sending steps to OpenCL"
 
 starttime = time.time()
 
@@ -76,12 +86,12 @@ for i in range(repetitions):
 endtime = time.time()
 
 duration = endtime-starttime
-numSteps = conv.maxNumWorkitems*repetitions
-numPhotons = numSteps*photonsPerStep
+totNumSteps = numSteps*repetitions
+totNumPhotons = totNumSteps*photonsPerStep
 
 print "took", duration, "seconds"
-print " =>", float(duration*1e9)/float(numSteps), "nanoseconds per step"
-print " =>", float(duration*1e9)/float(numPhotons), "nanoseconds per photon"
+print " =>", float(duration*1e9)/float(totNumSteps), "ns per step"
+print " =>", float(duration*1e9)/float(totNumPhotons), "ns per photon"
 
 
 
