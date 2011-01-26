@@ -1,0 +1,12 @@
+# ANTARES Site absorption/attenuation coefficients (July 2002, depth 1800-2300m)
+#
+#lambda [nm]  av. absorption coeff. [m^-1]  exp. error (sigma) [m^-1]
+412           0.026                         0.002
+440           0.020                         0.002
+488           0.022                         0.002
+510           0.041                         0.002
+532           0.054                         0.002
+555           0.070                         0.002
+650           0.362                         0.002
+676           0.444                         0.002
+715           1.042                         0.002

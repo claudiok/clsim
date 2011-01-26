@@ -20,6 +20,9 @@
 
 if(BUILD_PYBINDINGS)
   i3_add_pybindings(clsim
+    # this should be integrated into dataclasses eventually
+    augmentDataclassesWithPicklingSupport.cxx
+
     I3CLSimStep.cxx
     I3CLSimPhoton.cxx
     I3CLSimWlenDependentValue.cxx

@@ -11,8 +11,7 @@ from I3Tray import I3Units
 
 def initializeOpenCL(rng, geometry, medium):
     conv = clsim.I3CLSimStepToPhotonConverterOpenCL(RandomService=rng,
-                                                    UseNativeMath=True,
-                                                    CPUOnly=False)
+                                                    UseNativeMath=True)
     
     print "available OpenCL devices:"
     deviceList = conv.GetDeviceList()
@@ -50,7 +49,7 @@ def initializeOpenCL(rng, geometry, medium):
     conv.workgroupSize = conv.maxWorkgroupSize
     
     # use approximately 512000 work items, convert to a multiple of the workgroup size
-    conv.maxNumWorkitems = (1024000/conv.workgroupSize)*conv.workgroupSize
+    conv.maxNumWorkitems = (51200/conv.workgroupSize)*conv.workgroupSize
 
     print "maximum workgroup size is", conv.maxWorkgroupSize
     print "configured workgroup size is", conv.workgroupSize
@@ -95,7 +94,7 @@ openCLStepsToPhotonsConverter = initializeOpenCL(rng, geometry, medium)
 geant4ParticleToStepsConverter = initializeGeant4(rng, medium, openCLStepsToPhotonsConverter)
 
 
-numParticles = 100000
+numParticles = 10000
 
 print "sending %u particles to Geant4" % (numParticles)
 

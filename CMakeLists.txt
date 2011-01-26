@@ -54,19 +54,38 @@ i3_add_library(clsim
   )
 
 
-## this is a hack and should not be here. move to cmake project
-#set(GMP_VERSION "4.3.2")
-#tooldef(gmp
-#  include/gmp-${GMP_VERSION}
-#  gmp/gmp.h
-#  lib/gmp-${GMP_VERSION}
-#  NONE
-#  gmp
+# this is a hack and should not be here. move to cmake project
+set(GMP_VERSION "4.3.2")
+tooldef(gmp
+    include/gmp-${GMP_VERSION}
+    gmp/gmp.h
+    lib/gmp-${GMP_VERSION}
+    NONE
+    gmp
+    )
+
+i3_executable(make_safeprimes
+  private/make_safeprimes/main.c
+  #USE_PROJECTS g4sim
+  USE_TOOLS python boost gmp
+  )
+
+#i3_executable(tester
+#  private/tester/tester.cxx
+#  #USE_PROJECTS g4sim
+#  USE_TOOLS python boost
+#
+#  LINK_LIBRARIES ${OPENCL_LIBRARIES}
 #  )
-#i3_executable(make_safeprimes
-#  private/make_safeprimes/main.c
-#  USE_TOOLS python boost gmp
+#
+#i3_executable(tester2
+#  private/tester/tester2.cxx
+#  #USE_PROJECTS g4sim
+#  USE_TOOLS python boost gsl
+#
+#  LINK_LIBRARIES ${OPENCL_LIBRARIES}
 #  )
+#add_definitions(-DHAVE_SSE2 -DDSFMT_MEXP=19937 -O3 -msse2 -mmmx -ffast-math -mfpmath=sse)
 
 add_subdirectory(private/pybindings)
 

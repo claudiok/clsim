@@ -1,0 +1,23 @@
+# ANTARES Site absorption lengths (test 3' analysis, ANTARES-SITE-2001-002)
+# sigma_lambda(473.0) = 13nm 
+# sigma_lambda(374.5) = 5.0nm 
+#lambda [nm]  absorption length [m]  exp. error (sigma) [m]
+#blue
+#July '98
+473.0         69.3                   1.3
+#March '99
+473.0         60.7                   0.7
+#June '00
+473.0         47.9                   0.3
+473.0         48.4                   0.3
+#
+#UV
+#July '99
+374.5         22.0                   0.1
+374.5         22.0                   0.1
+#Sept. '99
+374.5         25.1                   0.2
+374.5         25.4                   0.2
+#June '00
+374.5         28.0                   0.1
+374.5         28.0                   0.1

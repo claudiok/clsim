@@ -22,12 +22,14 @@
 #include <sstream>
 
 #include <icetray/I3Units.h>
+#include <dataclasses/physics/I3Particle.h>
 
 #include <clsim/I3CLSimStep.h>
 #include <boost/preprocessor/seq.hpp>
 #include <icetray/python/std_vector_indexing_suite.hpp>
+#include "boost_serializable_pickle_suite.hpp"
 
-using namespace boost::python;
+namespace bp=boost::python;
 
 static std::string 
 i3clsimstep_prettyprint(const I3CLSimStep& s)
@@ -54,12 +56,15 @@ i3clsimstep_prettyprint(const I3CLSimStep& s)
 
 void register_I3CLSimStep()
 {
+    bp::def("I3Particle___getstate__", &boost_serializable_pickle_suite<I3Particle>::getstate);
+    bp::def("I3Particle___setstate__", &boost_serializable_pickle_suite<I3Particle>::setstate);
+    
     {
         void (I3CLSimStep::* SetDir_oneary)(const I3Direction&) = &I3CLSimStep::SetDir; 
         void (I3CLSimStep::* SetDir_threeary)(const double &x, const double &y, const double &z) = &I3CLSimStep::SetDir;
         
-        scope clsimstep_scope = 
-        class_<I3CLSimStep, boost::shared_ptr<I3CLSimStep> >("I3CLSimStep")
+        bp::scope clsimstep_scope = 
+        bp::class_<I3CLSimStep, boost::shared_ptr<I3CLSimStep> >("I3CLSimStep")
         .add_property("x", &I3CLSimStep::GetPosX, &I3CLSimStep::SetPosX)
         .add_property("y", &I3CLSimStep::GetPosY, &I3CLSimStep::SetPosY)
         .add_property("z", &I3CLSimStep::GetPosZ, &I3CLSimStep::SetPosZ)
@@ -83,13 +88,14 @@ void register_I3CLSimStep()
         ;
     }
     
-    class_<I3CLSimStepSeries, bases<I3FrameObject>, I3CLSimStepSeriesPtr>("I3CLSimStepSeries")
-    .def(std_vector_indexing_suite<I3CLSimStepSeries>())
+    bp::class_<I3CLSimStepSeries, bp::bases<I3FrameObject>, I3CLSimStepSeriesPtr>("I3CLSimStepSeries")
+    .def(bp::std_vector_indexing_suite<I3CLSimStepSeries>())
+    .def_pickle(boost_serializable_pickle_suite<I3CLSimStepSeries>())
     ;
     
     // does not base on I3FrameObject, so register only the shared_ptr<T>-to-shared_ptr<const T> conversion
     //register_pointer_conversions<I3CLSimStep>();
-    boost::python::implicitly_convertible<shared_ptr<I3CLSimStep>, shared_ptr<const I3CLSimStep> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimStep>, shared_ptr<const I3CLSimStep> >();
     
     register_pointer_conversions<I3CLSimStepSeries>();
 }
