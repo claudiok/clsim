@@ -237,9 +237,8 @@ TrkCerenkov::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
             }
         }
         
-        const double stepsPerTime = static_cast<double>(eventInformation->maxBunchSize)/eventInformation->GetElapsedWallTime();
-        
-        G4cout << "Geant4 just sent " << eventInformation->maxBunchSize<< " steps. => " << stepsPerTime/(1./I3Units::s) << " steps/second" << G4endl;
+        //const double stepsPerTime = static_cast<double>(eventInformation->maxBunchSize)/eventInformation->GetElapsedWallTime();
+        //G4cout << "Geant4 just sent " << eventInformation->maxBunchSize<< " steps. => " << stepsPerTime/(1./I3Units::s) << " steps/second" << G4endl;
         
         eventInformation->StartClock();
     }

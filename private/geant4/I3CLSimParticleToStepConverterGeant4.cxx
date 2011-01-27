@@ -355,7 +355,7 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
     UI->ApplyCommand("/physics_engine/tailor/MuonNuclear on");
     runManager->Initialize();
 
-    UI->ApplyCommand("/run/particle/dumpCutValues");
+    //UI->ApplyCommand("/run/particle/dumpCutValues");
     
     CLHEP::HepRandom::setTheSeed(randomSeed_); // value [0,900000000]
     
@@ -401,7 +401,7 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
         
         
         if (!particle) {
-            G4cout << "G4 thread got NULL! flushing " << stepStore->size() << " steps." << G4endl;
+            //G4cout << "G4 thread got NULL! flushing " << stepStore->size() << " steps." << G4endl;
 
             if (stepStore->empty()) {
                 // nothing to send. re-set the "barrier" flag from here
@@ -435,7 +435,7 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
                     }
                 }
                 
-                G4cout << " -> flushed " << maxBunchSize_ << " steps, " << stepStore->size() << " steps left" << G4endl;
+                //G4cout << " -> flushed " << maxBunchSize_ << " steps, " << stepStore->size() << " steps left" << G4endl;
             }            
             
             if (interruptionOccured) break;
@@ -446,7 +446,7 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
             I3CLSimStepSeriesPtr steps(new I3CLSimStepSeries());
             const std::size_t numStepsWithDummyFill = bunchSizeGranularity_>1?(((stepStore->size()/bunchSizeGranularity_)+1)*bunchSizeGranularity_):stepStore->size();
 
-            G4cout << " -> " << stepStore->size() << " steps left, padding to " << numStepsWithDummyFill << G4endl;
+            //G4cout << " -> " << stepStore->size() << " steps left, padding to " << numStepsWithDummyFill << G4endl;
             
             stepStore->pop_bunch_to_vector(numStepsWithDummyFill, *steps, NoOpStepTemplate);
             
@@ -463,13 +463,13 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
                 }
             }
             
-            G4cout << " -> flush complete." << G4endl;
+            //G4cout << " -> flush complete." << G4endl;
 
             // nothing to send to Geant4, so start from the beginning
             continue;
         }
         
-        G4cout << "G4 thread got particle id " << particleIdentifier << ", type: " << particle->GetTypeString() << G4endl;
+        //G4cout << "G4 thread got particle id " << particleIdentifier << ", type: " << particle->GetTypeString() << G4endl;
         
         // configure the Geant4 particle gun
         {

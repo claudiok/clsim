@@ -115,11 +115,11 @@ G4ClassificationOfNewTrack TrkStackingAction::ClassifyNewTrack(const G4Track * a
 
 void TrkStackingAction::NewStage()
 {
-	G4cout << "New stage!" << G4endl;
+	//G4cout << "New stage!" << G4endl;
 }
 
 void TrkStackingAction::PrepareNewEvent()
 {
-	G4cout << "Prepare new event!" << G4endl;
+	//G4cout << "Prepare new event!" << G4endl;
 }
 
