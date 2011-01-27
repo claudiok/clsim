@@ -2,8 +2,8 @@
 
 from icecube import icetray, dataclasses, dataio, clsim
 from I3Tray import I3Units
-conv = clsim.I3CLSimParticleToStepConverterGeant4MP(noisy=False)
-#conv = clsim.I3CLSimParticleToStepConverterGeant4()
+conv = clsim.I3CLSimParticleToStepConverterGeant4MP(randomSeeds=[34678,432,23543,45433,543543,4354343,7549], noisy=False)
+#conv = clsim.I3CLSimParticleToStepConverterGeant4(randomSeed=34678)
 
 conv.SetMediumProperties(clsim.MakeIceCubeMediumProperties())
 conv.SetMaxBunchSize(512000)

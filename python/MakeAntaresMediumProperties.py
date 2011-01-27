@@ -3,7 +3,8 @@ from icecube.clsim import I3CLSimMediumProperties, I3CLSimRandomValueTabulatedDi
                           I3CLSimRandomValueRayleighScatteringCosAngle, \
                           I3CLSimWlenDependentValueScatLenPartic, \
                           I3CLSimWlenDependentValueRefIndexQuanFry, \
-                          I3CLSimWlenDependentValueFromTable
+                          I3CLSimWlenDependentValueFromTable, \
+                          I3CLSimRandomValueMixed
 
 from I3Tray import I3Units
 

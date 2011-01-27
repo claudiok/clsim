@@ -91,27 +91,6 @@ struct I3CLSimParticleToStepConverter_ConversionResult_t_to_python
     
 };
 
-/*
-template <typename T1, typename T2> 
-struct I3CLSimParticleToStepConverter_std_pair_to_tuple 
-{ 
-    static PyObject* convert(std::pair<T1, T2> const& p) 
-    { 
-        return boost::python::incref(boost::python::make_tuple(p.first, p.second).ptr()); 
-    } 
-}; 
-
-template <typename T1, typename T2> 
-struct I3CLSimParticleToStepConverter_std_pair_to_python_converter 
-{ 
-    I3CLSimParticleToStepConverter_std_pair_to_python_converter() 
-    { 
-        boost::python::to_python_converter< 
-        std::pair<T1, T2>, 
-        I3CLSimParticleToStepConverter_std_pair_to_tuple<T1, T2> >(); 
-    } 
-};
-*/
 
 void register_I3CLSimParticleToStepConverter()
 {
@@ -136,7 +115,6 @@ void register_I3CLSimParticleToStepConverter()
     bp::implicitly_convertible<shared_ptr<I3CLSimParticleToStepConverterWrapper>, shared_ptr<const I3CLSimParticleToStepConverterWrapper> >();
     
     bp::to_python_converter<I3CLSimParticleToStepConverter::ConversionResult_t, I3CLSimParticleToStepConverter_ConversionResult_t_to_python>();
-    //I3CLSimParticleToStepConverter_std_pair_to_python_converter<uint32_t, I3ParticleConstPtr>();
     
     // I3CLSimParticleToStepConverterGeant4
     {
@@ -149,9 +127,17 @@ void register_I3CLSimParticleToStepConverter()
         (
          "I3CLSimParticleToStepConverterGeant4",
          bp::init<
+         uint32_t,
+         std::string,
+         double,
+         double,
          uint32_t
          >(
            (
+            bp::arg("randomSeed"),
+            bp::arg("physicsListName") = I3CLSimParticleToStepConverterGeant4::default_physicsListName,
+            bp::arg("maxBetaChangePerStep") = I3CLSimParticleToStepConverterGeant4::default_maxBetaChangePerStep,
+            bp::arg("maxNumPhotonsPerStep") = I3CLSimParticleToStepConverterGeant4::default_maxNumPhotonsPerStep,
             bp::arg("maxQueueItems") = I3CLSimParticleToStepConverterGeant4::default_maxQueueItems
            )
           )

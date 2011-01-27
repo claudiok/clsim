@@ -8,16 +8,19 @@ import multiprocessing as mp
 from Queue import Empty
 
 def checkGeant4Result(result, prefix=""):
-    if prefix != "":
+    if (prefix is not None) and (prefix != ""):
         print prefix,
     if isinstance(result, tuple) and isinstance(result[1], dataclasses.I3Particle):
-        print "Got a particle from Geant4 with id", result[0], "and energy", result[1].GetEnergy()/I3Units.GeV, "GeV"
+        if prefix is not None:
+            print "Got a particle from Geant4 with id", result[0], "and energy", result[1].GetEnergy()/I3Units.GeV, "GeV"
         return True
     elif isinstance(result, I3CLSimStepSeries):
-        print "Got", len(result), "steps from Geant4"
+        if prefix is not None:
+            print "Got", len(result), "steps from Geant4"
         return True
     else:
-        print "Got something unknown from Geant4."
+        if prefix is not None:
+            print "Got something unknown from Geant4."
         return False
 
 
@@ -25,6 +28,10 @@ def TheGeant4Process(procNum,
                      queueFromParent,
                      queueToParent,
                      maxQueueItems,
+                     randomSeed,
+                     physicsListName,
+                     maxBetaChangePerStep,
+                     maxNumPhotonsPerStep,
                      medium,
                      maxBunchSize,
                      bunchSizeGranularity,
@@ -58,6 +65,11 @@ def TheGeant4Process(procNum,
             return False
         return True
     
+    if noisy:
+        workerNamePrefixForLogging = "worker #%u" % procNum
+    else:
+        workerNamePrefixForLogging = None
+    
     shouldFinish=False
     while True:
         workItem = queueFromParent.get()
@@ -79,7 +91,7 @@ def TheGeant4Process(procNum,
             while conv.MoreStepsAvailable():
                 if noisy: print "worker #", procNum, "seems to have something ready on the Geant4 result queue."
                 s = conv.GetConversionResult()
-                if not checkGeant4Result(s, "worker #%u" % procNum):
+                if not checkGeant4Result(s, workerNamePrefixForLogging):
                     print "worker #", procNum, "ignored invalid Geant4 result."
                     continue
                 if noisy: print "worker #", procNum, "got result from Geant4, sending to parent."
@@ -98,7 +110,7 @@ def TheGeant4Process(procNum,
         while conv.BarrierActive() or conv.MoreStepsAvailable():
             if noisy: print "worker #", procNum, "More steps available, receiving.."
             s = conv.GetConversionResult()
-            if not checkGeant4Result(s, "worker #%u" % procNum):
+            if not checkGeant4Result(s, workerNamePrefixForLogging):
                 print "worker #", procNum, "ignored invalid Geant4 result."
                 continue
             if noisy: print "worker #", procNum, "got result from Geant4, sending to parent."
@@ -110,8 +122,15 @@ def TheGeant4Process(procNum,
             
             queueToParent.put((s, secondItem))
 
+            if noisy: print "worker #", procNum, "sent Geant4 result to parent."
+
+            if conv.MoreStepsAvailable():
+                continue
+
+            # hack: apparently something in multiprocessing.Queue goes wrong when using two queues..
+            # poking the _other_ queue seems to help the parent to receive the messages
             try:
-                workItem = queueFromParent.get(True, 0.1)
+                workItem = queueFromParent.get(True, 1.)
                 if isinstance(workItem, str) and workItem=="Terminate":
                     if noisy: print "worker #", procNum, "received termination signal."
                     shouldFinish=True
@@ -122,7 +141,6 @@ def TheGeant4Process(procNum,
             
             
             
-            if noisy: print "worker #", procNum, "sent Geant4 result to parent."
             #del s
         
         
@@ -149,8 +167,24 @@ class I3CLSimParticleToStepConverterGeant4MP(I3CLSimParticleToStepConverter):
             print arg,
         print ""
     
-    def __init__(self, maxQueueItems=20, numInstances=mp.cpu_count(), noisy=False):
+    def __init__(self, 
+                 randomSeeds,
+                 physicsListName="QGSP_BERT_EMV",
+                 maxBetaChangePerStep=0.1,
+                 maxNumPhotonsPerStep=200.,
+                 maxQueueItems=20,
+                 numInstances=mp.cpu_count(),
+                 noisy=False):
         self.maxQueueItems = maxQueueItems
+        
+        self.randomSeeds=randomSeeds
+        if isinstance(self.randomSeeds, int): self.randomSeeds=[self.randomSeeds]
+        if len(self.randomSeeds) < numInstances:
+            raise ValueError("You need to specify a random seed for each instance")
+        
+        self.physicsListName=physicsListName
+        self.maxBetaChangePerStep=maxBetaChangePerStep
+        self.maxNumPhotonsPerStep=maxNumPhotonsPerStep
         
         self.noisy=noisy
         
@@ -186,7 +220,7 @@ class I3CLSimParticleToStepConverterGeant4MP(I3CLSimParticleToStepConverter):
                 if process.is_alive():
                     print " *** Process", i, "failed to terminate. Killing it. ***"
                     process.terminate()
-        print self._print_if_noisy("cleanup complete.")
+        self._print_if_noisy("cleanup complete.")
         
     def SetElectronPositronMinEnergyForSecondary(self, val):
         if self.initialized: raise RuntimeError("Already initialized")
@@ -239,7 +273,26 @@ class I3CLSimParticleToStepConverterGeant4MP(I3CLSimParticleToStepConverter):
             self.processHasBarrier.append(False)
             queueToChild = mp.Queue()
             self.queuesToProcess.append(queueToChild)
-            self.processes.append(mp.Process(target=TheGeant4Process, args=(i, queueToChild, self.queueFromProcesses, self.maxQueueItems, self.medium, self.maxBunchSize, self.bunchSizeGranularity, self.minESecondary, self.maxESecondary, self.noisy,)))
+            self.processes.append( \
+             mp.Process( \
+              target=TheGeant4Process, \
+              args=(i,\
+                    queueToChild, \
+                    self.queueFromProcesses, \
+                    self.maxQueueItems, \
+                    self.randomSeeds[i], \
+                    self.physicsListName, \
+                    self.maxBetaChangePerStep, \
+                    self.maxNumPhotonsPerStep, \
+                    self.medium, \
+                    self.maxBunchSize, \
+                    self.bunchSizeGranularity, \
+                    self.minESecondary, \
+                    self.maxESecondary, \
+                    self.noisy, \
+                   ) \
+             ) \
+            )
         
         self._print_if_noisy("starting processes..")
         for process in self.processes:
@@ -292,6 +345,11 @@ class I3CLSimParticleToStepConverterGeant4MP(I3CLSimParticleToStepConverter):
         
         self._print_if_noisy("Trying to get a conversion result..")
         
+        if self.noisy:
+            prefixForLogging = "parent"
+        else:
+            prefixForLogging = None
+        
         while True:
             # get one item from the queue
             item = self.queueFromProcesses.get()
@@ -303,7 +361,7 @@ class I3CLSimParticleToStepConverterGeant4MP(I3CLSimParticleToStepConverter):
             #        print "queue size:", self.queueFromProcesses.qsize()
             #        pass
         
-            print "Got something. queue size after receive:", self.queueFromProcesses.qsize()
+            self._print_if_noisy("Got something. queue size after receive:", self.queueFromProcesses.qsize())
         
             if not isinstance(item, tuple):
                 print "Expected to receive a tuple from the child. Got something else. Ignoring."
@@ -323,7 +381,7 @@ class I3CLSimParticleToStepConverterGeant4MP(I3CLSimParticleToStepConverter):
                     self._print_if_noisy("re-setting the barrier flag for process #", item[1])
                     self.processHasBarrier[item[1]] = False
             
-            if not checkGeant4Result(item[0], "parent"):
+            if not checkGeant4Result(item[0], prefixForLogging):
                 print "Got something unknown from child. Ignoring."
                 continue
             else:

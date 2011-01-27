@@ -26,9 +26,17 @@ private:
 public:
     typedef std::pair<I3CLSimParticleToStepConverter::ConversionResult_t, bool> FromGeant4Pair_t;
     
+    static const std::string default_physicsListName;
+    static const double default_maxBetaChangePerStep;
+    static const double default_maxNumPhotonsPerStep;
     static const uint32_t default_maxQueueItems;
     
-    I3CLSimParticleToStepConverterGeant4(uint32_t maxQueueItems=default_maxQueueItems);
+    I3CLSimParticleToStepConverterGeant4(uint32_t randomSeed,
+                                         std::string physicsListName=default_physicsListName,
+                                         double maxBetaChangePerStep=default_maxBetaChangePerStep,
+                                         double maxNumPhotonsPerStep=default_maxNumPhotonsPerStep,
+                                         uint32_t maxQueueItems=default_maxQueueItems
+                                         );
     virtual ~I3CLSimParticleToStepConverterGeant4();
 
     // this class:
@@ -161,6 +169,11 @@ private:
     boost::shared_ptr<I3CLSimQueue<ToGeant4Pair_t> > queueToGeant4_;
     boost::shared_ptr<I3CLSimQueue<FromGeant4Pair_t> > queueFromGeant4_;
     mutable boost::shared_ptr<I3CLSimQueue<boost::shared_ptr<std::pair<const std::string, bool> > > > queueFromGeant4Messages_;
+    
+    uint32_t randomSeed_;
+    std::string physicsListName_;
+    double maxBetaChangePerStep_;
+    double maxNumPhotonsPerStep_;
     
     double electronPositronMinEnergyForSecondary_;
     double electronPositronMaxEnergyForSecondary_;

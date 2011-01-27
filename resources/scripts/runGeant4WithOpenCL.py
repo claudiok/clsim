@@ -49,7 +49,7 @@ def initializeOpenCL(rng, geometry, medium):
     conv.workgroupSize = conv.maxWorkgroupSize
     
     # use approximately 512000 work items, convert to a multiple of the workgroup size
-    conv.maxNumWorkitems = (51200/conv.workgroupSize)*conv.workgroupSize
+    conv.maxNumWorkitems = (512000/conv.workgroupSize)*conv.workgroupSize
 
     print "maximum workgroup size is", conv.maxWorkgroupSize
     print "configured workgroup size is", conv.workgroupSize
@@ -59,8 +59,14 @@ def initializeOpenCL(rng, geometry, medium):
 
     return conv
     
-def initializeGeant4(rng, medium, openCLconverter):
-    conv = clsim.I3CLSimParticleToStepConverterGeant4()
+def initializeGeant4(rng, medium, openCLconverter, multiprocessor=False):
+    if not multiprocessor:
+        conv = clsim.I3CLSimParticleToStepConverterGeant4(rng.Integer(900000000))
+    else:
+        randomSeeds=[]
+        # we will NOT have more than 100 cores.. ;-)
+        for i in range(100): randomSeeds.append(rng.Integer(900000000))
+        conv = clsim.I3CLSimParticleToStepConverterGeant4MP(randomSeeds=randomSeeds, numInstances=3)
 
     conv.SetMediumProperties(medium)
     conv.SetMaxBunchSize(openCLconverter.maxNumWorkitems)
@@ -76,8 +82,12 @@ def generateRandomParticle(rng):
     part.SetPos(rng.Uniform(-200.*I3Units.m,200.*I3Units.m), rng.Uniform(-200.*I3Units.m,200.*I3Units.m), rng.Uniform(-200.*I3Units.m,200.*I3Units.m))
     part.SetDir(numpy.arccos(rng.Uniform(-1.,1.)), rng.Uniform(0.,2.*math.pi))
     part.SetTime(0.)
-    part.SetEnergy(1.*I3Units.GeV)
-    part.SetType(dataclasses.I3Particle.PiPlus)
+
+    part.SetEnergy(492.*I3Units.MeV)
+    if rng.Uniform(0.,1.)>0.5:
+        part.SetType(dataclasses.I3Particle.Pi0)
+    else:
+        part.SetType(dataclasses.I3Particle.EPlus)
     return part
     
 # we need random numbers
@@ -91,10 +101,10 @@ medium = clsim.MakeIceCubeMediumProperties()
 openCLStepsToPhotonsConverter = initializeOpenCL(rng, geometry, medium)
 
 # initialize Geant4 (will set bunch sizes according to the OpenCL settings)
-geant4ParticleToStepsConverter = initializeGeant4(rng, medium, openCLStepsToPhotonsConverter)
+geant4ParticleToStepsConverter = initializeGeant4(rng, medium, openCLStepsToPhotonsConverter, multiprocessor=True)
 
 
-numParticles = 10000
+numParticles = 20000
 
 print "sending %u particles to Geant4" % (numParticles)
 
