@@ -95,7 +95,7 @@ def TheGeant4Process(procNum,
                     print "worker #", procNum, "ignored invalid Geant4 result."
                     continue
                 if noisy: print "worker #", procNum, "got result from Geant4, sending to parent."
-                queueToParent.put(s)
+                queueToParent.put((s, None))
                 if noisy: print "worker #", procNum, "sent Geant4 result to parent."
                 del s
             
@@ -364,7 +364,7 @@ class I3CLSimParticleToStepConverterGeant4MP(I3CLSimParticleToStepConverter):
             self._print_if_noisy("Got something. queue size after receive:", self.queueFromProcesses.qsize())
         
             if not isinstance(item, tuple):
-                print "Expected to receive a tuple from the child. Got something else. Ignoring."
+                print "Expected to receive a tuple from the child. Got something else. Ignoring.", type(item)
                 continue
             if len(item) != 2:
                 print "Expected a tuple of length 2 from the child. Got length", len(item), ". Ignoring."

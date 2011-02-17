@@ -1,5 +1,5 @@
 //
-//   Copyright (c) 2011  Claudio Kopper
+//   Copyright (c) 2011  Claudio Kopper <claudio.kopper@nikhef.nl>
 //   
 #ifndef BOOST_SERIALIZABLE_PICKLE_SUITE_HPP_INCLUDED
 #define BOOST_SERIALIZABLE_PICKLE_SUITE_HPP_INCLUDED
@@ -26,7 +26,6 @@ namespace I3 {namespace detail {
 template<class T>
 inline void to_vector(const T &element, std::vector<char> &blobBuffer)
 {
-    // serialize the object (and its name) into a buffer
     typedef boost::iostreams::stream<boost::iostreams::back_insert_device<std::vector<char> > > vecstream_t;
     vecstream_t blobBufStream(blobBuffer);
     {
@@ -39,7 +38,6 @@ inline void to_vector(const T &element, std::vector<char> &blobBuffer)
 template<class T>
 inline void from_buffer(T &element, const char *buffer, std::size_t size)
 {
-    // de-serialize the thing
     boost::iostreams::array_source src(buffer, size);
     boost::iostreams::filtering_istream fis(src);
     boost::archive::portable_binary_iarchive pia(fis);
@@ -51,7 +49,6 @@ inline void from_buffer(T &element, const char *buffer, std::size_t size)
 template<>
 inline void to_vector(const I3Frame &element, std::vector<char> &blobBuffer)
 {
-    // serialize the object (and its name) into a buffer
     boost::iostreams::filtering_ostream blobBufStream(boost::iostreams::back_inserter(blobBuffer));
     {
         element.save(blobBufStream);
@@ -63,7 +60,6 @@ inline void to_vector(const I3Frame &element, std::vector<char> &blobBuffer)
 template<>
 inline void from_buffer(I3Frame &element, const char *buffer, std::size_t size)
 {
-    // de-serialize the thing
     boost::iostreams::array_source src(buffer, size);
     boost::iostreams::filtering_istream fis(src);
     
@@ -79,7 +75,7 @@ struct boost_serializable_pickle_suite : boost::python::pickle_suite
     {
         const T &element = boost::python::extract<const T &>(element_obj)();
         
-        // serialize the object (and its name) into a buffer
+        // serialize the object into a buffer
         std::vector<char> blobBuffer;
         I3::detail::to_vector(element, blobBuffer);
         
