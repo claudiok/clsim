@@ -30,14 +30,17 @@ namespace I3CLSimHelper
                                              const double omRadius,
                                              std::vector<cl_int> &domIDbuffer,
                                              std::vector<cl_float> &domPosBuffer,
-                                             std::vector<cl_uchar> &geoLayerToOMNumIndexPerStringSetBuffer
+                                             std::vector<cl_uchar> &geoLayerToOMNumIndexPerStringSetBuffer,
+                                             std::vector<int> &stringIndexToStringIDBuffer
                                              );
     
     // the main converter
     std::string GenerateGeometrySource(const I3CLSimSimpleGeometry &geometry,
-                                       std::vector<unsigned char> &geoLayerToOMNumIndexPerStringSetBuffer)
+                                       std::vector<unsigned char> &geoLayerToOMNumIndexPerStringSetBuffer,
+                                       std::vector<int> &stringIndexToStringIDBuffer)
     {
         geoLayerToOMNumIndexPerStringSetBuffer.clear();
+        stringIndexToStringIDBuffer.clear();
         
         std::ostringstream code;
         
@@ -64,7 +67,8 @@ namespace I3CLSimHelper
                                                 geometry.GetOMRadius(),
                                                 domIDbuffer,
                                                 domPosBuffer,
-                                                geoLayerToOMNumIndexPerStringSetBuffer
+                                                geoLayerToOMNumIndexPerStringSetBuffer,
+                                                stringIndexToStringIDBuffer
                                                 );
             
             if (!ret)
@@ -108,8 +112,10 @@ namespace I3CLSimHelper
                          unsigned int cellNumY,
                          std::vector<unsigned short> &cellToStringIndex)
     {
-        if ((cellNumX==0) || (cellNumY==0)) return false;
-        if (strings.size()<=0) return false;
+        if ((cellNumX==0) || (cellNumY==0)) {log_fatal("cell count is zero");}
+        if (strings.size()<=0) {log_fatal("no strings found");}
+        
+        log_trace("New division try: cellNumX=%u cellNumY=%u", cellNumX, cellNumY);
         
         cellToStringIndex.resize(cellNumX*cellNumY);
         
@@ -182,7 +188,20 @@ namespace I3CLSimHelper
                     
                     if ((cellContainsStringX) && (cellContainsStringY))
                     {
-                        if (stringFound) return false; // two strings per cell -> fail!
+                        if (stringFound) 
+                        {
+                            log_trace("Segmentation is not valid, string %lu and %lu are in the same cell.",
+                                      thisString, stringFoundNum);
+                            log_trace("  -> string %lu reaches from x=[%f,%f], y=[%f,%f]",
+                                      thisString,
+                                      currentString.meanX-currentString.maxR, currentString.meanX+currentString.maxR,
+                                      currentString.meanY-currentString.maxR, currentString.meanY+currentString.maxR);
+                            log_trace("  -> string %lu reaches from x=[%f,%f], y=[%f,%f]",
+                                      stringFoundNum,
+                                      strings[stringFoundNum].meanX-strings[stringFoundNum].maxR, strings[stringFoundNum].meanX+strings[stringFoundNum].maxR,
+                                      strings[stringFoundNum].meanY-strings[stringFoundNum].maxR, strings[stringFoundNum].meanY+strings[stringFoundNum].maxR);
+                            return false; // two strings per cell -> fail!
+                        }
                         stringFound=true;
                         stringFoundNum=thisString;
                         assignedStringNums.insert(thisString);
@@ -374,19 +393,20 @@ namespace I3CLSimHelper
                                              const double omRadius,
                                              std::vector<cl_int> &domIDbuffer,
                                              std::vector<cl_float> &domPosBuffer,
-                                             std::vector<cl_uchar> &geoLayerToOMNumIndexPerStringSetBuffer
+                                             std::vector<cl_uchar> &geoLayerToOMNumIndexPerStringSetBuffer,
+                                             std::vector<int> &stringIndexToStringIDBuffer
                                              )
     {
         typedef std::vector<int>::size_type sizeType;
         
         sizeType numEntries=stringIDs.size();
-        if (numEntries==0) return false;
+        if (numEntries==0) {std::cerr << "Empty geometry provided." << std::endl; return false;}
         if ((domIDs.size() != numEntries) ||
             (posX.size() != numEntries) ||
             (posY.size() != numEntries) ||
             (posZ.size() != numEntries))
             return false;
-        if (omRadius < 0.) return false;
+        if (omRadius < 0.) {std::cerr << "Zero or negative OM radius." << std::endl; return false;}
         
         std::set<int> stringIDSet;
         BOOST_FOREACH(int stringID, stringIDs) {stringIDSet.insert(stringID);}
@@ -461,9 +481,13 @@ namespace I3CLSimHelper
                     stringMaxR = thisR;
             }
             
+            log_trace("String %u has radius %f",
+                      stringIndex, currentStringStruct.maxR);
+            
             ++stringIndex;
         }
         
+        log_trace("Number of strings is %lu", numberOfStrings);
         
         // Try to split the detector into xy "cells" with 0 or 1 strings per cell.
         // We do not need to optimize this, so we do a brute froce approach:
@@ -489,7 +513,7 @@ namespace I3CLSimHelper
             ++cellGridNumY;
             
             if (cellGridNumX >= 1000) {
-                std::cerr << "There does not seem to be a possible cell division for your detector." << std::endl;
+                std::cerr << "Could not generate a cell division for your detector." << std::endl;
                 exit(-3);
             }
         }
@@ -659,6 +683,12 @@ namespace I3CLSimHelper
             geoLayerToOMNumIndexPerStringSetBuffer[i] = geoLayerToOMNumIndex[i];
         }
         
+        // initialize the stringIndex to stringID buffer
+        stringIndexToStringIDBuffer.resize(numberOfStrings);
+        for (unsigned int i=0;i<numberOfStrings;++i)
+        {
+            stringIndexToStringIDBuffer[i] = strings[i].stringID;
+        }
         
         // string information goes to the constant memory
         

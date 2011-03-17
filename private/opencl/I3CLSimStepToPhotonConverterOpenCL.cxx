@@ -357,7 +357,7 @@ void I3CLSimStepToPhotonConverterOpenCL::Compile()
         throw I3CLSimStepToPhotonConverter_exception("Device not selected!");
     
     mediumPropertiesSource_ = I3CLSimHelper::GenerateMediumPropertiesSource(*mediumProperties_);
-    geometrySource_ = I3CLSimHelper::GenerateGeometrySource(*geometry_, geoLayerToOMNumIndexPerStringSetInfo_);
+    geometrySource_ = I3CLSimHelper::GenerateGeometrySource(*geometry_, geoLayerToOMNumIndexPerStringSetInfo_, stringIndexToStringIDBuffer_);
     
     SetupQueueAndKernel(*(clPlatformDeviceList_[selectedDeviceIndex_].first),
                         *(clPlatformDeviceList_[selectedDeviceIndex_].second));
@@ -742,10 +742,39 @@ bool I3CLSimStepToPhotonConverterOpenCL::MorePhotonsAvailable() const
     return (!queueFromOpenCL_->empty());
 }
 
+// helper
+namespace {
+    void ReplaceStringIndexWithStringIDs(I3CLSimPhotonSeries &photons,
+                                         const std::vector<int> &stringIndexToStringIDBuffer)
+    {
+        BOOST_FOREACH(I3CLSimPhoton &photon, photons)
+        {
+            const uint32_t stringIndexWithDOMIndex = *reinterpret_cast<cl_uint *>(&photon.dummy);
+            
+            const uint32_t stringIndex = stringIndexWithDOMIndex/1000;
+            const uint32_t DOMIndex = stringIndexWithDOMIndex%1000;
+            
+            const int stringID = stringIndexToStringIDBuffer.at(stringIndex);
+            
+            if (stringID >= 0)
+                photon.dummy = stringID*1000 + DOMIndex;
+            else
+                photon.dummy = -((-stringID)*1000 + DOMIndex);
+            
+            log_trace("Replaced dummy %u with %i", stringIndexWithDOMIndex, photon.dummy);
+        }
+    }
+    
+}
+
 I3CLSimStepToPhotonConverter::ConversionResult_t I3CLSimStepToPhotonConverterOpenCL::GetConversionResult()
 {
     if (!initialized_)
         throw I3CLSimStepToPhotonConverter_exception("I3CLSimStepToPhotonConverterOpenCL is not initialized!");
 
-    return queueFromOpenCL_->Get();
+    ConversionResult_t result = queueFromOpenCL_->Get();
+    
+    if (result.second) ReplaceStringIndexWithStringIDs(*result.second, stringIndexToStringIDBuffer_);
+    
+    return result;
 }

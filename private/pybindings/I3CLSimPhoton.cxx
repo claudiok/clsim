@@ -26,6 +26,7 @@
 #include <clsim/I3CLSimPhoton.h>
 #include <boost/preprocessor/seq.hpp>
 #include <icetray/python/std_vector_indexing_suite.hpp>
+#include <icetray/python/std_map_indexing_suite.hpp>
 
 using namespace boost::python;
 
@@ -46,6 +47,7 @@ i3clsimphoton_prettyprint(const I3CLSimPhoton& s)
         << "       numScatters : " << s.GetNumScatters() << std::endl
         << "            weight : " << s.GetWeight() << std::endl
         << "     cherenkovDist : " << s.GetCherenkovDist()/I3Units::m << "m" << std::endl
+        << "             dummy : " << s.GetDummy() << std::endl
         << "]" ;
     
     return oss.str();
@@ -73,6 +75,7 @@ void register_I3CLSimPhoton()
         .add_property("numScatters", &I3CLSimPhoton::GetNumScatters, &I3CLSimPhoton::SetNumScatters)
         .add_property("weight", &I3CLSimPhoton::GetWeight, &I3CLSimPhoton::SetWeight)
         .add_property("id", &I3CLSimPhoton::GetID, &I3CLSimPhoton::SetID)
+        .add_property("dummy", &I3CLSimPhoton::GetDummy, &I3CLSimPhoton::SetDummy)
 
         .add_property("pos", &I3CLSimPhoton::GetPos, &I3CLSimPhoton::SetPos)
         .add_property("dir", &I3CLSimPhoton::GetDir, SetDir_oneary)
@@ -86,10 +89,15 @@ void register_I3CLSimPhoton()
     class_<I3CLSimPhotonSeries, bases<I3FrameObject>, I3CLSimPhotonSeriesPtr>("I3CLSimPhotonSeries")
     .def(std_vector_indexing_suite<I3CLSimPhotonSeries>())
     ;
-    
+
+    class_<I3CLSimPhotonSeriesMap, bases<I3FrameObject>, I3CLSimPhotonSeriesMapPtr>("I3CLSimPhotonSeriesMap")
+    .def(std_map_indexing_suite<I3CLSimPhotonSeriesMap>())
+    ;
+
     // does not base on I3FrameObject, so register only the shared_ptr<T>-to-shared_ptr<const T> conversion
     //register_pointer_conversions<I3CLSimPhoton>();
     boost::python::implicitly_convertible<shared_ptr<I3CLSimPhoton>, shared_ptr<const I3CLSimPhoton> >();
     
     register_pointer_conversions<I3CLSimPhotonSeries>();
+    register_pointer_conversions<I3CLSimPhotonSeriesMap>();
 }

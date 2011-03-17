@@ -82,6 +82,7 @@ public:
     inline uint32_t GetNumPhotons() const {return numPhotons;}
     inline float GetWeight() const {return weight;}
     inline uint32_t GetID() const {return identifier;}
+    inline int32_t GetDummy() const {return dummy;}
 
     inline I3PositionPtr GetPos() const {return I3PositionPtr(new I3Position(((const cl_float *)&posAndTime)[0], ((const cl_float *)&posAndTime)[1], ((const cl_float *)&posAndTime)[2]));}
 
@@ -105,6 +106,7 @@ public:
     inline void SetNumPhotons(const uint32_t &val) {numPhotons=val;}
     inline void SetWeight(const float &val) {weight=val;}
     inline void SetID(const uint32_t &val) {identifier=val;}
+    inline void SetDummy(const int32_t &val) {dummy=val;}
     
     inline void SetPos(const I3Position &pos) {((cl_float *)&posAndTime)[0]=pos.GetX(); ((cl_float *)&posAndTime)[1]=pos.GetY(); ((cl_float *)&posAndTime)[2]=pos.GetZ();}
 
@@ -130,7 +132,7 @@ public:
     cl_uint numPhotons;
     cl_float weight;
     cl_uint identifier;
-    cl_float dummy;
+    cl_int dummy;
 
 private:
     friend class boost::serialization::access;
@@ -143,7 +145,7 @@ private:
 inline bool operator==(const I3CLSimStep &a, const I3CLSimStep &b)
 {
     // compare all fields except for the last one (which is a dummy)
-    return (std::memcmp(&a, &b, sizeof(I3CLSimStep)-sizeof(cl_float))==0);
+    return (std::memcmp(&a, &b, sizeof(I3CLSimStep)-sizeof(cl_int))==0);
 }
 
 BOOST_CLASS_VERSION(I3CLSimStep, i3clsimstep_version_);

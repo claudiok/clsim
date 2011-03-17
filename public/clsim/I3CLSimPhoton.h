@@ -81,6 +81,7 @@ public:
     inline uint32_t GetNumScatters() const {return numScatters;}
     inline float GetWeight() const {return weight;}
     inline uint32_t GetID() const {return identifier;}
+    inline int32_t GetDummy() const {return dummy;}
 
     inline I3PositionPtr GetPos() const {return I3PositionPtr(new I3Position(((const cl_float *)&posAndTime)[0], ((const cl_float *)&posAndTime)[1], ((const cl_float *)&posAndTime)[2]));}
 
@@ -105,6 +106,7 @@ public:
     inline void SetNumScatters(const uint32_t &val) {numScatters=val;}
     inline void SetWeight(const float &val) {weight=val;}
     inline void SetID(const uint32_t &val) {identifier=val;}
+    inline void SetDummy(const int32_t &val) {dummy=val;}
     
     inline void SetPos(const I3Position &pos) {((cl_float *)&posAndTime)[0]=pos.GetX(); ((cl_float *)&posAndTime)[1]=pos.GetY(); ((cl_float *)&posAndTime)[2]=pos.GetZ();}
 
@@ -132,7 +134,7 @@ public:
     cl_uint numScatters; // number of scatters
     cl_float weight;
     cl_uint identifier;
-    cl_float dummy;
+    cl_int dummy;
 
 private:
     friend class boost::serialization::access;
@@ -145,14 +147,16 @@ private:
 inline bool operator==(const I3CLSimPhoton &a, const I3CLSimPhoton &b)
 {
     // compare all fields except for the last one (which is a dummy)
-    return (std::memcmp(&a, &b, sizeof(I3CLSimPhoton)-sizeof(cl_float))==0);
+    return (std::memcmp(&a, &b, sizeof(I3CLSimPhoton)-sizeof(cl_int))==0);
 }
 
 BOOST_CLASS_VERSION(I3CLSimPhoton, i3clsimphoton_version_);
 
 typedef I3Vector<I3CLSimPhoton> I3CLSimPhotonSeries;
+typedef I3Map<OMKey, I3CLSimPhotonSeries> I3CLSimPhotonSeriesMap;
 
 I3_POINTER_TYPEDEFS(I3CLSimPhoton);
 I3_POINTER_TYPEDEFS(I3CLSimPhotonSeries);
+I3_POINTER_TYPEDEFS(I3CLSimPhotonSeriesMap);
 
 #endif //I3CLSIMPHOTON_H_INCLUDED

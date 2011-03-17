@@ -18,7 +18,11 @@ from MakeAntaresMediumProperties import MakeAntaresMediumProperties
 from MakeIceCubeMediumProperties import MakeIceCubeMediumProperties
 from I3CLSimParticleToStepConverterGeant4MP import I3CLSimParticleToStepConverterGeant4MP
 
+from I3CLSimModule import I3CLSimModule
+
+
 # clean up the clsim namespace
 del augmentClassWithPicklingSupport
 del icetray
 del dataclasses
+

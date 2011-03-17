@@ -218,6 +218,9 @@ private:
     // this is extra geometry information, we upload it to global memory
     std::vector<unsigned char> geoLayerToOMNumIndexPerStringSetInfo_;
     
+    // this allows us to convert the string index back to the string ID (which may be negative and non-contiguous)
+    std::vector<int> stringIndexToStringIDBuffer_;
+    
     // OpenCL command queue and kernel
     shared_ptr<cl::CommandQueue> queue_;
     shared_ptr<cl::Kernel> kernel_;

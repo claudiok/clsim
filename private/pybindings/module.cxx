@@ -42,7 +42,8 @@ namespace bp = boost::python;
     (I3CLSimParticleToStepConverter)                \
     (I3CLSimStepToPhotonConverter)                  \
     (I3CLSimSimpleGeometry)                         \
-    (augmentDataclassesWithPicklingSupport)
+    (augmentDataclassesWithPicklingSupport)         \
+    (I3CLSimPhotonSeriesToPhotonSeriesMapConverter)
 
 #define I3_REGISTRATION_FN_DECL(r, data, t) void BOOST_PP_CAT(register_,t)();
 #define I3_REGISTER(r, data, t) BOOST_PP_CAT(register_,t)();

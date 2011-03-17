@@ -487,7 +487,9 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
         
         // set the current particle ID
         theEventAction->SetExternalParticleID(particleIdentifier);
-        
+
+        G4cout << "Geant4: shooting a " << particle->GetTypeString() << " with id " << particleIdentifier << "." << G4endl;
+
         // we don't need the particle anymore.
         particle.reset();
         

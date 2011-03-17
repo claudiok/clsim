@@ -48,6 +48,7 @@ i3clsimstep_prettyprint(const I3CLSimStep& s)
         << "             num : " << s.GetNumPhotons() << std::endl
         << "          weight : " << s.GetWeight() << std::endl
         << "            beta : " << s.GetBeta() << std::endl
+        << "           dummy : " << s.GetDummy() << std::endl
         << "]" ;
     
     return oss.str();
@@ -78,6 +79,7 @@ void register_I3CLSimStep()
         .add_property("num", &I3CLSimStep::GetNumPhotons, &I3CLSimStep::SetNumPhotons)
         .add_property("weight", &I3CLSimStep::GetWeight, &I3CLSimStep::SetWeight)
         .add_property("id", &I3CLSimStep::GetID, &I3CLSimStep::SetID)
+        .add_property("dummy", &I3CLSimStep::GetDummy, &I3CLSimStep::SetDummy)
 
         .add_property("pos", &I3CLSimStep::GetPos, &I3CLSimStep::SetPos)
         .add_property("dir", &I3CLSimStep::GetDir, SetDir_oneary)

@@ -46,7 +46,7 @@ struct I3CLSimStep
     uint numPhotons;
     float weight;
     uint identifier;
-    float dummy;
+    uint dummy;
 };
 
 struct I3CLSimPhoton 
@@ -58,7 +58,7 @@ struct I3CLSimPhoton
     uint numScatters; // number of scatters
     float weight;
     uint identifier;
-    float dummy;
+    uint dummy;
 };
 
 

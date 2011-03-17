@@ -23,7 +23,7 @@ def initializeOpenCL(rng, geometry, medium):
     # do a semi-smart device selection
     deviceToUse=None
     
-    # look for a "GeForce" first
+    # look for a "GeForce" device first
     geForceDevices = [device for device in deviceList if string.lower(device[1]).find("geforce")!=-1]
     if len(geForceDevices)>0:
         if len(geForceDevices)>1:
@@ -122,7 +122,7 @@ numBunchesSentToOpenCL=0
 while geant4ParticleToStepsConverter.BarrierActive() or geant4ParticleToStepsConverter.MoreStepsAvailable():
     steps = geant4ParticleToStepsConverter.GetConversionResult()
     
-    if isinstance(steps, tuple) and isinstance(s[1], dataclasses.I3Particle):
+    if isinstance(steps, tuple) and isinstance(steps[1], dataclasses.I3Particle):
         print "Got a secondary particle from Geant4. This was not configured, something is wrong. ignoring."
         continue
     elif not isinstance(steps, clsim.I3CLSimStepSeries):

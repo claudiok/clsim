@@ -57,6 +57,8 @@ void I3CLSimStep::save(Archive &ar, unsigned version) const
     ar << make_nvp("num", numPhotons);
     ar << make_nvp("weight", weight);
     ar << make_nvp("id", identifier);
+
+    ar << make_nvp("dummy", dummy);
 }     
 
 
@@ -66,20 +68,21 @@ void I3CLSimStep::load(Archive &ar, unsigned version)
 	if (version > i3clsimstep_version_)
 		log_fatal("Attempting to read version %u from file but running version %u of I3CLSimStep class.",version,i3clsimstep_version_);
     
-    float dummy; uint32_t dummy_uint;
-    ar >> make_nvp("x", dummy); ((cl_float *)&posAndTime)[0]=dummy;
-    ar >> make_nvp("y", dummy); ((cl_float *)&posAndTime)[1]=dummy;
-    ar >> make_nvp("z", dummy); ((cl_float *)&posAndTime)[2]=dummy;
-    ar >> make_nvp("time", dummy); ((cl_float *)&posAndTime)[3]=dummy;
+    float temp; uint32_t temp_uint;
+    ar >> make_nvp("x", temp); ((cl_float *)&posAndTime)[0]=temp;
+    ar >> make_nvp("y", temp); ((cl_float *)&posAndTime)[1]=temp;
+    ar >> make_nvp("z", temp); ((cl_float *)&posAndTime)[2]=temp;
+    ar >> make_nvp("time", temp); ((cl_float *)&posAndTime)[3]=temp;
 
-    ar >> make_nvp("theta", dummy); ((cl_float *)&dirAndLengthAndBeta)[0]=dummy;
-    ar >> make_nvp("phi", dummy); ((cl_float *)&dirAndLengthAndBeta)[1]=dummy;
-    ar >> make_nvp("length", dummy); ((cl_float *)&dirAndLengthAndBeta)[2]=dummy;
-    ar >> make_nvp("beta", dummy); ((cl_float *)&dirAndLengthAndBeta)[3]=dummy;
+    ar >> make_nvp("theta", temp); ((cl_float *)&dirAndLengthAndBeta)[0]=temp;
+    ar >> make_nvp("phi", temp); ((cl_float *)&dirAndLengthAndBeta)[1]=temp;
+    ar >> make_nvp("length", temp); ((cl_float *)&dirAndLengthAndBeta)[2]=temp;
+    ar >> make_nvp("beta", temp); ((cl_float *)&dirAndLengthAndBeta)[3]=temp;
     
-    ar >> make_nvp("num", dummy_uint); numPhotons=dummy_uint;
-    ar >> make_nvp("weight", dummy); weight=dummy;
-    ar >> make_nvp("id", dummy_uint); identifier=dummy;
+    ar >> make_nvp("num", temp_uint); numPhotons=temp_uint;
+    ar >> make_nvp("weight", temp); weight=temp;
+    ar >> make_nvp("id", temp_uint); identifier=temp_uint;
+    ar >> make_nvp("dummy", temp_uint); dummy=temp_uint;
 
 }     
 

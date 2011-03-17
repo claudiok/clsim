@@ -24,6 +24,7 @@
 #include <clsim/I3CLSimSimpleGeometry.h>
 #include <clsim/I3CLSimSimpleGeometryUserConfigurable.h>
 #include <clsim/I3CLSimSimpleGeometryTextFile.h>
+#include <clsim/I3CLSimSimpleGeometryFromI3Geometry.h>
 
 #include <boost/preprocessor/seq.hpp>
 #include <icetray/python/std_vector_indexing_suite.hpp>
@@ -150,5 +151,37 @@ void register_I3CLSimSimpleGeometry()
     bp::implicitly_convertible<shared_ptr<I3CLSimSimpleGeometryTextFile>, shared_ptr<const I3CLSimSimpleGeometryTextFile> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimSimpleGeometryTextFile>, shared_ptr<I3CLSimSimpleGeometry> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimSimpleGeometryTextFile>, shared_ptr<const I3CLSimSimpleGeometry> >();
+
     
+    // I3CLSimSimpleGeometryFromI3Geometry
+    {
+        bp::class_<
+        I3CLSimSimpleGeometryFromI3Geometry, 
+        boost::shared_ptr<I3CLSimSimpleGeometryFromI3Geometry>, 
+        bases<I3CLSimSimpleGeometry>,
+        boost::noncopyable
+        >
+        (
+         "I3CLSimSimpleGeometryFromI3Geometry",
+         bp::init<
+         double, const I3GeometryConstPtr &,
+         int32_t, int32_t,
+         uint32_t, uint32_t
+         >(
+           (
+            bp::arg("OMRadius"),
+            bp::arg("geometry"),
+            bp::arg("ignoreStringIDsSmallerThan")=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreStringIDsSmallerThan,
+            bp::arg("ignoreStringIDsLargerThan")=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreStringIDsLargerThan,
+            bp::arg("ignoreDomIDsSmallerThan")=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreDomIDsSmallerThan,
+            bp::arg("ignoreDomIDsLargerThan")=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreDomIDsLargerThan
+            )
+           )
+         )
+        ;
+    }
+    bp::implicitly_convertible<shared_ptr<I3CLSimSimpleGeometryFromI3Geometry>, shared_ptr<const I3CLSimSimpleGeometryFromI3Geometry> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimSimpleGeometryFromI3Geometry>, shared_ptr<I3CLSimSimpleGeometry> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimSimpleGeometryFromI3Geometry>, shared_ptr<const I3CLSimSimpleGeometry> >();
+
 }

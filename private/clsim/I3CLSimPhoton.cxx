@@ -57,6 +57,7 @@ void I3CLSimPhoton::save(Archive &ar, unsigned version) const
     ar << make_nvp("numScatters", numScatters);
     ar << make_nvp("weight", weight);
     ar << make_nvp("id", identifier);
+    ar << make_nvp("dummy", dummy);
 }     
 
 
@@ -66,20 +67,21 @@ void I3CLSimPhoton::load(Archive &ar, unsigned version)
 	if (version > i3clsimphoton_version_)
 		log_fatal("Attempting to read version %u from file but running version %u of I3CLSimPhoton class.",version,i3clsimphoton_version_);
     
-    float dummy; uint32_t dummy_uint;
-    ar >> make_nvp("x", dummy); ((cl_float *)&posAndTime)[0]=dummy;
-    ar >> make_nvp("y", dummy); ((cl_float *)&posAndTime)[1]=dummy;
-    ar >> make_nvp("z", dummy); ((cl_float *)&posAndTime)[2]=dummy;
-    ar >> make_nvp("time", dummy); ((cl_float *)&posAndTime)[3]=dummy;
+    float temp; uint32_t temp_uint;
+    ar >> make_nvp("x", temp); ((cl_float *)&posAndTime)[0]=temp;
+    ar >> make_nvp("y", temp); ((cl_float *)&posAndTime)[1]=temp;
+    ar >> make_nvp("z", temp); ((cl_float *)&posAndTime)[2]=temp;
+    ar >> make_nvp("time", temp); ((cl_float *)&posAndTime)[3]=temp;
 
-    ar >> make_nvp("theta", dummy); ((cl_float *)&dir)[0]=dummy;
-    ar >> make_nvp("phi", dummy); ((cl_float *)&dir)[1]=dummy;
-    ar >> make_nvp("wavelength", dummy); wavelength=dummy;
-    ar >> make_nvp("cherenkovDist", dummy); cherenkovDist=dummy;
+    ar >> make_nvp("theta", temp); ((cl_float *)&dir)[0]=temp;
+    ar >> make_nvp("phi", temp); ((cl_float *)&dir)[1]=temp;
+    ar >> make_nvp("wavelength", temp); wavelength=temp;
+    ar >> make_nvp("cherenkovDist", temp); cherenkovDist=temp;
     
-    ar >> make_nvp("numScatters", dummy_uint); numScatters=dummy_uint;
-    ar >> make_nvp("weight", dummy); weight=dummy;
-    ar >> make_nvp("id", dummy_uint); identifier=dummy;
+    ar >> make_nvp("numScatters", temp_uint); numScatters=temp_uint;
+    ar >> make_nvp("weight", temp); weight=temp;
+    ar >> make_nvp("id", temp_uint); identifier=temp_uint;
+    ar >> make_nvp("dummy", temp_uint); dummy=temp_uint;
 
 }     
 
@@ -144,3 +146,4 @@ void I3Vector<I3CLSimPhoton>::serialize(portable_binary_oarchive &ar, unsigned v
 
 I3_SERIALIZABLE(I3CLSimPhoton);
 I3_SERIALIZABLE(I3CLSimPhotonSeries);
+I3_SERIALIZABLE(I3CLSimPhotonSeriesMap);
