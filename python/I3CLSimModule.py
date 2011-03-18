@@ -175,8 +175,27 @@ class I3CLSimModule(icetray.I3Module):
         self.geant4ParticleToStepsConverter.EnqueueBarrier()
         
         numBunchesSentToOpenCL = 0
-        while self.geant4ParticleToStepsConverter.BarrierActive() or self.geant4ParticleToStepsConverter.MoreStepsAvailable():
-            steps = self.geant4ParticleToStepsConverter.GetConversionResult()
+        #while self.geant4ParticleToStepsConverter.BarrierActive() or self.geant4ParticleToStepsConverter.MoreStepsAvailable():
+        while True:
+            if not self.geant4ParticleToStepsConverter.MoreStepsAvailable():
+                #print "No steps are available right now"
+                if not self.geant4ParticleToStepsConverter.BarrierActive():
+                    #print "No barrier is active, we are done"
+                    break # nothing to read and no barrier. We are done
+            
+                # no steps available, but barrier is still enqueued. Geant4
+                # must still be working. Try to get steps, but timeout after a while.
+                #print "Waiting until steps become available or a timeout occurs"
+                steps = self.geant4ParticleToStepsConverter.GetConversionResult(0.1*I3Units.s) # time in seconds
+                if steps is None:
+                    #print "Timeout while waiting for steps, trying again"
+                    continue
+                #print "Steps retrieved"
+            else:
+                # there are steps available, fetch them!
+                #print "Steps available, retrieving them"
+                steps = self.geant4ParticleToStepsConverter.GetConversionResult()
+                #print "Steps retrieved"
             
             if isinstance(steps, tuple) and isinstance(steps[1], dataclasses.I3Particle):
                 print "Got a secondary particle from Geant4. This was not configured, something is wrong. ignoring."

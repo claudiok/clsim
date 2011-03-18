@@ -45,7 +45,7 @@ struct I3CLSimParticleToStepConverterWrapper : I3CLSimParticleToStepConverter, b
     virtual void EnqueueBarrier() {this->get_override("EnqueueParticle")();}
     virtual bool BarrierActive() const {return this->get_override("BarrierActive")();}
     virtual bool MoreStepsAvailable() const {return this->get_override("MoreStepsAvailable")();}
-    virtual I3CLSimParticleToStepConverter::ConversionResult_t GetConversionResult() {return this->get_override("GetConversionResult")();}
+    virtual I3CLSimParticleToStepConverter::ConversionResult_t GetConversionResult(double timeout) {return this->get_override("GetConversionResult")(timeout);}
 };
 
 //
@@ -106,7 +106,7 @@ void register_I3CLSimParticleToStepConverter()
         .def("EnqueueBarrier", bp::pure_virtual(&I3CLSimParticleToStepConverter::EnqueueBarrier))
         .def("BarrierActive", bp::pure_virtual(&I3CLSimParticleToStepConverter::BarrierActive))
         .def("MoreStepsAvailable", bp::pure_virtual(&I3CLSimParticleToStepConverter::MoreStepsAvailable))
-        .def("GetConversionResult", bp::pure_virtual(&I3CLSimParticleToStepConverter::GetConversionResult))
+        .def("GetConversionResult", bp::pure_virtual(&I3CLSimParticleToStepConverter::GetConversionResult), bp::arg("timeout")=NAN)
         ;
     }
     

@@ -149,7 +149,7 @@ public:
      * 
      * Will throw if not initialized.
      */
-    virtual I3CLSimParticleToStepConverter::ConversionResult_t GetConversionResult();
+    virtual I3CLSimParticleToStepConverter::ConversionResult_t GetConversionResult(double timeout=NAN);
     
 private:
     void LogGeant4Messages(bool allAsWarn=false) const;

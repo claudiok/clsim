@@ -63,8 +63,8 @@ tray.AddModule("I3Reader","reader",
 tray.AddModule(clsim.I3CLSimModule, "clsim",
                RandomService=randomService,
                MediumProperties=mediumProperties,
-               MaxNumParallelEvents=100,
-               IgnoreMuons=True)
+               MaxNumParallelEvents=10,
+               IgnoreMuons=False)
 
 tray.AddModule("Dump","dumper")
 

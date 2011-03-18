@@ -40,7 +40,7 @@
 boost::mutex I3CLSimParticleToStepConverterGeant4::thereCanBeOnlyOneGeant4_mutex;
 bool I3CLSimParticleToStepConverterGeant4::thereCanBeOnlyOneGeant4=false;
 
-const uint32_t I3CLSimParticleToStepConverterGeant4::default_maxQueueItems=20;
+const uint32_t I3CLSimParticleToStepConverterGeant4::default_maxQueueItems=0;
 const std::string I3CLSimParticleToStepConverterGeant4::default_physicsListName="QGSP_BERT_EMV";
 const double I3CLSimParticleToStepConverterGeant4::default_maxBetaChangePerStep=10.*perCent;
 const double I3CLSimParticleToStepConverterGeant4::default_maxNumPhotonsPerStep=200.;
@@ -619,14 +619,18 @@ bool I3CLSimParticleToStepConverterGeant4::MoreStepsAvailable() const
     return (!queueFromGeant4_->empty());
 }
 
-I3CLSimParticleToStepConverter::ConversionResult_t I3CLSimParticleToStepConverterGeant4::GetConversionResult()
+I3CLSimParticleToStepConverter::ConversionResult_t I3CLSimParticleToStepConverterGeant4::GetConversionResult(double timeout)
 {
     LogGeant4Messages();
 
     if (!initialized_)
         throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterGeant4 is not initialized!");
 
-    FromGeant4Pair_t ret = queueFromGeant4_->Get();
+    FromGeant4Pair_t ret;
+    if (!isnan(timeout))
+        ret = queueFromGeant4_->Get(timeout/I3Units::second, FromGeant4Pair_t(I3CLSimStepSeriesConstPtr(), false));
+    else
+        ret = queueFromGeant4_->Get(); // no timeout
     
     if (ret.second)
     {

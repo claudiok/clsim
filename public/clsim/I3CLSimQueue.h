@@ -70,7 +70,36 @@ public:
         
         return msg;
     }
-    
+
+    T Get(double timeout, T returnOnTimeout) // timeout in seconds
+    {
+        // lock the mutex to ensure exclusive access to the queue
+        boost::unique_lock<boost::mutex> guard(mutex_);
+        
+        // in case the queue is empty, sleep waiting for something to be put onto it
+        while (queue_.empty())
+        {
+            boost::posix_time::time_duration td = boost::posix_time::milliseconds(static_cast<long>(timeout*1000.));
+            bool ret = cond_.timed_wait(guard, td);
+            
+            if (!ret) {
+                // timeout reached, return dummy
+                return returnOnTimeout;
+            }
+        }
+        
+        // the queue is not empty anymore, read the value
+        T msg = queue_.front();
+        
+        // remove the current message from the queue
+        queue_.pop();
+        
+        // notify the producer that there is space on the queue now
+        cond_.notify_one();
+        
+        return msg;
+    }
+
     bool empty()
     {
         // lock the mutex to ensure exclusive access to the queue

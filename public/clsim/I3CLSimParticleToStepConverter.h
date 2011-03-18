@@ -122,7 +122,7 @@ public:
      * 
      * Will throw if not initialized.
      */
-    virtual ConversionResult_t GetConversionResult() = 0;
+    virtual ConversionResult_t GetConversionResult(double timeout=NAN) = 0;
     
 protected:
 };
