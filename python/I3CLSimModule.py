@@ -68,11 +68,14 @@ def initializeGeant4(rng, medium, openCLconverter, multiprocessor=False):
         randomSeeds=[]
         # we will NOT have more than 100 cores.. ;-)
         for i in range(100): randomSeeds.append(rng.Integer(900000000))
-        conv = I3CLSimParticleToStepConverterGeant4MP(randomSeeds=randomSeeds, numInstances=3)
+        conv = I3CLSimParticleToStepConverterGeant4MP(randomSeeds=randomSeeds, numInstances=4)
 
     conv.SetMediumProperties(medium)
     conv.SetMaxBunchSize(openCLconverter.maxNumWorkitems)
     conv.SetBunchSizeGranularity(openCLconverter.workgroupSize)
+    
+    #conv.SetElectronPositronMinEnergyForSecondary(1.*I3Units.GeV)
+    #conv.SetElectronPositronMaxEnergyForSecondary(10.*I3Units.TeV)
     
     conv.Initialize()
     
@@ -126,7 +129,7 @@ class I3CLSimModule(icetray.I3Module):
         self.ignoreMuons = self.GetParameter('IgnoreMuons')
 
         if self.randomService is None: raise RuntimeError("You have to specify the \"RandomService\" parameter!")
-        if self.mediumProperties is None: raise RuntimeError("You have to specify the \"RandomService\" parameter!")
+        if self.mediumProperties is None: raise RuntimeError("You have to specify the \"MediumProperties\" parameter!")
         if self.maxNumParallelEvents <= 0: raise RuntimeError("Values <= 0 are invalid for the \"MaxNumParallelEvents\" parameter.!")
         
         self.currentEventID = 0
@@ -159,7 +162,7 @@ class I3CLSimModule(icetray.I3Module):
         self.geant4ParticleToStepsConverter = initializeGeant4(self.randomService,
                                                                self.mediumProperties,
                                                                self.openCLStepsToPhotonsConverter,
-                                                               multiprocessor=False)
+                                                               multiprocessor=False) # the multiprocessor version is not yet safe to use
 
         print "Initializing photon map converter.."
         self.photonSeriesMapConverter.SetGeometry(self.geometry)
@@ -198,7 +201,8 @@ class I3CLSimModule(icetray.I3Module):
                 #print "Steps retrieved"
             
             if isinstance(steps, tuple) and isinstance(steps[1], dataclasses.I3Particle):
-                print "Got a secondary particle from Geant4. This was not configured, something is wrong. ignoring."
+                print "Got a secondary with E =", steps[1].energy, "(ignoring it: needs to be fixed!)"
+                #print "Got a secondary particle from Geant4. This was not configured, something is wrong. ignoring."
                 continue
             elif not isinstance(steps, I3CLSimStepSeries):
                 print "Got something unknown from Geant4. ignoring."
@@ -209,6 +213,8 @@ class I3CLSimModule(icetray.I3Module):
             
             self.openCLStepsToPhotonsConverter.EnqueueSteps(steps, numBunchesSentToOpenCL)
             numBunchesSentToOpenCL += 1
+
+        print "Geant4 finished, retrieving results from GPU.."
 
         # join photon lists
         allPhotons = I3CLSimPhotonSeries()

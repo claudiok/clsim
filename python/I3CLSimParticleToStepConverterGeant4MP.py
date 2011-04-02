@@ -4,8 +4,11 @@ from icecube.clsim import I3CLSimStepSeries
 
 ### TODO: seed the rngs!
 
+import math
 import multiprocessing as mp
 from Queue import Empty
+
+from I3Tray import I3Units
 
 def checkGeant4Result(result, prefix=""):
     if (prefix is not None) and (prefix != ""):
@@ -109,7 +112,10 @@ def TheGeant4Process(procNum,
         
         while conv.BarrierActive() or conv.MoreStepsAvailable():
             if noisy: print "worker #", procNum, "More steps available, receiving.."
-            s = conv.GetConversionResult()
+            s = conv.GetConversionResult(0.1*I3Units.second)
+            if s is None:
+                continue # try again
+            
             if not checkGeant4Result(s, workerNamePrefixForLogging):
                 print "worker #", procNum, "ignored invalid Geant4 result."
                 continue
@@ -340,7 +346,7 @@ class I3CLSimParticleToStepConverterGeant4MP(I3CLSimParticleToStepConverter):
         if not self.initialized: raise RuntimeError("Not initialized!")
         return not self.queueFromProcesses.empty()
         
-    def GetConversionResult(self):
+    def GetConversionResult(self, timeout=float('NaN')):
         if not self.initialized: raise RuntimeError("Not initialized!")
         
         self._print_if_noisy("Trying to get a conversion result..")
@@ -352,14 +358,13 @@ class I3CLSimParticleToStepConverterGeant4MP(I3CLSimParticleToStepConverter):
         
         while True:
             # get one item from the queue
-            item = self.queueFromProcesses.get()
-            #while True:
-            #    try:
-            #        item = self.queueFromProcesses.get(True, 1.)
-            #        break
-            #    except:
-            #        print "queue size:", self.queueFromProcesses.qsize()
-            #        pass
+            if math.isnan(timeout):
+                item = self.queueFromProcesses.get(block=True)
+            else:
+                try:
+                    item = self.queueFromProcesses.get(block=True, timeout=timeout/I3Units.second)
+                except Empty:
+                    return None
         
             self._print_if_noisy("Got something. queue size after receive:", self.queueFromProcesses.qsize())
         

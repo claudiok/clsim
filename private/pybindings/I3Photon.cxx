@@ -92,11 +92,13 @@ void register_I3Photon()
         .def("GetID", &I3Photon::GetID)
         .def("SetID", &I3Photon::SetID)
 
-        .add_property("particleMajorID", &I3Photon::GetParticleMajorID)
+        .add_property("particleMajorID", &I3Photon::GetParticleMajorID, &I3Photon::SetParticleMajorID)
         .def("GetParticleMajorID", &I3Photon::GetParticleMajorID)
+        .def("SetParticleMajorID", &I3Photon::SetParticleMajorID)
 
-        .add_property("particleMinorID", &I3Photon::GetParticleMinorID)
+        .add_property("particleMinorID", &I3Photon::GetParticleMinorID, &I3Photon::SetParticleMinorID)
         .def("GetParticleMinorID", &I3Photon::GetParticleMinorID)
+        .def("SetParticleMinorID", &I3Photon::SetParticleMinorID)
 
         .def("SetParticleID", &I3Photon::SetParticleID)
 
