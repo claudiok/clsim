@@ -6,6 +6,7 @@
 
 #include "clsim/I3CLSimStep.h"
 #include "clsim/I3CLSimMediumProperties.h"
+#include "clsim/I3CLSimParticleParameterization.h"
 
 #include <boost/noncopyable.hpp>
 #include <boost/variant.hpp>
@@ -30,9 +31,8 @@ public:
 struct I3CLSimParticleToStepConverter : private boost::noncopyable
 {
 public:
-    typedef boost::variant<I3CLSimStepSeriesConstPtr, std::pair<uint32_t, I3ParticleConstPtr> > ConversionResult_t;
-    
-    //virtual ~I3CLSimParticleToStepConverter();
+    I3CLSimParticleToStepConverter();
+    virtual ~I3CLSimParticleToStepConverter();
 
     /**
      * Sets the granularity of the bunch size for the
@@ -53,7 +53,22 @@ public:
      * Will throw if used after the call to Initialize().
      */
     virtual void SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties) = 0;
-    
+
+    /**
+     * Sets the available parameterizations.
+     * Particles with parameterizations may be returned without
+     * having been converted into steps.
+     * Will throw if used after the call to Initialize().
+     */
+    virtual void SetParticleParameterizationSeries(const I3CLSimParticleParameterizationSeries &parameterizationSeries_);
+
+    /**
+     * Returns the available parameterizations.
+     * Particles with parameterizations may be returned without
+     * having been converted into steps.
+     */
+    virtual const I3CLSimParticleParameterizationSeries &GetParticleParameterizationSeries() const;
+
     /**
      * Initializes the simulation.
      * Will throw if already initialized.
@@ -122,9 +137,13 @@ public:
      * 
      * Will throw if not initialized.
      */
-    virtual ConversionResult_t GetConversionResult(double timeout=NAN) = 0;
+    virtual I3CLSimStepSeriesConstPtr GetConversionResultWithBarrierInfo(bool &barrierWasReset, double timeout=NAN) = 0;
+
+    virtual I3CLSimStepSeriesConstPtr GetConversionResult(double timeout=NAN);
+
     
 protected:
+    I3CLSimParticleParameterizationSeries parameterizationSeries;
 };
 
 I3_POINTER_TYPEDEFS(I3CLSimParticleToStepConverter);

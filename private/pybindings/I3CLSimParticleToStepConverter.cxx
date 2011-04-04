@@ -23,6 +23,7 @@
 
 #include <clsim/I3CLSimParticleToStepConverter.h>
 #include <clsim/I3CLSimParticleToStepConverterGeant4.h>
+#include <clsim/I3CLSimParticleToStepConverterCascadeParameterization.h>
 
 #include <boost/preprocessor/seq.hpp>
 #include <icetray/python/std_vector_indexing_suite.hpp>
@@ -45,9 +46,46 @@ struct I3CLSimParticleToStepConverterWrapper : I3CLSimParticleToStepConverter, b
     virtual void EnqueueBarrier() {this->get_override("EnqueueParticle")();}
     virtual bool BarrierActive() const {return this->get_override("BarrierActive")();}
     virtual bool MoreStepsAvailable() const {return this->get_override("MoreStepsAvailable")();}
-    virtual I3CLSimParticleToStepConverter::ConversionResult_t GetConversionResult(double timeout) {return this->get_override("GetConversionResult")(timeout);}
+    
+    virtual I3CLSimStepSeriesConstPtr GetConversionResultWithBarrierInfo(bool &barrierWasReset, double timeout)
+    {return this->get_override("GetConversionResultWithBarrierInfo")(barrierWasReset, timeout);}
+
+    virtual I3CLSimStepSeriesConstPtr GetConversionResult(double timeout)
+    {
+        if (override f = this->get_override("GetConversionResult")) {
+            return f(timeout);
+        } else {
+            return I3CLSimParticleToStepConverter::GetConversionResult(timeout);
+        }
+    }
+    I3CLSimStepSeriesConstPtr default_GetConversionResult(double timeout) {return this->get_override("GetConversionResult")(timeout);}
+
+    virtual void SetParticleParameterizationSeries(const I3CLSimParticleParameterizationSeries &parameterizationSeries_)
+    {
+        if (override f = this->get_override("SetParticleParameterizationSeries")) {
+            f(parameterizationSeries_);
+        } else {
+            I3CLSimParticleToStepConverter::SetParticleParameterizationSeries(parameterizationSeries_);
+        }
+    }
+    void default_SetParticleParameterizationSeries(const I3CLSimParticleParameterizationSeries &parameterizationSeries_) 
+    {this->I3CLSimParticleToStepConverter::SetParticleParameterizationSeries(parameterizationSeries_);}
+
+
+    virtual const I3CLSimParticleParameterizationSeries &GetParticleParameterizationSeries() const
+    {
+        if (override f = this->get_override("GetParticleParameterizationSeries")) {
+            return f();
+        } else {
+            return I3CLSimParticleToStepConverter::GetParticleParameterizationSeries();
+        }
+    }
+    const I3CLSimParticleParameterizationSeries &default_GetParticleParameterizationSeries() const
+    {return this->I3CLSimParticleToStepConverter::GetParticleParameterizationSeries();}
+
 };
 
+/*
 //
 // visitor for converting contents of variant to object
 //
@@ -90,7 +128,7 @@ struct I3CLSimParticleToStepConverter_ConversionResult_t_to_python
     }
     
 };
-
+*/
 
 void register_I3CLSimParticleToStepConverter()
 {
@@ -107,6 +145,19 @@ void register_I3CLSimParticleToStepConverter()
         .def("BarrierActive", bp::pure_virtual(&I3CLSimParticleToStepConverter::BarrierActive))
         .def("MoreStepsAvailable", bp::pure_virtual(&I3CLSimParticleToStepConverter::MoreStepsAvailable))
         .def("GetConversionResult", bp::pure_virtual(&I3CLSimParticleToStepConverter::GetConversionResult), bp::arg("timeout")=NAN)
+        .def("GetConversionResultWithBarrierInfo", 
+             &I3CLSimParticleToStepConverter::GetConversionResultWithBarrierInfo,
+             &I3CLSimParticleToStepConverterWrapper::GetConversionResultWithBarrierInfo,
+             bp::arg("barrierWasReset"), bp::arg("timeout")=NAN)
+
+        .def("SetParticleParameterizationSeries", 
+             &I3CLSimParticleToStepConverter::SetParticleParameterizationSeries,
+             &I3CLSimParticleToStepConverterWrapper::default_SetParticleParameterizationSeries)
+
+        .def("GetParticleParameterizationSeries", 
+             &I3CLSimParticleToStepConverter::GetParticleParameterizationSeries,
+             &I3CLSimParticleToStepConverterWrapper::default_GetParticleParameterizationSeries,
+             bp::return_internal_reference<>())
         ;
     }
     
@@ -114,7 +165,7 @@ void register_I3CLSimParticleToStepConverter()
     bp::implicitly_convertible<shared_ptr<I3CLSimParticleToStepConverterWrapper>, shared_ptr<I3CLSimParticleToStepConverter> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimParticleToStepConverterWrapper>, shared_ptr<const I3CLSimParticleToStepConverterWrapper> >();
     
-    bp::to_python_converter<I3CLSimParticleToStepConverter::ConversionResult_t, I3CLSimParticleToStepConverter_ConversionResult_t_to_python>();
+    //bp::to_python_converter<I3CLSimParticleToStepConverter::ConversionResult_t, I3CLSimParticleToStepConverter_ConversionResult_t_to_python>();
     
     // I3CLSimParticleToStepConverterGeant4
     {
@@ -142,12 +193,6 @@ void register_I3CLSimParticleToStepConverter()
            )
           )
         )
-        .def("SetElectronPositronMinEnergyForSecondary", &I3CLSimParticleToStepConverterGeant4::SetElectronPositronMinEnergyForSecondary)
-        .def("SetElectronPositronMaxEnergyForSecondary", &I3CLSimParticleToStepConverterGeant4::SetElectronPositronMaxEnergyForSecondary)
-        .def("GetElectronPositronMinEnergyForSecondary", &I3CLSimParticleToStepConverterGeant4::GetElectronPositronMinEnergyForSecondary)
-        .def("GetElectronPositronMaxEnergyForSecondary", &I3CLSimParticleToStepConverterGeant4::GetElectronPositronMaxEnergyForSecondary)
-        .add_property("electronPositronMinEnergyForSecondary", &I3CLSimParticleToStepConverterGeant4::GetElectronPositronMinEnergyForSecondary, &I3CLSimParticleToStepConverterGeant4::SetElectronPositronMinEnergyForSecondary)
-        .add_property("electronPositronMaxEnergyForSecondary", &I3CLSimParticleToStepConverterGeant4::GetElectronPositronMaxEnergyForSecondary, &I3CLSimParticleToStepConverterGeant4::SetElectronPositronMaxEnergyForSecondary)
         ;
     }
     
@@ -155,4 +200,32 @@ void register_I3CLSimParticleToStepConverter()
     bp::implicitly_convertible<shared_ptr<I3CLSimParticleToStepConverterGeant4>, shared_ptr<I3CLSimParticleToStepConverter> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimParticleToStepConverterGeant4>, shared_ptr<const I3CLSimParticleToStepConverter> >();
     
+    
+    // I3CLSimParticleToStepConverterCascadeParameterization
+    {
+        bp::class_<
+        I3CLSimParticleToStepConverterCascadeParameterization, 
+        boost::shared_ptr<I3CLSimParticleToStepConverterCascadeParameterization>, 
+        bases<I3CLSimParticleToStepConverter>,
+        boost::noncopyable
+        >
+        (
+         "I3CLSimParticleToStepConverterCascadeParameterization",
+         bp::init<
+         I3RandomServicePtr,
+         uint32_t
+         >(
+           (
+            bp::arg("randomService"),
+            bp::arg("photonsPerStep") = I3CLSimParticleToStepConverterCascadeParameterization::default_photonsPerStep
+            )
+           )
+         )
+        ;
+    }
+    
+    bp::implicitly_convertible<shared_ptr<I3CLSimParticleToStepConverterCascadeParameterization>, shared_ptr<const I3CLSimParticleToStepConverterCascadeParameterization> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimParticleToStepConverterCascadeParameterization>, shared_ptr<I3CLSimParticleToStepConverter> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimParticleToStepConverterCascadeParameterization>, shared_ptr<const I3CLSimParticleToStepConverter> >();
+
 }

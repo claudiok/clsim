@@ -183,8 +183,13 @@ def getGroupRefIndex_IceCube(wavelength):
     np = getPhaseRefIndex_IceCube(wavelength)
     return np * (1. + 0.227106 - 0.954648*x + 1.42568*x**2. - 0.711832*x**3.)
     
+def Cherenkov_dN_dXdwlen_IceCube(wlen, beta=1.):
+    return (2.*math.pi/(137.*(wlen**2.)))*(1. - 1./((beta*getPhaseRefIndex_IceCube(wlen))**2.))
+
+print Cherenkov_dN_dXdwlen_IceCube(470.)
 
 numberOfPhotonsPerNanometer, err = scipy.integrate.quadrature(Cherenkov_dN_dXdwlen, 290., 610.)
+#numberOfPhotonsPerNanometer, err = scipy.integrate.quadrature(Cherenkov_dN_dXdwlen_IceCube, 265., 675.)
 print err
 numberOfPhotonsPerMeter = numberOfPhotonsPerNanometer*1e9
 

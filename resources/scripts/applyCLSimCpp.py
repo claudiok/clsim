@@ -57,16 +57,113 @@ randomService = phys_services.I3SPRNGRandomService(
 # ice properties (SPICE-Mie model)
 mediumProperties = clsim.MakeIceCubeMediumProperties()
 
+# parameterizations for fast simulation (bypassing Geant4)
+# converters first:
+cascadeConverter = clsim.I3CLSimParticleToStepConverterCascadeParameterization(randomService=randomService)
+cascadeConverter.SetMediumProperties(mediumProperties)
+cascadeConverter.Initialize()
+
+
+# now set up a list of converters with particle types and valid energy ranges
+parameterizations = \
+[
+ #clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+ #                                      forParticleType=dataclasses.I3Particle.MuMinus,
+ #                                      fromEnergy=0.5*I3Units.GeV,
+ #                                      toEnergy=1000.*I3Units.GeV),
+ #clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+ #                                      forParticleType=dataclasses.I3Particle.MuPlus,
+ #                                      fromEnergy=0.5*I3Units.GeV,
+ #                                      toEnergy=1000.*I3Units.GeV),
+
+ # do we need some special handling for neutrons?
+ clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+                                       forParticleType=dataclasses.I3Particle.Neutron,
+                                       fromEnergy=0.0*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.GeV),
+
+ clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+                                       forParticleType=dataclasses.I3Particle.Hadrons,
+                                       fromEnergy=0.0*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.GeV),
+ clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+                                       forParticleType=dataclasses.I3Particle.Pi0,
+                                       fromEnergy=0.0*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.GeV),
+ clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+                                       forParticleType=dataclasses.I3Particle.PiPlus,
+                                       fromEnergy=0.0*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.GeV),
+ clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+                                       forParticleType=dataclasses.I3Particle.PiMinus,
+                                       fromEnergy=0.0*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.GeV),
+ clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+                                       forParticleType=dataclasses.I3Particle.K0_Long,
+                                       fromEnergy=0.0*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.GeV),
+ clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+                                       forParticleType=dataclasses.I3Particle.KPlus,
+                                       fromEnergy=0.0*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.GeV),
+ clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+                                       forParticleType=dataclasses.I3Particle.KMinus,
+                                       fromEnergy=0.0*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.GeV),
+ clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+                                       forParticleType=dataclasses.I3Particle.PPlus,
+                                       fromEnergy=0.0*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.GeV),
+ clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+                                       forParticleType=dataclasses.I3Particle.PMinus,
+                                       fromEnergy=0.0*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.GeV),
+ clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+                                       forParticleType=dataclasses.I3Particle.K0_Short,
+                                       fromEnergy=0.0*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.GeV),
+ clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+                                       forParticleType=dataclasses.I3Particle.NuclInt,
+                                       fromEnergy=0.0*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.GeV),
+
+ clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+                                       forParticleType=dataclasses.I3Particle.EMinus,
+                                       fromEnergy=0.5*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.GeV),
+ clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+                                       forParticleType=dataclasses.I3Particle.EPlus,
+                                       fromEnergy=0.5*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.GeV),
+ clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+                                       forParticleType=dataclasses.I3Particle.Gamma,
+                                       fromEnergy=0.0*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.GeV),
+ clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+                                       forParticleType=dataclasses.I3Particle.Brems,
+                                       fromEnergy=0.0*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.GeV),
+ clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+                                       forParticleType=dataclasses.I3Particle.DeltaE,
+                                       fromEnergy=0.0*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.GeV),
+ clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+                                       forParticleType=dataclasses.I3Particle.PairProd,
+                                       fromEnergy=0.0*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.GeV)
+]
+
 tray.AddModule("I3Reader","reader",
                Filename=options.INFILE)
 
 tray.AddModule("I3CLSimModule", "clsim",
                RandomService=randomService,
                MediumProperties=mediumProperties,
+               ParameterizationList=parameterizations,
                MaxNumParallelEvents=100,
-               IgnoreMuons=True)
+               IgnoreMuons=False)
 
-tray.AddModule("Dump","dumper")
+#tray.AddModule("Dump","dumper")
 
 tray.AddModule("I3Writer","writer",
     Filename = options.OUTFILE)

@@ -39,7 +39,13 @@
 #include "clsim/I3CLSimStepToPhotonConverterOpenCL.h"
 #include "clsim/I3CLSimParticleToStepConverterGeant4.h"
 
+#include "clsim/I3CLSimParticleParameterization.h"
+
 #include "clsim/I3Photon.h"
+
+#include <boost/thread.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/locks.hpp>
 
 #include <vector>
 #include <map>
@@ -87,6 +93,9 @@ public:
 private:
     // parameters
     
+    /// Parameter: An instance I3CLSimParticleParameterizationSeries specifying the fast simulation parameterizations to be used.
+    I3CLSimParticleParameterizationSeries parameterizationList_;
+    
     /// Parameter: A random number generating service (derived from I3RandomService).
     I3RandomServicePtr randomService_;
 
@@ -111,6 +120,19 @@ private:
     I3CLSimModule();
     I3CLSimModule(const I3CLSimModule&);
     I3CLSimModule& operator=(const I3CLSimModule&);
+    
+    // thread stuff
+    void StopThread();
+    void StartThread();
+    void Thread_starter();
+    bool Thread(boost::this_thread::disable_interruption &di);
+    boost::shared_ptr<boost::thread> threadObj_;
+    boost::condition_variable_any threadStarted_cond_;
+    boost::mutex threadStarted_mutex_;
+    bool threadStarted_;
+    bool threadFinishedOK_;
+    uint64_t numBunchesSentToOpenCL_;
+
     
     // helper functions
     void FlushFrameCache();

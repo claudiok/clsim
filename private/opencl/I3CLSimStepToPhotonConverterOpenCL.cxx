@@ -31,7 +31,7 @@ I3CLSimStepToPhotonConverterOpenCL::I3CLSimStepToPhotonConverterOpenCL(I3RandomS
                                                                        bool gpuOnly)
 :
 openCLStarted_(false),
-queueToOpenCL_(new I3CLSimQueue<ToOpenCLPair_t>(0)),
+queueToOpenCL_(new I3CLSimQueue<ToOpenCLPair_t>(5)),
 queueFromOpenCL_(new I3CLSimQueue<I3CLSimStepToPhotonConverter::ConversionResult_t>(0)),
 randomService_(randomService),
 initialized_(false),

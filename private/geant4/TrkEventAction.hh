@@ -10,6 +10,8 @@
 #include "clsim/I3CLSimQueue.h"
 #include "clsim/I3CLSimParticleToStepConverterGeant4.h"
 
+#include "clsim/I3CLSimParticleParameterization.h"
+
 #include <boost/thread.hpp>
 
 class G4Event;
@@ -19,8 +21,7 @@ class TrkEventAction : public G4UserEventAction
 public:
     TrkEventAction(uint64_t maxBunchSize,
                    I3CLSimStepStorePtr stepStore,
-                   double electronPositronMinEnergyForSecondary,
-                   double electronPositronMaxEnergyForSecondary,
+                   const I3CLSimParticleParameterizationSeries &parameterizationAvailable,
                    boost::shared_ptr<I3CLSimQueue<I3CLSimParticleToStepConverterGeant4::FromGeant4Pair_t> > queueFromGeant4,
                    boost::this_thread::disable_interruption &threadDisabledInterruptionState,
                    double maxRefractiveIndex);
@@ -39,8 +40,7 @@ private:
     I3CLSimStepStorePtr stepStore_;
     uint32_t currentExternalParticleID_;
     
-    double electronPositronMinEnergyForSecondary_;
-    double electronPositronMaxEnergyForSecondary_;
+    I3CLSimParticleParameterizationSeries parameterizationAvailable_;
     
     boost::shared_ptr<I3CLSimQueue<I3CLSimParticleToStepConverterGeant4::FromGeant4Pair_t> > queueFromGeant4_;
     boost::this_thread::disable_interruption &threadDisabledInterruptionState_;

@@ -42,7 +42,7 @@ I3CLSimWlenDependentValueRefIndexQuanFry(double salinity,
 :
 salinity_(salinity/I3Units::perThousand),
 temperature_(temperature),
-pressure_(pressure/1.01325*I3Units::bar),
+pressure_(pressure/(1.01325*I3Units::bar)),
 n0_(n0),
 n1_(n1),
 n2_(n2),

@@ -17,8 +17,7 @@
 
 TrkEventAction::TrkEventAction(uint64_t maxBunchSize,
                                I3CLSimStepStorePtr stepStore,
-                               double electronPositronMinEnergyForSecondary,
-                               double electronPositronMaxEnergyForSecondary,
+                               const I3CLSimParticleParameterizationSeries &parameterizationAvailable,
                                boost::shared_ptr<I3CLSimQueue<I3CLSimParticleToStepConverterGeant4::FromGeant4Pair_t> > queueFromGeant4,
                                boost::this_thread::disable_interruption &threadDisabledInterruptionState,
                                double maxRefractiveIndex)
@@ -26,8 +25,7 @@ TrkEventAction::TrkEventAction(uint64_t maxBunchSize,
 abortRequested_(false),
 maxBunchSize_(maxBunchSize),
 stepStore_(stepStore),
-electronPositronMinEnergyForSecondary_(electronPositronMinEnergyForSecondary),
-electronPositronMaxEnergyForSecondary_(electronPositronMaxEnergyForSecondary),
+parameterizationAvailable_(parameterizationAvailable),
 queueFromGeant4_(queueFromGeant4),
 threadDisabledInterruptionState_(threadDisabledInterruptionState),
 maxRefractiveIndex_(maxRefractiveIndex)
@@ -44,8 +42,7 @@ void TrkEventAction::BeginOfEventAction(const G4Event* anEvent)
 	TrkUserEventInformation* eventInformation = 
     new TrkUserEventInformation(maxBunchSize_,
                                 stepStore_,
-                                electronPositronMinEnergyForSecondary_,
-                                electronPositronMaxEnergyForSecondary_,
+                                parameterizationAvailable_,
                                 queueFromGeant4_,
                                 threadDisabledInterruptionState_,
                                 currentExternalParticleID_,

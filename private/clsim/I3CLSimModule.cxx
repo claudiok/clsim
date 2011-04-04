@@ -52,6 +52,10 @@ geometryIsConfigured_(false)
                  "An instance of I3CLSimMediumProperties describing the ice/water properties.",
                  mediumProperties_);
 
+    AddParameter("ParameterizationList",
+                 "An instance I3CLSimParticleParameterizationSeries specifying the fast simulation parameterizations to be used.",
+                 parameterizationList_);
+
     maxNumParallelEvents_=1000;
     AddParameter("MaxNumParallelEvents",
                  "Maximum number of events that will be processed by the GPU in parallel.",
@@ -82,6 +86,59 @@ I3CLSimModule::~I3CLSimModule()
 {
     log_trace("%s", __PRETTY_FUNCTION__);
 
+    StopThread();
+    
+}
+
+void I3CLSimModule::StartThread()
+{
+    log_trace("%s", __PRETTY_FUNCTION__);
+
+    if (threadObj_) {
+        log_warn("Thread is already running. Not starting a new one.");
+        return;
+    }
+    
+    log_warn("Thread not running. Starting a new one..");
+
+    threadStarted_=false;
+    threadFinishedOK_=false;
+    
+    threadObj_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&I3CLSimModule::Thread_starter, this)));
+    
+    // wait for startup
+    {
+        boost::unique_lock<boost::mutex> guard(threadStarted_mutex_);
+        for (;;)
+        {
+            if (threadStarted_) break;
+            threadStarted_cond_.wait(guard);
+        }
+    }        
+    
+    log_warn("Thread started..");
+
+}
+
+void I3CLSimModule::StopThread()
+{
+    log_trace("%s", __PRETTY_FUNCTION__);
+    
+    if (threadObj_)
+    {
+        if (threadObj_->joinable())
+        {
+            log_warn("Stopping the thread..");
+            threadObj_->interrupt();
+            threadObj_->join(); // wait for it indefinitely
+            log_warn("thread stopped.");
+        } 
+        else
+        {
+            log_warn("Thread did already finish, deleting reference.");
+        }
+        threadObj_.reset();
+    }
 }
 
 namespace {
@@ -170,19 +227,24 @@ namespace {
     I3CLSimParticleToStepConverterGeant4Ptr initializeGeant4(I3RandomServicePtr rng,
                                                              I3CLSimMediumPropertiesPtr medium,
                                                              I3CLSimStepToPhotonConverterOpenCLPtr openCLconverter,
+                                                             const I3CLSimParticleParameterizationSeries &parameterizationList,
                                                              bool multiprocessor=false)
     {
         I3CLSimParticleToStepConverterGeant4Ptr conv
         (
-         new I3CLSimParticleToStepConverterGeant4(rng->Integer(900000000)) // TODO: eventually Geant4 should use the IceTray rng!!
+         new I3CLSimParticleToStepConverterGeant4
+         (
+          rng->Integer(900000000), // TODO: eventually Geant4 should use the IceTray rng!!
+          //"QGSP_BERT_EMV"
+          "QGSP_BERT"
+         )
         );
         
         conv->SetMediumProperties(medium);
         conv->SetMaxBunchSize(openCLconverter->GetMaxNumWorkitems());
         conv->SetBunchSizeGranularity(openCLconverter->GetWorkgroupSize());
         
-        //conv->SetElectronPositronMinEnergyForSecondary(1.*I3Units::GeV);
-        //conv->SetElectronPositronMaxEnergyForSecondary(10.*I3Units::TeV);
+        conv->SetParticleParameterizationSeries(parameterizationList);
         
         conv->Initialize();
         
@@ -201,7 +263,7 @@ void I3CLSimModule::Configure()
     GetParameter("MCTreeName", MCTreeName_);
     GetParameter("PhotonSeriesMapName", photonSeriesMapName_);
     GetParameter("IgnoreMuons", ignoreMuons_);
-    
+    GetParameter("ParameterizationList", parameterizationList_);
     
     if (!randomService_) log_fatal("You have to specify the \"RandomService\" parameter!");
     if (!mediumProperties_) log_fatal("You have to specify the \"MediumProperties\" parameter!");
@@ -214,7 +276,115 @@ void I3CLSimModule::Configure()
     
     photonSeriesMapConverter_ = I3CLSimPhotonSeriesToPhotonSeriesMapConverterPtr(new I3CLSimPhotonSeriesToPhotonSeriesMapConverter());
     
+    if (parameterizationList_.size() > 0) {
+        log_warn("Using the following parameterizations:");
+        
+        BOOST_FOREACH(const I3CLSimParticleParameterization &parameterization, parameterizationList_)
+        {
+            I3Particle tmpParticle;
+            tmpParticle.SetType(parameterization.forParticleType);
+            
+            log_warn("  * particle=%s, from energy=%fGeV, to energy=%fGeV",
+                     tmpParticle.GetTypeString().c_str(),
+                     parameterization.fromEnergy/I3Units::GeV,
+                     parameterization.toEnergy/I3Units::GeV);
+            
+        }
+        
+    }
+    
 }
+
+
+/**
+ * This thread takes care of passing steps from Geant4 to OpenCL
+ */
+
+bool I3CLSimModule::Thread(boost::this_thread::disable_interruption &di)
+{
+    // do some setup while the main thread waits..
+    numBunchesSentToOpenCL_=0;
+    
+    // notify the main thread that everything is set up
+    {
+        boost::unique_lock<boost::mutex> guard(threadStarted_mutex_);
+        threadStarted_=true;
+    }
+    threadStarted_cond_.notify_all();
+
+    // the main thread is running again
+    
+    uint32_t counter=0;
+    
+    for (;;)
+    {
+        // retrieve steps from Geant4
+        I3CLSimStepSeriesConstPtr steps;
+        bool barrierWasJustReset=false;
+        
+        {
+            boost::this_thread::restore_interruption ri(di);
+            try {
+                steps = geant4ParticleToStepsConverter_->GetConversionResultWithBarrierInfo(barrierWasJustReset);
+            } catch(boost::thread_interrupted &i) {
+                return false;
+            }
+        }
+        
+        if (!steps)
+            log_warn("Got NULL I3CLSimStepSeriesConstPtr from Geant4.");
+        
+        if (steps->empty())
+        {
+            log_warn("Got 0 steps from Geant4, nothing to do for OpenCL.");
+        }
+        else
+        {
+            log_warn("Got %zu steps from Geant4, sending them to OpenCL",
+                     steps->size());
+
+            {
+                boost::this_thread::restore_interruption ri(di);
+                try {
+                    openCLStepsToPhotonsConverter_->EnqueueSteps(steps, counter);
+                } catch(boost::thread_interrupted &i) {
+                    return false;
+                }
+            }
+            
+            ++numBunchesSentToOpenCL_;
+            ++counter; // this may overflow, but it is not used for anything important/unique
+        }
+        
+        if (barrierWasJustReset) {
+            log_warn("Geant4 barrier has been reached. Exiting thread.");
+            break;
+        }
+    }
+    
+    return true;
+}
+
+void I3CLSimModule::Thread_starter()
+{
+    // do not interrupt this thread by default
+    boost::this_thread::disable_interruption di;
+    
+    try {
+        threadFinishedOK_ = Thread(di);
+        if (!threadFinishedOK_)
+        {
+            log_warn("thread exited due to interruption.");
+        }
+    } catch(...) { // any exceptions?
+        log_warn("thread died unexpectedly..");
+        
+        throw;
+    }
+    
+    log_warn("thread exited.");
+}
+
 
 void I3CLSimModule::Geometry(I3FramePtr frame)
 {
@@ -245,6 +415,7 @@ void I3CLSimModule::Geometry(I3FramePtr frame)
     geant4ParticleToStepsConverter_ = initializeGeant4(randomService_,
                                                        mediumProperties_,
                                                        openCLStepsToPhotonsConverter_,
+                                                       parameterizationList_,
                                                        false); // the multiprocessor version is not yet safe to use
 
     
@@ -258,25 +429,6 @@ void I3CLSimModule::Geometry(I3FramePtr frame)
 }
 
 namespace {
-    static inline I3CLSimStepSeriesConstPtr ResultAsStepPtr(const I3CLSimParticleToStepConverter::ConversionResult_t &res)
-    {
-        try {
-            return boost::get<I3CLSimStepSeriesConstPtr>(res);
-        } catch(boost::bad_get &) {
-            return I3CLSimStepSeriesConstPtr();            
-        }
-    }
-
-    static inline bool ResultIsStepPtr(const I3CLSimParticleToStepConverter::ConversionResult_t &res)
-    {
-        try {
-            I3CLSimStepSeriesConstPtr tmp = boost::get<I3CLSimStepSeriesConstPtr>(res);
-            return true;
-        } catch(boost::bad_get &) {
-            return false;            
-        }
-    }
-
     // this is specific to the OpenCL simulator.
     // TODO: I don't like this, it's using a magic number..
     static inline OMKey OMKeyFromOpenCLSimDummy(int32_t stringAndDomID)
@@ -363,70 +515,37 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons)
 
 void I3CLSimModule::FlushFrameCache()
 {
-    log_info("Flushing frame cache..");
+    log_warn("Flushing frame cache..");
     
-    geant4ParticleToStepsConverter_->EnqueueBarrier();
-    uint32_t numBunchesSentToOpenCL = 0;
-    
-    for (;;)
-    {
-        I3CLSimParticleToStepConverter::ConversionResult_t result;
-        
-        if (!geant4ParticleToStepsConverter_->MoreStepsAvailable())
-        {
-            log_debug("No steps are available right now");
-            if (!geant4ParticleToStepsConverter_->BarrierActive())
-            {
-                log_debug("No barrier is active, we are done");
-                break; // nothing to read and no barrier. We are done
-            }
-            
-            // no steps available, but barrier is still enqueued. Geant4
-            // must still be working. Try to get steps, but timeout after a while.
-            log_debug("Waiting until steps become available or a timeout occurs");
-
-            result = geant4ParticleToStepsConverter_->GetConversionResult(0.1*I3Units::s); // time in seconds
-            
-            if (!ResultAsStepPtr(result))
-            {
-                log_debug("Timeout while waiting for steps, trying again");
-                continue;
-            }
-            
-            log_debug("Steps retrieved");
-        }
-        else
-        {
-            // there are steps available, fetch them!
-            log_debug("Steps available, retrieving them");
-            result = geant4ParticleToStepsConverter_->GetConversionResult();
-            log_debug("Steps retrieved");
-        }
-
-        if (!ResultIsStepPtr(result))
-        {
-            std::pair<uint32_t, I3ParticleConstPtr> particleTuple = boost::get<std::pair<uint32_t, I3ParticleConstPtr> >(result);
-
-            log_info("Got a secondary with E = %fGeV (ignoring it: needs to be fixed!)",
-                     particleTuple.second->GetEnergy()/I3Units::GeV);
-            continue;
-        }
-
-        I3CLSimStepSeriesConstPtr steps = ResultAsStepPtr(result);
-        if (!steps) log_fatal("Got NULL I3CLSimStepSeriesConstPtr from Geant4.");
-        
-        log_info("Got %zu steps from Geant4, sending them to OpenCL",
-                 steps->size());
-        
-        openCLStepsToPhotonsConverter_->EnqueueSteps(steps, numBunchesSentToOpenCL);
-        numBunchesSentToOpenCL++;
+    // start the connector thread if necessary
+    if (!threadObj_) {
+        log_warn("No thread found running during FlushFrameCache(), starting one.");
+        StartThread();
     }
 
+    // tell the Geant4 converter to not accept any new data until it is finished 
+    // with its current work.
+    geant4ParticleToStepsConverter_->EnqueueBarrier();
+    
+    // At this point the thread should keep on passing steps from Geant4 to OpenCL.
+    // As soon as the barrier for Geant4 is no longer active and all data has been
+    // sent to OpenCL, the thread will finish. We wait for that and then receive
+    // data from the infinite OpenCL queue.
+    if (!threadObj_->joinable())
+        log_fatal("Thread should be joinable at this point!");
+        
+    log_warn("Waiting for thread..");
+    threadObj_->join(); // wait for it indefinitely
+    StopThread(); // stop it completely
+    if (!threadFinishedOK_) log_fatal("Thread was aborted or failed.");
+    log_warn("thread finished.");
+
+    
     log_info("Geant4 finished, retrieving results from GPU..");
 
     std::size_t totalNumOutPhotons=0;
     
-    for (uint32_t i=0;i<numBunchesSentToOpenCL;++i)
+    for (uint64_t i=0;i<numBunchesSentToOpenCL_;++i)
     {
         //typedef std::pair<uint32_t, I3CLSimPhotonSeriesPtr> ConversionResult_t;
         I3CLSimStepToPhotonConverter::ConversionResult_t res =
@@ -441,7 +560,7 @@ void I3CLSimModule::FlushFrameCache()
     
     log_info("results fetched from OpenCL.");
     
-    log_info("Got %zu photons in total during flush.", totalNumOutPhotons);
+    log_warn("Got %zu photons in total during flush.", totalNumOutPhotons);
     
     log_info("finished.");
     
@@ -467,6 +586,12 @@ void I3CLSimModule::Physics(I3FramePtr frame)
     
     if (!geometryIsConfigured_)
         log_fatal("Received Physics frame before Geometry frame");
+
+    // start the connector thread if necessary
+    if (!threadObj_) {
+        log_warn("No thread found running during Physics(), starting one.");
+        StartThread();
+    }
     
     I3MCTreeConstPtr MCTree = frame->Get<I3MCTreeConstPtr>(MCTreeName_);
     if (!MCTree) log_fatal("Frame does not contain an I3MCTree named \"%s\".",

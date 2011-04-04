@@ -24,7 +24,7 @@ private:
     static bool thereCanBeOnlyOneGeant4;
     
 public:
-    typedef std::pair<I3CLSimParticleToStepConverter::ConversionResult_t, bool> FromGeant4Pair_t;
+    typedef std::pair<I3CLSimStepSeriesConstPtr, bool> FromGeant4Pair_t;
     
     static const std::string default_physicsListName;
     static const double default_maxBetaChangePerStep;
@@ -39,26 +39,6 @@ public:
                                          );
     virtual ~I3CLSimParticleToStepConverterGeant4();
 
-    // this class:
-
-    /**
-     * Electrons and positrons with a higher enery than this
-     * will be stored as secondaries and will not be used
-     * for Cherenkov step generation.
-     */
-    void SetElectronPositronMinEnergyForSecondary(double val);
-    
-    /**
-     * Electrons and positrons with a lower enery than this
-     * will be stored as secondaries and will not be used
-     * for Cherenkov step generation.
-     */
-    void SetElectronPositronMaxEnergyForSecondary(double val);
-    
-    double GetElectronPositronMinEnergyForSecondary() const;
-    double GetElectronPositronMaxEnergyForSecondary() const;
-    
-    
     // inherited:
     
     /**
@@ -149,7 +129,7 @@ public:
      * 
      * Will throw if not initialized.
      */
-    virtual I3CLSimParticleToStepConverter::ConversionResult_t GetConversionResult(double timeout=NAN);
+    virtual I3CLSimStepSeriesConstPtr GetConversionResultWithBarrierInfo(bool &barrierWasReset, double timeout=NAN);
     
 private:
     void LogGeant4Messages(bool allAsWarn=false) const;
@@ -175,9 +155,6 @@ private:
     double maxBetaChangePerStep_;
     double maxNumPhotonsPerStep_;
     
-    double electronPositronMinEnergyForSecondary_;
-    double electronPositronMaxEnergyForSecondary_;
-
     bool initialized_;
     uint64_t bunchSizeGranularity_;
     uint64_t maxBunchSize_;
