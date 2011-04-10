@@ -138,6 +138,7 @@ I3VectorFloatPtr I3CLSimWlenDependentValueTester::EvaluateReferenceFunction(I3Ve
 {
     if (!xValues) log_fatal("NULL pointer passed to EvaluateReferenceFunction.");
     if (!wlenDependentValue_) log_fatal("Internal error: wlenDependentValue_ is NULL");
+    if (!wlenDependentValue_->HasNativeImplementation()) log_fatal("No native/reference implementation available!");
     
     // allocate the output vector
     I3VectorFloatPtr results = I3VectorFloatPtr(new I3VectorFloat(xValues->size(), NAN));
@@ -154,6 +155,7 @@ I3VectorFloatPtr I3CLSimWlenDependentValueTester::EvaluateReferenceDerivative(I3
 {
     if (!xValues) log_fatal("NULL pointer passed to EvaluateReferenceDerivative.");
     if (!wlenDependentValue_) log_fatal("Internal error: wlenDependentValue_ is NULL");
+    if (!wlenDependentValue_->HasNativeImplementation()) log_fatal("No native/reference implementation available!");
     if (!wlenDependentValue_->HasDerivative())
         log_fatal("No function derivative available!");
 

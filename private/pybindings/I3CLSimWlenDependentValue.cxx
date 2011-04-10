@@ -22,6 +22,9 @@
 #include <sstream>
 
 #include <clsim/I3CLSimWlenDependentValue.h>
+
+#include <clsim/I3CLSimWlenDependentValueConstant.h>
+
 #include <clsim/I3CLSimWlenDependentValueFromTable.h>
 #include <clsim/I3CLSimWlenDependentValueRefIndexQuanFry.h>
 #include <clsim/I3CLSimWlenDependentValueScatLenPartic.h>
@@ -83,6 +86,32 @@ void register_I3CLSimWlenDependentValue()
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueWrapper>, shared_ptr<const I3CLSimWlenDependentValue> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueWrapper>, shared_ptr<I3CLSimWlenDependentValue> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueWrapper>, shared_ptr<const I3CLSimWlenDependentValueWrapper> >();
+    
+
+    // constant value
+    {
+        bp::class_<
+        I3CLSimWlenDependentValueConstant, 
+        boost::shared_ptr<I3CLSimWlenDependentValueConstant>, 
+        bases<I3CLSimWlenDependentValue>,
+        boost::noncopyable
+        >
+        (
+         "I3CLSimWlenDependentValueConstant",
+         bp::init<
+         double
+         >(
+           (
+            bp::arg("value")
+            )
+           )
+         )
+        ;
+    }
+    bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueConstant>, shared_ptr<const I3CLSimWlenDependentValueConstant> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueConstant>, shared_ptr<I3CLSimWlenDependentValue> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueConstant>, shared_ptr<const I3CLSimWlenDependentValue> >();
+
     
     // from table
     {
