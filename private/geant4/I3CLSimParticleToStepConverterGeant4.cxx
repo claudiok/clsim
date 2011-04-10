@@ -151,7 +151,10 @@ void I3CLSimParticleToStepConverterGeant4::Initialize()
 
     if (initialized_)
         throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterGeant4 already initialized!");
-    
+
+    if (!wlenBias_)
+        throw I3CLSimParticleToStepConverter_exception("WlenBias not set!");
+
     if (!mediumProperties_)
         throw I3CLSimParticleToStepConverter_exception("MediumProperties not set!");
     
@@ -161,11 +164,39 @@ void I3CLSimParticleToStepConverterGeant4::Initialize()
     if (maxBunchSize_%bunchSizeGranularity_ != 0)
         throw I3CLSimParticleToStepConverter_exception("MaxBunchSize is not a multiple of BunchSizeGranularity!");
     
+    // make sure none of the parameterizations are initialized
+    const I3CLSimParticleParameterizationSeries &parameterizations = this->GetParticleParameterizationSeries();
+    for (I3CLSimParticleParameterizationSeries::const_iterator it=parameterizations.begin();
+         it!=parameterizations.end(); ++it)
+    {
+        const I3CLSimParticleParameterization &parameterization = *it;
+        if (!parameterization.converter) log_fatal("Internal error: parameteriation has NULL converter");
+        
+        // all parameterizations could have the same converter,
+        // but nevertheless, none of them must be initialized yet.
+        if (parameterization.converter->IsInitialized())
+            log_fatal("A parameterization converter is already initialized. Do not call their Initialize() method yourself!");
+    }
+
+    // now initialize them and set the medium properties and bias factors
+    for (I3CLSimParticleParameterizationSeries::const_iterator it=parameterizations.begin();
+         it!=parameterizations.end(); ++it)
+    {
+        const I3CLSimParticleParameterization &parameterization = *it;
+        if (parameterization.converter->IsInitialized()) continue; // skip initialized converters
+        
+        parameterization.converter->SetMediumProperties(mediumProperties_);
+        parameterization.converter->SetWlenBias(wlenBias_);
+        parameterization.converter->Initialize();
+    }
+    
+    
     // making a copy of the medium properties
     {
         I3CLSimMediumPropertiesConstPtr copiedMediumProperties(new I3CLSimMediumProperties(*mediumProperties_));
         mediumProperties_ = copiedMediumProperties;
     }
+
     
     log_info("Starting the Geant4 thread..");
     geant4Started_=false;
@@ -290,7 +321,8 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
     
     physics->RegisterPhysics(new TrkOpticalPhysics("Optical",
                                                    maxBetaChangePerStep_,
-                                                   maxNumPhotonsPerStep_));
+                                                   maxNumPhotonsPerStep_,
+                                                   wlenBias_));
     //physics->RegisterPhysics(new TrkEMPhysicsUHE("EMUHE"));
     //physics->RegisterPhysics(new TrkEnergyCut("TrkEnergyCut"));
     
@@ -487,7 +519,7 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
                 {
                     parameterizationIsAvailable=true;
                     
-                    G4cout << "Geant4: sending a " << particle->GetTypeString() << " with id " << particleIdentifier << " and E=" << particle->GetEnergy()/I3Units::GeV << "GeV to a parameterization handler." << G4endl;
+                    //G4cout << "Geant4: sending a " << particle->GetTypeString() << " with id " << particleIdentifier << " and E=" << particle->GetEnergy()/I3Units::GeV << "GeV to a parameterization handler." << G4endl;
 
                     // call the converter
                     if (!parameterization.converter) log_fatal("Internal error: parameteriation has NULL converter");
@@ -600,6 +632,16 @@ void I3CLSimParticleToStepConverterGeant4::SetMaxBunchSize(uint64_t num)
         throw I3CLSimParticleToStepConverter_exception("MaxBunchSize of 0 is invalid!");
 
     maxBunchSize_=num;
+}
+
+void I3CLSimParticleToStepConverterGeant4::SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias)
+{
+    LogGeant4Messages();
+    
+    if (initialized_)
+        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterGeant4 already initialized!");
+    
+    wlenBias_=wlenBias;
 }
 
 void I3CLSimParticleToStepConverterGeant4::SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties)

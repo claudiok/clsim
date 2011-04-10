@@ -24,11 +24,13 @@
 
 TrkOpticalPhysics::TrkOpticalPhysics(const G4String& name, 
                                      double maxBetaChangePerStep,
-                                     double maxNumPhotonsPerStep
+                                     double maxNumPhotonsPerStep,
+                                     I3CLSimWlenDependentValueConstPtr wlenBias
                                      )
 :  G4VPhysicsConstructor(name),
 maxBetaChangePerStep_(maxBetaChangePerStep),
-maxNumPhotonsPerStep_(maxNumPhotonsPerStep)
+maxNumPhotonsPerStep_(maxNumPhotonsPerStep),
+wlenBias_(wlenBias)
 {
 	G4cout << "<<<< Optical Processes (TrkCerenkov)" << G4endl;
 }
@@ -50,6 +52,7 @@ void TrkOpticalPhysics::ConstructProcess()
 
 	theCerenkovProcess->SetMaxBetaChangePerStep(maxBetaChangePerStep_);
 	theCerenkovProcess->SetMaxNumPhotonsPerStep(maxNumPhotonsPerStep_);
+	theCerenkovProcess->SetWlenBiasFunction(wlenBias_);
 	
 	// Add the processes to their respective particles
 	G4ProcessManager * pManager = NULL;

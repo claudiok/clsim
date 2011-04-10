@@ -7,6 +7,7 @@
 #include "clsim/I3CLSimStep.h"
 #include "clsim/I3CLSimMediumProperties.h"
 #include "clsim/I3CLSimParticleParameterization.h"
+#include "clsim/I3CLSimWlenDependentValue.h"
 
 #include <boost/noncopyable.hpp>
 #include <boost/variant.hpp>
@@ -47,6 +48,16 @@ public:
      * Will throw if used after the call to Initialize().
      */
     virtual void SetMaxBunchSize(uint64_t num) = 0;
+
+    /**
+     * Sets the wavelength bias. Set this to a constant value
+     * of 1 if you do not need biased photon generation.
+     * The Cherenkov spectrum will be multiplied by this
+     * value at each wavelength.
+     * This will influence the number of photons produced.
+     * Will throw if used after the call to Initialize().
+     */
+    virtual void SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias) = 0;
 
     /**
      * Sets the medium properties.

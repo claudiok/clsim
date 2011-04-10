@@ -39,6 +39,7 @@ struct I3CLSimParticleToStepConverterWrapper : I3CLSimParticleToStepConverter, b
     // pure virtual
     virtual void SetBunchSizeGranularity(uint64_t num) {this->get_override("SetBunchSizeGranularity")(num);}
     virtual void SetMaxBunchSize(uint64_t num) {this->get_override("SetMaxBunchSize")(num);}
+    virtual void SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias) {this->get_override("SetWlenBias")(wlenBias);}
     virtual void SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties) {this->get_override("SetMediumProperties")(mediumProperties);}
     virtual void Initialize() {this->get_override("Initialize")();}
     virtual bool IsInitialized() const {return this->get_override("IsInitialized")();}
@@ -137,6 +138,7 @@ void register_I3CLSimParticleToStepConverter()
         bp::class_<I3CLSimParticleToStepConverterWrapper, boost::shared_ptr<I3CLSimParticleToStepConverterWrapper>, boost::noncopyable>("I3CLSimParticleToStepConverter", bp::no_init)
         .def("SetBunchSizeGranularity", bp::pure_virtual(&I3CLSimParticleToStepConverter::SetBunchSizeGranularity))
         .def("SetMaxBunchSize", bp::pure_virtual(&I3CLSimParticleToStepConverter::SetMaxBunchSize))
+        .def("SetWlenBias", bp::pure_virtual(&I3CLSimParticleToStepConverter::SetWlenBias))
         .def("SetMediumProperties", bp::pure_virtual(&I3CLSimParticleToStepConverter::SetMediumProperties))
         .def("Initialize", bp::pure_virtual(&I3CLSimParticleToStepConverter::Initialize))
         .def("IsInitialized", bp::pure_virtual(&I3CLSimParticleToStepConverter::IsInitialized))

@@ -102,7 +102,21 @@ public:
      * Will throw if initialized.
      */
     uint64_t GetMaxWorkgroupSize() const;
+
+    /**
+     * Sets the wavelength generator. By default it should
+     * return wavelengths according to a Cherenkov spectrum.
+     * Will throw if used after the call to Initialize().
+     */
+    virtual void SetWlenGenerator(I3CLSimRandomValueConstPtr wlenGenerator);
     
+    /**
+     * Sets the wavelength weights. Set this to a constant value
+     * of 1 if you do not need biased photon generation.
+     * Will throw if used after the call to Initialize().
+     */
+    virtual void SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias);
+
     /**
      * Sets the medium properties.
      * Will throw if used after the call to Initialize().
@@ -198,6 +212,8 @@ private:
     
     bool initialized_;
     bool compiled_;
+    I3CLSimRandomValueConstPtr wlenGenerator_;
+    I3CLSimWlenDependentValueConstPtr wlenBias_;
     I3CLSimMediumPropertiesConstPtr mediumProperties_;
     I3CLSimSimpleGeometryConstPtr geometry_;
     
@@ -211,6 +227,8 @@ private:
     
     // some kernel sources loaded on construction
     std::string mwcrngKernelSource_;
+    std::string wlenGeneratorSource_;
+    std::string wlenBiasSource_;
     std::string mediumPropertiesSource_;
     std::string geometrySource_;
     std::string propagationKernelSource_;

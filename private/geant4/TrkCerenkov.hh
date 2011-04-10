@@ -58,6 +58,8 @@
 #include "G4MaterialPropertiesTable.hh"
 #include "G4PhysicsOrderedFreeVector.hh"
 
+#include "clsim/I3CLSimWlenDependentValue.h"
+
 // Class Description:
 // Discrete Process -- Generation of Cerenkov Photons.
 // Class inherits publicly from G4VDiscreteProcess.
@@ -159,6 +161,8 @@ public: // With description
     // If not called, the step is not limited by the number of 
     // photons generated.
     
+    void SetWlenBiasFunction(I3CLSimWlenDependentValueConstPtr wlenBias);
+    
     G4PhysicsTable* GetPhysicsTable() const;
     // Returns the address of the physics table.
     
@@ -184,16 +188,15 @@ private:
     
 protected:
     
-    G4PhysicsTable* thePhysicsTable;
-    //  A Physics Table can be either a cross-sections table or
-    //  an energy table (or can be used for other specific
-    //  purposes).
+    G4PhysicsTable* thePhysicsTable1;
+    G4PhysicsTable* thePhysicsTable2;
     
 private:
     
     //G4bool fTrackSecondariesFirst;
     G4double fMaxBetaChange;
     G4int  fMaxPhotons;
+    I3CLSimWlenDependentValueConstPtr fWlenBias;
 };
 
 ////////////////////
@@ -228,14 +231,21 @@ void TrkCerenkov::SetMaxNumPhotonsPerStep(const G4int NumPhotons)
 }
 
 inline
+void TrkCerenkov::SetWlenBiasFunction(I3CLSimWlenDependentValueConstPtr wlenBias)
+{ 
+    fWlenBias = wlenBias;
+    BuildThePhysicsTable(); // rebuild the table
+}
+
+inline
 void TrkCerenkov::DumpPhysicsTable() const
 {
-    G4int PhysicsTableSize = thePhysicsTable->entries();
+    G4int PhysicsTableSize = thePhysicsTable2->entries();
     G4PhysicsOrderedFreeVector *v;
     
     for (G4int i = 0 ; i < PhysicsTableSize ; i++ )
     {
-        v = (G4PhysicsOrderedFreeVector*)(*thePhysicsTable)[i];
+        v = (G4PhysicsOrderedFreeVector*)(*thePhysicsTable2)[i];
         v->DumpValues();
     }
 }
@@ -243,7 +253,7 @@ void TrkCerenkov::DumpPhysicsTable() const
 inline
 G4PhysicsTable* TrkCerenkov::GetPhysicsTable() const
 {
-    return thePhysicsTable;
+    return thePhysicsTable2;
 }
 
 #endif /* TrkCerenkov_h */

@@ -54,8 +54,11 @@ std::string I3CLSimRandomValueInterpolatedDistribution::WriteTableCode(const std
 	typedef std::vector<double>::size_type sizeType;
 	
 	// sanity checks
-	if (x_.size()!=y_.size()) log_fatal("Internal error: angles_.size()!=values_.size()");
-	sizeType numEntries=x_.size();
+    if (isnan(constantXSpacing_)) {
+        if (x_.size()!=y_.size()) log_fatal("Internal error: angles_.size()!=values_.size()");
+    }
+    
+	sizeType numEntries=y_.size();
 	if (numEntries<=1) log_fatal("Internal error: insufficient number of entries.");
 	
     

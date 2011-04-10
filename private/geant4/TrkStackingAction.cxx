@@ -98,7 +98,7 @@ G4ClassificationOfNewTrack TrkStackingAction::ClassifyNewTrack(const G4Track * a
             particle->SetTime(trackTime*I3Units::ns/ns);
             particle->SetEnergy(trackEnergy*I3Units::GeV/GeV);
 
-            G4cout << "Geant4: sending a " << particle->GetTypeString() << " with id " << eventInformation->currentExternalParticleID << " and E=" << particle->GetEnergy()/I3Units::GeV << "GeV to a parameterization handler." << G4endl;
+            //G4cout << "Geant4: sending a " << particle->GetTypeString() << " with id " << eventInformation->currentExternalParticleID << " and E=" << particle->GetEnergy()/I3Units::GeV << "GeV to a parameterization handler." << G4endl;
             
             // call the converter
             if (!parameterization.converter) log_fatal("Internal error: parameteriation has NULL converter");

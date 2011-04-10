@@ -29,6 +29,8 @@
 #include <clsim/I3CLSimRandomValueMixed.h>
 #include <clsim/I3CLSimRandomValueApplyFunction.h>
 
+#include <clsim/I3CLSimRandomValueWlenCherenkovNoDispersion.h>
+
 #include <boost/preprocessor/seq.hpp>
 #include <icetray/python/std_vector_indexing_suite.hpp>
 
@@ -219,7 +221,6 @@ void register_I3CLSimRandomValue()
     bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueMixed>, shared_ptr<const I3CLSimRandomValue> >();
 
     
-    
     // apply function to generated random value
     {
         bp::class_<
@@ -245,5 +246,32 @@ void register_I3CLSimRandomValue()
     bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueApplyFunction>, shared_ptr<const I3CLSimRandomValueApplyFunction> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueApplyFunction>, shared_ptr<I3CLSimRandomValue> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueApplyFunction>, shared_ptr<const I3CLSimRandomValue> >();
+
+    
+    // wavelength distributed according to a Cherenkov spectrum (no dispersion)
+    {
+        bp::class_<
+        I3CLSimRandomValueWlenCherenkovNoDispersion, 
+        boost::shared_ptr<I3CLSimRandomValueWlenCherenkovNoDispersion>, 
+        bases<I3CLSimRandomValue>,
+        boost::noncopyable
+        >
+        (
+         "I3CLSimRandomValueWlenCherenkovNoDispersion",
+         bp::init<
+         double,
+         double
+         >(
+           (
+            bp::arg("fromWlen"),
+            bp::arg("toWlen")
+            )
+           )
+         )
+        ;
+    }
+    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueWlenCherenkovNoDispersion>, shared_ptr<const I3CLSimRandomValueWlenCherenkovNoDispersion> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueWlenCherenkovNoDispersion>, shared_ptr<I3CLSimRandomValue> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueWlenCherenkovNoDispersion>, shared_ptr<const I3CLSimRandomValue> >();
 
 }

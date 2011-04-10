@@ -8,6 +8,8 @@
 #include "clsim/I3CLSimStep.h"
 #include "clsim/I3CLSimPhoton.h"
 #include "clsim/I3CLSimMediumProperties.h"
+#include "clsim/I3CLSimRandomValue.h"
+#include "clsim/I3CLSimWlenDependentValue.h"
 
 #include <boost/noncopyable.hpp>
 
@@ -38,6 +40,21 @@ public:
     typedef std::pair<uint32_t, I3CLSimPhotonSeriesPtr> ConversionResult_t;
     
     //virtual ~I3CLSimStepToPhotonConverter();
+
+    /**
+     * Sets the wavelength generator. By default it should
+     * return wavelengths according to a Cherenkov spectrum.
+     * Will throw if used after the call to Initialize().
+     */
+    virtual void SetWlenGenerator(I3CLSimRandomValueConstPtr wlenGenerator) = 0;
+
+    /**
+     * Sets the wavelength bias. Set this to a constant value
+     * of 1 if you do not need biased photon generation.
+     * Photons will be assigned a weight equal to 1/bias.
+     * Will throw if used after the call to Initialize().
+     */
+    virtual void SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias) = 0;
 
     /**
      * Sets the medium properties.

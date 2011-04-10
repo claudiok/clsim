@@ -346,7 +346,13 @@ void I3CLSimStepToPhotonConverterOpenCL::Compile()
     
     if (clPlatformDeviceList_.empty())
         throw I3CLSimStepToPhotonConverter_exception("No OpenCL devices found!");
-    
+
+    if (!wlenGenerator_)
+        throw I3CLSimStepToPhotonConverter_exception("WlenGenerator not set!");
+
+    if (!wlenBias_)
+        throw I3CLSimStepToPhotonConverter_exception("WlenBias not set!");
+
     if (!mediumProperties_)
         throw I3CLSimStepToPhotonConverter_exception("MediumProperties not set!");
     
@@ -355,7 +361,16 @@ void I3CLSimStepToPhotonConverterOpenCL::Compile()
     
     if (!deviceIndexIsSelected_)
         throw I3CLSimStepToPhotonConverter_exception("Device not selected!");
-    
+
+    wlenGeneratorSource_ = wlenGenerator_->GetOpenCLFunction("generateWavelength", // name
+                                                             // these are all defined as macros by the rng code:
+                                                             "RNG_ARGS",               // function arguments for rng
+                                                             "RNG_ARGS_TO_CALL",       // if we call anothor function, this is how we pass on the rng state
+                                                             "RNG_CALL_UNIFORM_CO",    // the call to the rng for creating a uniform number [0;1[
+                                                             "RNG_CALL_UNIFORM_OC"     // the call to the rng for creating a uniform number ]0;1]
+                                                             );
+    wlenBiasSource_ = wlenBias_->GetOpenCLFunction("getWavelengthBias"); // name
+
     mediumPropertiesSource_ = I3CLSimHelper::GenerateMediumPropertiesSource(*mediumProperties_);
     geometrySource_ = I3CLSimHelper::GenerateGeometrySource(*geometry_, geoLayerToOMNumIndexPerStringSetInfo_, stringIndexToStringIDBuffer_);
     
@@ -370,6 +385,8 @@ std::string I3CLSimStepToPhotonConverterOpenCL::GetFullSource()
     std::ostringstream code;
 
     code << mwcrngKernelSource_;
+    code << wlenGeneratorSource_;
+    code << wlenBiasSource_;
     code << mediumPropertiesSource_;
     code << geometrySource_;
     code << propagationKernelSource_;
@@ -441,6 +458,8 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
 		cl::Program::Sources source;
 		
 		source.push_back(std::make_pair(mwcrngKernelSource_.c_str(),mwcrngKernelSource_.size()));
+		source.push_back(std::make_pair(wlenGeneratorSource_.c_str(),wlenGeneratorSource_.size()));
+		source.push_back(std::make_pair(wlenBiasSource_.c_str(),wlenBiasSource_.size()));
 		source.push_back(std::make_pair(mediumPropertiesSource_.c_str(),mediumPropertiesSource_.size()));
 		source.push_back(std::make_pair(geometrySource_.c_str(),geometrySource_.size()));
 		source.push_back(std::make_pair(propagationKernelSource_.c_str(),propagationKernelSource_.size()));
@@ -687,6 +706,30 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
 bool I3CLSimStepToPhotonConverterOpenCL::IsInitialized() const
 {
     return initialized_;
+}
+
+void I3CLSimStepToPhotonConverterOpenCL::SetWlenGenerator(I3CLSimRandomValueConstPtr wlenGenerator)
+{
+    if (initialized_)
+        throw I3CLSimStepToPhotonConverter_exception("I3CLSimStepToPhotonConverterOpenCL already initialized!");
+    
+    compiled_=false;
+    kernel_.reset();
+    queue_.reset();
+    
+    wlenGenerator_=wlenGenerator;
+}
+
+void I3CLSimStepToPhotonConverterOpenCL::SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias)
+{
+    if (initialized_)
+        throw I3CLSimStepToPhotonConverter_exception("I3CLSimStepToPhotonConverterOpenCL already initialized!");
+    
+    compiled_=false;
+    kernel_.reset();
+    queue_.reset();
+    
+    wlenBias_=wlenBias;
 }
 
 void I3CLSimStepToPhotonConverterOpenCL::SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties)

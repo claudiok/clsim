@@ -32,6 +32,9 @@
 
 #include "phys-services/I3RandomService.h"
 
+#include "clsim/I3CLSimRandomValue.h"
+#include "clsim/I3CLSimWlenDependentValue.h"
+
 #include "clsim/I3CLSimMediumProperties.h"
 #include "clsim/I3CLSimSimpleGeometryFromI3Geometry.h"
 
@@ -98,12 +101,27 @@ private:
     /// Parameter: A random number generating service (derived from I3RandomService).
     I3RandomServicePtr randomService_;
 
+    /// Parameter: The wavelength of the generated Cherenkov photons will be generated
+    ///            according to a spectrum without dispersion. This does not change
+    ///            the total number of photons, only the distribution of wavelengths.
+    bool generateCherenkovPhotonsWithoutDispersion_;
+    
+    /// Parameter: An instance of I3CLSimWlenDependentValue describing the reciprocal weight a photon gets assigned as a function of its wavelegth.
+    ///            You can set this to the wavelength depended acceptance of your DOM to pre-scale the number of generated photons.
+    I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias_;
+
     /// Parameter: An instance of I3CLSimMediumProperties describing the ice/water properties.
     I3CLSimMediumPropertiesPtr mediumProperties_;
 
     /// Parameter: Maximum number of events that will be processed by the GPU in parallel.
     unsigned int maxNumParallelEvents_;
-    
+
+    /// Parameter: Name of the OpenCL platform. Leave empty for auto-selection.
+    std::string openCLPlatformName_;
+
+    /// Parameter: Name of the OpenCL device. Leave empty for auto-selection.
+    std::string openCLDeviceName_;
+
     /// Parameter: Name of the I3MCTree frame object. All particles except neutrinos will be read from this tree.
     std::string MCTreeName_;
     
@@ -143,6 +161,9 @@ private:
     double totalSimulatedEnergyForFlush_;
     uint64_t totalNumParticlesForFlush_;
     
+    // this is calculated from wavelengthGenerationBias:
+    I3CLSimRandomValueConstPtr wavelengthGenerator_;
+
     I3CLSimSimpleGeometryFromI3GeometryPtr geometry_;
     I3CLSimStepToPhotonConverterOpenCLPtr openCLStepsToPhotonsConverter_;
     I3CLSimParticleToStepConverterGeant4Ptr geant4ParticleToStepsConverter_;

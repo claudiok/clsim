@@ -72,7 +72,8 @@ TrkCerenkov::TrkCerenkov(const G4String& processName, G4ProcessType type)
     fMaxBetaChange = 0.;
     fMaxPhotons = 0;
     
-    thePhysicsTable = NULL;
+    thePhysicsTable1 = NULL;
+    thePhysicsTable2 = NULL;
     
     if (verboseLevel>0) {
         G4cout << GetProcessName() << " is created " << G4endl;
@@ -91,9 +92,14 @@ TrkCerenkov::TrkCerenkov(const G4String& processName, G4ProcessType type)
 
 TrkCerenkov::~TrkCerenkov() 
 {
-    if (thePhysicsTable != NULL) {
-        thePhysicsTable->clearAndDestroy();
-        delete thePhysicsTable;
+    if (thePhysicsTable1 != NULL) {
+        thePhysicsTable1->clearAndDestroy();
+        delete thePhysicsTable1;
+    }
+
+    if (thePhysicsTable2 != NULL) {
+        thePhysicsTable2->clearAndDestroy();
+        delete thePhysicsTable2;
     }
 }
 
@@ -421,7 +427,18 @@ TrkCerenkov::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
 
 void TrkCerenkov::BuildThePhysicsTable()
 {
-    if (thePhysicsTable) return;
+    if (thePhysicsTable1 != NULL) {
+        thePhysicsTable1->clearAndDestroy();
+        delete thePhysicsTable1;
+        thePhysicsTable1=NULL;
+    }
+    
+    if (thePhysicsTable2 != NULL) {
+        thePhysicsTable2->clearAndDestroy();
+        delete thePhysicsTable2;
+        thePhysicsTable2=NULL;
+    }
+
     
     const G4MaterialTable* theMaterialTable=
     G4Material::GetMaterialTable();
@@ -429,13 +446,17 @@ void TrkCerenkov::BuildThePhysicsTable()
     
     // create new physics table
     
-    thePhysicsTable = new G4PhysicsTable(numOfMaterials);
+    thePhysicsTable1 = new G4PhysicsTable(numOfMaterials);
+    thePhysicsTable2 = new G4PhysicsTable(numOfMaterials);
     
     // loop for materials
     
     for (G4int i=0 ; i < numOfMaterials; i++)
     {
-        G4PhysicsOrderedFreeVector* aPhysicsOrderedFreeVector =
+        G4PhysicsOrderedFreeVector* aPhysicsOrderedFreeVector1 =
+        new G4PhysicsOrderedFreeVector();
+
+        G4PhysicsOrderedFreeVector* aPhysicsOrderedFreeVector2 =
         new G4PhysicsOrderedFreeVector();
         
         // Retrieve vector of refraction indices for the material
@@ -469,15 +490,19 @@ void TrkCerenkov::BuildThePhysicsTable()
                     
                     G4double currentPM = theRefractionIndexVector->
                     GetPhotonEnergy();
-                    G4double currentCAI = 0.0;
+                    G4double currentCAI1 = 0.0;
+                    G4double currentCAI2 = 0.0;
                     
-                    aPhysicsOrderedFreeVector->
-                    InsertValues(currentPM , currentCAI);
+                    aPhysicsOrderedFreeVector1->
+                    InsertValues(currentPM , currentCAI1);
+                    aPhysicsOrderedFreeVector2->
+                    InsertValues(currentPM , currentCAI2);
                     
                     // Set previous values to current ones prior to loop
                     
                     G4double prevPM  = currentPM;
-                    G4double prevCAI = currentCAI;
+                    G4double prevCAI1 = currentCAI1;
+                    G4double prevCAI2 = currentCAI2;
                     G4double prevRI  = currentRI;
                     
                     // loop over all (photon energy, refraction index)
@@ -491,17 +516,30 @@ void TrkCerenkov::BuildThePhysicsTable()
                         currentPM = theRefractionIndexVector->
                         GetPhotonEnergy();
                         
-                        currentCAI = 0.5*(1.0/(prevRI*prevRI) +
-                                          1.0/(currentRI*currentRI));
+                        double currentBiasFactor=1.;
+                        double prevBiasFactor=1.;
+                        if (fWlenBias) {
+                            currentBiasFactor = fWlenBias->GetValue(((h_Planck*c_light/currentPM)/nm)*I3Units::nanometer);
+                            prevBiasFactor = fWlenBias->GetValue(((h_Planck*c_light/prevPM)/nm)*I3Units::nanometer);
+                        }
                         
-                        currentCAI = prevCAI + 
-                        (currentPM - prevPM) * currentCAI;
+                        currentCAI1 = 0.5*(prevBiasFactor + currentBiasFactor);
+                        currentCAI2 = 0.5*(prevBiasFactor/(prevRI*prevRI) +
+                                           currentBiasFactor/(currentRI*currentRI));
+
+                        currentCAI1 = prevCAI1 + 
+                        (currentPM - prevPM) * currentCAI1;
+                        currentCAI2 = prevCAI2 + 
+                        (currentPM - prevPM) * currentCAI2;
                         
-                        aPhysicsOrderedFreeVector->
-                        InsertValues(currentPM, currentCAI);
+                        aPhysicsOrderedFreeVector1->
+                        InsertValues(currentPM, currentCAI1);
+                        aPhysicsOrderedFreeVector2->
+                        InsertValues(currentPM, currentCAI2);
                         
                         prevPM  = currentPM;
-                        prevCAI = currentCAI;
+                        prevCAI1 = currentCAI1;
+                        prevCAI2 = currentCAI2;
                         prevRI  = currentRI;
                     }
                     
@@ -510,11 +548,12 @@ void TrkCerenkov::BuildThePhysicsTable()
         }
         
         // The Cerenkov integral for a given material
-        // will be inserted in thePhysicsTable
+        // will be inserted in thePhysicsTable2
         // according to the position of the material in
         // the material table. 
         
-        thePhysicsTable->insertAt(i,aPhysicsOrderedFreeVector); 
+        thePhysicsTable1->insertAt(i,aPhysicsOrderedFreeVector1); 
+        thePhysicsTable2->insertAt(i,aPhysicsOrderedFreeVector2); 
         
     }
 }
@@ -659,10 +698,13 @@ TrkCerenkov::GetAverageNumberOfPhotons(const G4double charge,
     
     // Retrieve the Cerenkov Angle Integrals for this material  
     
-    G4PhysicsOrderedFreeVector* CerenkovAngleIntegrals =
-    (G4PhysicsOrderedFreeVector*)((*thePhysicsTable)(materialIndex));
+    G4PhysicsOrderedFreeVector* CerenkovAngleIntegrals1 =
+    (G4PhysicsOrderedFreeVector*)((*thePhysicsTable1)(materialIndex));
+    G4PhysicsOrderedFreeVector* CerenkovAngleIntegrals2 =
+    (G4PhysicsOrderedFreeVector*)((*thePhysicsTable2)(materialIndex));
     
-    if(!(CerenkovAngleIntegrals->IsFilledVectorExist()))return 0.0;
+    if(!(CerenkovAngleIntegrals1->IsFilledVectorExist()))return 0.0;
+    if(!(CerenkovAngleIntegrals2->IsFilledVectorExist()))return 0.0;
     
     // Min and Max photon energies 
     G4double Pmin = Rindex->GetMinPhotonEnergy();
@@ -673,13 +715,18 @@ TrkCerenkov::GetAverageNumberOfPhotons(const G4double charge,
     G4double nMax = Rindex->GetMaxProperty();
     
     // Max Cerenkov Angle Integral 
-    G4double CAImax = CerenkovAngleIntegrals->GetMaxValue();
+    G4double CAImax1 = CerenkovAngleIntegrals1->GetMaxValue();
+    G4double CAImax2 = CerenkovAngleIntegrals2->GetMaxValue();
     
     G4double dp, ge;
     
     // If n(Pmax) < 1/Beta -- no photons generated 
     
+    int kind=-1;
+    
     if (nMax < BetaInverse) {
+        kind=0;
+
         dp = 0;
         ge = 0;
     } 
@@ -687,8 +734,10 @@ TrkCerenkov::GetAverageNumberOfPhotons(const G4double charge,
     // otherwise if n(Pmin) >= 1/Beta -- photons generated  
     
     else if (nMin > BetaInverse) {
-        dp = Pmax - Pmin;	
-        ge = CAImax; 
+        kind=1;
+        
+        dp = CAImax1; // Pmax-Pmin for unbiased production
+        ge = CAImax2; 
     } 
     
     // If n(Pmin) < 1/Beta, and n(Pmax) >= 1/Beta, then
@@ -698,18 +747,25 @@ TrkCerenkov::GetAverageNumberOfPhotons(const G4double charge,
     // the GetValue() method of G4PhysicsVector.  
     
     else {
+        kind=2;
+        
         Pmin = Rindex->GetPhotonEnergy(BetaInverse);
         dp = Pmax - Pmin;
         
         // need boolean for current implementation of G4PhysicsVector
         // ==> being phased out
         G4bool isOutRange;
-        G4double CAImin = CerenkovAngleIntegrals->
+
+        G4double CAImin1 = CerenkovAngleIntegrals1->
         GetValue(Pmin, isOutRange);
-        ge = CAImax - CAImin;
+        dp = CAImax1 - CAImin1;
+
+        G4double CAImin2 = CerenkovAngleIntegrals2->
+        GetValue(Pmin, isOutRange);
+        ge = CAImax2 - CAImin2;
         
         if (verboseLevel>0) {
-            G4cout << "CAImin = " << CAImin << G4endl;
+            G4cout << "CAImin2 = " << CAImin2 << G4endl;
             G4cout << "ge = " << ge << G4endl;
         }
     }
@@ -717,6 +773,10 @@ TrkCerenkov::GetAverageNumberOfPhotons(const G4double charge,
     // Calculate number of photons 
     G4double NumPhotons = Rfact * charge/eplus * charge/eplus *
     (dp - ge * BetaInverse*BetaInverse);
+
+    //std::cout << "NumPhotons/m=" << NumPhotons/(charge/eplus * charge/eplus)/(1./m) << " @ beta=" << beta << ", kind=" << kind << std::endl;
+    //std::cout << "CAImax1=" << CAImax1 << ", CAImax2=" << CAImax2 << ", Pmax=" << Pmax << ", Pmin=" << Pmin << std::endl;
+    //std::cout << "Wmax=" << (h_Planck*c_light/Pmin)/nm << ", Wmin=" << (h_Planck*c_light/Pmax)/nm << std::endl;
     
     return NumPhotons;		
 }

@@ -135,6 +135,10 @@ void register_I3CLSimWlenDependentValue()
            )
           )
         )
+        .def("GetFirstWavelength", &I3CLSimWlenDependentValueFromTable::GetFirstWavelength)
+        .def("GetWavelengthStepping", &I3CLSimWlenDependentValueFromTable::GetWavelengthStepping)
+        .def("GetWavelengthNumValues", &I3CLSimWlenDependentValueFromTable::GetWavelengthNumValues)
+        .def("GetWavelengthValue", &I3CLSimWlenDependentValueFromTable::GetWavelengthValue)
         ;
     }
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueFromTable>, shared_ptr<const I3CLSimWlenDependentValueFromTable> >();

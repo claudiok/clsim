@@ -46,7 +46,27 @@ public:
      * Shall return the maximal supported wavelength (possibly +inf)
      */
     virtual double GetMaxWlen() const;
+
+    /**
+     * Returns the internal state: first wavelength
+     */
+    inline double GetFirstWavelength() const {return startWlen_;}
     
+    /**
+     * Returns the internal state: wavelength stepping
+     */
+    inline double GetWavelengthStepping() const {return wlenStep_;}
+
+    /**
+     * Returns the internal state: wavelength stepping
+     */
+    inline std::size_t GetWavelengthNumValues() const {return values_.size();}
+
+    /**
+     * Returns the internal state: wavelength stepping
+     */
+    inline double GetWavelengthValue(std::size_t i) const {return values_[i];}
+
     /**
      * Shall return an OpenCL-compatible function named
      * functionName with a single float argument (float wlen)

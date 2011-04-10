@@ -47,7 +47,7 @@ void register_I3CLSimParticleParameterization()
           )
          )
         )
-        .def(init<>()) // the class also has a defualt constructor
+        .def(init<>()) // the class also has a default constructor
         .def(copy_suite<I3CLSimParticleParameterization>())
         .def_readwrite("converter", &I3CLSimParticleParameterization::converter)
         .def_readwrite("forParticleType", &I3CLSimParticleParameterization::forParticleType)

@@ -129,7 +129,8 @@ inline void createPhotonFromTrack(struct I3CLSimStep *step,
     unsigned int layer = min(max(findLayerForGivenZPos( (*photonPosAndTime).z ), 0), MEDIUM_LAYERS-1);
     
     // our photon still needs a wavelength. create one!
-    (*photonDirAndWlen).w = my_recip(MEDIUM_MIN_RECIP_WLEN + RNG_CALL_UNIFORM_OC * (MEDIUM_MAX_RECIP_WLEN-MEDIUM_MIN_RECIP_WLEN));
+    //(*photonDirAndWlen).w = my_recip(MEDIUM_MIN_RECIP_WLEN + RNG_CALL_UNIFORM_OC * (MEDIUM_MAX_RECIP_WLEN-MEDIUM_MIN_RECIP_WLEN));
+    (*photonDirAndWlen).w = generateWavelength(RNG_ARGS_TO_CALL);
     
     const float cosCherenkov = my_recip(getPhaseRefIndex(layer, (*photonDirAndWlen).w));
     const float sinCherenkov = my_sqrt(1.0f-cosCherenkov*cosCherenkov);
@@ -302,7 +303,7 @@ inline bool checkForCollision(const float4 photonPosAndTime,
             
             outputPhotons[myIndex].cherenkovDist = photonTotalPathLength+(*thisStepLength);
             outputPhotons[myIndex].numScatters = photonNumScatters;
-            outputPhotons[myIndex].weight = step->weight;
+            outputPhotons[myIndex].weight = step->weight / getWavelengthBias(photonDirAndWlen.w);
             outputPhotons[myIndex].identifier = step->identifier;
             
             outputPhotons[myIndex].dummy = convert_int(hitOnString)*1000+convert_int(hitOnDom);

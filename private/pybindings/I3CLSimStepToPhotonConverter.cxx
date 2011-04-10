@@ -39,6 +39,9 @@ namespace bp = boost::python;
 struct I3CLSimStepToPhotonConverterWrapper : I3CLSimStepToPhotonConverter, bp::wrapper<I3CLSimStepToPhotonConverter>
 {
     // pure virtual
+    virtual void SetWlenGenerator(I3CLSimRandomValueConstPtr wlenGenerator) {this->get_override("SetWlenGenerator")(wlenGenerator);}
+    virtual void SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias) {this->get_override("SetWlenBias")(wlenBias);}
+
     virtual void SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties) {this->get_override("SetMediumProperties")(mediumProperties);}
     virtual void SetGeometry(I3CLSimSimpleGeometryConstPtr geometry) {this->get_override("SetGeometry")(geometry);}
 
@@ -96,7 +99,10 @@ void register_I3CLSimStepToPhotonConverter()
 {
     {
         bp::scope I3CLSimStepToPhotonConverter_scope = 
-        bp::class_<I3CLSimStepToPhotonConverterWrapper, boost::shared_ptr<I3CLSimStepToPhotonConverterWrapper>, boost::noncopyable>("I3CLSimStepToPhotonConverter", bp::no_init)
+        bp::class_<I3CLSimStepToPhotonConverterWrapper, boost::shared_ptr<I3CLSimStepToPhotonConverterWrapper>, boost::noncopyable>
+        ("I3CLSimStepToPhotonConverter", bp::no_init)
+        .def("SetWlenGenerator", bp::pure_virtual(&I3CLSimStepToPhotonConverter::SetWlenGenerator))
+        .def("SetWlenBias", bp::pure_virtual(&I3CLSimStepToPhotonConverter::SetWlenBias))
         .def("SetMediumProperties", bp::pure_virtual(&I3CLSimStepToPhotonConverter::SetMediumProperties))
         .def("SetGeometry", bp::pure_virtual(&I3CLSimStepToPhotonConverter::SetGeometry))
         .def("Initialize", bp::pure_virtual(&I3CLSimStepToPhotonConverter::Initialize))

@@ -30,6 +30,8 @@ public:
 
     virtual void SetMaxBunchSize(uint64_t num);
 
+    virtual void SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias);
+
     virtual void SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties);
     
     virtual void Initialize();
@@ -56,6 +58,8 @@ private:
     uint64_t bunchSizeGranularity_;
     uint64_t maxBunchSize_;
     uint32_t photonsPerStep_;
+
+    I3CLSimWlenDependentValueConstPtr wlenBias_;
     I3CLSimMediumPropertiesConstPtr mediumProperties_;
     
     std::vector<double> meanPhotonsPerMeterInLayer_;

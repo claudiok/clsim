@@ -33,6 +33,11 @@
 #include "dataclasses/physics/I3MCTree.h"
 #include "dataclasses/physics/I3MCTreeUtils.h"
 
+#include "clsim/I3CLSimWlenDependentValueConstant.h"
+
+#include "clsim/I3CLSimModuleHelper.h"
+
+
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
@@ -47,6 +52,22 @@ geometryIsConfigured_(false)
     AddParameter("RandomService",
                  "A random number generating service (derived from I3RandomService).",
                  randomService_);
+
+    AddParameter("WavelengthGenerator",
+                 "An instance of I3CLSimRandomValue generating wavelengths (most likely sampled from a Cherenkov spectrum).",
+                 wavelengthGenerator_);
+
+    generateCherenkovPhotonsWithoutDispersion_=true;
+    AddParameter("GenerateCherenkovPhotonsWithoutDispersion",
+                 "The wavelength of the generated Cherenkov photons will be generated\n"
+                 "according to a spectrum without dispersion. This does not change\n"
+                 "the total number of photons, only the distribution of wavelengths.",
+                 generateCherenkovPhotonsWithoutDispersion_);
+
+    AddParameter("WavelengthGenerationBias",
+                 "An instance of I3CLSimWlenDependentValue describing the reciprocal weight a photon gets assigned as a function of its wavelegth.\n"
+                 "You can set this to the wavelength depended acceptance of your DOM to pre-scale the number of generated photons.",
+                 wavelengthGenerationBias_);
 
     AddParameter("MediumProperties",
                  "An instance of I3CLSimMediumProperties describing the ice/water properties.",
@@ -75,6 +96,16 @@ geometryIsConfigured_(false)
     AddParameter("IgnoreMuons",
                  "If set to True, muons will not be propagated.",
                  ignoreMuons_);
+
+    openCLPlatformName_="";
+    AddParameter("OpenCLPlatformName",
+                 "Name of the OpenCL platform. Leave empty for auto-selection.",
+                 openCLPlatformName_);
+
+    openCLDeviceName_="";
+    AddParameter("OpenCLDeviceName",
+                 "Name of the OpenCL device. Leave empty for auto-selection.",
+                 openCLDeviceName_);
 
 
     // add an outbox
@@ -141,133 +172,40 @@ void I3CLSimModule::StopThread()
     }
 }
 
-namespace {
-    I3CLSimStepToPhotonConverterOpenCLPtr initializeOpenCL(I3RandomServicePtr rng,
-                                                     I3CLSimSimpleGeometryFromI3GeometryPtr geometry,
-                                                     I3CLSimMediumPropertiesPtr medium)
-    {
-        I3CLSimStepToPhotonConverterOpenCLPtr conv(new I3CLSimStepToPhotonConverterOpenCL(rng, true));
-
-        log_info("available OpenCL devices:");
-        shared_ptr<const std::vector<std::pair<std::string, std::string> > >
-        deviceList = conv->GetDeviceList();
-        if (!deviceList) log_fatal("Internal error. GetDeviceList() returned NULL.");
-        if (deviceList->size() <= 0) log_fatal("No OpenCL devices available!");
-        
-        typedef std::pair<std::string, std::string> stringPair_t;
-        
-        BOOST_FOREACH(const stringPair_t &device, *deviceList)
-        {
-            log_info("platform: \"%s\", device: \"%s\"",
-                     device.first.c_str(), device.second.c_str());
-        
-        }
-
-        // do a semi-smart device selection
-        stringPair_t deviceToUse;
-        
-        // look for a "GeForce" device first
-        std::vector<std::pair<std::string, std::string> > geForceDevices;
-        BOOST_FOREACH(const stringPair_t &device, *deviceList)
-        {
-            std::string deviceNameLowercase = boost::to_lower_copy(device.second);
-            
-            if ( deviceNameLowercase.find("geforce") != deviceNameLowercase.npos )
-                geForceDevices.push_back(device);
-        }
-
-        if (geForceDevices.size() > 0)
-        {
-            if (geForceDevices.size()>1)
-            {
-                deviceToUse=geForceDevices[0];
-                log_info("You seem to have more than one GeForce GPU. Using the first one. (\"%s\")", 
-                         deviceToUse.second.c_str());
-            } else {
-                deviceToUse=geForceDevices[0];
-                log_info("You seem to have a GeForce GPU. (\"%s\")",
-                         deviceToUse.second.c_str());
-            }
-        }
-        else
-        {
-            log_info("No GeForce device found. Just using the first available one.");
-            deviceToUse=(*deviceList)[0];
-        }
-        
-        log_info(" -> using OpenCL device \"%s\" on platform \"%s\".",
-                 deviceToUse.second.c_str(), deviceToUse.first.c_str());
-
-        conv->SetDeviceName(deviceToUse.first, deviceToUse.second);
-        
-        conv->SetMediumProperties(medium);
-        conv->SetGeometry(geometry);
-        
-        conv->Compile();
-        //log_trace("%s", conv.GetFullSource().c_str());
-        
-        const std::size_t maxWorkgroupSize = conv->GetMaxWorkgroupSize();
-        conv->SetWorkgroupSize(maxWorkgroupSize);
-
-        const std::size_t workgroupSize = conv->GetWorkgroupSize();
-        
-        // use approximately 512000 work items, convert to a multiple of the workgroup size
-        const std::size_t maxNumWorkitems = (512000/workgroupSize)*workgroupSize;
-        conv->SetMaxNumWorkitems(maxNumWorkitems);
-
-        log_info("maximum workgroup size is %zu", maxWorkgroupSize);
-        log_info("configured workgroup size is %zu", workgroupSize);
-        log_info("maximum number of work items is %zu", maxNumWorkitems);
-
-        conv->Initialize();
-        
-        return conv;
-    }
-
-    I3CLSimParticleToStepConverterGeant4Ptr initializeGeant4(I3RandomServicePtr rng,
-                                                             I3CLSimMediumPropertiesPtr medium,
-                                                             I3CLSimStepToPhotonConverterOpenCLPtr openCLconverter,
-                                                             const I3CLSimParticleParameterizationSeries &parameterizationList,
-                                                             bool multiprocessor=false)
-    {
-        I3CLSimParticleToStepConverterGeant4Ptr conv
-        (
-         new I3CLSimParticleToStepConverterGeant4
-         (
-          rng->Integer(900000000), // TODO: eventually Geant4 should use the IceTray rng!!
-          //"QGSP_BERT_EMV"
-          "QGSP_BERT"
-         )
-        );
-        
-        conv->SetMediumProperties(medium);
-        conv->SetMaxBunchSize(openCLconverter->GetMaxNumWorkitems());
-        conv->SetBunchSizeGranularity(openCLconverter->GetWorkgroupSize());
-        
-        conv->SetParticleParameterizationSeries(parameterizationList);
-        
-        conv->Initialize();
-        
-        return conv;
-    }
-
-}
 
 void I3CLSimModule::Configure()
 {
     log_trace("%s", __PRETTY_FUNCTION__);
 
     GetParameter("RandomService", randomService_);
+
+    GetParameter("GenerateCherenkovPhotonsWithoutDispersion", generateCherenkovPhotonsWithoutDispersion_);
+    GetParameter("WavelengthGenerationBias", wavelengthGenerationBias_);
+
     GetParameter("MediumProperties", mediumProperties_);
     GetParameter("MaxNumParallelEvents", maxNumParallelEvents_);
     GetParameter("MCTreeName", MCTreeName_);
     GetParameter("PhotonSeriesMapName", photonSeriesMapName_);
     GetParameter("IgnoreMuons", ignoreMuons_);
     GetParameter("ParameterizationList", parameterizationList_);
-    
+
+    GetParameter("OpenCLPlatformName", openCLPlatformName_);
+    GetParameter("OpenCLDeviceName", openCLDeviceName_);
+
+    if (!wavelengthGenerationBias_) {
+        wavelengthGenerationBias_ = I3CLSimWlenDependentValueConstantConstPtr(new I3CLSimWlenDependentValueConstant(1.));
+    }
+
     if (!randomService_) log_fatal("You have to specify the \"RandomService\" parameter!");
     if (!mediumProperties_) log_fatal("You have to specify the \"MediumProperties\" parameter!");
     if (maxNumParallelEvents_ <= 0) log_fatal("Values <= 0 are invalid for the \"MaxNumParallelEvents\" parameter!");
+
+    // fill wavelengthGenerator_
+    wavelengthGenerator_ =
+    I3CLSimModuleHelper::makeWavelegthGenerator
+    (wavelengthGenerationBias_,
+     generateCherenkovPhotonsWithoutDispersion_,
+     mediumProperties_);
     
     currentParticleCacheIndex_ = 0;
     geometryIsConfigured_ = false;
@@ -405,17 +343,24 @@ void I3CLSimModule::Geometry(I3FramePtr frame)
     
     log_info("Initializing CLSim..");
     // initialize OpenCL
-    openCLStepsToPhotonsConverter_ = initializeOpenCL(randomService_,
-                                                      geometry_,
-                                                      mediumProperties_);
+    openCLStepsToPhotonsConverter_ =
+    I3CLSimModuleHelper::initializeOpenCL(openCLPlatformName_,
+                                          openCLDeviceName_,
+                                          randomService_,
+                                          geometry_,
+                                          mediumProperties_,
+                                          wavelengthGenerationBias_,
+                                          wavelengthGenerator_);
     
     log_info("Initializing Geant4..");
     // initialize Geant4 (will set bunch sizes according to the OpenCL settings)
-    geant4ParticleToStepsConverter_ = initializeGeant4(randomService_,
-                                                       mediumProperties_,
-                                                       openCLStepsToPhotonsConverter_,
-                                                       parameterizationList_,
-                                                       false); // the multiprocessor version is not yet safe to use
+    geant4ParticleToStepsConverter_ =
+    I3CLSimModuleHelper::initializeGeant4(randomService_,
+                                          mediumProperties_,
+                                          wavelengthGenerationBias_,
+                                          openCLStepsToPhotonsConverter_,
+                                          parameterizationList_,
+                                          false); // the multiprocessor version is not yet safe to use
 
     
     log_info("Initialization complete.");

@@ -33,43 +33,65 @@ I3CLSimParticleToStepConverterCascadeParameterization::~I3CLSimParticleToStepCon
 }
 
 namespace {
-    double f(double wlen, void *params)
+#define H_TIMES_C 1.
+    
+    struct f_params_t {
+        const I3CLSimWlenDependentValue *phaseRefIndex;
+        const I3CLSimWlenDependentValue *wavelengthGenerationBias;
+    };
+    
+    double f(double energy, void *params)
     {
-        const I3CLSimWlenDependentValue *phaseRefIndex = static_cast<const I3CLSimWlenDependentValue *>(params);
+        f_params_t *f_params = static_cast<f_params_t *>(params);
+        
+        const I3CLSimWlenDependentValue &phaseRefIndex = *(f_params->phaseRefIndex);
+        const I3CLSimWlenDependentValue &wavelengthGenerationBias = *(f_params->wavelengthGenerationBias);
         
         const double beta=1.;
+        const double wlen = H_TIMES_C/energy;
         
-        const double retval = (2.*M_PI/(137.*( pow(wlen,2.) )))*(1. - 1./( pow(beta*phaseRefIndex->GetValue(wlen), 2.) ));
+        const double refIndexValue = phaseRefIndex.GetValue(wlen);
+        const double bias = wavelengthGenerationBias.GetValue(wlen);
+        
+        const double retval = bias*(2.*M_PI/(137.*H_TIMES_C))*(1. - 1./( pow(beta*refIndexValue, 2.) ));
         
         
-        log_trace("r(%fnm)=%g  f(%fnm)=%g",
+        log_trace("r(%fnm)=%g  bias(%fnm)=%g  f(%fnm)=%g",
                   wlen/I3Units::nanometer,
-                  phaseRefIndex->GetValue(wlen),
+                  refIndexValue,
+                  wlen/I3Units::nanometer,
+                  bias,
                   wlen/I3Units::nanometer,
                   retval);
         
         return retval;
     }
     
-    double NumberOfPhotonsPerMeter(const I3CLSimWlenDependentValue &phaseRefIndex, double fromWlen, double toWlen)
+    double NumberOfPhotonsPerMeter(const I3CLSimWlenDependentValue &phaseRefIndex,
+                                   const I3CLSimWlenDependentValue &wavelengthGenerationBias,
+                                   double fromWlen, double toWlen)
     {
         log_trace("integrating in range [%f;%f]nm",
                   fromWlen/I3Units::nanometer,
                   toWlen/I3Units::nanometer);
         
+        f_params_t f_params;
+        f_params.phaseRefIndex = &phaseRefIndex;
+        f_params.wavelengthGenerationBias = &wavelengthGenerationBias;
+        
         gsl_integration_workspace *w = gsl_integration_workspace_alloc(1000);
         
         gsl_function F;
         F.function = &f;
-        F.params = const_cast<void *>(static_cast<const void *>(&phaseRefIndex)); // I'm not proud of this..
+        F.params = static_cast<void *>(&f_params); // I'm not proud of this..
         
         double result, error;
         
         gsl_integration_qag(&F,
-                            fromWlen,
-                            toWlen,
+                            H_TIMES_C/toWlen,
+                            H_TIMES_C/fromWlen,
                             0,
-                            1e-7,
+                            1e-5,
                             1000,
                             GSL_INTEG_GAUSS61,
                             w,
@@ -80,7 +102,7 @@ namespace {
         
         return result/(1./I3Units::meter);
     }
-    
+#undef H_TIMES_C    
     
     // stolen from PPC by D. Chirkin
     inline double gammaDistributedNumber(float shape, I3RandomServicePtr randomService_)
@@ -225,7 +247,10 @@ void I3CLSimParticleToStepConverterCascadeParameterization::Initialize()
 {
     if (initialized_)
         throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterCascadeParameterization already initialized!");
-    
+
+    if (!wlenBias_)
+        throw I3CLSimParticleToStepConverter_exception("WlenBias not set!");
+
     if (!mediumProperties_)
         throw I3CLSimParticleToStepConverter_exception("MediumProperties not set!");
     
@@ -246,6 +271,7 @@ void I3CLSimParticleToStepConverterCascadeParameterization::Initialize()
     for (uint32_t i=0;i<mediumProperties_->GetLayersNum();++i)
     {
         const double nPhot = NumberOfPhotonsPerMeter(*(mediumProperties_->GetPhaseRefractiveIndex(i)),
+                                                     *(wlenBias_),
                                                      mediumProperties_->GetMinWavelength(),
                                                      mediumProperties_->GetMaxWavelength());
         
@@ -288,6 +314,14 @@ void I3CLSimParticleToStepConverterCascadeParameterization::SetMaxBunchSize(uint
         throw I3CLSimParticleToStepConverter_exception("MaxBunchSize of 0 is invalid!");
 
     maxBunchSize_=num;
+}
+
+void I3CLSimParticleToStepConverterCascadeParameterization::SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias)
+{
+    if (initialized_)
+        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterCascadeParameterization already initialized!");
+    
+    wlenBias_=wlenBias;
 }
 
 void I3CLSimParticleToStepConverterCascadeParameterization::SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties)
