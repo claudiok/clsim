@@ -26,7 +26,6 @@
 #include <clsim/I3CLSimRandomValueRayleighScatteringCosAngle.h>
 #include <clsim/I3CLSimRandomValueInterpolatedDistribution.h>
 #include <clsim/I3CLSimRandomValueSimplifiedLiu.h>
-#include <clsim/I3CLSimRandomValueTabulatedDistributionCosAngle.h>
 #include <clsim/I3CLSimRandomValueMixed.h>
 #include <clsim/I3CLSimRandomValueApplyFunction.h>
 
@@ -154,35 +153,6 @@ void register_I3CLSimRandomValue()
     bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueSimplifiedLiu>, shared_ptr<const I3CLSimRandomValue> >();
  
     
-    // table of (angle,value) pairs
-    {
-        bp::class_<
-        I3CLSimRandomValueTabulatedDistributionCosAngle, 
-        boost::shared_ptr<I3CLSimRandomValueTabulatedDistributionCosAngle>, 
-        bases<I3CLSimRandomValue>,
-        boost::noncopyable
-        >
-        (
-         "I3CLSimRandomValueTabulatedDistributionCosAngle",
-         bp::init<
-         const std::vector<double> &,
-         const std::vector<double> &,
-         double
-         >(
-           (
-            bp::arg("angles"),
-            bp::arg("values"),
-            bp::arg("powerLawIndexBeforeFirstBin")
-            )
-           )
-         )
-        ;
-    }
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueTabulatedDistributionCosAngle>, shared_ptr<const I3CLSimRandomValueTabulatedDistributionCosAngle> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueTabulatedDistributionCosAngle>, shared_ptr<I3CLSimRandomValue> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueTabulatedDistributionCosAngle>, shared_ptr<const I3CLSimRandomValue> >();
-
-    
     // table of (x,value) pairs
     {
         bp::class_<
@@ -200,9 +170,19 @@ void register_I3CLSimRandomValue()
            (
             bp::arg("x"),
             bp::arg("y")
-            )
            )
+          )
          )
+        .def(init<double, double, const std::vector<double> & >
+             (
+              (
+               bp::arg("xFirst"),
+               bp::arg("xSpacing"),
+               bp::arg("y")
+               )
+              )
+             )
+
         ;
     }
     bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueInterpolatedDistribution>, shared_ptr<const I3CLSimRandomValueInterpolatedDistribution> >();

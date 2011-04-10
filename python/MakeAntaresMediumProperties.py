@@ -1,6 +1,5 @@
 from icecube import icetray, dataclasses
 from icecube.clsim import I3CLSimMediumProperties, \
-                          I3CLSimRandomValueTabulatedDistributionCosAngle, \
                           I3CLSimRandomValueApplyFunction, \
                           I3CLSimRandomValueInterpolatedDistribution, \
                           I3CLSimRandomValueRayleighScatteringCosAngle, \

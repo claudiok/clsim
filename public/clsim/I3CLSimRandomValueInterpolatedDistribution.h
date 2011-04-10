@@ -16,7 +16,12 @@ struct I3CLSimRandomValueInterpolatedDistribution : public I3CLSimRandomValue
 {
 public:
     
+    // arbitrary x values
     I3CLSimRandomValueInterpolatedDistribution(const std::vector<double> &x,
+                                               const std::vector<double> &y);
+
+    // x values with constant spacing (more efficient)
+    I3CLSimRandomValueInterpolatedDistribution(double xFirst, double xSpacing,
                                                const std::vector<double> &y);
 
     virtual ~I3CLSimRandomValueInterpolatedDistribution();
@@ -39,6 +44,8 @@ private:
 
     std::vector<double> x_;
     std::vector<double> y_;
+    double constantXSpacing_;
+    double firstX_;
     
     friend class boost::serialization::access;
     template <class Archive> void serialize(Archive & ar, unsigned version);

@@ -15,7 +15,9 @@ I3CLSimRandomValueInterpolatedDistribution(const std::vector<double> &x,
                                            const std::vector<double> &y)
 :
 x_(x),
-y_(y)
+y_(y),
+constantXSpacing_(NAN),
+firstX_(NAN)
 { 
     if (x_.size() != y_.size())
         log_fatal("The \"x\" and \"y\" vectors must have the same size!");
@@ -23,6 +25,23 @@ y_(y)
     if (x_.size() <= 1)
         log_fatal("At least two entries have to be specified in the vectors passed to I3CLSimRandomValueInterpolatedDistribution().");
 }
+
+I3CLSimRandomValueInterpolatedDistribution::
+I3CLSimRandomValueInterpolatedDistribution(double xFirst, double xSpacing,
+                                           const std::vector<double> &y)
+:
+y_(y),
+constantXSpacing_(xSpacing),
+firstX_(xFirst)
+{ 
+    if (isnan(firstX_)) log_fatal("\"xFirst\" must not be NaN!");
+    if (isnan(constantXSpacing_)) log_fatal("\"xSpacing\" must not be NaN!");
+    if (constantXSpacing_<=0.) log_fatal("\"xSpacing\" must not be <= 0!");
+    
+    if (y_.size() <= 1)
+        log_fatal("At least two entries have to be specified in the vector passed to I3CLSimRandomValueInterpolatedDistribution().");
+}
+
 
 I3CLSimRandomValueInterpolatedDistribution::~I3CLSimRandomValueInterpolatedDistribution() 
 { 
@@ -46,11 +65,21 @@ std::string I3CLSimRandomValueInterpolatedDistribution::WriteTableCode(const std
 
     // simple trapezoidal integration (which is not an approximation in this case)
     data_acu[0]=0.;
-    for (std::size_t j=1;j<numEntries;++j)
+    if (isnan(constantXSpacing_))
     {
-        data_acu[j] = data_acu[j-1] + (x_[j]-x_[j-1]) * (y_[j]+y_[j-1]) / 2.;
+        for (std::size_t j=1;j<numEntries;++j)
+        {
+            data_acu[j] = data_acu[j-1] + (x_[j]-x_[j-1]) * (y_[j]+y_[j-1]) / 2.;
+        }
+    } 
+    else
+    {
+        for (std::size_t j=1;j<numEntries;++j)
+        {
+            data_acu[j] = data_acu[j-1] + (constantXSpacing_) * (y_[j]+y_[j-1]) / 2.;
+        }
     }
-
+        
     // normalize
     for (std::size_t j=0;j<numEntries;++j)
     {
@@ -74,13 +103,16 @@ std::string I3CLSimRandomValueInterpolatedDistribution::WriteTableCode(const std
 	output.setf(std::ios::scientific,std::ios::floatfield);
 	output.precision(std::numeric_limits<float>::digits10+4); // maximum precision for a float
     
-	output << "__constant float " << prefix << "distXValues[" << prefix << "NUM_DIST_ENTRIES] = {" << std::endl;
-	for (sizeType j=0;j<numEntries;++j){     
-		output << "  " << x_[j] << "f, " << std::endl;
-	}
-	output << "};" << std::endl;
-	output << std::endl;
-
+    if (isnan(constantXSpacing_))
+    {
+        output << "__constant float " << prefix << "distXValues[" << prefix << "NUM_DIST_ENTRIES] = {" << std::endl;
+        for (sizeType j=0;j<numEntries;++j){     
+            output << "  " << x_[j] << "f, " << std::endl;
+        }
+        output << "};" << std::endl;
+        output << std::endl;
+    }
+    
     output << "__constant float " << prefix << "distYValues[" << prefix << "NUM_DIST_ENTRIES] = {" << std::endl;
 	for (sizeType j=0;j<numEntries;++j){     
 		output << "  " << data_beta[j] << "f, " << std::endl;
@@ -114,9 +146,30 @@ std::string I3CLSimRandomValueInterpolatedDistribution::GetOpenCLFunction
     const std::string distXValuesName = std::string("_") + functionName + "distXValues";
     const std::string distYValuesName = std::string("_") + functionName + "distYValues";
     const std::string distYCumulativeValuesName = std::string("_") + functionName + "distYCumulativeValues";
+
+    std::string constantXSpacingValueString;
+    std::string firstXValueString;
     
-    
-    return tableDecl + "\n\n" + functionDecl + "\n"
+    if (!isnan(constantXSpacing_)) {
+        std::ostringstream output(std::ostringstream::out);
+        output.setf(std::ios::scientific,std::ios::floatfield);
+        output.precision(std::numeric_limits<float>::digits10+4); // maximum precision for a float
+        
+        output << constantXSpacing_ << "f";
+        constantXSpacingValueString = output.str();
+    }
+
+    if (!isnan(firstX_)) {
+        std::ostringstream output(std::ostringstream::out);
+        output.setf(std::ios::scientific,std::ios::floatfield);
+        output.precision(std::numeric_limits<float>::digits10+4); // maximum precision for a float
+        
+        output << firstX_ << "f";
+        firstXValueString = output.str();
+    }
+
+    std::string retString = 
+    tableDecl + "\n\n" + functionDecl + "\n"
     "{\n"
     "    const float randomNumber = " + uniformRandomCall_oc + ";\n"
     "    \n"
@@ -133,10 +186,21 @@ std::string I3CLSimRandomValueInterpolatedDistribution::GetOpenCLFunction
     "    \n"
     "    // look between bins k and k+1\n"
     "    \n"
-    "    const float b = " + distYValuesName + "[k];\n"
-    "    const float x0 = " + distXValuesName + "[k];\n"
-    "    \n"
-    "    const float slope = (" + distYValuesName + "[k+1]-b)/(" + distXValuesName + "[k+1]-x0);\n"
+    "    const float b = " + distYValuesName + "[k];\n";
+    
+    if (isnan(constantXSpacing_)) {
+        retString = retString + 
+        "    const float x0 = " + distXValuesName + "[k];\n"
+        "    \n"
+        "    const float slope = (" + distYValuesName + "[k+1]-b)/(" + distXValuesName + "[k+1]-x0);\n";
+    } else {
+        retString = retString + 
+        "    const float x0 = convert_float_rtz(k)*(" + constantXSpacingValueString + ") + (" + firstXValueString + "); // _rtz==\"round to zero\"\n"
+        "    \n"
+        "    const float slope = (" + distYValuesName + "[k+1]-b)/(" + constantXSpacingValueString + ");\n";
+    }
+
+    retString = retString + 
     "    const float dy = randomNumber-this_acu;\n"
     "    \n"
     "    \n"
@@ -166,6 +230,8 @@ std::string I3CLSimRandomValueInterpolatedDistribution::GetOpenCLFunction
     "    }\n"
     "}\n"
     ;
+    
+    return retString;
 }
 
 bool I3CLSimRandomValueInterpolatedDistribution::CompareTo(const I3CLSimRandomValue &other) const
@@ -173,6 +239,15 @@ bool I3CLSimRandomValueInterpolatedDistribution::CompareTo(const I3CLSimRandomVa
     try
     {
         const I3CLSimRandomValueInterpolatedDistribution &other_ = dynamic_cast<const I3CLSimRandomValueInterpolatedDistribution &>(other);
+
+        if (isnan(other_.constantXSpacing_) && (!isnan(constantXSpacing_))) return false;
+        if ((!isnan(other_.constantXSpacing_)) && isnan(constantXSpacing_)) return false;
+
+        if (isnan(other_.firstX_) && (!isnan(firstX_))) return false;
+        if ((!isnan(other_.firstX_)) && isnan(firstX_)) return false;
+
+        if ( (!isnan(constantXSpacing_)) && (other_.constantXSpacing_ != constantXSpacing_)) return false;
+        if ( (!isnan(firstX_)) && (other_.firstX_ != firstX_)) return false;
 
         if (other_.x_.size() != x_.size()) return false;
         if (other_.y_.size() != y_.size()) return false;
@@ -204,6 +279,8 @@ void I3CLSimRandomValueInterpolatedDistribution::serialize(Archive &ar, unsigned
     ar & make_nvp("I3CLSimRandomValue", base_object<I3CLSimRandomValue>(*this));
     ar & make_nvp("x", x_);
     ar & make_nvp("y", y_);
+    ar & make_nvp("constantXSpacing", constantXSpacing_);
+    ar & make_nvp("firstX", firstX_);
 }     
 
 
