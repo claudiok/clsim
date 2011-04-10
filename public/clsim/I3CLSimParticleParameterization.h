@@ -44,15 +44,17 @@ public:
 
     I3CLSimParticleParameterization(I3CLSimParticleToStepConverterPtr converter_,
                                     I3Particle::ParticleType forParticleType_,
-                                    double fromEnergy_, double toEnergy_);
+                                    double fromEnergy_, double toEnergy_,
+                                    bool needsLength_=false);
 
     
     I3CLSimParticleToStepConverterPtr converter;
     I3Particle::ParticleType forParticleType;
     double fromEnergy, toEnergy;
+    bool needsLength;
     
-    bool IsValidForParticle(const I3Particle &p) const;
-    bool IsValid(I3Particle::ParticleType type, double energy) const;
+    bool IsValidForParticle(const I3Particle &particle) const;
+    bool IsValid(I3Particle::ParticleType type, double energy, double length=NAN) const;
     
 private:
 };
@@ -63,6 +65,7 @@ inline bool operator==(const I3CLSimParticleParameterization &a, const I3CLSimPa
     if (a.toEnergy != b.toEnergy) return false;
     if (a.forParticleType != b.forParticleType) return false;
     if (a.converter != b.converter) return false;
+    if (a.needsLength != b.needsLength) return false;
     return true;
 }
 

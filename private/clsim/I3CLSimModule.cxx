@@ -95,11 +95,11 @@ void I3CLSimModule::StartThread()
     log_trace("%s", __PRETTY_FUNCTION__);
 
     if (threadObj_) {
-        log_warn("Thread is already running. Not starting a new one.");
+        log_debug("Thread is already running. Not starting a new one.");
         return;
     }
     
-    log_warn("Thread not running. Starting a new one..");
+    log_trace("Thread not running. Starting a new one..");
 
     threadStarted_=false;
     threadFinishedOK_=false;
@@ -116,7 +116,7 @@ void I3CLSimModule::StartThread()
         }
     }        
     
-    log_warn("Thread started..");
+    log_trace("Thread started..");
 
 }
 
@@ -128,14 +128,14 @@ void I3CLSimModule::StopThread()
     {
         if (threadObj_->joinable())
         {
-            log_warn("Stopping the thread..");
+            log_trace("Stopping the thread..");
             threadObj_->interrupt();
             threadObj_->join(); // wait for it indefinitely
-            log_warn("thread stopped.");
+            log_trace("thread stopped.");
         } 
         else
         {
-            log_warn("Thread did already finish, deleting reference.");
+            log_trace("Thread did already finish, deleting reference.");
         }
         threadObj_.reset();
     }
@@ -274,17 +274,15 @@ void I3CLSimModule::Configure()
     totalSimulatedEnergyForFlush_ = 0.;
     totalNumParticlesForFlush_ = 0;
     
-    photonSeriesMapConverter_ = I3CLSimPhotonSeriesToPhotonSeriesMapConverterPtr(new I3CLSimPhotonSeriesToPhotonSeriesMapConverter());
-    
     if (parameterizationList_.size() > 0) {
-        log_warn("Using the following parameterizations:");
+        log_info("Using the following parameterizations:");
         
         BOOST_FOREACH(const I3CLSimParticleParameterization &parameterization, parameterizationList_)
         {
             I3Particle tmpParticle;
             tmpParticle.SetType(parameterization.forParticleType);
             
-            log_warn("  * particle=%s, from energy=%fGeV, to energy=%fGeV",
+            log_info("  * particle=%s, from energy=%fGeV, to energy=%fGeV",
                      tmpParticle.GetTypeString().c_str(),
                      parameterization.fromEnergy/I3Units::GeV,
                      parameterization.toEnergy/I3Units::GeV);
@@ -331,10 +329,11 @@ bool I3CLSimModule::Thread(boost::this_thread::disable_interruption &di)
             }
         }
         
-        if (!steps)
-            log_warn("Got NULL I3CLSimStepSeriesConstPtr from Geant4.");
-        
-        if (steps->empty())
+        if (!steps) 
+        {
+            log_debug("Got NULL I3CLSimStepSeriesConstPtr from Geant4.");
+        }
+        else if (steps->empty())
         {
             log_warn("Got 0 steps from Geant4, nothing to do for OpenCL.");
         }
@@ -357,7 +356,7 @@ bool I3CLSimModule::Thread(boost::this_thread::disable_interruption &di)
         }
         
         if (barrierWasJustReset) {
-            log_warn("Geant4 barrier has been reached. Exiting thread.");
+            log_trace("Geant4 barrier has been reached. Exiting thread.");
             break;
         }
     }
@@ -374,7 +373,7 @@ void I3CLSimModule::Thread_starter()
         threadFinishedOK_ = Thread(di);
         if (!threadFinishedOK_)
         {
-            log_warn("thread exited due to interruption.");
+            log_trace("thread exited due to interruption.");
         }
     } catch(...) { // any exceptions?
         log_warn("thread died unexpectedly..");
@@ -382,7 +381,7 @@ void I3CLSimModule::Thread_starter()
         throw;
     }
     
-    log_warn("thread exited.");
+    log_debug("thread exited.");
 }
 
 
@@ -418,9 +417,6 @@ void I3CLSimModule::Geometry(I3FramePtr frame)
                                                        parameterizationList_,
                                                        false); // the multiprocessor version is not yet safe to use
 
-    
-    log_info("Initializing photon map converter..");
-    photonSeriesMapConverter_->SetGeometry(geometry_);
     
     log_info("Initialization complete.");
     geometryIsConfigured_=true;
@@ -515,11 +511,11 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons)
 
 void I3CLSimModule::FlushFrameCache()
 {
-    log_warn("Flushing frame cache..");
+    log_debug("Flushing frame cache..");
     
     // start the connector thread if necessary
     if (!threadObj_) {
-        log_warn("No thread found running during FlushFrameCache(), starting one.");
+        log_trace("No thread found running during FlushFrameCache(), starting one.");
         StartThread();
     }
 
@@ -534,11 +530,11 @@ void I3CLSimModule::FlushFrameCache()
     if (!threadObj_->joinable())
         log_fatal("Thread should be joinable at this point!");
         
-    log_warn("Waiting for thread..");
+    log_debug("Waiting for thread..");
     threadObj_->join(); // wait for it indefinitely
     StopThread(); // stop it completely
     if (!threadFinishedOK_) log_fatal("Thread was aborted or failed.");
-    log_warn("thread finished.");
+    log_debug("thread finished.");
 
     
     log_info("Geant4 finished, retrieving results from GPU..");
@@ -589,7 +585,7 @@ void I3CLSimModule::Physics(I3FramePtr frame)
 
     // start the connector thread if necessary
     if (!threadObj_) {
-        log_warn("No thread found running during Physics(), starting one.");
+        log_debug("No thread found running during Physics(), starting one.");
         StartThread();
     }
     
@@ -614,6 +610,15 @@ void I3CLSimModule::Physics(I3FramePtr frame)
         const bool isMuon = (particle.GetType() == I3Particle::MuMinus) || (particle.GetType() == I3Particle::MuPlus);
         const bool isNeutrino = particle.IsNeutrino();
 
+        // mmc-icetray currently stores continuous loss entries as "unknown"
+        const bool isContinuousLoss = (particle.GetType() == -1111) || (particle.GetType() == I3Particle::unknown); // special magic number used by MMC
+        
+        // ignore continuous loss entries
+        if (isContinuousLoss) {
+            log_debug("ignored a continuous loss I3MCTree entry");
+            continue;
+        }
+        
         // always ignore neutrinos
         if (isNeutrino) continue;
 
@@ -648,6 +653,8 @@ void I3CLSimModule::Physics(I3FramePtr frame)
         totalNumParticlesForFlush_=0;
         
         FlushFrameCache();
+        
+        log_warn("============== CACHE FLUSHED ================");
     }
     
     

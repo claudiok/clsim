@@ -43,15 +43,18 @@ public:
     const std::vector<I3CLSimWlenDependentValueConstPtr> &GetAbsorptionLengths() const;
     const std::vector<I3CLSimWlenDependentValueConstPtr> &GetScatteringLengths() const;
     const std::vector<I3CLSimWlenDependentValueConstPtr> &GetPhaseRefractiveIndices() const;
+    const std::vector<I3CLSimWlenDependentValueConstPtr> &GetGroupRefractiveIndicesOverride() const;
     
     I3CLSimWlenDependentValueConstPtr GetAbsorptionLength(uint32_t layer) const;
     I3CLSimWlenDependentValueConstPtr GetScatteringLength(uint32_t layer) const;
     I3CLSimWlenDependentValueConstPtr GetPhaseRefractiveIndex(uint32_t layer) const;
+    I3CLSimWlenDependentValueConstPtr GetGroupRefractiveIndexOverride(uint32_t layer) const;
     I3CLSimRandomValueConstPtr GetScatteringCosAngleDistribution() const;
 
     void SetAbsorptionLength(uint32_t layer, I3CLSimWlenDependentValueConstPtr ptr);
     void SetScatteringLength(uint32_t layer, I3CLSimWlenDependentValueConstPtr ptr);
     void SetPhaseRefractiveIndex(uint32_t layer, I3CLSimWlenDependentValueConstPtr ptr);
+    void SetGroupRefractiveIndexOverride(uint32_t layer, I3CLSimWlenDependentValueConstPtr ptr);
     void SetScatteringCosAngleDistribution(I3CLSimRandomValueConstPtr ptr);
 
     double GetMinWavelength() const;
@@ -65,7 +68,7 @@ public:
     inline double GetRockZCoord() const {return rockZCoordinate_;}
     inline double GetAirZCoord() const {return airZCoordinate_;}
     
-    // The use can specify a minimum and maximum wavelength.
+    // The user can specify a minimum and maximum wavelength.
     // This is necessary if none of the I3CLSimWlenDependentValues
     // specifies any.
     inline double GetForcedMinWlen() const {return forcedMinWlen_;}
@@ -89,6 +92,7 @@ private:
     std::vector<I3CLSimWlenDependentValueConstPtr> absorptionLength_;
     std::vector<I3CLSimWlenDependentValueConstPtr> scatteringLength_;
     std::vector<I3CLSimWlenDependentValueConstPtr> phaseRefractiveIndex_;
+    std::vector<I3CLSimWlenDependentValueConstPtr> groupRefractiveIndexOverride_;
     I3CLSimRandomValueConstPtr scatteringCosAngleDist_;
     
 private:

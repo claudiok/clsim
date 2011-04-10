@@ -24,9 +24,11 @@
 #include <clsim/I3CLSimRandomValue.h>
 #include <clsim/I3CLSimRandomValueHenyeyGreenstein.h>
 #include <clsim/I3CLSimRandomValueRayleighScatteringCosAngle.h>
+#include <clsim/I3CLSimRandomValueInterpolatedDistribution.h>
 #include <clsim/I3CLSimRandomValueSimplifiedLiu.h>
 #include <clsim/I3CLSimRandomValueTabulatedDistributionCosAngle.h>
 #include <clsim/I3CLSimRandomValueMixed.h>
+#include <clsim/I3CLSimRandomValueApplyFunction.h>
 
 #include <boost/preprocessor/seq.hpp>
 #include <icetray/python/std_vector_indexing_suite.hpp>
@@ -181,6 +183,33 @@ void register_I3CLSimRandomValue()
     bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueTabulatedDistributionCosAngle>, shared_ptr<const I3CLSimRandomValue> >();
 
     
+    // table of (x,value) pairs
+    {
+        bp::class_<
+        I3CLSimRandomValueInterpolatedDistribution, 
+        boost::shared_ptr<I3CLSimRandomValueInterpolatedDistribution>, 
+        bases<I3CLSimRandomValue>,
+        boost::noncopyable
+        >
+        (
+         "I3CLSimRandomValueInterpolatedDistribution",
+         bp::init<
+         const std::vector<double> &,
+         const std::vector<double> &
+         >(
+           (
+            bp::arg("x"),
+            bp::arg("y")
+            )
+           )
+         )
+        ;
+    }
+    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueInterpolatedDistribution>, shared_ptr<const I3CLSimRandomValueInterpolatedDistribution> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueInterpolatedDistribution>, shared_ptr<I3CLSimRandomValue> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueInterpolatedDistribution>, shared_ptr<const I3CLSimRandomValue> >();
+
+    
     // mix of two distributions
     {
         bp::class_<
@@ -208,5 +237,33 @@ void register_I3CLSimRandomValue()
     bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueMixed>, shared_ptr<const I3CLSimRandomValueMixed> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueMixed>, shared_ptr<I3CLSimRandomValue> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueMixed>, shared_ptr<const I3CLSimRandomValue> >();
+
     
+    
+    // apply function to generated random value
+    {
+        bp::class_<
+        I3CLSimRandomValueApplyFunction, 
+        boost::shared_ptr<I3CLSimRandomValueApplyFunction>, 
+        bases<I3CLSimRandomValue>,
+        boost::noncopyable
+        >
+        (
+         "I3CLSimRandomValueApplyFunction",
+         bp::init<
+         I3CLSimRandomValuePtr,
+         const std::string &
+         >(
+           (
+            bp::arg("randomDistUsed"),
+            bp::arg("functionName")
+            )
+           )
+         )
+        ;
+    }
+    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueApplyFunction>, shared_ptr<const I3CLSimRandomValueApplyFunction> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueApplyFunction>, shared_ptr<I3CLSimRandomValue> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueApplyFunction>, shared_ptr<const I3CLSimRandomValue> >();
+
 }

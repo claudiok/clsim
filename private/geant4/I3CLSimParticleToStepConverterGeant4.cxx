@@ -399,8 +399,6 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
                 
                 I3CLSimStepSeriesPtr steps(new I3CLSimStepSeries());
 
-                log_error("AAAA");
-                
                 {
                     boost::this_thread::restore_interruption ri(di);
                     try {

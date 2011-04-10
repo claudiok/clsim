@@ -451,15 +451,13 @@ void I3CLSimParticleToStepConverterCascadeParameterization::EnqueueParticle(cons
         if (isnan(particle.GetLength()))
             log_warn("Muon without length found! Assigned a length of 2000m.");
 
-        const double additionalTrackLengthFromCascades=max(0.0, 0.1720+0.0324*logE);
-
         // calculation from PPC
         const double extr = 1. + max(0.0, 0.1720+0.0324*logE);
         const double cascadeFraction = 1./extr;
         
         const double meanNumPhotonsTotal = meanPhotonsPerMeter*(length/I3Units::m)*extr;
         
-        log_warn("meanNumPhotonsTotal=%f", meanNumPhotonsTotal);
+        log_trace("meanNumPhotonsTotal=%f", meanNumPhotonsTotal);
         
         const double meanNumPhotonsFromMuon = meanNumPhotonsTotal*(1.-cascadeFraction);
         const uint32_t numPhotonsFromMuon = randomService_->Poisson(meanNumPhotonsFromMuon);
@@ -497,7 +495,7 @@ void I3CLSimParticleToStepConverterCascadeParameterization::EnqueueParticle(cons
                                 length);
         }
         
-        log_warn("Generate %u steps for E=%fGeV. (muon[muon])", static_cast<unsigned int>((numStepsFromMuon+((numPhotonsFromMuonInLastStep>0)?1:0))), E);
+        log_trace("Generate %u steps for E=%fGeV, l=%fm. (muon[muon])", static_cast<unsigned int>((numStepsFromMuon+((numPhotonsFromMuonInLastStep>0)?1:0))), E, length/I3Units::m);
         
         
         // steps from cascade
@@ -534,7 +532,7 @@ void I3CLSimParticleToStepConverterCascadeParameterization::EnqueueParticle(cons
                          longitudinalPos);
         }        
         
-        log_warn("Generate %u steps for E=%fGeV. (muon[cascade])", static_cast<unsigned int>((numStepsFromCascades+((numPhotonsFromCascadesInLastStep>0)?1:0))), E);
+        log_trace("Generate %u steps for E=%fGeV, l=%fm. (muon[cascade])", static_cast<unsigned int>((numStepsFromCascades+((numPhotonsFromCascadesInLastStep>0)?1:0))), E, length/I3Units::m);
         
     } else {
         log_fatal("I3CLSimParticleToStepConverterCascadeParameterization cannot handle a %s.",

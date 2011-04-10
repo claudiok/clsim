@@ -201,6 +201,12 @@ void register_I3CLSimWlenDependentValue()
         (
          "I3CLSimWlenDependentValueRefIndexIceCube",
          bp::init<
+         std::string,
+         double,
+         double,
+         double,
+         double,
+         double,
          double,
          double,
          double,
@@ -208,11 +214,17 @@ void register_I3CLSimWlenDependentValue()
          double
          >(
            (
+            bp::arg("mode") = I3CLSimWlenDependentValueRefIndexIceCube::default_mode,
             bp::arg("n0") = I3CLSimWlenDependentValueRefIndexIceCube::default_n0,
             bp::arg("n1") = I3CLSimWlenDependentValueRefIndexIceCube::default_n1,
             bp::arg("n2") = I3CLSimWlenDependentValueRefIndexIceCube::default_n2,
             bp::arg("n3") = I3CLSimWlenDependentValueRefIndexIceCube::default_n3,
-            bp::arg("n4") = I3CLSimWlenDependentValueRefIndexIceCube::default_n4
+            bp::arg("n4") = I3CLSimWlenDependentValueRefIndexIceCube::default_n4,
+            bp::arg("g0") = I3CLSimWlenDependentValueRefIndexIceCube::default_g0,
+            bp::arg("g1") = I3CLSimWlenDependentValueRefIndexIceCube::default_g1,
+            bp::arg("g2") = I3CLSimWlenDependentValueRefIndexIceCube::default_g2,
+            bp::arg("g3") = I3CLSimWlenDependentValueRefIndexIceCube::default_g3,
+            bp::arg("g4") = I3CLSimWlenDependentValueRefIndexIceCube::default_g4
             )
            )
          )

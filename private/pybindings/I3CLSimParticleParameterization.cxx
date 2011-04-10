@@ -36,13 +36,14 @@ void register_I3CLSimParticleParameterization()
         bp::scope I3CLSimParticleParameterization_scope = 
         bp::class_<I3CLSimParticleParameterization, boost::shared_ptr<I3CLSimParticleParameterization> >
         ("I3CLSimParticleParameterization",
-         bp::init<I3CLSimParticleToStepConverterPtr, I3Particle::ParticleType, double, double>
+         bp::init<I3CLSimParticleToStepConverterPtr, I3Particle::ParticleType, double, double, bool>
          (
           (
            bp::arg("converter"),
            bp::arg("forParticleType"),
            bp::arg("fromEnergy"),
-           bp::arg("toEnergy")
+           bp::arg("toEnergy"),
+           bp::arg("needsLength")=false
           )
          )
         )
@@ -52,8 +53,9 @@ void register_I3CLSimParticleParameterization()
         .def_readwrite("forParticleType", &I3CLSimParticleParameterization::forParticleType)
         .def_readwrite("fromEnergy", &I3CLSimParticleParameterization::fromEnergy)
         .def_readwrite("toEnergy", &I3CLSimParticleParameterization::toEnergy)
-        .def("IsValidForParticle", &I3CLSimParticleParameterization::IsValidForParticle)
-        .def("IsValid", &I3CLSimParticleParameterization::IsValid)
+        .def_readwrite("needsLength", &I3CLSimParticleParameterization::needsLength)
+        .def("IsValidForParticle", &I3CLSimParticleParameterization::IsValidForParticle, bp::arg("particle"))
+        .def("IsValid", &I3CLSimParticleParameterization::IsValid, bp::arg("type"), bp::arg("energy"), bp::arg("length")=NAN)
         ;
     }
     

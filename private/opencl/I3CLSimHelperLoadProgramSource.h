@@ -3,10 +3,11 @@
 
 #include <string>
 #include <stdexcept>
+#include <cstdio>
 
 namespace I3CLSimHelper
 {
-    std::string LoadProgramSource(const std::string &filename)
+    inline std::string LoadProgramSource(const std::string &filename)
     {
         // open the OpenCL source code file
         FILE* pFileStream = fopen(filename.c_str(), "rb");

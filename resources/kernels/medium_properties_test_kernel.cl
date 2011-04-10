@@ -1,0 +1,55 @@
+#pragma OPENCL EXTENSION cl_khr_global_int32_base_atomics : enable
+#pragma OPENCL EXTENSION cl_khr_local_int32_base_atomics : enable
+#pragma OPENCL EXTENSION cl_khr_byte_addressable_store : enable
+//#pragma OPENCL EXTENSION cl_khr_fp16 : enable
+
+// disable dbg_printf for GPU
+#define dbg_printf(format, ...)
+
+// enable printf for CPU
+//#pragma OPENCL EXTENSION cl_amd_printf : enable
+//#define dbg_printf(format, ...) printf(format, ##__VA_ARGS__)
+
+__kernel void testKernel(__global ulong* MWC_RNG_x,
+                         __global uint* MWC_RNG_a,
+                         __read_only __global float* xValues,
+                         __write_only __global float* yValues,
+                         uint layer,
+                         uint mode)
+{
+    dbg_printf("Start kernel... (work item %u of %u)\n", get_global_id(0), get_global_size(0));
+
+    unsigned int i = get_global_id(0);
+    unsigned int global_size = get_global_size(0);
+
+    //download MWC RNG state
+    ulong real_rnd_x = MWC_RNG_x[i];
+    uint real_rnd_a = MWC_RNG_a[i];
+    ulong *rnd_x = &real_rnd_x;
+    uint *rnd_a = &real_rnd_a;
+
+    // evaluate the function
+    if (mode==0) {
+        yValues[i] = getPhaseRefIndex(layer, xValues[i]);
+    } else if (mode==1) {
+        yValues[i] = getDispersion(layer, xValues[i]);
+    } else if (mode==2) {
+        yValues[i] = getGroupVelocity(layer, xValues[i]);
+    } else if (mode==3) {
+        yValues[i] = getAbsorptionLength(layer, xValues[i]);
+    } else if (mode==4) {
+        yValues[i] = getScatteringLength(layer, xValues[i]);
+    } else if (mode==5) {
+        // this ignores the input data and just generates random numbers
+        yValues[i] = makeScatteringCosAngle(RNG_ARGS_TO_CALL);
+    } else {
+        yValues[i] = 9999999.f;
+    }
+
+    dbg_printf("Stop kernel... (work item %u of %u)\n", i, global_size);
+    dbg_printf("Kernel finished.\n");
+
+    //upload MWC RNG state
+    MWC_RNG_x[i] = real_rnd_x;
+    MWC_RNG_a[i] = real_rnd_a;
+}

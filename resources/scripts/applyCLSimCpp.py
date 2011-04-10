@@ -44,9 +44,16 @@ import sys
 
 from icecube import icetray, dataclasses, dataio, phys_services
 from icecube import clsim
-#load("libsim-services")
+
+load("libc2j-icetray")
+load("libmmc-icetray")
+
+MMCseed=432
 
 tray = I3Tray()
+
+tray.AddService("I3JavaVMFactory","javavm",
+                options = [expandvars("-Djava.class.path=$I3_BUILD/lib/mmc.jar"), "-server", "-Xms64m", "-Xmx512m"])
 
 # a random number generator
 randomService = phys_services.I3SPRNGRandomService(
@@ -67,14 +74,16 @@ cascadeConverter.Initialize()
 # now set up a list of converters with particle types and valid energy ranges
 parameterizations = \
 [
- #clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
- #                                      forParticleType=dataclasses.I3Particle.MuMinus,
- #                                      fromEnergy=0.5*I3Units.GeV,
- #                                      toEnergy=1000.*I3Units.GeV),
- #clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
- #                                      forParticleType=dataclasses.I3Particle.MuPlus,
- #                                      fromEnergy=0.5*I3Units.GeV,
- #                                      toEnergy=1000.*I3Units.GeV),
+ clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+                                       forParticleType=dataclasses.I3Particle.MuMinus,
+                                       fromEnergy=0.5*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.GeV,
+                                       needsLength=True),
+ clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+                                       forParticleType=dataclasses.I3Particle.MuPlus,
+                                       fromEnergy=0.5*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.GeV,
+                                       needsLength=True),
 
  # do we need some special handling for neutrons?
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
@@ -155,6 +164,15 @@ parameterizations = \
 
 tray.AddModule("I3Reader","reader",
                Filename=options.INFILE)
+
+tray.AddModule("I3PropagatorMMC","propagate",
+               PrimaryTreeName = "I3MCTree",
+               mode=-1,
+               opts="-cont -recc -seed=%i -radius=900 -length=1600" % (MMCseed),
+               ShiftParticles = True
+               #mediadefPath = tempMediaDefDir,
+               #mediadefName = tempMediaDefFileName
+               )
 
 tray.AddModule("I3CLSimModule", "clsim",
                RandomService=randomService,

@@ -1,3 +1,6 @@
+#define __STDC_FORMAT_MACROS 
+#include <inttypes.h>
+
 #include "opencl/I3CLSimHelperGenerateMediumPropertiesSource.h"
 
 #include <string>
@@ -195,24 +198,61 @@ namespace I3CLSimHelper
                                                       "getPhaseRefIndex",
                                                       "getDispersion");
 
-        // group velocity
-        code << "// group velocity\n";
-        code << "inline float getGroupVelocity(unsigned int layer, float wavelength)\n";
-        code << "{\n";
-        code << "    const float c_light = " << to_float_string(I3Constants::c) << ";\n";
-        code << "    \n";
-        code << "#ifdef USE_NATIVE_MATH\n";
-        code << "    const float n_inv = native_recip(getPhaseRefIndex(layer, wavelength));\n";
-        code << "#else\n";
-        code << "    const float n_inv = 1.f/getPhaseRefIndex(layer, wavelength);\n";
-        code << "#endif\n";
-        code << "    \n";
-        code << "    const float y = getDispersion(layer, wavelength);\n";
-        code << "    \n";
-        code << "    return c_light * (1.0f + y*wavelength*n_inv) * n_inv;\n";
-        code << "}\n";
-        code << "\n";        
+        if (mediumProperties.GetGroupRefractiveIndexOverride(0))
+        {
+            // seems there is an override parameterization for the group refractive index.
+            // Use that instead of the one calculated from the dispersion.
 
+            // sanity check
+            for (uint32_t i=0;i<mediumProperties.GetLayersNum();++i)
+            {
+                if (!mediumProperties.GetGroupRefractiveIndexOverride(i))
+                    log_fatal("Medium property error: group refractive index overrides are not set for all layers! (unset for layer %" PRIu32 ")", i);
+            }
+            
+            // phase refractive index
+            code << GenerateLayeredWlenDependentFunctions(mediumProperties.GetGroupRefractiveIndicesOverride(),
+                                                          "group refractive index",
+                                                          "getGroupRefIndex");
+
+            code << "// group velocity from group refractive index\n";
+            code << "inline float getGroupVelocity(unsigned int layer, float wavelength)\n";
+            code << "{\n";
+            code << "    const float c_light = " << to_float_string(I3Constants::c) << ";\n";
+            code << "    const float n_group = getGroupRefIndex(layer, wavelength);\n";
+            code << "    \n";
+            code << "    return c_light / n_group;\n";
+            code << "}\n";
+        }
+        else
+        {    
+            // group velocity from dispersion
+            code << "// group velocity from dispersion\n";
+            code << "inline float getGroupVelocity(unsigned int layer, float wavelength)\n";
+            code << "{\n";
+            code << "    const float c_light = " << to_float_string(I3Constants::c) << ";\n";
+            code << "    \n";
+            code << "#ifdef USE_NATIVE_MATH\n";
+            code << "    const float n_inv = native_recip(getPhaseRefIndex(layer, wavelength));\n";
+            code << "#else\n";
+            code << "    const float n_inv = 1.f/getPhaseRefIndex(layer, wavelength);\n";
+            code << "#endif\n";
+            code << "    \n";
+            code << "    const float y = getDispersion(layer, wavelength);\n";
+            code << "    \n";
+            code << "    return c_light * (1.0f + y*wavelength*n_inv) * n_inv;\n";
+            code << "}\n";
+            code << "\n";        
+            code << "inline float getGroupRefIndex(unsigned int layer, float wavelength)\n";
+            code << "{\n";
+            code << "    const float c_light = " << to_float_string(I3Constants::c) << ";\n";
+            code << "    const float groupvel = getGroupVelocity(layer, wavelength);\n";
+            code << "    \n";
+            code << "    return c_light / groupvel;\n";
+            code << "}\n";
+            code << "\n";        
+        }
+    
         // scattering length
         code << GenerateLayeredWlenDependentFunctions(mediumProperties.GetScatteringLengths(),
                                                       "scattering length",

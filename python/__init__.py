@@ -14,11 +14,9 @@ augmentClassWithPicklingSupport(dataclasses.I3Direction, I3Direction___setstate_
 augmentClassWithPicklingSupport(dataclasses.I3Position, I3Position___setstate__, I3Position___getstate__)
 
 
-from MakeAntaresMediumProperties import MakeAntaresMediumProperties
+from MakeAntaresMediumProperties import GetPetzoldScatteringCosAngleDistribution, GetAntaresScatteringCosAngleDistribution, MakeAntaresMediumProperties
 from MakeIceCubeMediumProperties import MakeIceCubeMediumProperties
 from I3CLSimParticleToStepConverterGeant4MP import I3CLSimParticleToStepConverterGeant4MP
-
-from I3CLSimModule import I3CLSimModule
 
 
 # clean up the clsim namespace

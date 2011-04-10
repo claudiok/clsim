@@ -33,7 +33,6 @@
 #include "phys-services/I3RandomService.h"
 
 #include "clsim/I3CLSimMediumProperties.h"
-#include "clsim/I3CLSimPhotonSeriesToPhotonSeriesMapConverter.h"
 #include "clsim/I3CLSimSimpleGeometryFromI3Geometry.h"
 
 #include "clsim/I3CLSimStepToPhotonConverterOpenCL.h"
@@ -144,7 +143,6 @@ private:
     double totalSimulatedEnergyForFlush_;
     uint64_t totalNumParticlesForFlush_;
     
-    I3CLSimPhotonSeriesToPhotonSeriesMapConverterPtr photonSeriesMapConverter_;
     I3CLSimSimpleGeometryFromI3GeometryPtr geometry_;
     I3CLSimStepToPhotonConverterOpenCLPtr openCLStepsToPhotonsConverter_;
     I3CLSimParticleToStepConverterGeant4Ptr geant4ParticleToStepsConverter_;

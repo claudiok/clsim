@@ -154,7 +154,6 @@ bool I3CLSimRandomValueTabulatedDistributionCosAngle::CompareTo(const I3CLSimRan
     {
         const I3CLSimRandomValueTabulatedDistributionCosAngle &other_ = dynamic_cast<const I3CLSimRandomValueTabulatedDistributionCosAngle &>(other);
 
-        // everything hase to be the same
         if (other_.powerLawIndexBeforeFirstBin_ != powerLawIndexBeforeFirstBin_) return false;
         if (other_.angles_.size() != angles_.size()) return false;
         if (other_.values_.size() != values_.size()) return false;

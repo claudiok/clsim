@@ -27,6 +27,7 @@ i3_add_library(clsim
   private/clsim/*.cxx
   private/geant4/*.cxx
   private/opencl/*.cxx
+  private/test/*.cxx
   USE_TOOLS python boost log4cplus gsl clhep geant4 opencl
   USE_PROJECTS icetray dataio dataclasses phys-services
   )

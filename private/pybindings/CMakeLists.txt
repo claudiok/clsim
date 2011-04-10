@@ -31,8 +31,8 @@ if(BUILD_PYBINDINGS)
     I3CLSimParticleToStepConverter.cxx
     I3CLSimStepToPhotonConverter.cxx
     I3CLSimSimpleGeometry.cxx
-    I3CLSimPhotonSeriesToPhotonSeriesMapConverter.cxx
     I3CLSimParticleParameterization.cxx
+    I3CLSimTester.cxx
     I3Photon.cxx
     module.cxx
     USE_TOOLS boost python log4cplus

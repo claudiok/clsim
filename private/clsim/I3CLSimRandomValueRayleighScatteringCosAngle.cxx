@@ -29,7 +29,7 @@ std::string I3CLSimRandomValueRayleighScatteringCosAngle::GetOpenCLFunction
     "    const float b = 0.835f;\n"
     "    const float p = 1.f/0.835f;\n"
     "    \n"
-    "    const float q = (b+3.f)*(" + uniformRandomCall_co + ")-0.5f/b;\n"
+    "    const float q = (b+3.f)*((" + uniformRandomCall_co + ")-0.5f)/b;\n"
     "    const float d = q*q + p*p*p;\n"
     "    \n"
     "#ifdef USE_NATIVE_MATH\n"

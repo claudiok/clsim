@@ -36,7 +36,7 @@
 
 //   Initialize random number generator 
 //////////////////////////////////////////////////////////////////////////////
-int init_MWC_RNG(uint64_t *x, uint32_t *a, 
+inline int init_MWC_RNG(uint64_t *x, uint32_t *a, 
 				 const uint32_t n_rng,
 				 std::string safeprimes_file,
 				 I3RandomServicePtr randomService)
