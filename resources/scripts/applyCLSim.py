@@ -71,8 +71,7 @@ domAcceptance = clsim.GetIceCubeDOMAcceptance()
 cascadeConverter = clsim.I3CLSimParticleToStepConverterCascadeParameterization(randomService=randomService)
 
 # now set up a list of converters with particle types and valid energy ranges
-parameterizations = \
-[
+parameterizationsMuon = [
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.MuMinus,
                                        fromEnergy=0.5*I3Units.GeV,
@@ -82,13 +81,15 @@ parameterizations = \
                                        forParticleType=dataclasses.I3Particle.MuPlus,
                                        fromEnergy=0.5*I3Units.GeV,
                                        toEnergy=1000.*I3Units.GeV,
-                                       needsLength=True),
+                                       needsLength=True)
+]
 
- # do we need some special handling for neutrons?
- clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
-                                       forParticleType=dataclasses.I3Particle.Neutron,
-                                       fromEnergy=0.0*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+parameterizationsOther = [
+ ## do we need some special handling for neutrons?
+ #clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+ #                                      forParticleType=dataclasses.I3Particle.Neutron,
+ #                                      fromEnergy=0.0*I3Units.GeV,
+ #                                      toEnergy=1000.*I3Units.GeV),
 
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.Hadrons,
@@ -145,19 +146,19 @@ parameterizations = \
                                        toEnergy=1000.*I3Units.GeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.Gamma,
-                                       fromEnergy=0.0*I3Units.GeV,
+                                       fromEnergy=0.5*I3Units.GeV,
                                        toEnergy=1000.*I3Units.GeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.Brems,
-                                       fromEnergy=0.0*I3Units.GeV,
+                                       fromEnergy=0.5*I3Units.GeV,
                                        toEnergy=1000.*I3Units.GeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.DeltaE,
-                                       fromEnergy=0.0*I3Units.GeV,
+                                       fromEnergy=0.5*I3Units.GeV,
                                        toEnergy=1000.*I3Units.GeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.PairProd,
-                                       fromEnergy=0.0*I3Units.GeV,
+                                       fromEnergy=0.5*I3Units.GeV,
                                        toEnergy=1000.*I3Units.GeV)
 ]
 
@@ -178,8 +179,9 @@ tray.AddModule("I3CLSimModule", "clsim",
                MediumProperties=mediumProperties,
                GenerateCherenkovPhotonsWithoutDispersion=False,
                WavelengthGenerationBias=domAcceptance,
-               ParameterizationList=parameterizations,
-               MaxNumParallelEvents=1000,
+               ParameterizationList=parameterizationsMuon+parameterizationsOther,
+               #ParameterizationList=parameterizationsMuon,
+               MaxNumParallelEvents=2500,
                #OpenCLPlatformName="NVIDIA CUDA",
                #OpenCLDeviceName="GeForce GTX 580"
                #OpenCLPlatformName="ATI Stream",

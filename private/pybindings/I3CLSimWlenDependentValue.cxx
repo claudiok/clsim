@@ -35,6 +35,8 @@
 
 #include <boost/preprocessor/seq.hpp>
 #include <icetray/python/std_vector_indexing_suite.hpp>
+#include "const_ptr_helpers.h"
+
 
 using namespace boost::python;
 namespace bp = boost::python;
@@ -86,7 +88,8 @@ void register_I3CLSimWlenDependentValue()
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueWrapper>, shared_ptr<const I3CLSimWlenDependentValue> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueWrapper>, shared_ptr<I3CLSimWlenDependentValue> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueWrapper>, shared_ptr<const I3CLSimWlenDependentValueWrapper> >();
-    
+    utils::register_const_ptr<I3CLSimWlenDependentValue>();
+
 
     // constant value
     {
@@ -111,6 +114,7 @@ void register_I3CLSimWlenDependentValue()
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueConstant>, shared_ptr<const I3CLSimWlenDependentValueConstant> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueConstant>, shared_ptr<I3CLSimWlenDependentValue> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueConstant>, shared_ptr<const I3CLSimWlenDependentValue> >();
+    utils::register_const_ptr<I3CLSimWlenDependentValueConstant>();
 
     
     // from table
@@ -144,6 +148,7 @@ void register_I3CLSimWlenDependentValue()
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueFromTable>, shared_ptr<const I3CLSimWlenDependentValueFromTable> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueFromTable>, shared_ptr<I3CLSimWlenDependentValue> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueFromTable>, shared_ptr<const I3CLSimWlenDependentValue> >();
+    utils::register_const_ptr<I3CLSimWlenDependentValueFromTable>();
 
     
     // scattering length (partic)
@@ -171,6 +176,7 @@ void register_I3CLSimWlenDependentValue()
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueScatLenPartic>, shared_ptr<const I3CLSimWlenDependentValueScatLenPartic> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueScatLenPartic>, shared_ptr<I3CLSimWlenDependentValue> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueScatLenPartic>, shared_ptr<const I3CLSimWlenDependentValue> >();
+    utils::register_const_ptr<I3CLSimWlenDependentValueScatLenPartic>();
 
 
     // refractive index (Quan&Fry)
@@ -222,7 +228,10 @@ void register_I3CLSimWlenDependentValue()
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueRefIndexQuanFry>, shared_ptr<const I3CLSimWlenDependentValueRefIndexQuanFry> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueRefIndexQuanFry>, shared_ptr<I3CLSimWlenDependentValue> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueRefIndexQuanFry>, shared_ptr<const I3CLSimWlenDependentValue> >();
+    utils::register_const_ptr<I3CLSimWlenDependentValueRefIndexQuanFry>();
 
+    
+    
     // refractive index (IceCube)
     {
         bp::class_<
@@ -266,6 +275,7 @@ void register_I3CLSimWlenDependentValue()
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueRefIndexIceCube>, shared_ptr<const I3CLSimWlenDependentValueRefIndexIceCube> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueRefIndexIceCube>, shared_ptr<I3CLSimWlenDependentValue> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueRefIndexIceCube>, shared_ptr<const I3CLSimWlenDependentValue> >();
+    utils::register_const_ptr<I3CLSimWlenDependentValueRefIndexIceCube>();
 
     
     // absorption length (IceCube)
@@ -303,7 +313,8 @@ void register_I3CLSimWlenDependentValue()
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueAbsLenIceCube>, shared_ptr<const I3CLSimWlenDependentValueAbsLenIceCube> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueAbsLenIceCube>, shared_ptr<I3CLSimWlenDependentValue> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueAbsLenIceCube>, shared_ptr<const I3CLSimWlenDependentValue> >();
-    
+    utils::register_const_ptr<I3CLSimWlenDependentValueAbsLenIceCube>();
+
 
     // scattering length (IceCube)
     {
@@ -330,7 +341,8 @@ void register_I3CLSimWlenDependentValue()
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueScatLenIceCube>, shared_ptr<const I3CLSimWlenDependentValueScatLenIceCube> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueScatLenIceCube>, shared_ptr<I3CLSimWlenDependentValue> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueScatLenIceCube>, shared_ptr<const I3CLSimWlenDependentValue> >();
-    
+    utils::register_const_ptr<I3CLSimWlenDependentValueScatLenIceCube>();
+
     
     
 }

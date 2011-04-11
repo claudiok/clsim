@@ -69,8 +69,8 @@ namespace I3CLSimModuleHelper {
     
     I3CLSimRandomValueConstPtr
     makeWavelegthGenerator(I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
-                                     bool generateCherenkovPhotonsWithoutDispersion,
-                                     I3CLSimMediumPropertiesPtr mediumProperties)
+                           bool generateCherenkovPhotonsWithoutDispersion,
+                           I3CLSimMediumPropertiesPtr mediumProperties)
     {
         const double minWlen = mediumProperties->GetMinWavelength();
         const double maxWlen = mediumProperties->GetMaxWavelength();
