@@ -190,13 +190,21 @@ def genMCHistogramsOpenCL(distribution, range, iterations=1000, numBins=1000):
 beta=1.
 mediumProps = clsim.MakeIceCubeMediumProperties()
 domAcceptance = clsim.GetIceCubeDOMAcceptance()
+flatAcceptance = clsim.I3CLSimWlenDependentValueConstant(1.)
 phaseRefIndex = mediumProps.GetPhaseRefractiveIndex(0)
 
 wlen_range = (mediumProps.GetMinWavelength()/I3Units.nanometer, mediumProps.GetMaxWavelength()/I3Units.nanometer)
 
 genWavelength = clsim.makeWavelegthGenerator(domAcceptance, False, mediumProps)
 histGenWavelength = genMCHistogramsOpenCL(genWavelength, range=wlen_range)
+numberOfPhotonsPerMeter = clsim.NumberOfPhotonsPerMeter(phaseRefIndex, domAcceptance, wlen_range[0]*I3Units.nanometer, wlen_range[1]*I3Units.nanometer)
 
+genWavelengthFlat = clsim.makeWavelegthGenerator(flatAcceptance, False, mediumProps)
+histGenWavelengthFlat = genMCHistogramsOpenCL(genWavelengthFlat, range=wlen_range)
+numberOfPhotonsPerMeterFlat = clsim.NumberOfPhotonsPerMeter(phaseRefIndex, flatAcceptance, wlen_range[0]*I3Units.nanometer, wlen_range[1]*I3Units.nanometer)
+
+#genWavelengthFlatNoDispersion = clsim.makeWavelegthGenerator(flatAcceptance, True, mediumProps)
+#histGenWavelengthFlatNoDispersion = genMCHistogramsOpenCL(genWavelengthFlatNoDispersion, range=wlen_range)
 
 ####
 
@@ -222,14 +230,18 @@ ax.plot(wlens, acceptance_OpenCL, linewidth=1., color='r', linestyle='solid', la
 
 
 
-numberOfPhotonsPerMeter=clsim.NumberOfPhotonsPerMeter(phaseRefIndex, domAcceptance, wlen_range[0]*I3Units.nanometer, wlen_range[1]*I3Units.nanometer)
-print "numberOfPhotonsPerMeter=", numberOfPhotonsPerMeter
-addAnnotationToPlot(bx, loc=2, text=r"$\frac{\mathrm{d}N_\mathrm{phot}}{\mathrm{d}l} = %f \mathrm{m}^{-1}$" % (numberOfPhotonsPerMeter))
-
-
+addAnnotationToPlot(bx, loc=2, text=r"$\int_{-\infty}^{\infty} \left( \frac{\mathrm{d}N_\mathrm{phot}}{\mathrm{d}l \mathrm{d}\lambda} \times \epsilon_\mathrm{DOM} \right) \mathrm{d}\lambda = %.1f \, \mathrm{m}^{-1}$" % (numberOfPhotonsPerMeter))
 bx.plot(histGenWavelength["bins"], histGenWavelength["num"]*numberOfPhotonsPerMeter, linewidth=2, color='r', label="MC generated")
+bx.plot(wlens, qe_dom2007a(wlens)*Cherenkov_dN_dXdwlen(wlens, beta)*1.*1e9, linewidth=2., color='k', linestyle='solid', label=r"acceptance $\times$ cherenkov spectrum (python)")
 
-bx.plot(wlens, qe_dom2007a(wlens)*Cherenkov_dN_dXdwlen(wlens, beta)*1.*1e9, linewidth=2., color='k', linestyle='solid', label=r"acceptance with cherenkov spectrum (python)")
+
+addAnnotationToPlot(cx, loc=2, text=r"$\int_{-\infty}^{\infty} \frac{\mathrm{d}N_\mathrm{phot}}{\mathrm{d}l \mathrm{d}\lambda} \mathrm{d}\lambda = %.1f \, \mathrm{m}^{-1}$" % (numberOfPhotonsPerMeterFlat))
+
+#cx.plot(histGenWavelengthFlatNoDispersion["bins"], histGenWavelengthFlatNoDispersion["num"]*numberOfPhotonsPerMeterFlat, linewidth=2, color='b', label="MC generated (no dispersion)")
+cx.plot(histGenWavelengthFlat["bins"], histGenWavelengthFlat["num"]*numberOfPhotonsPerMeterFlat, linewidth=2, color='r', label="MC generated")
+cx.plot(wlens, Cherenkov_dN_dXdwlen(wlens, beta)*1.*1e9, linewidth=2., color='k', linestyle='solid', label=r"cherenkov spectrum (python)")
+
+
 
 #cx.plot(wlens, Cherenkov_dN_dXdwlen(wlens, beta)*1.*1e9, linewidth=3., color='k', linestyle='solid', label=r"cherenkov spectrum beta=1")
 #cx.plot(wlens, Cherenkov_dN_dXdwlen(wlens, 0.76)*1.*1e9, linewidth=1., color='r', linestyle='solid', label=r"cherenkov spectrum beta=0.76")
@@ -247,14 +259,14 @@ ax.set_ylabel("DOM acceptance")
 bx.set_xlim(260.,690.)
 bx.legend()
 bx.grid(True)
-bx.set_xlabel("wavelength $\\lambda [\\mathrm{nm}]$")
-bx.set_ylabel("npe per meter (in 1nm bins)")
+bx.set_xlabel("wavelength $\\lambda^\prime [\\mathrm{nm}]$")
+bx.set_ylabel(r"$\int_{\lambda^\prime}^{\lambda^\prime + 1\,\mathrm{nm}} \left( \frac{\mathrm{d}N_\mathrm{phot}}{\mathrm{d}l \mathrm{d}\lambda} \times \epsilon_\mathrm{DOM} \right) \mathrm{d} \lambda$ [$\mathrm{m}^{-1}$]")
 
 cx.set_xlim(260.,690.)
 cx.legend()
 cx.grid(True)
-cx.set_xlabel("wavelength $\\lambda [\\mathrm{nm}]$")
-cx.set_ylabel("npe per meter (in 1nm bins)")
+cx.set_xlabel("wavelength $\\lambda^\prime [\\mathrm{nm}]$")
+cx.set_ylabel(r"$\int_{\lambda^\prime}^{\lambda^\prime + 1\,\mathrm{nm}} \left( \frac{\mathrm{d}N_\mathrm{phot}}{\mathrm{d}l \mathrm{d}\lambda} \right) \mathrm{d}\lambda$ [$\mathrm{m}^{-1}$]")
 
 
 
