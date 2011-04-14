@@ -235,16 +235,18 @@ inline bool checkForCollision(const float4 photonPosAndTime,
         {
             const unsigned char domNum = *geoLayerToOMNumIndex;
             if (domNum==0xFF) continue; // empty layer for this string
-        
-            const unsigned int domIndex = stringNum*MAX_NUM_DOMS_PER_STRINGS+domNum;
-            const float4 drvec = (const float4)(photonPosAndTime.x - convert_float(geoDomPosX[domIndex])*(GEO_DOM_POS_MAX_ABS_X/32767.f),
-                                                photonPosAndTime.y - convert_float(geoDomPosY[domIndex])*(GEO_DOM_POS_MAX_ABS_Y/32767.f),
-                                                photonPosAndTime.z - convert_float(geoDomPosZ[domIndex])*(GEO_DOM_POS_MAX_ABS_Z/32767.f),
+            
+            float domPosX, domPosY, domPosZ;
+            geometryGetDomPosition(stringNum, domNum, &domPosX, &domPosY, &domPosZ);
+            
+            const float4 drvec = (const float4)(photonPosAndTime.x - domPosX,
+                                                photonPosAndTime.y - domPosY,
+                                                photonPosAndTime.z - domPosZ,
                                                 0.f);
             
             const float dr2     = dot(drvec,drvec);
             const float urdot   = dot(drvec, photonDirAndWlen); // this assumes drvec.w==0
-
+            
             float discr   = sqr(urdot) - dr2 + OM_RADIUS*OM_RADIUS;   // (discr)^2
             
             if (dr2 < OM_RADIUS*OM_RADIUS) // start point inside the OM

@@ -28,8 +28,8 @@ namespace I3CLSimHelper
                                              const std::vector<double> &posY,
                                              const std::vector<double> &posZ,
                                              const double omRadius,
-                                             std::vector<cl_int> &domIDbuffer,
-                                             std::vector<cl_float> &domPosBuffer,
+                                             //std::vector<cl_int> &domIDbuffer,
+                                             //std::vector<cl_float> &domPosBuffer,
                                              std::vector<cl_uchar> &geoLayerToOMNumIndexPerStringSetBuffer,
                                              std::vector<int> &stringIndexToStringIDBuffer
                                              );
@@ -52,8 +52,8 @@ namespace I3CLSimHelper
         code << "// I3CLSimHelper::GenerateGeometrySource()\n";
         code << "\n";
 
-        std::vector<cl_int> domIDbuffer;
-        std::vector<cl_float> domPosBuffer;
+        //std::vector<cl_int> domIDbuffer;
+        //std::vector<cl_float> domPosBuffer;
 
         {
             std::string geo_code;
@@ -65,8 +65,8 @@ namespace I3CLSimHelper
                                                 geometry.GetPosYVector(),
                                                 geometry.GetPosZVector(),
                                                 geometry.GetOMRadius(),
-                                                domIDbuffer,
-                                                domPosBuffer,
+                                                //domIDbuffer,
+                                                //domPosBuffer,
                                                 geoLayerToOMNumIndexPerStringSetBuffer,
                                                 stringIndexToStringIDBuffer
                                                 );
@@ -383,6 +383,122 @@ namespace I3CLSimHelper
         return true;	
     }
     
+    std::string generate_get_dom_position_code(const std::vector<stringStruct> &strings)
+    {
+        std::size_t maxNumDoms=0;
+
+        
+        double geoDomPosMaxAbsX=NAN;
+        double geoDomPosMaxAbsY=NAN;
+        double geoDomPosMaxAbsZ=NAN;
+        for (std::size_t i=0;i<strings.size();++i)
+        {
+            if (strings[i].doms.size() > maxNumDoms) maxNumDoms=strings[i].doms.size();
+            
+            for (unsigned long j=0;j<strings[i].doms.size();++j)
+            {
+                const domStruct &currentDomStruct = strings[i].doms[j];
+                
+                double absX = fabs(currentDomStruct.posX);
+                double absY = fabs(currentDomStruct.posY);
+                double absZ = fabs(currentDomStruct.posZ);
+                
+                if ((absX > geoDomPosMaxAbsX) || isnan(geoDomPosMaxAbsX)) geoDomPosMaxAbsX=absX;
+                if ((absY > geoDomPosMaxAbsY) || isnan(geoDomPosMaxAbsY)) geoDomPosMaxAbsY=absY;
+                if ((absZ > geoDomPosMaxAbsZ) || isnan(geoDomPosMaxAbsZ)) geoDomPosMaxAbsZ=absZ;
+            }
+        }
+
+        
+        std::vector<cl_float> domPosBuffer;
+        
+        domPosBuffer.assign(strings.size()*maxNumDoms*4, NAN);
+        
+        for (std::size_t i=0;i<strings.size();++i)
+        {
+            for (unsigned long j=0;j<strings[i].doms.size();++j)
+            {
+                const domStruct &currentDomStruct = strings[i].doms[j];
+                
+                //domIDbuffer[i*maxNumDoms + j]  = currentDomStruct.domID;
+                domPosBuffer[i*(maxNumDoms*4)+j*4 + 0] = currentDomStruct.posX;
+                domPosBuffer[i*(maxNumDoms*4)+j*4 + 1] = currentDomStruct.posY;
+                domPosBuffer[i*(maxNumDoms*4)+j*4 + 2] = currentDomStruct.posZ;
+                domPosBuffer[i*(maxNumDoms*4)+j*4 + 3] = NAN;
+                
+                //std::cout << "string=" << i << " dom=" << j << ": pos=(" << currentDomStruct.posX << "," << currentDomStruct.posY << "," << currentDomStruct.posZ << ")" << std::endl;
+                
+            }
+        }
+
+        
+        
+        // prepare the output buffer
+        std::ostringstream output(std::ostringstream::out);
+        // write the output buffer
+        output << "// this is auto-generated code created by generate_get_dom_position_code()" << std::endl;
+        output << std::endl;
+        output.setf(std::ios::scientific,std::ios::floatfield);
+        output.precision(std::numeric_limits<float>::digits10+4); // maximum precision for a float
+
+        output << "#define GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS " << maxNumDoms << std::endl;
+        output << "#define GEO_DOM_POS_NUM_STRINGS " << strings.size() << std::endl;
+
+        
+        // we only have a limited amount of constant memory. this needs lots of memory,
+        // so store it as shorts with a known multiplier.
+        output << "#define GEO_DOM_POS_MAX_ABS_X " << geoDomPosMaxAbsX << "f" << std::endl;
+        output << "__constant short geoDomPosX[GEO_DOM_POS_NUM_STRINGS*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS] = {" << std::endl;
+        for (std::size_t i=0;i<strings.size();++i){     
+            for (std::size_t j=0;j<maxNumDoms;++j){    
+                short value = static_cast<short>((domPosBuffer[i*(maxNumDoms*4)+j*4 + 0]/geoDomPosMaxAbsX)*32767.);
+                
+                output << "  " << value << ", // string=" << i << ", dom=" << j << std::endl;
+            }
+        }
+        output << "};" << std::endl;
+        
+        output << "#define GEO_DOM_POS_MAX_ABS_Y " << geoDomPosMaxAbsY << "f" << std::endl;
+        output << "__constant short geoDomPosY[GEO_DOM_POS_NUM_STRINGS*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS] = {" << std::endl;
+        for (std::size_t i=0;i<strings.size();++i){     
+            for (std::size_t j=0;j<maxNumDoms;++j){    
+                short value = static_cast<short>((domPosBuffer[i*(maxNumDoms*4)+j*4 + 1]/geoDomPosMaxAbsY)*32767.);
+                
+                output << "  " << value << ", // string=" << i << ", dom=" << j << std::endl;
+            }
+        }
+        output << "};" << std::endl;
+        
+        output << "#define GEO_DOM_POS_MAX_ABS_Z " << geoDomPosMaxAbsZ << "f" << std::endl;
+        output << "__constant short geoDomPosZ[GEO_DOM_POS_NUM_STRINGS*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS] = {" << std::endl;
+        for (std::size_t i=0;i<strings.size();++i){     
+            for (std::size_t j=0;j<maxNumDoms;++j){    
+                short value = static_cast<short>((domPosBuffer[i*(maxNumDoms*4)+j*4 + 2]/geoDomPosMaxAbsZ)*32767.);
+                
+                output << "  " << value << ", // string=" << i << ", dom=" << j << std::endl;
+            }
+        }
+        output << "};" << std::endl;
+        output << std::endl;
+
+        output << "inline void geometryGetDomPosition(unsigned short stringNum, unsigned char domNum, float *domPosX, float *domPosY, float *domPosZ)" << std::endl;
+        output << "{" << std::endl;
+        output << "    const unsigned int domIndex = stringNum*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS+domNum;" << std::endl;
+        output << "    " << std::endl;
+        output << "    *domPosX = convert_float(geoDomPosX[domIndex])*(GEO_DOM_POS_MAX_ABS_X/32767.f);" << std::endl;
+        output << "    *domPosY = convert_float(geoDomPosY[domIndex])*(GEO_DOM_POS_MAX_ABS_Y/32767.f);" << std::endl;
+        output << "    *domPosZ = convert_float(geoDomPosZ[domIndex])*(GEO_DOM_POS_MAX_ABS_Z/32767.f);" << std::endl;
+        output << "}" << std::endl;
+        output << std::endl;
+        
+        
+        
+        
+        output << "// end of auto-generated code created by generate_get_dom_position_code()" << std::endl;
+        output << std::endl;
+        return output.str();
+    }
+    
     
     bool write_geometry_code_and_fill_buffer(std::string &code, 
                                              const std::vector<int> &stringIDs,
@@ -391,8 +507,8 @@ namespace I3CLSimHelper
                                              const std::vector<double> &posY,
                                              const std::vector<double> &posZ,
                                              const double omRadius,
-                                             std::vector<cl_int> &domIDbuffer,
-                                             std::vector<cl_float> &domPosBuffer,
+                                             //std::vector<cl_int> &domIDbuffer,
+                                             //std::vector<cl_float> &domPosBuffer,
                                              std::vector<cl_uchar> &geoLayerToOMNumIndexPerStringSetBuffer,
                                              std::vector<int> &stringIndexToStringIDBuffer
                                              )
@@ -410,17 +526,15 @@ namespace I3CLSimHelper
         
         std::set<int> stringIDSet;
         BOOST_FOREACH(int stringID, stringIDs) {stringIDSet.insert(stringID);}
-        unsigned long numberOfStrings = stringIDSet.size();
         
         #define MAX_SUPPORTED_NUM_STRINGS 0xFFFF-1
-        if (numberOfStrings >= MAX_SUPPORTED_NUM_STRINGS) {
+        if (stringIDSet.size() >= MAX_SUPPORTED_NUM_STRINGS) {
             std::cerr << "More than " << MAX_SUPPORTED_NUM_STRINGS << " are not supported." << std::endl;
             return false;
         }
         
-        std::vector<stringStruct> strings(numberOfStrings);
+        std::vector<stringStruct> strings(stringIDSet.size());
         unsigned int stringIndex=0;
-        unsigned long maxNumDoms=0;
         double stringMaxR=NAN;
         BOOST_FOREACH(int stringID, stringIDSet)
         {
@@ -462,8 +576,6 @@ namespace I3CLSimHelper
             currentStringStruct.meanX /= static_cast<double>(numDoms);
             currentStringStruct.meanY /= static_cast<double>(numDoms);
             
-            if (numDoms > maxNumDoms) maxNumDoms=numDoms;
-            
             log_trace("String %u has minZ=%f, maxZ=%f, numDoms=%lu",
                       stringIndex, currentStringStruct.minZ, currentStringStruct.maxZ,
                       numDoms);
@@ -491,7 +603,7 @@ namespace I3CLSimHelper
             ++stringIndex;
         }
         
-        log_trace("Number of strings is %lu", numberOfStrings);
+        log_trace("Number of strings is %zu", strings.size());
         
         // Try to split the detector into xy "cells" with 0 or 1 strings per cell.
         // We do not need to optimize this, so we do a brute froce approach:
@@ -636,49 +748,6 @@ namespace I3CLSimHelper
         }
         
         
-        double geoDomPosMaxAbsX=NAN;
-        double geoDomPosMaxAbsY=NAN;
-        double geoDomPosMaxAbsZ=NAN;
-        for (sizeType i=0;i<numberOfStrings;++i)
-        {
-            for (unsigned long j=0;j<strings[i].doms.size();++j)
-            {
-                domStruct &currentDomStruct = strings[i].doms[j];
-                
-                double absX = fabs(currentDomStruct.posX);
-                double absY = fabs(currentDomStruct.posY);
-                double absZ = fabs(currentDomStruct.posZ);
-                
-                if ((absX > geoDomPosMaxAbsX) || isnan(geoDomPosMaxAbsX)) geoDomPosMaxAbsX=absX;
-                if ((absY > geoDomPosMaxAbsY) || isnan(geoDomPosMaxAbsY)) geoDomPosMaxAbsY=absY;
-                if ((absZ > geoDomPosMaxAbsZ) || isnan(geoDomPosMaxAbsZ)) geoDomPosMaxAbsZ=absZ;
-            }
-        }
-        
-        
-        
-        // dom information goes to a memory buffer (i.e. global memory)
-        
-        domIDbuffer.assign(numberOfStrings*maxNumDoms, 0);
-        domPosBuffer.assign(numberOfStrings*maxNumDoms*4, NAN);
-        
-        for (sizeType i=0;i<numberOfStrings;++i)
-        {
-            for (unsigned long j=0;j<strings[i].doms.size();++j)
-            {
-                domStruct &currentDomStruct = strings[i].doms[j];
-                
-                domIDbuffer[i*maxNumDoms + j]  = currentDomStruct.domID;
-                domPosBuffer[i*(maxNumDoms*4)+j*4 + 0] = currentDomStruct.posX;
-                domPosBuffer[i*(maxNumDoms*4)+j*4 + 1] = currentDomStruct.posY;
-                domPosBuffer[i*(maxNumDoms*4)+j*4 + 2] = currentDomStruct.posZ;
-                domPosBuffer[i*(maxNumDoms*4)+j*4 + 3] = NAN;
-                
-                //std::cout << "string=" << i << " dom=" << j << ": pos=(" << currentDomStruct.posX << "," << currentDomStruct.posY << "," << currentDomStruct.posZ << ")" << std::endl;
-                
-            }
-        }
-        
         unsigned int geoLayerToOMNumIndexPerStringSetBuffer_size = ((numStringSets*maxLayerNum)/64)+1;
         geoLayerToOMNumIndexPerStringSetBuffer_size *= 64;
         log_debug("BSize: %u -> %u", numStringSets*maxLayerNum, geoLayerToOMNumIndexPerStringSetBuffer_size);
@@ -690,8 +759,8 @@ namespace I3CLSimHelper
         }
         
         // initialize the stringIndex to stringID buffer
-        stringIndexToStringIDBuffer.resize(numberOfStrings);
-        for (unsigned int i=0;i<numberOfStrings;++i)
+        stringIndexToStringIDBuffer.resize(strings.size());
+        for (std::size_t i=0;i<strings.size();++i)
         {
             stringIndexToStringIDBuffer[i] = strings[i].stringID;
         }
@@ -709,9 +778,13 @@ namespace I3CLSimHelper
         output.setf(std::ios::scientific,std::ios::floatfield);
         output.precision(std::numeric_limits<float>::digits10+4); // maximum precision for a float
         
+
+        // the dom position lookup code (i.e. (stringNum,domNum)->(posX, posY, posZ) )
+        output << generate_get_dom_position_code(strings);
         
-        output << "#define NUM_STRINGS " << numberOfStrings << std::endl;
-        output << "#define MAX_NUM_DOMS_PER_STRINGS " << maxNumDoms << std::endl;
+        
+        // all the other data
+        output << "#define NUM_STRINGS " << strings.size() << std::endl;
         output << "#define OM_RADIUS " << omRadius << "f" << std::endl;
         
         output << "#define GEO_CELL_NUM_X " << cellGridNumX << std::endl;
@@ -727,28 +800,28 @@ namespace I3CLSimHelper
         output << std::endl;
         
         //output << "__constant const short geoStringIDs[NUM_STRINGS] = {" << std::endl;
-        //for (sizeType j=0;j<numberOfStrings;++j){     
+        //for (sizeType j=0;j<strings.size();++j){     
         //	output << "  " << strings[j].stringID << ", " << std::endl;
         //}
         //output << "};" << std::endl;
         //output << std::endl;
         
         output << "__constant unsigned char geoStringNumDoms[NUM_STRINGS] = {" << std::endl;
-        for (sizeType j=0;j<numberOfStrings;++j){     
+        for (sizeType j=0;j<strings.size();++j){     
             output << "  " << strings[j].doms.size() << ", " << std::endl;
         }
         output << "};" << std::endl;
         output << std::endl;
         
         output << "__constant float geoStringPosX[NUM_STRINGS] = {" << std::endl;
-        for (sizeType j=0;j<numberOfStrings;++j){     
+        for (sizeType j=0;j<strings.size();++j){     
             output << "  " << strings[j].meanX << "f, " << std::endl;
         }
         output << "};" << std::endl;
         output << std::endl;
         
         output << "__constant float geoStringPosY[NUM_STRINGS] = {" << std::endl;
-        for (sizeType j=0;j<numberOfStrings;++j){     
+        for (sizeType j=0;j<strings.size();++j){     
             output << "  " << strings[j].meanY << "f, " << std::endl;
         }
         output << "};" << std::endl;
@@ -756,61 +829,26 @@ namespace I3CLSimHelper
         
         output << "#define GEO_STRING_MAX_RADIUS " << stringMaxR << "f" << std::endl;
         output << "__constant float geoStringRadius[NUM_STRINGS] = {" << std::endl;
-        for (sizeType j=0;j<numberOfStrings;++j){     
+        for (sizeType j=0;j<strings.size();++j){     
             output << "  " << strings[j].maxR << "f, " << std::endl;
         }
         output << "};" << std::endl;
         output << std::endl;
         
         output << "__constant float geoStringMinZ[NUM_STRINGS] = {" << std::endl;
-        for (sizeType j=0;j<numberOfStrings;++j){     
+        for (sizeType j=0;j<strings.size();++j){     
             output << "  " << strings[j].minZ << "f, " << std::endl;
         }
         output << "};" << std::endl;
         output << std::endl;
         
         output << "__constant float geoStringMaxZ[NUM_STRINGS] = {" << std::endl;
-        for (sizeType j=0;j<numberOfStrings;++j){     
+        for (sizeType j=0;j<strings.size();++j){     
             output << "  " << strings[j].maxZ << "f, " << std::endl;
         }
         output << "};" << std::endl;
         output << std::endl;
-        
-        
-        // we only have a limited amount of constant memory. this needs lots of memory,
-        // so store it as shorts with a known multiplier.
-        output << "#define GEO_DOM_POS_MAX_ABS_X " << geoDomPosMaxAbsX << "f" << std::endl;
-        output << "__constant short geoDomPosX[NUM_STRINGS*MAX_NUM_DOMS_PER_STRINGS] = {" << std::endl;
-        for (sizeType i=0;i<numberOfStrings;++i){     
-            for (sizeType j=0;j<maxNumDoms;++j){    
-                short value = static_cast<short>((domPosBuffer[i*(maxNumDoms*4)+j*4 + 0]/geoDomPosMaxAbsX)*32767.);
-                
-                output << "  " << value << ", // string=" << i << ", dom=" << j << std::endl;
-            }
-        }
-        output << "};" << std::endl;
-        
-        output << "#define GEO_DOM_POS_MAX_ABS_Y " << geoDomPosMaxAbsY << "f" << std::endl;
-        output << "__constant short geoDomPosY[NUM_STRINGS*MAX_NUM_DOMS_PER_STRINGS] = {" << std::endl;
-        for (sizeType i=0;i<numberOfStrings;++i){     
-            for (sizeType j=0;j<maxNumDoms;++j){    
-                short value = static_cast<short>((domPosBuffer[i*(maxNumDoms*4)+j*4 + 1]/geoDomPosMaxAbsY)*32767.);
-                
-                output << "  " << value << ", // string=" << i << ", dom=" << j << std::endl;
-            }
-        }
-        output << "};" << std::endl;
-        
-        output << "#define GEO_DOM_POS_MAX_ABS_Z " << geoDomPosMaxAbsZ << "f" << std::endl;
-        output << "__constant short geoDomPosZ[NUM_STRINGS*MAX_NUM_DOMS_PER_STRINGS] = {" << std::endl;
-        for (sizeType i=0;i<numberOfStrings;++i){     
-            for (sizeType j=0;j<maxNumDoms;++j){    
-                short value = static_cast<short>((domPosBuffer[i*(maxNumDoms*4)+j*4 + 2]/geoDomPosMaxAbsZ)*32767.);
-                
-                output << "  " << value << ", // string=" << i << ", dom=" << j << std::endl;
-            }
-        }
-        output << "};" << std::endl;
+
         
         output << "__constant unsigned short geoCellIndex[GEO_CELL_NUM_X*GEO_CELL_NUM_Y] = {" << std::endl;
         for (sizeType j=0;j<cellGridNumY;++j){
@@ -827,7 +865,7 @@ namespace I3CLSimHelper
         
         
         output << "__constant unsigned char geoStringInStringSet[NUM_STRINGS] = {" << std::endl;
-        for (unsigned int i=0;i<numberOfStrings;++i)
+        for (unsigned int i=0;i<strings.size();++i)
         {
             output << "  " << (int)stringInStringSet[i] << ", " << std::endl;
         }
