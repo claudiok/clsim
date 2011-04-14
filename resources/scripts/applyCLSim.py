@@ -177,6 +177,7 @@ tray.AddModule("I3PropagatorMMC","propagate",
 tray.AddModule("I3CLSimModule", "clsim",
                RandomService=randomService,
                MediumProperties=mediumProperties,
+               IgnoreNonIceCubeOMNumbers=True, # ignore AMANDA and IceTop OMKeys (do NOT use for any other detector!)
                GenerateCherenkovPhotonsWithoutDispersion=False,
                WavelengthGenerationBias=domAcceptance,
                ParameterizationList=parameterizationsMuon+parameterizationsOther,

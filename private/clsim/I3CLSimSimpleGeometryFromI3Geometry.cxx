@@ -1,3 +1,6 @@
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 #include "clsim/I3CLSimSimpleGeometryFromI3Geometry.h"
 
 #include <stdexcept>
@@ -26,6 +29,10 @@ ignoreDomIDsSmallerThan_(ignoreDomIDsSmallerThan),
 ignoreDomIDsLargerThan_(ignoreDomIDsLargerThan)
 {
     if (!geometry) throw std::runtime_error("Received NULL geometry pointer!");
+    
+    log_debug("Ignoring StringNum<%" PRIi32 ", StringNum>%" PRIi32 ", OMNum<%" PRIu32 ", OMNum>%" PRIu32 ".",
+              ignoreStringIDsSmallerThan, ignoreStringIDsLargerThan,
+              ignoreDomIDsSmallerThan, ignoreDomIDsLargerThan);
     
     numOMs_=0;
     BOOST_FOREACH(const I3OMGeoMap::value_type &i, geometry->omgeo)

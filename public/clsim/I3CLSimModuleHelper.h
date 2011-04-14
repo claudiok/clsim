@@ -59,6 +59,9 @@ namespace I3CLSimModuleHelper {
                      I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
                      I3CLSimStepToPhotonConverterOpenCLPtr openCLconverter,
                      const I3CLSimParticleParameterizationSeries &parameterizationList,
+                     const std::string &physicsListName,
+                     double maxBetaChangePerStep,
+                     double maxNumPhotonsPerStep,
                      bool multiprocessor=false);
 
     I3CLSimRandomValueConstPtr

@@ -464,6 +464,10 @@ namespace I3CLSimHelper
             
             if (numDoms > maxNumDoms) maxNumDoms=numDoms;
             
+            log_trace("String %u has minZ=%f, maxZ=%f, numDoms=%lu",
+                      stringIndex, currentStringStruct.minZ, currentStringStruct.maxZ,
+                      numDoms);
+
             // calculate the string radius (will be the OM radius for a straight string)
             for (unsigned long i=0;i<numEntries;++i)
             {
@@ -534,6 +538,8 @@ namespace I3CLSimHelper
         
         double minZHint, maxZHint;
         findOverallStringMinMaxZ(strings, omRadius, minZHint, maxZHint);
+        
+        log_trace("overall minZ=%fm, maxZ=%fm", minZHint, maxZHint);
         
         unsigned int maxLayerNum=0;
         for (unsigned int stringNum=0;stringNum<strings.size();++stringNum)
@@ -675,7 +681,7 @@ namespace I3CLSimHelper
         
         unsigned int geoLayerToOMNumIndexPerStringSetBuffer_size = ((numStringSets*maxLayerNum)/64)+1;
         geoLayerToOMNumIndexPerStringSetBuffer_size *= 64;
-        log_info("BSize: %u -> %u", numStringSets*maxLayerNum, geoLayerToOMNumIndexPerStringSetBuffer_size);
+        log_debug("BSize: %u -> %u", numStringSets*maxLayerNum, geoLayerToOMNumIndexPerStringSetBuffer_size);
         
         geoLayerToOMNumIndexPerStringSetBuffer.assign(geoLayerToOMNumIndexPerStringSetBuffer_size,0xFF);
         for (unsigned int i=0;i<numStringSets*maxLayerNum;++i)

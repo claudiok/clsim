@@ -311,6 +311,9 @@ namespace I3CLSimModuleHelper {
                                                              I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
                                                              I3CLSimStepToPhotonConverterOpenCLPtr openCLconverter,
                                                              const I3CLSimParticleParameterizationSeries &parameterizationList,
+                                                             const std::string &physicsListName,
+                                                             double maxBetaChangePerStep,
+                                                             double maxNumPhotonsPerStep,
                                                              bool multiprocessor)
     {
         I3CLSimParticleToStepConverterGeant4Ptr conv
@@ -318,8 +321,9 @@ namespace I3CLSimModuleHelper {
          new I3CLSimParticleToStepConverterGeant4
          (
           rng->Integer(900000000), // TODO: eventually Geant4 should use the IceTray rng!!
-          //"QGSP_BERT_EMV"
-          "QGSP_BERT"
+          physicsListName,
+          maxBetaChangePerStep,
+          maxNumPhotonsPerStep
          )
         );
         

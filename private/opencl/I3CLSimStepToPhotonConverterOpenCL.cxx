@@ -482,7 +482,7 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
         throw I3CLSimStepToPhotonConverter_exception("OpenCL error: could build the OpenCL program!");;
 	}
     log_debug("code compiled.");
-    
+
 	// instantiate the command queue
     log_debug("Initializing..");
 	try {
@@ -645,8 +645,8 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
             
             if (numberOfGeneratedPhotons > maxNumOutputPhotons_)
             {
-                log_warn("Maximum number of photons exceeded, only receiving %" PRIu32 " photons",
-                         maxNumOutputPhotons_);
+                log_warn("Maximum number of photons exceeded, only receiving %" PRIu32 " of %" PRIu32 " photons",
+                         maxNumOutputPhotons_, numberOfGeneratedPhotons);
                 numberOfGeneratedPhotons = maxNumOutputPhotons_;
             }
             

@@ -35,8 +35,11 @@
 
 #include "clsim/I3CLSimWlenDependentValueConstant.h"
 
+#include "clsim/I3CLSimParticleToStepConverterGeant4.h"
+
 #include "clsim/I3CLSimModuleHelper.h"
 
+#include <limits>
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
@@ -106,6 +109,32 @@ geometryIsConfigured_(false)
     AddParameter("OpenCLDeviceName",
                  "Name of the OpenCL device. Leave empty for auto-selection.",
                  openCLDeviceName_);
+
+    DOMRadius_=0.16510*I3Units::m; // 13 inch diameter
+    AddParameter("DOMRadius",
+                 "The DOM radius used during photon tracking.",
+                 DOMRadius_);
+
+    ignoreNonIceCubeOMNumbers_=false;
+    AddParameter("IgnoreNonIceCubeOMNumbers",
+                 "Ignore string numbers < 1 and OM numbers > 60. (AMANDA and IceTop)",
+                 ignoreNonIceCubeOMNumbers_);
+
+    geant4PhysicsListName_="QGSP_BERT";
+    AddParameter("Geant4PhysicsListName",
+                 "Geant4 physics list name. Examples are \"QGSP_BERT_EMV\" and \"QGSP_BERT\"",
+                 geant4PhysicsListName_);
+
+    geant4MaxBetaChangePerStep_=I3CLSimParticleToStepConverterGeant4::default_maxBetaChangePerStep;
+    AddParameter("Geant4MaxBetaChangePerStep",
+                 "Maximum change of beta=v/c per Geant4 step.",
+                 geant4MaxBetaChangePerStep_);
+
+    geant4MaxNumPhotonsPerStep_=I3CLSimParticleToStepConverterGeant4::default_maxNumPhotonsPerStep;
+    AddParameter("Geant4MaxNumPhotonsPerStep",
+                 "Approximate maximum number of Cherenkov photons generated per step by Geant4.",
+                 geant4MaxNumPhotonsPerStep_);
+
 
 
     // add an outbox
@@ -191,6 +220,13 @@ void I3CLSimModule::Configure()
 
     GetParameter("OpenCLPlatformName", openCLPlatformName_);
     GetParameter("OpenCLDeviceName", openCLDeviceName_);
+
+    GetParameter("DOMRadius", DOMRadius_);
+    GetParameter("IgnoreNonIceCubeOMNumbers", ignoreNonIceCubeOMNumbers_);
+
+    GetParameter("Geant4PhysicsListName", geant4PhysicsListName_);
+    GetParameter("Geant4MaxBetaChangePerStep", geant4MaxBetaChangePerStep_);
+    GetParameter("Geant4MaxNumPhotonsPerStep", geant4MaxNumPhotonsPerStep_);
 
     if (!wavelengthGenerationBias_) {
         wavelengthGenerationBias_ = I3CLSimWlenDependentValueConstantConstPtr(new I3CLSimWlenDependentValueConstant(1.));
@@ -335,11 +371,28 @@ void I3CLSimModule::Geometry(I3FramePtr frame)
     if (!geometryObject) log_fatal("Geometry frame does not have an I3Geometry object!");
     
     log_info("Converting geometry..");
-    geometry_ = I3CLSimSimpleGeometryFromI3GeometryPtr
-    (
-     new I3CLSimSimpleGeometryFromI3Geometry(43.18*I3Units::cm/2., geometryObject)
-    );
-
+    if (ignoreNonIceCubeOMNumbers_) 
+    {    
+        geometry_ = I3CLSimSimpleGeometryFromI3GeometryPtr
+        (
+         new I3CLSimSimpleGeometryFromI3Geometry(DOMRadius_, geometryObject,
+                                                 1,                                     // ignoreStringIDsSmallerThan
+                                                 std::numeric_limits<int32_t>::max(),   // ignoreStringIDsLargerThan
+                                                 1,                                     // ignoreDomIDsSmallerThan
+                                                 60)                                    // ignoreDomIDsLargerThan
+        );
+    }
+    else
+    {
+        geometry_ = I3CLSimSimpleGeometryFromI3GeometryPtr
+        (
+         new I3CLSimSimpleGeometryFromI3Geometry(DOMRadius_, geometryObject,
+                                                 std::numeric_limits<int32_t>::min(),   // ignoreStringIDsSmallerThan
+                                                 std::numeric_limits<int32_t>::max(),   // ignoreStringIDsLargerThan
+                                                 std::numeric_limits<uint32_t>::min(),  // ignoreDomIDsSmallerThan
+                                                 std::numeric_limits<uint32_t>::max())  // ignoreDomIDsLargerThan
+        );
+    }
     
     log_info("Initializing CLSim..");
     // initialize OpenCL
@@ -360,6 +413,9 @@ void I3CLSimModule::Geometry(I3FramePtr frame)
                                           wavelengthGenerationBias_,
                                           openCLStepsToPhotonsConverter_,
                                           parameterizationList_,
+                                          geant4PhysicsListName_,
+                                          geant4MaxBetaChangePerStep_,
+                                          geant4MaxNumPhotonsPerStep_,
                                           false); // the multiprocessor version is not yet safe to use
 
     

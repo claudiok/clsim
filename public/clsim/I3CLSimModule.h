@@ -122,6 +122,12 @@ private:
     /// Parameter: Name of the OpenCL device. Leave empty for auto-selection.
     std::string openCLDeviceName_;
 
+    /// Parameter: The DOM radius used during photon tracking.
+    double DOMRadius_;
+
+    /// Parameter: Ignore string numbers < 1 and OM numbers > 60. (AMANDA and IceTop)
+    bool ignoreNonIceCubeOMNumbers_;
+
     /// Parameter: Name of the I3MCTree frame object. All particles except neutrinos will be read from this tree.
     std::string MCTreeName_;
     
@@ -130,6 +136,15 @@ private:
     
     /// Parameter: If set to True, muons will not be propagated.
     bool ignoreMuons_;
+    
+    /// Parameter: Geant4 physics list name. Examples are "QGSP_BERT_EMV" and "QGSP_BERT".
+    std::string geant4PhysicsListName_;
+
+    /// Parameter: Maximum change of beta=v/c per Geant4 step.
+    double geant4MaxBetaChangePerStep_;
+
+    /// Parameter: Approximate maximum number of Cherenkov photons generated per step by Geant4.
+    double geant4MaxNumPhotonsPerStep_;
     
     
 private:
