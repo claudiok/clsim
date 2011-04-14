@@ -43,13 +43,13 @@ bool I3CLSimParticleToStepConverterGeant4::thereCanBeOnlyOneGeant4=false;
 const uint32_t I3CLSimParticleToStepConverterGeant4::default_maxQueueItems=5;
 const std::string I3CLSimParticleToStepConverterGeant4::default_physicsListName="QGSP_BERT_EMV";
 const double I3CLSimParticleToStepConverterGeant4::default_maxBetaChangePerStep=10.*perCent;
-const double I3CLSimParticleToStepConverterGeant4::default_maxNumPhotonsPerStep=200.;
+const uint32_t I3CLSimParticleToStepConverterGeant4::default_maxNumPhotonsPerStep=200;
 
 
 I3CLSimParticleToStepConverterGeant4::I3CLSimParticleToStepConverterGeant4(uint32_t randomSeed,
                                                                            std::string physicsListName,
                                                                            double maxBetaChangePerStep,
-                                                                           double maxNumPhotonsPerStep,
+                                                                           uint32_t maxNumPhotonsPerStep,
                                                                            uint32_t maxQueueItems)
 :
 queueToGeant4_(new I3CLSimQueue<ToGeant4Pair_t>(0)),

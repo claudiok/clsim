@@ -11,7 +11,7 @@ class TrkOpticalPhysics : public G4VPhysicsConstructor
 public:
     TrkOpticalPhysics(const G4String& name,
                       double maxBetaChangePerStep,
-                      double maxNumPhotonsPerStep,
+                      uint32_t maxNumPhotonsPerStep,
                       I3CLSimWlenDependentValueConstPtr wlenBias);
     virtual ~TrkOpticalPhysics();
     
@@ -23,7 +23,7 @@ protected:
     
 private:
     double maxBetaChangePerStep_;
-    double maxNumPhotonsPerStep_;
+    uint32_t maxNumPhotonsPerStep_;
     I3CLSimWlenDependentValueConstPtr wlenBias_;
 };
 

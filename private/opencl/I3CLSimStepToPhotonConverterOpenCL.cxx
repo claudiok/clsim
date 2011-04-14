@@ -553,7 +553,7 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
 
 
     I3CLSimStepSeriesConstPtr steps;
-    uint32_t stepsIdentifier;
+    uint32_t stepsIdentifier=0;
 
     // start the main loop
     for (;;)

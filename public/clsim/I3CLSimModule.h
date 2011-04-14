@@ -144,7 +144,7 @@ private:
     double geant4MaxBetaChangePerStep_;
 
     /// Parameter: Approximate maximum number of Cherenkov photons generated per step by Geant4.
-    double geant4MaxNumPhotonsPerStep_;
+    uint32_t geant4MaxNumPhotonsPerStep_;
     
     
 private:

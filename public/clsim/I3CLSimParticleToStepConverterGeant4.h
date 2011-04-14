@@ -28,13 +28,13 @@ public:
     
     static const std::string default_physicsListName;
     static const double default_maxBetaChangePerStep;
-    static const double default_maxNumPhotonsPerStep;
+    static const uint32_t default_maxNumPhotonsPerStep;
     static const uint32_t default_maxQueueItems;
     
     I3CLSimParticleToStepConverterGeant4(uint32_t randomSeed,
                                          std::string physicsListName=default_physicsListName,
                                          double maxBetaChangePerStep=default_maxBetaChangePerStep,
-                                         double maxNumPhotonsPerStep=default_maxNumPhotonsPerStep,
+                                         uint32_t maxNumPhotonsPerStep=default_maxNumPhotonsPerStep,
                                          uint32_t maxQueueItems=default_maxQueueItems
                                          );
     virtual ~I3CLSimParticleToStepConverterGeant4();
@@ -163,7 +163,7 @@ private:
     uint32_t randomSeed_;
     std::string physicsListName_;
     double maxBetaChangePerStep_;
-    double maxNumPhotonsPerStep_;
+    uint32_t maxNumPhotonsPerStep_;
     
     bool initialized_;
     uint64_t bunchSizeGranularity_;

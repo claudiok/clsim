@@ -183,7 +183,7 @@ void register_I3CLSimParticleToStepConverter()
          uint32_t,
          std::string,
          double,
-         double,
+         uint32_t,
          uint32_t
          >(
            (

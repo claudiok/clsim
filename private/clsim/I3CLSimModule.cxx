@@ -83,7 +83,7 @@ geometryIsConfigured_(false)
     maxNumParallelEvents_=1000;
     AddParameter("MaxNumParallelEvents",
                  "Maximum number of events that will be processed by the GPU in parallel.",
-                 MCTreeName_);
+                 maxNumParallelEvents_);
 
     MCTreeName_="I3MCTree";
     AddParameter("MCTreeName",

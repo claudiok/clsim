@@ -61,7 +61,7 @@ namespace I3CLSimModuleHelper {
                      const I3CLSimParticleParameterizationSeries &parameterizationList,
                      const std::string &physicsListName,
                      double maxBetaChangePerStep,
-                     double maxNumPhotonsPerStep,
+                     uint32_t maxNumPhotonsPerStep,
                      bool multiprocessor=false);
 
     I3CLSimRandomValueConstPtr

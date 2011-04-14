@@ -28,8 +28,6 @@ namespace I3CLSimHelper
                                              const std::vector<double> &posY,
                                              const std::vector<double> &posZ,
                                              const double omRadius,
-                                             //std::vector<cl_int> &domIDbuffer,
-                                             //std::vector<cl_float> &domPosBuffer,
                                              std::vector<cl_uchar> &geoLayerToOMNumIndexPerStringSetBuffer,
                                              std::vector<int> &stringIndexToStringIDBuffer
                                              );
@@ -52,9 +50,6 @@ namespace I3CLSimHelper
         code << "// I3CLSimHelper::GenerateGeometrySource()\n";
         code << "\n";
 
-        //std::vector<cl_int> domIDbuffer;
-        //std::vector<cl_float> domPosBuffer;
-
         {
             std::string geo_code;
             bool ret = 
@@ -65,8 +60,6 @@ namespace I3CLSimHelper
                                                 geometry.GetPosYVector(),
                                                 geometry.GetPosZVector(),
                                                 geometry.GetOMRadius(),
-                                                //domIDbuffer,
-                                                //domPosBuffer,
                                                 geoLayerToOMNumIndexPerStringSetBuffer,
                                                 stringIndexToStringIDBuffer
                                                 );
@@ -383,11 +376,60 @@ namespace I3CLSimHelper
         return true;	
     }
     
+    namespace {
+        bool isStringInTemplate(const stringStruct &string,
+                                const std::vector<std::vector<double> > &allTemplatePositionsX,
+                                const std::vector<std::vector<double> > &allTemplatePositionsY,
+                                const std::vector<std::vector<double> > &allTemplatePositionsZ,
+                                double offsetX, double offsetY,
+                                std::size_t &templateNumber
+                                )
+        {
+            if (allTemplatePositionsX.size() != allTemplatePositionsY.size()) log_fatal("Internal error. template sizes differ x!=y (1)");
+            if (allTemplatePositionsX.size() != allTemplatePositionsZ.size()) log_fatal("Internal error. template sizes differ x!=z (1)");
+            
+            const double epsilon=1e-4*I3Units::m;
+            
+            for (std::size_t i=0;i<allTemplatePositionsX.size();++i)
+            {
+                const std::vector<double> &templateXPositions = allTemplatePositionsX[i];
+                const std::vector<double> &templateYPositions = allTemplatePositionsY[i];
+                const std::vector<double> &templateZPositions = allTemplatePositionsZ[i];
+                if (templateXPositions.size() != templateYPositions.size()) log_fatal("Internal error. template sizes differ x!=y (2)");
+                if (templateXPositions.size() != templateZPositions.size()) log_fatal("Internal error. template sizes differ x!=z (2)");
+
+                if (string.doms.size() != templateXPositions.size()) continue; // cannot match
+                
+                for (std::size_t j=0;j<string.doms.size();++j)
+                {
+                    const domStruct &currentDomStruct = string.doms[j];
+                    
+                    const double diffX = std::abs(templateXPositions[j]-(currentDomStruct.posX-offsetX));
+                    const double diffY = std::abs(templateYPositions[j]-(currentDomStruct.posY-offsetY));
+                    const double diffZ = std::abs(templateZPositions[j]-(currentDomStruct.posZ));
+                    
+                    if (diffX>epsilon) break; // does not match
+                    if (diffY>epsilon) break; // does not match
+                    if (diffZ>epsilon) break; // does not match
+                    
+                    // match!
+                    templateNumber=i;
+                    return true;
+                }
+            }
+
+            return false; // no match found
+        }
+        
+    }
+    
     std::string generate_get_dom_position_code(const std::vector<stringStruct> &strings)
     {
-        std::size_t maxNumDoms=0;
+        std::vector<double> stringMeanPosX(strings.size(), 0.);
+        std::vector<double> stringMeanPosY(strings.size(), 0.);
+        std::vector<std::size_t> stringMeanPosXYEntries(strings.size(), 0);
 
-        
+        std::size_t maxNumDoms=0;
         double geoDomPosMaxAbsX=NAN;
         double geoDomPosMaxAbsY=NAN;
         double geoDomPosMaxAbsZ=NAN;
@@ -406,9 +448,72 @@ namespace I3CLSimHelper
                 if ((absX > geoDomPosMaxAbsX) || isnan(geoDomPosMaxAbsX)) geoDomPosMaxAbsX=absX;
                 if ((absY > geoDomPosMaxAbsY) || isnan(geoDomPosMaxAbsY)) geoDomPosMaxAbsY=absY;
                 if ((absZ > geoDomPosMaxAbsZ) || isnan(geoDomPosMaxAbsZ)) geoDomPosMaxAbsZ=absZ;
+                
+                stringMeanPosXYEntries[i]++;
+                stringMeanPosX[i]+=currentDomStruct.posX;
+                stringMeanPosY[i]+=currentDomStruct.posY;
             }
         }
 
+        for (std::size_t i=0;i<strings.size();++i)
+        {
+            stringMeanPosX[i] /= static_cast<double>(stringMeanPosXYEntries[i]);
+            stringMeanPosY[i] /= static_cast<double>(stringMeanPosXYEntries[i]);
+        }
+        
+        std::vector<std::size_t> stringInTemplate(strings.size());
+        std::vector<std::vector<double> > templatePositionsX;
+        std::vector<std::vector<double> > templatePositionsY;
+        std::vector<std::vector<double> > templatePositionsZ;
+        
+        for (std::size_t i=0;i<strings.size();++i)
+        {
+            const bool stringIsInTemplate = 
+            isStringInTemplate(strings[i],
+                               templatePositionsX,
+                               templatePositionsY,
+                               templatePositionsZ,
+                               stringMeanPosX[i], stringMeanPosY[i],
+                               stringInTemplate[i]);
+            
+            if (stringIsInTemplate) continue; // nothing else to do, string is now registered in stringInTemplate[i]
+            
+            // make a new template
+            templatePositionsX.push_back(std::vector<double>(strings[i].doms.size(), NAN));
+            templatePositionsY.push_back(std::vector<double>(strings[i].doms.size(), NAN));
+            templatePositionsZ.push_back(std::vector<double>(strings[i].doms.size(), NAN));
+            
+            for (unsigned long j=0;j<strings[i].doms.size();++j)
+            {
+                const domStruct &currentDomStruct = strings[i].doms[j];
+
+                templatePositionsX.back()[j] = currentDomStruct.posX-stringMeanPosX[i];
+                templatePositionsY.back()[j] = currentDomStruct.posY-stringMeanPosY[i];
+                templatePositionsZ.back()[j] = currentDomStruct.posZ;
+                
+                stringInTemplate[i] = templatePositionsX.size()-1;
+            }
+        }
+        
+        std::vector<double> templatePositionsX_flat;
+        std::vector<double> templatePositionsY_flat;
+        std::vector<double> templatePositionsZ_flat;
+        std::vector<std::size_t> templateIndexIntoFlatList(templatePositionsZ.size());
+
+        for (std::size_t i=0;i<templatePositionsX.size();++i)
+        {
+            templateIndexIntoFlatList[i] = templatePositionsX_flat.size();
+            for (std::size_t j=0;j<templatePositionsX[i].size();++j)
+            {
+                templatePositionsX_flat.push_back(templatePositionsX[i][j]);
+                templatePositionsY_flat.push_back(templatePositionsY[i][j]);
+                templatePositionsZ_flat.push_back(templatePositionsZ[i][j]);
+            }
+        }
+        
+        
+        
+        log_warn("There are %zu string templates for %zu strings", templatePositionsX.size(), strings.size());
         
         std::vector<cl_float> domPosBuffer;
         
@@ -420,7 +525,6 @@ namespace I3CLSimHelper
             {
                 const domStruct &currentDomStruct = strings[i].doms[j];
                 
-                //domIDbuffer[i*maxNumDoms + j]  = currentDomStruct.domID;
                 domPosBuffer[i*(maxNumDoms*4)+j*4 + 0] = currentDomStruct.posX;
                 domPosBuffer[i*(maxNumDoms*4)+j*4 + 1] = currentDomStruct.posY;
                 domPosBuffer[i*(maxNumDoms*4)+j*4 + 2] = currentDomStruct.posZ;
@@ -431,72 +535,168 @@ namespace I3CLSimHelper
             }
         }
 
-        
-        
-        // prepare the output buffer
-        std::ostringstream output(std::ostringstream::out);
-        // write the output buffer
-        output << "// this is auto-generated code created by generate_get_dom_position_code()" << std::endl;
-        output << std::endl;
-        output.setf(std::ios::scientific,std::ios::floatfield);
-        output.precision(std::numeric_limits<float>::digits10+4); // maximum precision for a float
+        if (templateIndexIntoFlatList.size() < strings.size())
+        {
+            // templating works, there are identical strings
+            
+            /// new method: prepare output buffer
+            std::ostringstream output(std::ostringstream::out);
+            // write the output buffer
+            output << "// this is auto-generated code created by generate_get_dom_position_code()" << std::endl;
+            output << std::endl;
+            output.setf(std::ios::scientific,std::ios::floatfield);
+            output.precision(std::numeric_limits<float>::digits10+4); // maximum precision for a float
 
-        output << "#define GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS " << maxNumDoms << std::endl;
-        output << "#define GEO_DOM_POS_NUM_STRINGS " << strings.size() << std::endl;
+            //output << "#define GEO_DOM_POS_NUM_TEMPLATES " << templateIndexIntoFlatList.size() << std::endl;
+            //output << "__constant unsigned short geoDomPosTemplateIndexIntoFlatList[GEO_DOM_POS_NUM_TEMPLATES] = {" << std::endl;
+            //for (std::size_t i=0;i<templateIndexIntoFlatList.size();++i){     
+            //    output << "  " << templateIndexIntoFlatList[i] << "," << std::endl;
+            //}
+            //output << "};" << std::endl;
+            //output << "__constant unsigned short geoDomPosTemplateNumDoms[GEO_DOM_POS_NUM_TEMPLATES] = {" << std::endl;
+            //for (std::size_t i=0;i<templateIndexIntoFlatList.size();++i){     
+            //    output << "  " << templatePositionsZ[i].size() << "," << std::endl;
+            //}
+            //output << "};" << std::endl;
+            output << "#define GEO_DOM_POS_MAX_ABS_X " << geoDomPosMaxAbsX << "f" << std::endl;
+            output << "#define GEO_DOM_POS_MAX_ABS_Y " << geoDomPosMaxAbsY << "f" << std::endl;
+            output << "#define GEO_DOM_POS_MAX_ABS_Z " << geoDomPosMaxAbsZ << "f" << std::endl;
+            output << std::endl;
+            
+            output << "#define GEO_DOM_POS_NUM_FLAT_LIST_ENTRIES " << templatePositionsX_flat.size() << std::endl;
+            output << "__constant short geoDomPosTemplatePositionsX_flat[GEO_DOM_POS_NUM_FLAT_LIST_ENTRIES] = {" << std::endl;
+            for (std::size_t i=0;i<templatePositionsX_flat.size();++i){     
+                const short value = static_cast<short>((templatePositionsX_flat[i]/geoDomPosMaxAbsX)*32767.);
+                output << "  " << value << "," << std::endl;
+            }
+            output << "};" << std::endl;
+            output << "__constant short geoDomPosTemplatePositionsY_flat[GEO_DOM_POS_NUM_FLAT_LIST_ENTRIES] = {" << std::endl;
+            for (std::size_t i=0;i<templatePositionsY_flat.size();++i){     
+                const short value = static_cast<short>((templatePositionsY_flat[i]/geoDomPosMaxAbsY)*32767.);
+                output << "  " << value << "," << std::endl;
+            }
+            output << "};" << std::endl;
 
-        
-        // we only have a limited amount of constant memory. this needs lots of memory,
-        // so store it as shorts with a known multiplier.
-        output << "#define GEO_DOM_POS_MAX_ABS_X " << geoDomPosMaxAbsX << "f" << std::endl;
-        output << "__constant short geoDomPosX[GEO_DOM_POS_NUM_STRINGS*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS] = {" << std::endl;
-        for (std::size_t i=0;i<strings.size();++i){     
-            for (std::size_t j=0;j<maxNumDoms;++j){    
-                short value = static_cast<short>((domPosBuffer[i*(maxNumDoms*4)+j*4 + 0]/geoDomPosMaxAbsX)*32767.);
-                
-                output << "  " << value << ", // string=" << i << ", dom=" << j << std::endl;
+            output << "__constant short geoDomPosTemplatePositionsZ_flat[GEO_DOM_POS_NUM_FLAT_LIST_ENTRIES] = {" << std::endl;
+            for (std::size_t i=0;i<templatePositionsZ_flat.size();++i){     
+                const short value = static_cast<short>((templatePositionsZ_flat[i]/geoDomPosMaxAbsZ)*32767.);
+                output << "  " << value << "," << std::endl;
             }
-        }
-        output << "};" << std::endl;
-        
-        output << "#define GEO_DOM_POS_MAX_ABS_Y " << geoDomPosMaxAbsY << "f" << std::endl;
-        output << "__constant short geoDomPosY[GEO_DOM_POS_NUM_STRINGS*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS] = {" << std::endl;
-        for (std::size_t i=0;i<strings.size();++i){     
-            for (std::size_t j=0;j<maxNumDoms;++j){    
-                short value = static_cast<short>((domPosBuffer[i*(maxNumDoms*4)+j*4 + 1]/geoDomPosMaxAbsY)*32767.);
-                
-                output << "  " << value << ", // string=" << i << ", dom=" << j << std::endl;
+            output << "};" << std::endl;
+            
+            output << "#define GEO_DOM_POS_NUM_STRINGS " << strings.size() << std::endl;
+            output << "__constant unsigned int geoDomPosStringStartIndexInTemplateDomList[GEO_DOM_POS_NUM_STRINGS] = {" << std::endl;
+            for (std::size_t i=0;i<stringInTemplate.size();++i){     
+                output << "  " << templateIndexIntoFlatList[stringInTemplate[i]] << "," << std::endl;
             }
-        }
-        output << "};" << std::endl;
-        
-        output << "#define GEO_DOM_POS_MAX_ABS_Z " << geoDomPosMaxAbsZ << "f" << std::endl;
-        output << "__constant short geoDomPosZ[GEO_DOM_POS_NUM_STRINGS*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS] = {" << std::endl;
-        for (std::size_t i=0;i<strings.size();++i){     
-            for (std::size_t j=0;j<maxNumDoms;++j){    
-                short value = static_cast<short>((domPosBuffer[i*(maxNumDoms*4)+j*4 + 2]/geoDomPosMaxAbsZ)*32767.);
-                
-                output << "  " << value << ", // string=" << i << ", dom=" << j << std::endl;
-            }
-        }
-        output << "};" << std::endl;
-        output << std::endl;
+            output << "};" << std::endl;
 
-        output << "inline void geometryGetDomPosition(unsigned short stringNum, unsigned char domNum, float *domPosX, float *domPosY, float *domPosZ)" << std::endl;
-        output << "{" << std::endl;
-        output << "    const unsigned int domIndex = stringNum*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS+domNum;" << std::endl;
-        output << "    " << std::endl;
-        output << "    *domPosX = convert_float(geoDomPosX[domIndex])*(GEO_DOM_POS_MAX_ABS_X/32767.f);" << std::endl;
-        output << "    *domPosY = convert_float(geoDomPosY[domIndex])*(GEO_DOM_POS_MAX_ABS_Y/32767.f);" << std::endl;
-        output << "    *domPosZ = convert_float(geoDomPosZ[domIndex])*(GEO_DOM_POS_MAX_ABS_Z/32767.f);" << std::endl;
-        output << "}" << std::endl;
-        output << std::endl;
+            output << "__constant short geoDomPosStringMeanPosX[GEO_DOM_POS_NUM_STRINGS] = {" << std::endl;
+            for (std::size_t i=0;i<stringMeanPosX.size();++i){     
+                const short value = static_cast<short>((stringMeanPosX[i]/geoDomPosMaxAbsX)*32767.);
+                output << "  " << value << "," << std::endl;
+            }
+            output << "};" << std::endl;
+
+            output << "__constant short geoDomPosStringMeanPosY[GEO_DOM_POS_NUM_STRINGS] = {" << std::endl;
+            for (std::size_t i=0;i<stringMeanPosY.size();++i){     
+                const short value = static_cast<short>((stringMeanPosY[i]/geoDomPosMaxAbsY)*32767.);
+                output << "  " << value << "," << std::endl;
+            }
+            output << "};" << std::endl;
+
+            
+            output << "inline void geometryGetDomPosition(unsigned short stringNum, unsigned char domNum, float *domPosX, float *domPosY, float *domPosZ)" << std::endl;
+            output << "{" << std::endl;
+            
+            output << "    const float stringMeanPosX = convert_float(geoDomPosStringMeanPosX[stringNum])*(GEO_DOM_POS_MAX_ABS_X/32767.f);" << std::endl;
+            output << "    const float stringMeanPosY = convert_float(geoDomPosStringMeanPosY[stringNum])*(GEO_DOM_POS_MAX_ABS_Y/32767.f);" << std::endl;
+            
+            output << "    const unsigned int index = geoDomPosStringStartIndexInTemplateDomList[stringNum]+domNum;" << std::endl;
+            output << "    *domPosX = convert_float(geoDomPosTemplatePositionsX_flat[index])*(GEO_DOM_POS_MAX_ABS_X/32767.f) + stringMeanPosX;" << std::endl;
+            output << "    *domPosY = convert_float(geoDomPosTemplatePositionsY_flat[index])*(GEO_DOM_POS_MAX_ABS_Y/32767.f) + stringMeanPosY;" << std::endl;
+            output << "    *domPosZ = convert_float(geoDomPosTemplatePositionsZ_flat[index])*(GEO_DOM_POS_MAX_ABS_Z/32767.f);" << std::endl;
+            output << "}" << std::endl;
+            output << std::endl;
+            
+            
+            
+            output << "// end of auto-generated code created by generate_get_dom_position_code()" << std::endl;
+            output << std::endl;
+            return output.str();
+
+
+        }
+        else
+        {
+            // templating does NOT work, generate old-style code
+
+            log_warn("Got as many templates as strings, no memory savings from templating. Using full tables per string.");
+            
+            std::ostringstream output(std::ostringstream::out);
+            // write the output buffer
+            output << "// this is auto-generated code created by generate_get_dom_position_code()" << std::endl;
+            output << std::endl;
+            output.setf(std::ios::scientific,std::ios::floatfield);
+            output.precision(std::numeric_limits<float>::digits10+4); // maximum precision for a float
+
+            output << "#define GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS " << maxNumDoms << std::endl;
+            output << "#define GEO_DOM_POS_NUM_STRINGS " << strings.size() << std::endl;
+            
+            // we only have a limited amount of constant memory. this needs lots of memory,
+            // so store it as shorts with a known multiplier.
+            output << "#define GEO_DOM_POS_MAX_ABS_X " << geoDomPosMaxAbsX << "f" << std::endl;
+            output << "__constant short geoDomPosX[GEO_DOM_POS_NUM_STRINGS*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS] = {" << std::endl;
+            for (std::size_t i=0;i<strings.size();++i){     
+                for (std::size_t j=0;j<maxNumDoms;++j){    
+                    short value = static_cast<short>((domPosBuffer[i*(maxNumDoms*4)+j*4 + 0]/geoDomPosMaxAbsX)*32767.);
+                    
+                    output << "  " << value << ", // string=" << i << ", dom=" << j << std::endl;
+                }
+            }
+            output << "};" << std::endl;
+            
+            output << "#define GEO_DOM_POS_MAX_ABS_Y " << geoDomPosMaxAbsY << "f" << std::endl;
+            output << "__constant short geoDomPosY[GEO_DOM_POS_NUM_STRINGS*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS] = {" << std::endl;
+            for (std::size_t i=0;i<strings.size();++i){     
+                for (std::size_t j=0;j<maxNumDoms;++j){    
+                    short value = static_cast<short>((domPosBuffer[i*(maxNumDoms*4)+j*4 + 1]/geoDomPosMaxAbsY)*32767.);
+                    
+                    output << "  " << value << ", // string=" << i << ", dom=" << j << std::endl;
+                }
+            }
+            output << "};" << std::endl;
+            
+            output << "#define GEO_DOM_POS_MAX_ABS_Z " << geoDomPosMaxAbsZ << "f" << std::endl;
+            output << "__constant short geoDomPosZ[GEO_DOM_POS_NUM_STRINGS*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS] = {" << std::endl;
+            for (std::size_t i=0;i<strings.size();++i){     
+                for (std::size_t j=0;j<maxNumDoms;++j){    
+                    short value = static_cast<short>((domPosBuffer[i*(maxNumDoms*4)+j*4 + 2]/geoDomPosMaxAbsZ)*32767.);
+                    
+                    output << "  " << value << ", // string=" << i << ", dom=" << j << std::endl;
+                }
+            }
+            output << "};" << std::endl;
+            output << std::endl;
+
+            output << "inline void geometryGetDomPosition(unsigned short stringNum, unsigned char domNum, float *domPosX, float *domPosY, float *domPosZ)" << std::endl;
+            output << "{" << std::endl;
+            output << "    const unsigned int domIndex = stringNum*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS+domNum;" << std::endl;
+            output << "    " << std::endl;
+            output << "    *domPosX = convert_float(geoDomPosX[domIndex])*(GEO_DOM_POS_MAX_ABS_X/32767.f);" << std::endl;
+            output << "    *domPosY = convert_float(geoDomPosY[domIndex])*(GEO_DOM_POS_MAX_ABS_Y/32767.f);" << std::endl;
+            output << "    *domPosZ = convert_float(geoDomPosZ[domIndex])*(GEO_DOM_POS_MAX_ABS_Z/32767.f);" << std::endl;
+            output << "}" << std::endl;
+            output << std::endl;
+            
+            
+            
+            
+            output << "// end of auto-generated code created by generate_get_dom_position_code()" << std::endl;
+            output << std::endl;
+            return output.str();
+        }
         
-        
-        
-        
-        output << "// end of auto-generated code created by generate_get_dom_position_code()" << std::endl;
-        output << std::endl;
-        return output.str();
     }
     
     
@@ -507,8 +707,6 @@ namespace I3CLSimHelper
                                              const std::vector<double> &posY,
                                              const std::vector<double> &posZ,
                                              const double omRadius,
-                                             //std::vector<cl_int> &domIDbuffer,
-                                             //std::vector<cl_float> &domPosBuffer,
                                              std::vector<cl_uchar> &geoLayerToOMNumIndexPerStringSetBuffer,
                                              std::vector<int> &stringIndexToStringIDBuffer
                                              )

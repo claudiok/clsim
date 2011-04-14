@@ -24,7 +24,7 @@
 
 TrkOpticalPhysics::TrkOpticalPhysics(const G4String& name, 
                                      double maxBetaChangePerStep,
-                                     double maxNumPhotonsPerStep,
+                                     uint32_t maxNumPhotonsPerStep,
                                      I3CLSimWlenDependentValueConstPtr wlenBias
                                      )
 :  G4VPhysicsConstructor(name),

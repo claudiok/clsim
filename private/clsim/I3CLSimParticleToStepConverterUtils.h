@@ -8,6 +8,8 @@
 #include "clsim/I3CLSimStep.h"
 #include "clsim/I3CLSimWlenDependentValue.h"
 
+#include <cmath>
+
 namespace I3CLSimParticleToStepConverterUtils 
 {
     
@@ -16,25 +18,25 @@ namespace I3CLSimParticleToStepConverterUtils
                                    double fromWlen, double toWlen);
     
     // stolen from PPC by D. Chirkin
-    inline double gammaDistributedNumber(float shape, I3RandomServicePtr randomService_)
+    inline double gammaDistributedNumber(double shape, I3RandomServicePtr randomService_)
     {
         double x;
         if(shape<1.){  // Weibull algorithm
             double c=1./shape;
-            double d=(1.-shape)*pow(shape, shape / (1.-shape) );
+            double d=(1.-shape)*std::pow(shape, shape / (1.-shape) );
             double z, e;
             do
             {
-                z=-log(randomService_->Uniform());
-                e=-log(randomService_->Uniform());
-                x=pow(z, c);
+                z=-std::log(randomService_->Uniform());
+                e=-std::log(randomService_->Uniform());
+                x=std::pow(z, c);
             } while(z+e<d+x); // or here
         }
         else  // Cheng's algorithm
         {
-            double b=shape-log(4.0);
-            double l=sqrt(2.*shape-1.0);
-            const double cheng=1.0+log(4.5);
+            double b=shape-std::log(4.0);
+            double l=std::sqrt(2.*shape-1.0);
+            const double cheng=1.0+std::log(4.5);
             
             //float u, v;
             float y, z, r;
@@ -44,10 +46,10 @@ namespace I3CLSimParticleToStepConverterUtils
                 const double ry = randomService_->Uniform();
                 
                 y=log( ry/(1.-ry) ) / l;
-                x=shape*exp(y);
+                x=shape*std::exp(y);
                 z=rx*ry*ry;
                 r=b+(shape+l)*y-x;
-            } while(r<4.5*z-cheng && r<log(z));
+            } while(r<4.5*z-cheng && r<std::log(z));
         }
         
         return x;
@@ -60,11 +62,11 @@ namespace I3CLSimParticleToStepConverterUtils
     {
         // randomize direction of scattering (rotation around old direction axis)
         const double b=2.0*M_PI*randomService_->Uniform();
-        const double cosb=cos(b);
-        const double sinb=sin(b);
+        const double cosb=std::cos(b);
+        const double sinb=std::sin(b);
         
         // Rotate new direction into absolute frame of reference 
-        const double sinth = sqrt(max(0., 1.-z*z));
+        const double sinth = std::sqrt(std::max(0., 1.-z*z));
         
         if(sinth>0.){  // Current direction not vertical, so rotate 
             const double old_x=x;
@@ -85,7 +87,7 @@ namespace I3CLSimParticleToStepConverterUtils
         }
         
         {
-            const double recip_length = 1./sqrt( x*x + y*y + z*z );
+            const double recip_length = 1./std::sqrt( x*x + y*y + z*z );
             
             x *= recip_length;
             y *= recip_length;
