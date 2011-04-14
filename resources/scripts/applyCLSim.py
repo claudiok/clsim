@@ -196,5 +196,5 @@ tray.AddModule("I3Writer","writer",
 
 tray.AddModule("TrashCan", "the can")
 
-tray.Execute(5000)
+tray.Execute()
 tray.Finish()
