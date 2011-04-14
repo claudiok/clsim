@@ -513,7 +513,7 @@ namespace I3CLSimHelper
         
         
         
-        log_warn("There are %zu string templates for %zu strings", templatePositionsX.size(), strings.size());
+        log_debug("There are %zu string templates for %zu strings", templatePositionsX.size(), strings.size());
         
         std::vector<cl_float> domPosBuffer;
         
