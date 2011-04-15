@@ -135,6 +135,10 @@ geometryIsConfigured_(false)
                  "Approximate maximum number of Cherenkov photons generated per step by Geant4.",
                  geant4MaxNumPhotonsPerStep_);
 
+    statisticsName_="";
+    AddParameter("StatisticsName",
+                 "Collect statistics in this frame object (e.g. number of photons generated or reaching the DOMs)",
+                 statisticsName_);
 
 
     // add an outbox
@@ -161,6 +165,11 @@ void I3CLSimModule::StartThread()
     
     log_trace("Thread not running. Starting a new one..");
 
+    // clear statistics counters
+    photonNumGeneratedPerParticle_.clear();
+    photonWeightSumGeneratedPerParticle_.clear();
+    
+    // re-set flags
     threadStarted_=false;
     threadFinishedOK_=false;
     
@@ -228,6 +237,9 @@ void I3CLSimModule::Configure()
     GetParameter("Geant4MaxBetaChangePerStep", geant4MaxBetaChangePerStep_);
     GetParameter("Geant4MaxNumPhotonsPerStep", geant4MaxNumPhotonsPerStep_);
 
+    GetParameter("StatisticsName", statisticsName_);
+    collectStatistics_ = (statisticsName_!="");
+    
     if (!wavelengthGenerationBias_) {
         wavelengthGenerationBias_ = I3CLSimWlenDependentValueConstantConstPtr(new I3CLSimWlenDependentValueConstant(1.));
     }
@@ -316,6 +328,20 @@ bool I3CLSimModule::Thread(boost::this_thread::disable_interruption &di)
             log_warn("Got %zu steps from Geant4, sending them to OpenCL",
                      steps->size());
 
+            
+            // collect statistics if requested
+            if (collectStatistics_)
+            {
+                BOOST_FOREACH(const I3CLSimStep &step, *steps)
+                {
+                    const uint32_t particleID = step.identifier;
+                    
+                    (photonNumGeneratedPerParticle_.insert(std::make_pair(particleID, 0)).first->second)+=step.numPhotons;
+                    (photonWeightSumGeneratedPerParticle_.insert(std::make_pair(particleID, 0.)).first->second)+=static_cast<double>(step.numPhotons)*step.weight;
+                }
+            }
+
+            // send to OpenCL
             {
                 boost::this_thread::restore_interruption ri(di);
                 try {
@@ -458,6 +484,11 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons)
     if (photonsForFrameList_.size() != currentPhotonIdForFrame_.size())
         log_fatal("Internal error: cache sizes differ. (2)");
     
+    uint64_t photonNumCounter=0;
+    double photonWeightSum=0.;
+    
+
+    
     BOOST_FOREACH(const I3CLSimPhoton &photon, photons)
     {
         // find identifier in particle cache
@@ -505,9 +536,17 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons)
             outDir.SetThetaPhi(photon.GetDirTheta(), photon.GetDirPhi());
             outputPhoton.SetDir(outDir);
         }
+
+        if (collectStatistics_)
+        {
+            // collect statistics
+            (photonNumAtOMPerParticle_.insert(std::make_pair(photon.identifier, 0)).first->second)++;
+            (photonWeightSumAtOMPerParticle_.insert(std::make_pair(photon.identifier, 0.)).first->second)+=photon.GetWeight();
+        }
         
         currentPhotonId++;
     }
+    
 }
 
 void I3CLSimModule::FlushFrameCache()
@@ -542,6 +581,9 @@ void I3CLSimModule::FlushFrameCache()
 
     std::size_t totalNumOutPhotons=0;
     
+    photonNumAtOMPerParticle_.clear();
+    photonWeightSumAtOMPerParticle_.clear();
+    
     for (uint64_t i=0;i<numBunchesSentToOpenCL_;++i)
     {
         //typedef std::pair<uint32_t, I3CLSimPhotonSeriesPtr> ConversionResult_t;
@@ -558,6 +600,106 @@ void I3CLSimModule::FlushFrameCache()
     log_info("results fetched from OpenCL.");
     
     log_warn("Got %zu photons in total during flush.", totalNumOutPhotons);
+
+    if (collectStatistics_)
+    {
+        std::vector<I3CLSimEventStatisticsPtr> eventStatisticsForFrame;
+        for (std::size_t i=0;i<frameList_.size();++i) {
+            eventStatisticsForFrame.push_back(I3CLSimEventStatisticsPtr(new I3CLSimEventStatistics()));
+        }
+
+        
+        // generated photons (count)
+        for(std::map<uint32_t, uint64_t>::const_iterator it=photonNumGeneratedPerParticle_.begin();
+            it!=photonNumGeneratedPerParticle_.end();++it)
+        {
+            // find identifier in particle cache
+            std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_.find(it->first);
+            if (it_cache == particleCache_.end())
+                log_fatal("Internal error: unknown particle id from Geant4: %" PRIu32,
+                          it_cache->first);
+            const particleCacheEntry &cacheEntry = it_cache->second;
+            
+            if (cacheEntry.frameListEntry >= eventStatisticsForFrame.size())
+                log_fatal("Internal error: particle cache entry uses invalid frame cache position");
+            
+            eventStatisticsForFrame[cacheEntry.frameListEntry]->AddNumPhotonsGeneratedWithWeights(it->second, 0.,
+                                                                                                  cacheEntry.particleMajorID,
+                                                                                                  cacheEntry.particleMinorID);
+        }
+
+        // generated photons (weight sum)
+        for(std::map<uint32_t, double>::const_iterator it=photonWeightSumGeneratedPerParticle_.begin();
+            it!=photonWeightSumGeneratedPerParticle_.end();++it)
+        {
+            // find identifier in particle cache
+            std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_.find(it->first);
+            if (it_cache == particleCache_.end())
+                log_fatal("Internal error: unknown particle id from Geant4: %" PRIu32,
+                          it_cache->first);
+            const particleCacheEntry &cacheEntry = it_cache->second;
+            
+            if (cacheEntry.frameListEntry >= eventStatisticsForFrame.size())
+                log_fatal("Internal error: particle cache entry uses invalid frame cache position");
+
+            eventStatisticsForFrame[cacheEntry.frameListEntry]->AddNumPhotonsGeneratedWithWeights(0, it->second,
+                                                                                                  cacheEntry.particleMajorID,
+                                                                                                  cacheEntry.particleMinorID);
+        }
+
+        
+        // photons @ DOMs(count)
+        for(std::map<uint32_t, uint64_t>::const_iterator it=photonNumAtOMPerParticle_.begin();
+            it!=photonNumAtOMPerParticle_.end();++it)
+        {
+            // find identifier in particle cache
+            std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_.find(it->first);
+            if (it_cache == particleCache_.end())
+                log_fatal("Internal error: unknown particle id from Geant4: %" PRIu32,
+                          it_cache->first);
+            const particleCacheEntry &cacheEntry = it_cache->second;
+            
+            if (cacheEntry.frameListEntry >= eventStatisticsForFrame.size())
+                log_fatal("Internal error: particle cache entry uses invalid frame cache position");
+            
+            eventStatisticsForFrame[cacheEntry.frameListEntry]->AddNumPhotonsAtDOMsWithWeights(it->second, 0.,
+                                                                                               cacheEntry.particleMajorID,
+                                                                                               cacheEntry.particleMinorID);
+        }
+        
+        // photons @ DOMs (weight sum)
+        for(std::map<uint32_t, double>::const_iterator it=photonWeightSumAtOMPerParticle_.begin();
+            it!=photonWeightSumAtOMPerParticle_.end();++it)
+        {
+            // find identifier in particle cache
+            std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_.find(it->first);
+            if (it_cache == particleCache_.end())
+                log_fatal("Internal error: unknown particle id from Geant4: %" PRIu32,
+                          it_cache->first);
+            const particleCacheEntry &cacheEntry = it_cache->second;
+            
+            if (cacheEntry.frameListEntry >= eventStatisticsForFrame.size())
+                log_fatal("Internal error: particle cache entry uses invalid frame cache position");
+            
+            eventStatisticsForFrame[cacheEntry.frameListEntry]->AddNumPhotonsAtDOMsWithWeights(0, it->second,
+                                                                                               cacheEntry.particleMajorID,
+                                                                                               cacheEntry.particleMinorID);
+        }
+
+        
+        // store statistics to frame
+        for (std::size_t i=0;i<frameList_.size();++i)
+        {
+            frameList_[i]->Put(statisticsName_, eventStatisticsForFrame[i]);
+        }
+    }    
+    
+    // not needed anymore
+    photonWeightSumGeneratedPerParticle_.clear();
+    photonNumGeneratedPerParticle_.clear();
+    photonNumAtOMPerParticle_.clear();
+    photonWeightSumAtOMPerParticle_.clear();
+
     
     log_info("finished.");
     

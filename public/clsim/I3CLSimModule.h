@@ -44,6 +44,7 @@
 #include "clsim/I3CLSimParticleParameterization.h"
 
 #include "clsim/I3Photon.h"
+#include "clsim/I3CLSimEventStatistics.h"
 
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
@@ -145,7 +146,10 @@ private:
 
     /// Parameter: Approximate maximum number of Cherenkov photons generated per step by Geant4.
     uint32_t geant4MaxNumPhotonsPerStep_;
-    
+
+    /// Parameter: Collect statistics in this frame object (e.g. number of photons generated or reaching the DOMs)
+    std::string statisticsName_;
+    bool collectStatistics_;
     
 private:
     // default, assignment, and copy constructor declared private
@@ -170,6 +174,15 @@ private:
     void FlushFrameCache();
     void AddPhotonsToFrames(const I3CLSimPhotonSeries &photons);
 
+    // statistics will be collected here:
+    std::map<uint32_t, uint64_t> photonNumGeneratedPerParticle_;
+    std::map<uint32_t, double> photonWeightSumGeneratedPerParticle_;
+
+    std::map<uint32_t, uint64_t> photonNumAtOMPerParticle_;
+    std::map<uint32_t, double> photonWeightSumAtOMPerParticle_;
+
+
+    
     
     bool geometryIsConfigured_;
     uint32_t currentParticleCacheIndex_;

@@ -19,11 +19,10 @@
 //   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-
-#include "test/I3CLSimTesterBase.h"
-
 #define __STDC_FORMAT_MACROS 
 #include <inttypes.h>
+
+#include "test/I3CLSimTesterBase.h"
 
 #include <string>
 #include <sstream>
