@@ -114,12 +114,12 @@ def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m):
         m.SetGroupRefractiveIndexOverride(i, groupRefIndex)
         
         absLen = I3CLSimWlenDependentValueAbsLenIceCube(kappa=kappa, A=A, B=B, D=D, E=E,
-                                                        aDust400=a_dust400[i], 
-                                                        deltaTau=delta_tau[i])
+                                                        aDust400=a_dust400[::-1][i],   # reverse order
+                                                        deltaTau=delta_tau[::-1][i])   # reverse order
         m.SetAbsorptionLength(i, absLen)
 
         scatLen = I3CLSimWlenDependentValueScatLenIceCube(alpha=alpha,
-                                                          be400=b_e400[i])
+                                                          be400=b_e400[::-1][i])       # reverse order
         m.SetScatteringLength(i, scatLen)
 
     return m
