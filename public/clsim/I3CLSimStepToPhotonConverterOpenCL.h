@@ -238,6 +238,9 @@ private:
     
     // this allows us to convert the string index back to the string ID (which may be negative and non-contiguous)
     std::vector<int> stringIndexToStringIDBuffer_;
+
+    // this allows us to convert the DOM index back to the DOM ID (which may be non-contiguous)
+    std::vector<std::vector<unsigned int> > domIndexToDomIDBuffer_perStringIndex_;
     
     // OpenCL command queue and kernel
     shared_ptr<cl::CommandQueue> queue_;

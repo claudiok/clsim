@@ -13,7 +13,8 @@ namespace I3CLSimHelper
      */
     std::string GenerateGeometrySource(const I3CLSimSimpleGeometry &geometry,
                                        std::vector<unsigned char> &geoLayerToOMNumIndexPerStringSetBuffer,
-                                       std::vector<int> &stringIndexToStringIDBuffer);
+                                       std::vector<int> &stringIndexToStringIDBuffer,
+                                       std::vector<std::vector<unsigned int> > &domIndexToDomIDBuffer_perStringIndex);
 
 };
 

@@ -29,16 +29,19 @@ namespace I3CLSimHelper
                                              const std::vector<double> &posZ,
                                              const double omRadius,
                                              std::vector<cl_uchar> &geoLayerToOMNumIndexPerStringSetBuffer,
-                                             std::vector<int> &stringIndexToStringIDBuffer
+                                             std::vector<int> &stringIndexToStringIDBuffer,
+                                             std::vector<std::vector<unsigned int> > &domIndexToDomIDBuffer_perStringIndex
                                              );
     
     // the main converter
     std::string GenerateGeometrySource(const I3CLSimSimpleGeometry &geometry,
                                        std::vector<unsigned char> &geoLayerToOMNumIndexPerStringSetBuffer,
-                                       std::vector<int> &stringIndexToStringIDBuffer)
+                                       std::vector<int> &stringIndexToStringIDBuffer,
+                                       std::vector<std::vector<unsigned int> > &domIndexToDomIDBuffer_perStringIndex)
     {
         geoLayerToOMNumIndexPerStringSetBuffer.clear();
         stringIndexToStringIDBuffer.clear();
+        domIndexToDomIDBuffer_perStringIndex.clear();
         
         std::ostringstream code;
         
@@ -61,7 +64,8 @@ namespace I3CLSimHelper
                                                 geometry.GetPosZVector(),
                                                 geometry.GetOMRadius(),
                                                 geoLayerToOMNumIndexPerStringSetBuffer,
-                                                stringIndexToStringIDBuffer
+                                                stringIndexToStringIDBuffer,
+                                                domIndexToDomIDBuffer_perStringIndex
                                                 );
             
             if (!ret)
@@ -704,7 +708,8 @@ namespace I3CLSimHelper
                                              const std::vector<double> &posZ,
                                              const double omRadius,
                                              std::vector<cl_uchar> &geoLayerToOMNumIndexPerStringSetBuffer,
-                                             std::vector<int> &stringIndexToStringIDBuffer
+                                             std::vector<int> &stringIndexToStringIDBuffer,
+                                             std::vector<std::vector<unsigned int> > &domIndexToDomIDBuffer_perStringIndex
                                              )
     {
         typedef std::vector<int>::size_type sizeType;
@@ -955,7 +960,20 @@ namespace I3CLSimHelper
         {
             stringIndexToStringIDBuffer[i] = strings[i].stringID;
         }
-        
+
+        // initialize the DOMIndex to OMID buffer
+        domIndexToDomIDBuffer_perStringIndex.resize(strings.size());
+        for (std::size_t i=0;i<strings.size();++i)
+        {
+            std::vector<unsigned int> &domIndexToDomIDBuffer = domIndexToDomIDBuffer_perStringIndex[i];
+            domIndexToDomIDBuffer.resize(strings[i].doms.size());
+
+            for (std::size_t j=0;j<strings[i].doms.size();++j)
+            {
+                domIndexToDomIDBuffer[j] = strings[i].doms[j].domID;
+            }
+        }
+
         // string information goes to the constant memory
         
         // prepare the output buffer

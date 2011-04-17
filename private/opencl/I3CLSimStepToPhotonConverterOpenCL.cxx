@@ -372,7 +372,10 @@ void I3CLSimStepToPhotonConverterOpenCL::Compile()
     wlenBiasSource_ = wlenBias_->GetOpenCLFunction("getWavelengthBias"); // name
 
     mediumPropertiesSource_ = I3CLSimHelper::GenerateMediumPropertiesSource(*mediumProperties_);
-    geometrySource_ = I3CLSimHelper::GenerateGeometrySource(*geometry_, geoLayerToOMNumIndexPerStringSetInfo_, stringIndexToStringIDBuffer_);
+    geometrySource_ = I3CLSimHelper::GenerateGeometrySource(*geometry_,
+                                                            geoLayerToOMNumIndexPerStringSetInfo_,
+                                                            stringIndexToStringIDBuffer_,
+                                                            domIndexToDomIDBuffer_perStringIndex_);
     
     SetupQueueAndKernel(*(clPlatformDeviceList_[selectedDeviceIndex_].first),
                         *(clPlatformDeviceList_[selectedDeviceIndex_].second));
@@ -790,8 +793,9 @@ bool I3CLSimStepToPhotonConverterOpenCL::MorePhotonsAvailable() const
 
 // helper
 namespace {
-    void ReplaceStringIndexWithStringIDs(I3CLSimPhotonSeries &photons,
-                                         const std::vector<int> &stringIndexToStringIDBuffer)
+    inline void ReplaceStringDOMIndexWithStringDOMIDs(I3CLSimPhotonSeries &photons,
+                                                      const std::vector<int> &stringIndexToStringIDBuffer,
+                                                      const std::vector<std::vector<unsigned int> > &domIndexToDomIDBuffer_perStringIndex)
     {
         BOOST_FOREACH(I3CLSimPhoton &photon, photons)
         {
@@ -801,13 +805,18 @@ namespace {
             const uint32_t DOMIndex = stringIndexWithDOMIndex%1000;
             
             const int stringID = stringIndexToStringIDBuffer.at(stringIndex);
-            
+
+            const unsigned int domID = domIndexToDomIDBuffer_perStringIndex.at(stringIndex).at(DOMIndex);
+
             if (stringID >= 0)
-                photon.dummy = stringID*1000 + DOMIndex;
+                photon.dummy = stringID*1000 + domID;
             else
-                photon.dummy = -((-stringID)*1000 + DOMIndex);
+                photon.dummy = -((-stringID)*1000 + domID);
             
             log_trace("Replaced dummy %u with %i", stringIndexWithDOMIndex, photon.dummy);
+            
+            
+            
         }
     }
     
@@ -820,7 +829,10 @@ I3CLSimStepToPhotonConverter::ConversionResult_t I3CLSimStepToPhotonConverterOpe
 
     ConversionResult_t result = queueFromOpenCL_->Get();
     
-    if (result.second) ReplaceStringIndexWithStringIDs(*result.second, stringIndexToStringIDBuffer_);
+    if (result.second)
+        ReplaceStringDOMIndexWithStringDOMIDs(*result.second,
+                                              stringIndexToStringIDBuffer_,
+                                              domIndexToDomIDBuffer_perStringIndex_);
     
     return result;
 }
