@@ -1,5 +1,9 @@
-This file can be generated with the clsim-make_safeprimes tool
-or it can be downloaded from:
-http://gpumcml.googlecode.com/svn-history/r101/trunk/gpumcml/simple/safeprimes_base32.txt
+The safeprimes_base32.txt file can be generated with the clsim-make_safeprimes tool
+(which might take some time) or it can be downloaded from:
+http://www.nikhef.nl/~ckopper/safeprimes_base32.txt.gz
+or
+http://www.nikhef.nl/~ckopper/safeprimes_base32.txt.xz
+
+Use gunzip/unxz to uncompress those files after downloading.
 
 -ck
