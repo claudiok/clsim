@@ -110,6 +110,7 @@ randomService = phys_services.I3SPRNGRandomService(
 mediumProperties = clsim.MakeIceCubeMediumProperties()
 
 domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius = 0.16510*I3Units.m*radiusOverSizeFactor)
+domAngularSensitivity = clsim.GetIceCubeDOMAngularSensitivity(holeIce=True)
 
 # parameterizations for fast simulation (bypassing Geant4)
 # converters first:
@@ -248,6 +249,14 @@ tray.AddModule("I3CLSimModule", "clsim",
                #OpenCLPlatformName="ATI Stream",
                #OpenCLDeviceName="Intel(R) Core(TM) i5 CPU         760  @ 2.80GHz"
                )
+
+tray.AddModule("I3PhotonToMCHitConverter", "make_hits",
+               RandomService = randomService,
+               MCTreeName=clSimMCTreeName,
+               InputPhotonSeriesMapName = "PropagatedPhotons",
+               OutputMCHitSeriesMapName = "MCHitSeriesMap_clsim",
+               WavelengthAcceptance = domAcceptance,
+               AngularAcceptance = domAngularSensitivity)
 
 tray.AddModule("I3Writer","writer",
     Filename = options.OUTFILE)

@@ -33,6 +33,8 @@
 #include <clsim/I3CLSimWlenDependentValueAbsLenIceCube.h>
 #include <clsim/I3CLSimWlenDependentValueScatLenIceCube.h>
 
+#include <clsim/I3CLSimWlenDependentValuePolynomial.h>
+
 #include <boost/preprocessor/seq.hpp>
 #include <icetray/python/std_vector_indexing_suite.hpp>
 #include "const_ptr_helpers.h"
@@ -344,5 +346,30 @@ void register_I3CLSimWlenDependentValue()
     utils::register_const_ptr<I3CLSimWlenDependentValueScatLenIceCube>();
 
     
-    
+    // polynomial
+    {
+        bp::class_<
+        I3CLSimWlenDependentValuePolynomial, 
+        boost::shared_ptr<I3CLSimWlenDependentValuePolynomial>, 
+        bases<I3CLSimWlenDependentValue>,
+        boost::noncopyable
+        >
+        (
+         "I3CLSimWlenDependentValuePolynomial",
+         bp::init<
+         const std::vector<double> &
+         >(
+           (
+            bp::arg("coeffs")
+            )
+           )
+         )
+        .def("GetCoefficients", &I3CLSimWlenDependentValuePolynomial::GetCoefficients, bp::return_value_policy<bp::copy_const_reference>())
+        ;
+    }
+    bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValuePolynomial>, shared_ptr<const I3CLSimWlenDependentValuePolynomial> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValuePolynomial>, shared_ptr<I3CLSimWlenDependentValue> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValuePolynomial>, shared_ptr<const I3CLSimWlenDependentValue> >();
+    utils::register_const_ptr<I3CLSimWlenDependentValuePolynomial>();
+
 }
