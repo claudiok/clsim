@@ -575,7 +575,7 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
         // set the current particle ID
         theEventAction->SetExternalParticleID(particleIdentifier);
 
-        log_debug("Geant4: no parameterization for %s with E=%fGeV", particle->GetTypeString().c_str(), particle->GetEnergy()/I3Units::GeV);
+        log_trace("Geant4: no parameterization for %s with E=%fGeV", particle->GetTypeString().c_str(), particle->GetEnergy()/I3Units::GeV);
         
         G4cout << "Geant4: shooting a " << particle->GetTypeString() << " with id " << particleIdentifier << " and E=" << particle->GetEnergy()/I3Units::GeV << "GeV." << G4endl;
 

@@ -1,3 +1,6 @@
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 #include "clsim/I3CLSimParticleToStepConverterCascadeParameterization.h"
 
 #include "clsim/I3CLSimWlenDependentValue.h"
@@ -187,6 +190,7 @@ void I3CLSimParticleToStepConverterCascadeParameterization::EnqueueParticle(cons
         const uint32_t numSteps = numPhotons/photonsPerStep_;
         const uint32_t numPhotonsInLastStep = numPhotons%photonsPerStep_;
         
+        log_trace("Generating %" PRIu32 " steps for electromagetic", numSteps);
         
         for (uint32_t i=0; i<numSteps; ++i)
         {
@@ -242,7 +246,8 @@ void I3CLSimParticleToStepConverterCascadeParameterization::EnqueueParticle(cons
         const uint32_t numSteps = numPhotons/photonsPerStep_;
         const uint32_t numPhotonsInLastStep = numPhotons%photonsPerStep_;
         
-        
+        log_trace("Generating %" PRIu32 " steps for hadron", numSteps);
+
         for (uint32_t i=0; i<numSteps; ++i)
         {
             currentStepSeries_->push_back(I3CLSimStep());
@@ -276,6 +281,10 @@ void I3CLSimParticleToStepConverterCascadeParameterization::EnqueueParticle(cons
         if (isnan(particle.GetLength()))
             log_warn("Muon without length found! Assigned a length of 2000m.");
 
+        log_trace("Parameterizing muon (ID=(%" PRIu64 "/%i)) with E=%fTeV, length=%fm",
+                  particle.GetMajorID(), particle.GetMinorID(),
+                  E*I3Units::GeV/I3Units::TeV, length/I3Units::m);
+        
         // calculation from PPC
         const double extr = 1. + max(0.0, 0.1720+0.0324*logE);
         const double cascadeFraction = 1./extr;
@@ -286,15 +295,24 @@ void I3CLSimParticleToStepConverterCascadeParameterization::EnqueueParticle(cons
         
         const double meanNumPhotonsFromMuon = meanNumPhotonsTotal*(1.-cascadeFraction);
         const uint32_t numPhotonsFromMuon = randomService_->Poisson(meanNumPhotonsFromMuon);
-        
+
+        log_trace("Generating %" PRIu32 " muon-steps for muon (mean=%f)", numPhotonsFromMuon, meanNumPhotonsFromMuon);
+
         const double meanNumPhotonsFromCascades = meanNumPhotonsTotal*cascadeFraction;
+
+        log_trace("Generating a mean of %f cascade-steps for muon", meanNumPhotonsFromCascades);
+
         const uint32_t numPhotonsFromCascades = randomService_->Poisson(meanNumPhotonsFromCascades);
+        log_trace("Generating %" PRIu32 " cascade-steps for muon (mean=%f)", numPhotonsFromCascades, meanNumPhotonsFromCascades);
 
 
         // steps from muon
 
         const uint32_t numStepsFromMuon = numPhotonsFromMuon/photonsPerStep_;
         const uint32_t numPhotonsFromMuonInLastStep = numPhotonsFromMuon%photonsPerStep_;
+        
+        log_trace("Generating %" PRIu32 " steps for muon", numStepsFromMuon);
+
         
         for (uint32_t i=0; i<(numStepsFromMuon+((numPhotonsFromMuonInLastStep>0)?1:0)); ++i)
         {

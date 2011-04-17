@@ -611,6 +611,7 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
                                          cl::NDRange(workgroupSize_),
                                          NULL,
                                          NULL);
+            queue_->flush(); // make sure it begins executing on the device
         } catch (cl::Error &err) {
             log_fatal("OpenCL ERROR (running kernel): %s (%i)", err.what(), err.err());
         }
@@ -636,6 +637,7 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
             {
                 cl::Event mappingComplete;
                 uint32_t *mapped_CurrentNumOutputPhotons = (uint32_t *)queue_->enqueueMapBuffer(*deviceBuffer_CurrentNumOutputPhotons, CL_FALSE, CL_MAP_READ, 0, sizeof(uint32_t), NULL, &mappingComplete);
+                queue_->flush(); // make sure it begins executing on the device
                 mappingComplete.wait();
                 numberOfGeneratedPhotons = *mapped_CurrentNumOutputPhotons;
                 queue_->enqueueUnmapMemObject(*deviceBuffer_CurrentNumOutputPhotons, mapped_CurrentNumOutputPhotons);
@@ -654,6 +656,7 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
             {
                 cl::Event mappingComplete;
                 I3CLSimPhoton *mapped_OutputPhotons = (I3CLSimPhoton *)queue_->enqueueMapBuffer(*deviceBuffer_OutputPhotons, CL_FALSE, CL_MAP_READ, 0, numberOfGeneratedPhotons*sizeof(I3CLSimPhoton), NULL, &mappingComplete);
+                queue_->flush(); // make sure it begins executing on the device
                 
                 // allocate the result vector while waiting for the mapping operation to complete
                 photons = I3CLSimPhotonSeriesPtr(new I3CLSimPhotonSeries(numberOfGeneratedPhotons));

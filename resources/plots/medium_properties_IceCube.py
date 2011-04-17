@@ -225,17 +225,17 @@ ax.set_ylabel("refractive index $n$")
 
 for layerNum in range(0, mediumProps.LayersNum, 10):
     absCoeff = 1./applyOpenCLMediumPropertyFunction(wlens, layerNum, mediumProps, mode="absorptionLength")
-    bx.plot(wlens, absCoeff, linewidth=1., linestyle='-', color='b', alpha=0.1) #, label=r"layer %u" % (layerNum))
+    bx.plot(wlens, 1./absCoeff, linewidth=1., linestyle='-', color='b', alpha=0.1) #, label=r"layer %u" % (layerNum))
 
 
-exampleLayerNum=146
-bx.plot(wlens, 1./absLenIceCube(wlens, layer=exampleLayerNum), linewidth=6., linestyle='-', color='g', label=r"python")
+exampleLayerNum=20
+#bx.plot(wlens, absLenIceCube(wlens, layer=exampleLayerNum), linewidth=6., linestyle='-', color='g', label=r"python")
 
 absCoeff = 1./applyOpenCLWlenDependentFunction(wlens, mediumProps.GetAbsorptionLength(exampleLayerNum), useReferenceFunction=True)
-bx.plot(wlens, absCoeff, linewidth=3., linestyle='-', color='k', label=r"C++")
+bx.plot(wlens, 1./absCoeff, linewidth=3., linestyle='-', color='k', label=r"C++")
 
 absCoeff = 1./applyOpenCLMediumPropertyFunction(wlens, exampleLayerNum, mediumProps, mode="absorptionLength")
-bx.plot(wlens, absCoeff, linewidth=1., linestyle='-', color='r', label=r"OpenCL")
+bx.plot(wlens, 1./absCoeff, linewidth=1., linestyle='-', color='r', label=r"OpenCL")
 
 
 
@@ -245,18 +245,18 @@ bx.set_xlim(260.,690.)
 bx.legend(loc="upper left")
 bx.grid(True)
 bx.set_xlabel("wavelength $\\lambda [\\mathrm{nm}]$")
-bx.set_ylabel("absorption coefficient $[\\mathrm{m}^{-1}]$")
-
+bx.set_ylabel("absorption length $[\\mathrm{m}]$")
+#bx.set_ylim(0., 0.2)
 
 for layerNum in range(0, mediumProps.LayersNum, 10):
     scatCoeff = 1./applyOpenCLMediumPropertyFunction(wlens, layerNum, mediumProps, mode="scatteringLength")
-    cx.plot(wlens, scatCoeff, linewidth=1., linestyle='-', color='b', alpha=0.1) #, label=r"layer %u" % (layerNum))
+    cx.plot(wlens, 1./scatCoeff, linewidth=1., linestyle='-', color='b', alpha=0.1) #, label=r"layer %u" % (layerNum))
 
 scatCoeff = 1./applyOpenCLWlenDependentFunction(wlens, mediumProps.GetScatteringLength(exampleLayerNum), useReferenceFunction=True)
-cx.plot(wlens, scatCoeff, linewidth=3., linestyle='-', color='k', label=r"C++")
+cx.plot(wlens, 1./scatCoeff, linewidth=3., linestyle='-', color='k', label=r"C++")
 
 scatCoeff = 1./applyOpenCLMediumPropertyFunction(wlens, exampleLayerNum, mediumProps, mode="scatteringLength")
-cx.plot(wlens, scatCoeff, linewidth=1., linestyle='-', color='r', label=r"OpenCL")
+cx.plot(wlens, 1./scatCoeff, linewidth=1., linestyle='-', color='r', label=r"OpenCL")
 
 
 cx.xaxis.set_major_locator(matplotlib.ticker.MaxNLocator(20))
@@ -264,7 +264,7 @@ cx.set_xlim(260.,690.)
 cx.grid(True)
 cx.legend(loc='upper right')
 cx.set_xlabel(r"wavelength $\lambda [\mathrm{nm}]$")
-cx.set_ylabel(r"scattering coefficient $\lambda_\mathrm{scat;geom}^{-1}$ $[\mathrm{m}^{-1}]$")
+cx.set_ylabel(r"scattering length $\lambda_\mathrm{scat;geom}$ $[\mathrm{m}]$")
 
 pylab.savefig("medium_properties_IceCube.pdf", transparent=False)
 

@@ -29,7 +29,7 @@ i3_add_library(clsim
   private/opencl/*.cxx
   private/test/*.cxx
   USE_TOOLS python boost log4cplus gsl clhep geant4 opencl
-  USE_PROJECTS icetray dataio dataclasses phys-services
+  USE_PROJECTS icetray dataio dataclasses phys-services simclasses
   )
 
 i3_executable(make_safeprimes

@@ -231,13 +231,10 @@ namespace I3CLSimHelper
         if (layerNum==0) return false;
         if (domRadius < 0.) return false;
         if (currentString.doms.size() >= 0xFF) {
-            std::cerr << "Dom numbers >= 255 are not supported!" << std::endl;
-            exit(-4);
+            log_fatal("Dom numbers >= 255 are not supported!");
         }
-        if (layerToOMNumIndex.size() != layerNum)
-        {
-            std::cerr << "Internal error: layerToOMNumIndex.size() != layerNum" << std::endl;
-            exit(-4);
+        if (layerToOMNumIndex.size() != layerNum) {
+            log_fatal("Internal error: layerToOMNumIndex.size() != layerNum");
         }
         
         for (unsigned int i=0;i<layerNum;++i)
@@ -315,8 +312,7 @@ namespace I3CLSimHelper
         if (layerNum==0) return false;
         if (domRadius < 0.) return false;
         if (currentString.doms.size() >= 0xFF) {
-            std::cerr << "Dom numbers >= 255 are not supported!" << std::endl;
-            exit(-4);
+            log_fatal("Dom numbers >= 255 are not supported!");
         }
         
         // set all layers on each string to "no doms inside"
@@ -827,8 +823,7 @@ namespace I3CLSimHelper
             ++cellGridNumY;
             
             if (cellGridNumX >= 1000) {
-                std::cerr << "Could not generate a cell division for your detector." << std::endl;
-                exit(-3);
+                log_fatal("Could not generate a x-y cell division for your detector.");
             }
         }
         log_debug("Geometry cell division: %ux%u", cellGridNumX, cellGridNumY);
@@ -885,8 +880,7 @@ namespace I3CLSimHelper
                 // need to create a new layering for this string
                 ++numStringSets;
                 if (numStringSets >= 0xFF) {
-                    std::cerr << "Not more than 255 different string layer divisions (\"string sets\") are supported!" << std::endl;
-                    exit(-5);
+                    log_fatal("Not more than 255 different string layer divisions (\"string sets\") are supported!");
                 }
                 
                 layerStartZ.push_back(NAN);
@@ -907,8 +901,7 @@ namespace I3CLSimHelper
                     ++geoLayerNum.back();
                     
                     if (geoLayerNum.back() >= 1000) {
-                        std::cerr << "There does not seem to be a possible layer division for your detector." << std::endl;
-                        exit(-3);
+                        log_fatal("There does not seem to be a possible layer division for your detector.");
                     }
                 }
                 

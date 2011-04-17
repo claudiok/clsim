@@ -484,10 +484,6 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons)
     if (photonsForFrameList_.size() != currentPhotonIdForFrame_.size())
         log_fatal("Internal error: cache sizes differ. (2)");
     
-    uint64_t photonNumCounter=0;
-    double photonWeightSum=0.;
-    
-
     
     BOOST_FOREACH(const I3CLSimPhoton &photon, photons)
     {
@@ -719,6 +715,22 @@ void I3CLSimModule::FlushFrameCache()
     currentPhotonIdForFrame_.clear();
 }
 
+namespace {
+    bool ParticleHasMuonDaughter(const I3Particle &particle, const I3MCTree &mcTree)
+    {
+        const std::vector<I3Particle> daughters =
+        I3MCTreeUtils::GetDaughters(mcTree, particle);
+
+        BOOST_FOREACH(const I3Particle &daughter, daughters)
+        {
+            if ((daughter.GetType()==I3Particle::MuMinus) ||
+                (daughter.GetType()==I3Particle::MuPlus))
+                return true;
+        }
+        return false;
+    }
+}
+
 void I3CLSimModule::Physics(I3FramePtr frame)
 {
     log_trace("%s", __PRETTY_FUNCTION__);
@@ -767,6 +779,15 @@ void I3CLSimModule::Physics(I3FramePtr frame)
 
         // ignore muons if requested
         if ((ignoreMuons_) && (isMuon)) continue;
+        
+        // ignore muons with muons as child particles
+        // -> those already ran through MMC(-recc) or
+        // were sliced with I3MuonSlicer. Only add their
+        // children.
+        if (!ignoreMuons_) {
+            if (ParticleHasMuonDaughter(particle, *MCTree))
+                continue;
+        }
         
         totalSimulatedEnergyForFlush_ += particle.GetEnergy();
         totalNumParticlesForFlush_++;
