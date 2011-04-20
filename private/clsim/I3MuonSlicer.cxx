@@ -140,7 +140,7 @@ namespace {
     
     void SliceMuonOrCopySubtree(const I3MCTree &inputTree,
                                 const I3MMCTrackList &mmcTrackList,
-                                const std::map<std::pair<uint64_t, int>, const I3MMCTrack &> &mmcTrackListIndex,
+                                const std::map<std::pair<uint64_t, int>, const I3MMCTrack *> &mmcTrackListIndex,
                                 I3MCTree &outputTree,
                                 const I3Particle &particle
                                 )
@@ -165,13 +165,13 @@ namespace {
             if (isnan(particle.GetTime())) log_fatal("Muon must have a time");
             
             // find it in the I3MMCTrackList
-            std::map<std::pair<uint64_t, int>, const I3MMCTrack &>::const_iterator it =
+            std::map<std::pair<uint64_t, int>, const I3MMCTrack *>::const_iterator it =
             mmcTrackListIndex.find(std::make_pair(particle.GetMajorID(), particle.GetMinorID()));
             if (it==mmcTrackListIndex.end())
             {
                 log_fatal("Muon is not in I3MMCTrackList.");
             }
-            const I3MMCTrack &mmcTrack = it->second;
+            const I3MMCTrack &mmcTrack = *(it->second);
             
             // daughters need to be sorted in time (ascending)
             if (!AreParticlesSortedInTime(daughters))
@@ -317,13 +317,13 @@ void I3MuonSlicer::Physics(I3FramePtr frame)
                                  MMCTrackListName_.c_str());
 
     // build an index into the MMCTrackList (by particle ID)
-    std::map<std::pair<uint64_t, int>, const I3MMCTrack &> MMCTrackListIndex;
+    std::map<std::pair<uint64_t, int>, const I3MMCTrack *> MMCTrackListIndex;
     BOOST_FOREACH(const I3MMCTrack &mmcTrack, *MMCTrackList)
     {
         const std::pair<uint64_t, int> identifier(mmcTrack.GetI3Particle().GetMajorID(),
                                                   mmcTrack.GetI3Particle().GetMinorID());
         
-        if (!MMCTrackListIndex.insert(std::make_pair(identifier, mmcTrack)).second) {
+        if (!MMCTrackListIndex.insert(std::make_pair(identifier, &mmcTrack)).second) {
             log_fatal("Particle ID exists more than once in I3MMCTrackList.");
         }
     }

@@ -142,12 +142,12 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
     I3MCHitSeriesMapPtr outputMCHitSeriesMap(new I3MCHitSeriesMap());
     
     // build an index into the I3MCTree
-    std::map<std::pair<uint64_t, int>, const I3Particle &> mcTreeIndex;
+    std::map<std::pair<uint64_t, int>, const I3Particle *> mcTreeIndex;
     for (I3MCTree::iterator it = MCTree->begin();
          it != MCTree->end(); ++it)
     {
         const I3Particle &particle = *it;
-        mcTreeIndex.insert(std::make_pair(std::make_pair(particle.GetMajorID(), particle.GetMinorID()), particle));
+        mcTreeIndex.insert(std::make_pair(std::make_pair(particle.GetMajorID(), particle.GetMinorID()), &particle));
     }
     
     
@@ -221,12 +221,12 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
             if (hitProbability <= randomService_->Uniform()) continue;
 
             // find the particle
-            std::map<std::pair<uint64_t, int>, const I3Particle &>::const_iterator it = 
+            std::map<std::pair<uint64_t, int>, const I3Particle *>::const_iterator it = 
             mcTreeIndex.find(std::make_pair(photon.GetParticleMajorID(), photon.GetParticleMinorID()));
             if (it==mcTreeIndex.end())
                 log_fatal("Particle with id maj=%" PRIu64 ", min=%i does not exist in MC tree, but we have a photon that claims it was created by that particle..",
                           photon.GetParticleMajorID(), photon.GetParticleMinorID());
-            const I3Particle &particle = it->second;
+            const I3Particle &particle = *(it->second);
             
             // allocate the output vector if not already done
             if (!hits) hits = &(outputMCHitSeriesMap->insert(std::make_pair(key, I3MCHitSeries())).first->second);
