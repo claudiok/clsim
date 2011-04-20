@@ -68,9 +68,9 @@ namespace I3CLSimModuleHelper {
     
     
     I3CLSimRandomValueConstPtr
-    makeWavelegthGenerator(I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
-                           bool generateCherenkovPhotonsWithoutDispersion,
-                           I3CLSimMediumPropertiesPtr mediumProperties)
+    makeWavelengthGenerator(I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
+                            bool generateCherenkovPhotonsWithoutDispersion,
+                            I3CLSimMediumPropertiesPtr mediumProperties)
     {
         const double minWlen = mediumProperties->GetMinWavelength();
         const double maxWlen = mediumProperties->GetMaxWavelength();
@@ -194,9 +194,10 @@ namespace I3CLSimModuleHelper {
                                                            I3CLSimSimpleGeometryFromI3GeometryPtr geometry,
                                                            I3CLSimMediumPropertiesPtr medium,
                                                            I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
-                                                           I3CLSimRandomValueConstPtr wavelengthGenerator)
+                                                           I3CLSimRandomValueConstPtr wavelengthGenerator,
+                                                           bool useNativeMath)
     {
-        I3CLSimStepToPhotonConverterOpenCLPtr conv(new I3CLSimStepToPhotonConverterOpenCL(rng, true));
+        I3CLSimStepToPhotonConverterOpenCLPtr conv(new I3CLSimStepToPhotonConverterOpenCL(rng, useNativeMath));
 
         shared_ptr<const std::vector<std::pair<std::string, std::string> > >
         deviceList = conv->GetDeviceList();

@@ -8,6 +8,8 @@ parser.add_option("-o", "--outfile",default="test_muons.i3",
                   dest="OUTFILE", help="Write output to OUTFILE (.i3{.gz} format)")
 parser.add_option("-s", "--seed",type="int",default=12345,
                   dest="SEED", help="Initial seed for the random number generator")
+parser.add_option("-g", "--gcd",default="GeoCalibDetectorStatus_IC86.55040_official.i3.gz",
+                  dest="GCDFILE", help="Read geometry from GCDFILE (.i3{.gz} format)")
 parser.add_option("-r", "--runnumber", type="int", default=1,
                   dest="RUNNUMBER", help="The run number for this simulation")
 parser.add_option("-n", "--numevents", type="int", default=100,
@@ -57,7 +59,7 @@ randomService = phys_services.I3SPRNGRandomService(
     streamnum = options.RUNNUMBER)
 
 tray.AddService("I3ReaderServiceFactory", "gcd_reader",
-    Filename = "GeoCalibDetectorStatus_IC86.55040_official.i3.gz",
+    Filename = options.GCDFILE,
     OmitGeometry=False,
     OmitCalibration=False,
     OmitStatus=False,

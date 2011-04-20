@@ -228,7 +228,7 @@ for layerNum in range(0, mediumProps.LayersNum, 10):
     bx.plot(wlens, 1./absCoeff, linewidth=1., linestyle='-', color='b', alpha=0.1) #, label=r"layer %u" % (layerNum))
 
 
-exampleLayerNum=20
+exampleLayerNum=114
 #bx.plot(wlens, absLenIceCube(wlens, layer=exampleLayerNum), linewidth=6., linestyle='-', color='g', label=r"python")
 
 absCoeff = 1./applyOpenCLWlenDependentFunction(wlens, mediumProps.GetAbsorptionLength(exampleLayerNum), useReferenceFunction=True)

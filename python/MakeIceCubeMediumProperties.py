@@ -69,17 +69,19 @@ def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m):
         if abs((depth[i+1]-depth[i]) - layerHeight) > 1e-5:
             raise RuntimeError("ice layers are not spaced evenly")
     
-    
-    layerZStart = []
-    layerZEnd = []
-    
-    for z in detectorCenterDepth - depth[::-1]: # z coordinates in reverse order
-        layerZStart.append(z-layerHeight/2.)
-        layerZEnd.append(z+layerHeight/2.)
-    
-    layerZStart = numpy.array(layerZStart)
-    layerZEnd = numpy.array(layerZEnd)
+    # change the order (top-to-bottom -> bottom-to-top)
+    depth = depth[::-1]
+    b_e400 = b_e400[::-1]               # effective scattering length
+    a_dust400 = a_dust400[::-1]
+    delta_tau = delta_tau[::-1]
 
+    b_400 = b_e400/(1.-meanCosineTheta) # scattering length (used in the simulation)
+    
+    # layerZ is in z-coordinates, from bottom to top (ascending z)
+    depthAtBottomOfLayer = depth + layerHeight
+    layerZStart = detectorCenterDepth - depthAtBottomOfLayer
+    layerZEnd = detectorCenterDepth - depth
+    
     ##### start making the medium property object
     
     m = I3CLSimMediumProperties(mediumDensity=0.9216*I3Units.g/I3Units.cm3,
@@ -105,6 +107,8 @@ def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m):
     phaseRefIndex = I3CLSimWlenDependentValueRefIndexIceCube(mode="phase")
     groupRefIndex = I3CLSimWlenDependentValueRefIndexIceCube(mode="group")
     for i in range(len(layerZStart)):
+        #print "layer {0}: depth at bottom is {1} (z_bottom={2}), b_400={3}".format(i, depthAtBottomOfLayer[i], layerZStart[i], b_400[i])
+        
         m.SetPhaseRefractiveIndex(i, phaseRefIndex)
 
         # the IceCube group refractive index parameterization is not exactly 
@@ -114,12 +118,12 @@ def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m):
         m.SetGroupRefractiveIndexOverride(i, groupRefIndex)
         
         absLen = I3CLSimWlenDependentValueAbsLenIceCube(kappa=kappa, A=A, B=B, D=D, E=E,
-                                                        aDust400=a_dust400[::-1][i],   # reverse order
-                                                        deltaTau=delta_tau[::-1][i])   # reverse order
+                                                        aDust400=a_dust400[i],
+                                                        deltaTau=delta_tau[i])
         m.SetAbsorptionLength(i, absLen)
 
         scatLen = I3CLSimWlenDependentValueScatLenIceCube(alpha=alpha,
-                                                          be400=b_e400[::-1][i])       # reverse order
+                                                          b400=b_400[i])
         m.SetScatteringLength(i, scatLen)
 
     return m

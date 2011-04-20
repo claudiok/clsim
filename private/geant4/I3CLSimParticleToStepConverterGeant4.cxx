@@ -505,6 +505,9 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
         
         //G4cout << "G4 thread got particle id " << particleIdentifier << ", type: " << particle->GetTypeString() << G4endl;
         
+        //// HACK HACK HACK
+        //if ((particle->GetType()!=I3Particle::MuMinus) && (particle->GetType()!=I3Particle::MuPlus)) continue;
+        
         // check if there is a parameterization for this particle, so we
         // may not even have to send it to Geant4
         {

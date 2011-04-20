@@ -104,10 +104,10 @@ namespace I3CLSimParticleToStepConverterUtils
     {
         const double angularDist_a=0.39;
         const double angularDist_b=2.61;
-        const double angularDist_I=1.-exp(-angularDist_b*pow(2., angularDist_a));
+        const double angularDist_I=1.-std::exp(-angularDist_b*std::pow(2., angularDist_a));
         
-        const double angular_cos=max(1.-pow(-log(1.-randomService_->Uniform()*angularDist_I)/angularDist_b, 1./angularDist_a), -1.0);
-        const double angular_sin=sqrt(1.-angular_cos*angular_cos);
+        const double angular_cos=std::max(1.-std::pow(-std::log(1.-randomService_->Uniform()*angularDist_I)/angularDist_b, 1./angularDist_a), -1.0);
+        const double angular_sin=std::sqrt(1.-angular_cos*angular_cos);
         
         double step_dx = p.GetDir().GetX();
         double step_dy = p.GetDir().GetY();
@@ -124,7 +124,7 @@ namespace I3CLSimParticleToStepConverterUtils
         newStep.SetWeight(1.);
         newStep.SetBeta(1.);
         newStep.SetID(identifier);
-        
+
         // rotate in-place
         scatterDirectionByAngle(angular_cos, angular_sin,
                                 step_dx, step_dy, step_dz,

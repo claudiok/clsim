@@ -10,11 +10,11 @@ using namespace I3CLSimHelper;
 
 I3CLSimWlenDependentValueScatLenIceCube::
 I3CLSimWlenDependentValueScatLenIceCube(double alpha,
-                                        double be400
+                                        double b400
                                         )
 :
 alpha_(alpha),
-be400_(be400)
+b400_(b400)
 { 
 }
 
@@ -27,7 +27,7 @@ I3CLSimWlenDependentValueScatLenIceCube::~I3CLSimWlenDependentValueScatLenIceCub
 double I3CLSimWlenDependentValueScatLenIceCube::GetValue(double wlen) const
 {
     const double x = wlen/I3Units::nanometer;
-    return I3Units::m/( be400_ * std::pow(x/400., -alpha_) );
+    return I3Units::m/( b400_ * std::pow(x/400., -alpha_) );
 }
 
 
@@ -43,12 +43,12 @@ std::string I3CLSimWlenDependentValueScatLenIceCube::GetOpenCLFunction(const std
     std::string funcBody = std::string() + 
     "{\n"
     "    const float alpha = " + to_float_string(alpha_) + ";\n"
-    "    const float be400 = " + to_float_string(be400_) + ";\n"
+    "    const float b400 = " + to_float_string(b400_) + ";\n"
     "    \n"
     "#ifdef USE_NATIVE_MATH\n"
-    "    return " + to_float_string(I3Units::m) + "*native_recip( be400 * native_powr(wlen*" + refWlenAsString + ", -alpha) );\n"
+    "    return " + to_float_string(I3Units::m) + "*native_recip( b400 * native_powr(wlen*" + refWlenAsString + ", -alpha) );\n"
     "#else\n"
-    "    return " + to_float_string(I3Units::m) + "/( be400 * powr(wlen*" + refWlenAsString + ", -alpha) );\n"
+    "    return " + to_float_string(I3Units::m) + "/( b400 * powr(wlen*" + refWlenAsString + ", -alpha) );\n"
     "#endif\n"
     "}\n"
     ;
@@ -62,7 +62,7 @@ bool I3CLSimWlenDependentValueScatLenIceCube::CompareTo(const I3CLSimWlenDepende
     {
         const I3CLSimWlenDependentValueScatLenIceCube &other_ = dynamic_cast<const I3CLSimWlenDependentValueScatLenIceCube &>(other);
         return ((other_.alpha_ == alpha_) &&
-                (other_.be400_ == be400_));
+                (other_.b400_ == b400_));
     }
     catch (const std::bad_cast& e)
     {
@@ -81,7 +81,7 @@ void I3CLSimWlenDependentValueScatLenIceCube::serialize(Archive &ar, unsigned ve
 
     ar & make_nvp("I3CLSimWlenDependentValue", base_object<I3CLSimWlenDependentValue>(*this));
     ar & make_nvp("alpha", alpha_);
-    ar & make_nvp("be400", be400_);
+    ar & make_nvp("b400", b400_);
 }
 
 

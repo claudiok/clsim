@@ -184,11 +184,23 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
                                       photon.GetDir().GetZ() * DOMDir_z);
             photonCosAngle = std::max(-1., std::min(1., photonCosAngle));
             
-#ifndef I3_OPTIMIZE
-            const double photonAngle = std::acos(photonCosAngle);
+
             const double distFromDOMCenter = std::sqrt(std::pow(photon.GetPos().GetX()-om.position.GetX(),2) + 
                                                        std::pow(photon.GetPos().GetY()-om.position.GetY(),2) + 
                                                        std::pow(photon.GetPos().GetZ()-om.position.GetZ(),2));
+            if (distFromDOMCenter > 5.*165.1*I3Units::mm + 1.*I3Units::cm) {
+                log_error("distance not 5*13\"/2=%fmm.. it is %fmm (diff=%gmm) (OMKey=(%i,%u)",
+                          5.*165.1,
+                          distFromDOMCenter/I3Units::mm,
+                          (distFromDOMCenter-5.*165.1*I3Units::mm)/I3Units::mm,
+                          key.GetString(), key.GetOM());
+            } else {
+                //log_warn("distance OK!");
+            }
+                
+            
+#ifndef I3_OPTIMIZE
+            const double photonAngle = std::acos(photonCosAngle);
             
             log_trace("Photon (lambda=%fnm, angle=%fdeg, dist=%fm) has weight %g",
                      photon.GetWavelength()/I3Units::nanometer,

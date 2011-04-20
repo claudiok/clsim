@@ -285,36 +285,36 @@ void I3CLSimParticleToStepConverterCascadeParameterization::EnqueueParticle(cons
                   particle.GetMajorID(), particle.GetMinorID(),
                   E*I3Units::GeV/I3Units::TeV, length/I3Units::m);
         
-        // calculation from PPC
+        // calculation the way it's done by PPC (I hope)
         const double extr = 1. + max(0.0, 0.1720+0.0324*logE);
-        const double cascadeFraction = 1./extr;
+        const double muonFraction = 1./extr;
         
         const double meanNumPhotonsTotal = meanPhotonsPerMeter*(length/I3Units::m)*extr;
         
         log_trace("meanNumPhotonsTotal=%f", meanNumPhotonsTotal);
         
-        const double meanNumPhotonsFromMuon = meanNumPhotonsTotal*(1.-cascadeFraction);
+        const double meanNumPhotonsFromMuon = meanNumPhotonsTotal*muonFraction;
         const uint32_t numPhotonsFromMuon = randomService_->Poisson(meanNumPhotonsFromMuon);
 
         log_trace("Generating %" PRIu32 " muon-steps for muon (mean=%f)", numPhotonsFromMuon, meanNumPhotonsFromMuon);
 
-        const double meanNumPhotonsFromCascades = meanNumPhotonsTotal*cascadeFraction;
+        const double meanNumPhotonsFromCascades = meanNumPhotonsTotal*(1.-muonFraction);
 
         log_trace("Generating a mean of %f cascade-steps for muon", meanNumPhotonsFromCascades);
 
         const uint32_t numPhotonsFromCascades = randomService_->Poisson(meanNumPhotonsFromCascades);
         log_trace("Generating %" PRIu32 " cascade-steps for muon (mean=%f)", numPhotonsFromCascades, meanNumPhotonsFromCascades);
 
-
+         
+         
         // steps from muon
-
         const uint32_t numStepsFromMuon = numPhotonsFromMuon/photonsPerStep_;
         const uint32_t numPhotonsFromMuonInLastStep = numPhotonsFromMuon%photonsPerStep_;
         
         log_trace("Generating %" PRIu32 " steps for muon", numStepsFromMuon);
 
         
-        for (uint32_t i=0; i<(numStepsFromMuon+((numPhotonsFromMuonInLastStep>0)?1:0)); ++i)
+        for (uint32_t i=0; i<numStepsFromMuon; ++i)
         {
             currentStepSeries_->push_back(I3CLSimStep());
             I3CLSimStep &newStep = currentStepSeries_->back();
@@ -343,7 +343,7 @@ void I3CLSimParticleToStepConverterCascadeParameterization::EnqueueParticle(cons
         
         // steps from cascade
         
-        uint32_t photonsPerStepForCascadeLight=photonsPerStep_/10;
+        uint32_t photonsPerStepForCascadeLight=photonsPerStep_/1;
         if (photonsPerStepForCascadeLight==0) photonsPerStepForCascadeLight=1;
         
         const uint32_t numStepsFromCascades = numPhotonsFromCascades/photonsPerStepForCascadeLight;
@@ -354,11 +354,11 @@ void I3CLSimParticleToStepConverterCascadeParameterization::EnqueueParticle(cons
             currentStepSeries_->push_back(I3CLSimStep());
             I3CLSimStep &newStep = currentStepSeries_->back();
             
-            const double longitudinalPos = randomService_->Uniform()*length*I3Units::m;
+            const double longitudinalPos = randomService_->Uniform()*length;
             GenerateStep(newStep, particle,
                          identifier,
                          randomService_,
-                         photonsPerStep_,
+                         photonsPerStepForCascadeLight,
                          longitudinalPos);
         }
         
@@ -367,7 +367,7 @@ void I3CLSimParticleToStepConverterCascadeParameterization::EnqueueParticle(cons
             currentStepSeries_->push_back(I3CLSimStep());
             I3CLSimStep &newStep = currentStepSeries_->back();
             
-            const double longitudinalPos = randomService_->Uniform()*length*I3Units::m;
+            const double longitudinalPos = randomService_->Uniform()*length;
             GenerateStep(newStep, particle,
                          identifier,
                          randomService_,

@@ -195,15 +195,15 @@ phaseRefIndex = mediumProps.GetPhaseRefractiveIndex(0)
 
 wlen_range = (mediumProps.GetMinWavelength()/I3Units.nanometer, mediumProps.GetMaxWavelength()/I3Units.nanometer)
 
-genWavelength = clsim.makeWavelegthGenerator(domAcceptance, False, mediumProps)
+genWavelength = clsim.makeWavelengthGenerator(domAcceptance, False, mediumProps)
 histGenWavelength = genMCHistogramsOpenCL(genWavelength, range=wlen_range)
 numberOfPhotonsPerMeter = clsim.NumberOfPhotonsPerMeter(phaseRefIndex, domAcceptance, wlen_range[0]*I3Units.nanometer, wlen_range[1]*I3Units.nanometer)
 
-genWavelengthFlat = clsim.makeWavelegthGenerator(flatAcceptance, False, mediumProps)
+genWavelengthFlat = clsim.makeWavelengthGenerator(flatAcceptance, False, mediumProps)
 histGenWavelengthFlat = genMCHistogramsOpenCL(genWavelengthFlat, range=wlen_range)
 numberOfPhotonsPerMeterFlat = clsim.NumberOfPhotonsPerMeter(phaseRefIndex, flatAcceptance, wlen_range[0]*I3Units.nanometer, wlen_range[1]*I3Units.nanometer)
 
-#genWavelengthFlatNoDispersion = clsim.makeWavelegthGenerator(flatAcceptance, True, mediumProps)
+#genWavelengthFlatNoDispersion = clsim.makeWavelengthGenerator(flatAcceptance, True, mediumProps)
 #histGenWavelengthFlatNoDispersion = genMCHistogramsOpenCL(genWavelengthFlatNoDispersion, range=wlen_range)
 
 ####

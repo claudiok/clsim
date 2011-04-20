@@ -56,10 +56,6 @@ geometryIsConfigured_(false)
                  "A random number generating service (derived from I3RandomService).",
                  randomService_);
 
-    AddParameter("WavelengthGenerator",
-                 "An instance of I3CLSimRandomValue generating wavelengths (most likely sampled from a Cherenkov spectrum).",
-                 wavelengthGenerator_);
-
     generateCherenkovPhotonsWithoutDispersion_=true;
     AddParameter("GenerateCherenkovPhotonsWithoutDispersion",
                  "The wavelength of the generated Cherenkov photons will be generated\n"
@@ -68,7 +64,7 @@ geometryIsConfigured_(false)
                  generateCherenkovPhotonsWithoutDispersion_);
 
     AddParameter("WavelengthGenerationBias",
-                 "An instance of I3CLSimWlenDependentValue describing the reciprocal weight a photon gets assigned as a function of its wavelegth.\n"
+                 "An instance of I3CLSimWlenDependentValue describing the reciprocal weight a photon gets assigned as a function of its wavelength.\n"
                  "You can set this to the wavelength depended acceptance of your DOM to pre-scale the number of generated photons.",
                  wavelengthGenerationBias_);
 
@@ -110,6 +106,14 @@ geometryIsConfigured_(false)
                  "Name of the OpenCL device. Leave empty for auto-selection.",
                  openCLDeviceName_);
 
+    openCLUseNativeMath_=false;
+    AddParameter("OpenCLUseNativeMath",
+                 "Use native math instructions in the OpenCL kernel. Has proven not to work\n"
+                 "correctly with kernels running on Intel CPUs. Seems to work correctly on\n"
+                 "Nvidia GPUs (may speed up things, but make sure it does not change your\n"
+                 "results).",
+                 openCLUseNativeMath_);
+    
     DOMRadius_=0.16510*I3Units::m; // 13 inch diameter
     AddParameter("DOMRadius",
                  "The DOM radius used during photon tracking.",
@@ -229,6 +233,7 @@ void I3CLSimModule::Configure()
 
     GetParameter("OpenCLPlatformName", openCLPlatformName_);
     GetParameter("OpenCLDeviceName", openCLDeviceName_);
+    GetParameter("OpenCLUseNativeMath", openCLUseNativeMath_);
 
     GetParameter("DOMRadius", DOMRadius_);
     GetParameter("IgnoreNonIceCubeOMNumbers", ignoreNonIceCubeOMNumbers_);
@@ -250,7 +255,7 @@ void I3CLSimModule::Configure()
 
     // fill wavelengthGenerator_
     wavelengthGenerator_ =
-    I3CLSimModuleHelper::makeWavelegthGenerator
+    I3CLSimModuleHelper::makeWavelengthGenerator
     (wavelengthGenerationBias_,
      generateCherenkovPhotonsWithoutDispersion_,
      mediumProperties_);
@@ -429,7 +434,8 @@ void I3CLSimModule::Geometry(I3FramePtr frame)
                                           geometry_,
                                           mediumProperties_,
                                           wavelengthGenerationBias_,
-                                          wavelengthGenerator_);
+                                          wavelengthGenerator_,
+                                          openCLUseNativeMath_);
     
     log_info("Initializing Geant4..");
     // initialize Geant4 (will set bunch sizes according to the OpenCL settings)

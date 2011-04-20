@@ -15,7 +15,7 @@ struct I3CLSimWlenDependentValueScatLenIceCube : public I3CLSimWlenDependentValu
 {
 public:
     I3CLSimWlenDependentValueScatLenIceCube(double alpha,
-                                            double be400
+                                            double b400
                                             );
     virtual ~I3CLSimWlenDependentValueScatLenIceCube();
     
@@ -60,13 +60,13 @@ public:
     
     // access to the internal state
     inline double GetAlpha() const {return alpha_;}
-    inline double GetBe400() const {return be400_;}
+    inline double GetB400() const {return b400_;}
     
 private:
     I3CLSimWlenDependentValueScatLenIceCube();
     
     double alpha_;
-    double be400_;
+    double b400_;
     
     
     friend class boost::serialization::access;

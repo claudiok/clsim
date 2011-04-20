@@ -334,7 +334,7 @@ void register_I3CLSimWlenDependentValue()
          >(
            (
             bp::arg("alpha"),
-            bp::arg("be400")
+            bp::arg("b400")
             )
            )
          )

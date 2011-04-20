@@ -190,10 +190,10 @@ namespace I3CLSimHelper
         code << "///////////////// START " << fullName << " (optimized) ////////////////\n";
         code << "\n";
         
-        code << "__constant float " << functionName << "_be400[" << layeredFunctionIceCube.size() << "] = {\n";
+        code << "__constant float " << functionName << "_b400[" << layeredFunctionIceCube.size() << "] = {\n";
         BOOST_FOREACH(const I3CLSimWlenDependentValueScatLenIceCubeConstPtr &function, layeredFunctionIceCube)
         {
-            code << "    " << to_float_string(function->GetBe400()) << ",\n";
+            code << "    " << to_float_string(function->GetB400()) << ",\n";
         }
         code << "};\n";
         code << "\n";
@@ -209,9 +209,9 @@ namespace I3CLSimHelper
         code << "    \n";
         code << "    \n";
         code << "#ifdef USE_NATIVE_MATH\n";
-        code << "    return " << to_float_string(I3Units::meter) << "*native_recip( " << functionName << "_be400[layer] * native_powr(wlen*" + refWlenAsString + ", -alpha) );\n";
+        code << "    return " << to_float_string(I3Units::meter) << "*native_recip( " << functionName << "_b400[layer] * native_powr(wlen*" + refWlenAsString + ", -alpha) );\n";
         code << "#else\n";
-        code << "    return " << to_float_string(I3Units::meter) << "/( " << functionName << "_be400[layer] * powr(wlen*" + refWlenAsString + ", -alpha) );\n";
+        code << "    return " << to_float_string(I3Units::meter) << "/( " << functionName << "_b400[layer] * powr(wlen*" + refWlenAsString + ", -alpha) );\n";
         code << "#endif\n";
         
         code << "}\n";

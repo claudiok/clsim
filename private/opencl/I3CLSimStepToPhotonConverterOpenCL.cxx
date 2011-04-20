@@ -1,5 +1,8 @@
 #include "clsim/I3CLSimStepToPhotonConverterOpenCL.h"
 
+//// debugging: show GPUtime/photon
+//#define DUMP_STATISTICS
+
 #define __STDC_FORMAT_MACROS 
 #include <inttypes.h>
 
@@ -489,8 +492,11 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
 	// instantiate the command queue
     log_debug("Initializing..");
 	try {
-		//queue_ = shared_ptr<cl::CommandQueue>(new cl::CommandQueue(*context_, device, CL_QUEUE_PROFILING_ENABLE));
+#ifdef DUMP_STATISTICS
+		queue_ = shared_ptr<cl::CommandQueue>(new cl::CommandQueue(*context_, device, CL_QUEUE_PROFILING_ENABLE));
+#else
 		queue_ = shared_ptr<cl::CommandQueue>(new cl::CommandQueue(*context_, device, 0));
+#endif
 	} catch (cl::Error err) {
         queue_.reset(); // throw away command queue.
         log_error("OpenCL ERROR: %s (%i)", err.what(), err.err());
@@ -586,6 +592,15 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
 
         log_trace("OpenCL thread got steps with id %zu", static_cast<std::size_t>(stepsIdentifier));
         
+#ifdef DUMP_STATISTICS
+        uint64_t totalNumberOfPhotons=0;
+        BOOST_FOREACH(const I3CLSimStep &step, *steps)
+        {
+            totalNumberOfPhotons+=step.numPhotons;
+        }
+        
+#endif //DUMP_STATISTICS
+        
         // copy steps to device
         try {
             // blocking!
@@ -606,6 +621,8 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
         
         log_trace("Starting kernel..");
         
+        cl::Event kernelFinishEvent;
+        
         // run the kernel
         try {
             queue_->enqueueNDRangeKernel(*kernel_, 
@@ -613,18 +630,30 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
                                          cl::NDRange(thisNumberOfInputSteps),	// number of work items
                                          cl::NDRange(workgroupSize_),
                                          NULL,
-                                         NULL);
+                                         &kernelFinishEvent);
             queue_->flush(); // make sure it begins executing on the device
         } catch (cl::Error &err) {
             log_fatal("OpenCL ERROR (running kernel): %s (%i)", err.what(), err.err());
         }
 
-        
         // we don't need the current steps anymore
         steps.reset();
-        
+
         try {
-            // wait for the kernel
+            // wait for the kernel to finish
+            kernelFinishEvent.wait();
+
+#ifdef DUMP_STATISTICS
+            uint64_t timeStart, timeEnd;
+            kernelFinishEvent.getProfilingInfo(CL_PROFILING_COMMAND_START, &timeStart);
+            kernelFinishEvent.getProfilingInfo(CL_PROFILING_COMMAND_END, &timeEnd);
+
+            log_warn("kernel statistics: %g nanoseconds/photon",
+                     static_cast<double>(timeEnd-timeStart)/static_cast<double>(totalNumberOfPhotons));
+            
+#endif
+
+            // wait for the queue to really finish (just to make sure)
             queue_->finish();
         } catch (cl::Error &err) {
             log_fatal("OpenCL ERROR (running kernel): %s (%i)", err.what(), err.err());
@@ -813,10 +842,14 @@ namespace {
             else
                 photon.dummy = -((-stringID)*1000 + domID);
             
-            log_trace("Replaced dummy %u with %i", stringIndexWithDOMIndex, photon.dummy);
-            
-            
-            
+            log_trace("Replaced dummy %u with %i (photon @ pos=(%g,%g,%g))",
+                      stringIndexWithDOMIndex,
+                      photon.dummy,
+                      photon.GetPosX(),
+                      photon.GetPosY(),
+                      photon.GetPosZ()
+                      );
+
         }
     }
     
@@ -829,10 +862,12 @@ I3CLSimStepToPhotonConverter::ConversionResult_t I3CLSimStepToPhotonConverterOpe
 
     ConversionResult_t result = queueFromOpenCL_->Get();
     
-    if (result.second)
+    if (result.second) {
         ReplaceStringDOMIndexWithStringDOMIDs(*result.second,
                                               stringIndexToStringIDBuffer_,
                                               domIndexToDomIDBuffer_perStringIndex_);
+        
+    }
     
     return result;
 }

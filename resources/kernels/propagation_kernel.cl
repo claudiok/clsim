@@ -77,6 +77,11 @@ void scatterDirectionByAngle(float cosa,
                             float4 *direction,
                             float randomNumber)
 {
+    //printf("direction before=(%f,%f,%f) len^2=%f  -> cos=%f, sin=%f, r=%f\n",
+    //       (*direction).x, (*direction).y, (*direction).z,
+    //       (*direction).x*(*direction).x + (*direction).y*(*direction).y + (*direction).z*(*direction).z,
+    //       cosa, sina, randomNumber);
+    
     // randomize direction of scattering (rotation around old direction axis)
     const float b=2.0f*PI*randomNumber;
     const float cosb=my_cos(b);
@@ -104,6 +109,11 @@ void scatterDirectionByAngle(float cosa,
         (*direction).y *= recip_length;
         (*direction).z *= recip_length;
     }
+    
+    //printf("direction after=(%f,%f,%f) len^2=%f\n",
+    //       (*direction).x, (*direction).y, (*direction).z,
+    //       (*direction).x*(*direction).x + (*direction).y*(*direction).y + (*direction).z*(*direction).z);
+    
 }
 
 
@@ -116,7 +126,7 @@ inline void createPhotonFromTrack(struct I3CLSimStep *step,
     float shiftMultiplied = step->dirAndLengthAndBeta.z*RNG_CALL_UNIFORM_CO;
     float inverseParticleSpeed = my_recip(speedOfLight*step->dirAndLengthAndBeta.w);
 
-    // move along the shower direction
+    // move along the step direction
     *photonPosAndTime = (float4)
     (
     step->posAndTime.x+stepDir.x*shiftMultiplied,
@@ -129,19 +139,21 @@ inline void createPhotonFromTrack(struct I3CLSimStep *step,
     unsigned int layer = min(max(findLayerForGivenZPos( (*photonPosAndTime).z ), 0), MEDIUM_LAYERS-1);
     
     // our photon still needs a wavelength. create one!
-    //(*photonDirAndWlen).w = my_recip(MEDIUM_MIN_RECIP_WLEN + RNG_CALL_UNIFORM_OC * (MEDIUM_MAX_RECIP_WLEN-MEDIUM_MIN_RECIP_WLEN));
-    (*photonDirAndWlen).w = generateWavelength(RNG_ARGS_TO_CALL);
+    const float wavelength = generateWavelength(RNG_ARGS_TO_CALL);
     
-    const float cosCherenkov = my_recip(getPhaseRefIndex(layer, (*photonDirAndWlen).w));
+    const float cosCherenkov = my_recip(step->dirAndLengthAndBeta.w*getPhaseRefIndex(layer, wavelength)); // cos theta = 1/(beta*n)
     const float sinCherenkov = my_sqrt(1.0f-cosCherenkov*cosCherenkov);
     
     // determine the photon direction
 
     // start with the track direction
     (*photonDirAndWlen).xyz = stepDir.xyz;
+    (*photonDirAndWlen).w = wavelength;
     
     // and now rotate to cherenkov emission direction
+    //printf("gen:\n");
     scatterDirectionByAngle(cosCherenkov, sinCherenkov, photonDirAndWlen, RNG_CALL_UNIFORM_CO);
+    //printf("endgen.\n");
 }
 
 inline float2 sphDirFromCar(float4 carDir)
@@ -252,16 +264,17 @@ inline bool checkForCollision(const float4 photonPosAndTime,
             if (dr2 < OM_RADIUS*OM_RADIUS) // start point inside the OM
             {
                 *thisStepLength=0.f;
-
+            
                 // record a hit
                 hitOnString=stringNum;
                 hitOnDom=domNum;
                 
                 hitRecorded=true;
             }
-            else if (discr >= 0.0f) 
+            else
+            if (discr >= 0.0f) 
             {
-                discr = my_sqrt(discr);
+                discr = my_sqrt(discr); // /5.f;
                 
                 float smin = -urdot - discr;
                 if (smin < 0.0f) smin = -urdot + discr;
@@ -365,19 +378,20 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
     float4 stepDir;
     {
         const float rho = my_sin(step.dirAndLengthAndBeta.x); // sin(theta)
-        stepDir = (float4)(rho*my_cos(step.dirAndLengthAndBeta.y), // rho*cos(phi
+        stepDir = (float4)(rho*my_cos(step.dirAndLengthAndBeta.y), // rho*cos(phi)
                            rho*my_sin(step.dirAndLengthAndBeta.y), // rho*sin(phi)
                            my_cos(step.dirAndLengthAndBeta.x),    // cos(phi)
                            0.f);
     }
 
-    dbg_printf("Step at: p=(%f,%f,%f), d=(%f,%f,%f), t=%f, l=%f\n",
+    dbg_printf("Step at: p=(%f,%f,%f), d=(%f,%f,%f), t=%f, l=%f, N=%u\n",
                step.posAndTime.x,
                step.posAndTime.y,
                step.posAndTime.z,
                stepDir.x, stepDir.y, stepDir.z,
                step.posAndTime.w,
-               step.dirAndLengthAndBeta.z);
+               step.dirAndLengthAndBeta.z,
+               step.numPhotons);
 
 
     for (uint jj=0;jj<step.numPhotons;++jj)
@@ -394,12 +408,13 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
         uint photonNumScatters=0;
         float photonTotalPathLength=0.f;
 
-        dbg_printf("   created photon at: p=(%f,%f,%f), d=(%f,%f,%f), t=%f, wlen=%fnm\n",
+        dbg_printf("   created photon %u at: p=(%f,%f,%f), d=(%f,%f,%f), t=%f, wlen=%fnm\n",
+                   jj,
                    photonPosAndTime.x, photonPosAndTime.y, photonPosAndTime.z,
                    photonDirAndWlen.x, photonDirAndWlen.y, photonDirAndWlen.z,
                    photonPosAndTime.w, photonDirAndWlen.w/1e-9f);
 
-                int currentPhotonLayer = findLayerForGivenZPos(photonPosAndTime.z);
+        int currentPhotonLayer = findLayerForGivenZPos(photonPosAndTime.z);
         dbg_printf("   in layer %i (valid between 0 and up to including %u)\n", currentPhotonLayer, MEDIUM_LAYERS-1);
         if ((currentPhotonLayer < 0) || (currentPhotonLayer >= MEDIUM_LAYERS)) continue; // outside, do not track
 
@@ -415,43 +430,143 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
         {
             float sca_step_left = -my_log(RNG_CALL_UNIFORM_OC);
             dbg_printf("   - next scatter in %f scattering lengths\n", sca_step_left);
+            
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef FUNCTION_getGroupVelocity_DOES_NOT_DEPEND_ON_LAYER
+            // optimized version for constant group refractive index
+            // (collisions are not checked for in every layer)
+            const float inv_groupvel = my_recip(getGroupVelocity(0, photonDirAndWlen.w));
+            
+            float totalStepLength=0.f;
+            float steppedToZ=photonPosAndTime.z;
+            const float photon_dz=photonDirAndWlen.z;
+            
+            float boundaryCurrentLayerBottom = mediumLayerBoundary(currentPhotonLayer);
+            float boundaryCurrentLayerTop = boundaryCurrentLayerBottom+(float)MEDIUM_LAYER_THICKNESS;
+            
+            while ( (sca_step_left > EPSILON) && (abs_lens_left > EPSILON) ) 
+            {
+                // retrieve the absorption and scattering lengths for the current layer
+                const float abslen       = getAbsorptionLength(currentPhotonLayer, photonDirAndWlen.w);
+                const float scatlen      = getScatteringLength(currentPhotonLayer, photonDirAndWlen.w);
+                const float inv_abslen   = my_recip(abslen);
+                const float inv_scatlen  = my_recip(scatlen);
+                
+                float thisStepLength = min(sca_step_left*scatlen, abs_lens_left*abslen);
+                
+                float zBefore = steppedToZ;
+                steppedToZ += thisStepLength*photon_dz; // where did our step end up?
+                
+                // downward crossing?
+                if (steppedToZ < boundaryCurrentLayerBottom)
+                {
+                    // limit the current step length to the layer boundary
+                    steppedToZ = boundaryCurrentLayerBottom;
+                    thisStepLength = my_divide((boundaryCurrentLayerBottom-zBefore),photon_dz);
+                    --currentPhotonLayer;
                     
+                    boundaryCurrentLayerTop-=(float)MEDIUM_LAYER_THICKNESS;
+                    boundaryCurrentLayerBottom-=(float)MEDIUM_LAYER_THICKNESS;
+                }
+                // upward crossing?
+                else if (steppedToZ > boundaryCurrentLayerTop)
+                {
+                    // limit the current step length to the layer boundary
+                    steppedToZ = boundaryCurrentLayerTop;
+                    thisStepLength = my_divide((boundaryCurrentLayerTop-zBefore),photon_dz);
+                    ++currentPhotonLayer;
+
+                    boundaryCurrentLayerTop+=(float)MEDIUM_LAYER_THICKNESS;
+                    boundaryCurrentLayerBottom+=(float)MEDIUM_LAYER_THICKNESS;
+                }
+                // stays within the same layer: do nothing special
+
+                // perform the step
+                abs_lens_left -= thisStepLength*inv_abslen;
+                sca_step_left -= thisStepLength*inv_scatlen;
+                totalStepLength += thisStepLength;
+                
+                if ((currentPhotonLayer < 0) || (currentPhotonLayer >= MEDIUM_LAYERS))
+                {
+                    // we left the known world. absorb.
+                    abs_lens_left = 0.f;
+                    sca_step_left = 0.f;
+                }
+                
+            }
+            
+            // the photon is now either being absorbed or scattered.
+            // Check for collisions in its way
+
+            bool collided = checkForCollision(photonPosAndTime, 
+                                              photonDirAndWlen, 
+                                              inv_groupvel,
+                                              photonTotalPathLength,
+                                              photonNumScatters,
+                                              &step,
+                                              &totalStepLength, 
+                                              hitIndex, 
+                                              maxHitIndex, 
+                                              outputPhotons, 
+                                              geoLayerToOMNumIndexPerStringSetLocal
+                                              );
+            if (collided) {
+                // get rid of the photon if we detected it
+                abs_lens_left = 0.f;
+                sca_step_left = 0.f;
+                
+                steppedToZ=photonPosAndTime.z+photonDirAndWlen.z*totalStepLength; // this needs to be updated, the old value has probably changed
+                
+                dbg_printf("    . colission detected, step limited to thisStepLength=%f, steppedToZ=%f!\n", 
+                           totalStepLength, steppedToZ);
+            }
+            
+            // update the track to its next position
+            photonPosAndTime.x += photonDirAndWlen.x*totalStepLength;
+            photonPosAndTime.y += photonDirAndWlen.y*totalStepLength;
+            photonPosAndTime.z  = steppedToZ; // we already calculated that..
+            photonPosAndTime.w += inv_groupvel*totalStepLength;
+            photonTotalPathLength += totalStepLength;
+            
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#else
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
             while ( (sca_step_left > EPSILON) && (abs_lens_left > EPSILON) ) 
             {
                 dbg_printf("   - stepping...\n");
-
+                
                 // retrieve the absorption and scattering lengths for the current layer
                 const float abslen       = getAbsorptionLength(currentPhotonLayer, photonDirAndWlen.w);
                 const float scatlen      = getScatteringLength(currentPhotonLayer, photonDirAndWlen.w);
                 const float inv_groupvel = my_recip(getGroupVelocity(currentPhotonLayer, photonDirAndWlen.w));
                 const float inv_abslen   = my_recip(abslen);
-
+                
                 dbg_printf("    . in this layer (%u): abslen=%f, scatlen=%f, 1/c_gr=%f, 1/abslen=%f\n",
                            currentPhotonLayer, abslen, scatlen, inv_groupvel, inv_abslen);
-
+                       
                 // determine the current step length in meters
                 float thisStepLength = min(sca_step_left*scatlen, abs_lens_left*abslen);
                 
                 float steppedToZ = photonPosAndTime.z+thisStepLength*photonDirAndWlen.z; // where did our step end up?
                 dbg_printf("    . trying a step of %fm (to z=%f)\n", thisStepLength, steppedToZ);
-
+                
                 {
                     const float boundaryCurrentLayerBottom = mediumLayerBoundary(currentPhotonLayer);
                     const float boundaryCurrentLayerTop = boundaryCurrentLayerBottom+(float)MEDIUM_LAYER_THICKNESS;
-
+                    
                     // downward crossing?
                     if (steppedToZ < boundaryCurrentLayerBottom)
                     {
                         // limit the current step length to the layer boundary
                         steppedToZ = boundaryCurrentLayerBottom;
                         thisStepLength = my_divide((boundaryCurrentLayerBottom-photonPosAndTime.z),photonDirAndWlen.z);
-
+                        
                         // perform the step
                         abs_lens_left -= thisStepLength*inv_abslen;
                         sca_step_left -= thisStepLength*my_recip(scatlen);
                         
                         --currentPhotonLayer;
-
+                        
                         dbg_printf("      -> just crossed a layer boundary (downwards): now in layer %u\n", currentPhotonLayer);
                         dbg_printf("         step limited: thisStepLength=%f, steppedToZ=%f, abs_lens_left=%f, sca_step_left=%f\n",
                                    thisStepLength, steppedToZ, abs_lens_left, sca_step_left);
@@ -462,7 +577,7 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
                         // limit the current step length to the layer boundary
                         steppedToZ = boundaryCurrentLayerTop;
                         thisStepLength = my_divide((boundaryCurrentLayerTop-photonPosAndTime.z),photonDirAndWlen.z);
-
+                        
                         // perform the step
                         abs_lens_left -= thisStepLength*inv_abslen;
                         sca_step_left -= thisStepLength*my_recip(scatlen);
@@ -479,14 +594,14 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
                         // perform the step
                         abs_lens_left -= thisStepLength*inv_abslen;
                         sca_step_left  = 0.f;
-
+                        
                         dbg_printf("      -> we ended up in the same layer! The photon will either be scattered or absorbed now.\n");
                         dbg_printf("         abs_len_left -= %f  =>  abs_len_left=%f\n", thisStepLength*inv_abslen, abs_lens_left);
                         dbg_printf("          step done: thisStepLength=%f, steppedToZ=%f, abs_lens_left=%f, sca_step_left=%f\n",
                                    thisStepLength, steppedToZ, abs_lens_left, sca_step_left);
                     }
                 }
-
+                
                 bool collided = checkForCollision(photonPosAndTime, 
                                                   photonDirAndWlen, 
                                                   inv_groupvel,
@@ -504,8 +619,8 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
                     abs_lens_left = 0.f;
                     sca_step_left = 0.f;
                     
-                    steppedToZ=photonDirAndWlen.z*thisStepLength; // this needs to be updated, the old value has probably changed
-
+                    steppedToZ=photonPosAndTime.z+photonDirAndWlen.z*thisStepLength; // this needs to be updated, the old value has probably changed
+                    
                     dbg_printf("    . colission detected, step limited to thisStepLength=%f, steppedToZ=%f!\n", 
                                thisStepLength, steppedToZ);
                 }
@@ -516,23 +631,25 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
                 photonPosAndTime.z  = steppedToZ; // we already calculated that..
                 photonPosAndTime.w += inv_groupvel*thisStepLength;
                 photonTotalPathLength += thisStepLength;
-
-                dbg_printf("    . photon position updated: p=(%f,%f,%f), d=(%f,%f,%f), t=%f, wlen=%f\n",
+                
+                dbg_printf("    . photon position updated: p=(%f,%f,%f), d=(%f,%f,%f), t=%f, wlen=%fnm\n",
                            photonPosAndTime.x, photonPosAndTime.y, photonPosAndTime.z,
                            photonDirAndWlen.x, photonDirAndWlen.y, photonDirAndWlen.z,
-                           photonPosAndTime.w, photonDirAndWlen.w);
-
+                           photonPosAndTime.w, photonDirAndWlen.w/1e-9f);
+                
                 if ((currentPhotonLayer < 0) || (currentPhotonLayer >= MEDIUM_LAYERS))
                 {
                     // we left the known world. absorb.
                     abs_lens_left = 0.f;
                     sca_step_left = 0.f;
-
+                    
                     dbg_printf("    . photon left the world (upper or lower layer boundary). Killing it!\n");
                 }
-
+                
             } // while()
-            
+#endif
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
             dbg_printf("   - step performed! abs_lens_left=%f, sca_step_left=%f\n", abs_lens_left, sca_step_left);
             
             // if we got here, the photon was either absorbed or it needs to be scattered.
@@ -541,35 +658,38 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             {
                 // it was not absorbed. calculate a new direction
                 dbg_printf("   - photon is not yet absorbed (abs_len_left=%f)! Scattering!\n", abs_lens_left);
-
+                
                 dbg_printf("    . photon direction before: d=(%f,%f,%f), wlen=%f\n",
                        photonDirAndWlen.x, photonDirAndWlen.y, photonDirAndWlen.z,
-                       photonDirAndWlen.w);
+                       photonDirAndWlen.w/1e-9f);
                 
                 const float cosScatAngle = makeScatteringCosAngle(RNG_ARGS_TO_CALL);
                 const float sinScatAngle = my_sqrt(1.0f - sqr(cosScatAngle));
-
+                
                 scatterDirectionByAngle(cosScatAngle, sinScatAngle, &photonDirAndWlen, RNG_CALL_UNIFORM_CO);
+
+                dbg_printf("    . cos(scat_angle)=%f sin(scat_angle)=%f\n",
+                       cosScatAngle, sinScatAngle);
                 
                 dbg_printf("    . photon direction after:  d=(%f,%f,%f), wlen=%f\n",
                        photonDirAndWlen.x, photonDirAndWlen.y, photonDirAndWlen.z,
-                       photonDirAndWlen.w);
+                       photonDirAndWlen.w/1e-9f);
                 
                 ++photonNumScatters;
-
+                
                 dbg_printf("    . the photon has now been scattered %u time(s).\n", photonNumScatters);
             }
-
+        
         } // while()
         
         dbg_printf(" * photon #%u finished.\n", jj);
-
+        
     }
-
-
+    
+    
     dbg_printf("Stop kernel... (work item %u of %u)\n", i, global_size);
-        dbg_printf("Kernel finished.\n");
-
+    dbg_printf("Kernel finished.\n");
+    
     //upload MWC RNG state
     MWC_RNG_x[i] = real_rnd_x;
     MWC_RNG_a[i] = real_rnd_a;

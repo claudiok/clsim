@@ -51,7 +51,8 @@ namespace I3CLSimModuleHelper {
                      I3CLSimSimpleGeometryFromI3GeometryPtr geometry,
                      I3CLSimMediumPropertiesPtr medium,
                      I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
-                     I3CLSimRandomValueConstPtr wavelengthGenerator);
+                     I3CLSimRandomValueConstPtr wavelengthGenerator,
+                     bool useNativeMath);
     
     I3CLSimParticleToStepConverterGeant4Ptr
     initializeGeant4(I3RandomServicePtr rng,
@@ -65,7 +66,7 @@ namespace I3CLSimModuleHelper {
                      bool multiprocessor=false);
 
     I3CLSimRandomValueConstPtr
-    makeWavelegthGenerator(I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
+    makeWavelengthGenerator(I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
                                      bool generateCherenkovPhotonsWithoutDispersion,
                                      I3CLSimMediumPropertiesPtr mediumProperties);
 

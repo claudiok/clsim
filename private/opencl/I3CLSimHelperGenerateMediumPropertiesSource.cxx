@@ -67,6 +67,11 @@ namespace I3CLSimHelper
     {
         std::ostringstream code;
 
+        if (functionsToGenerate.size()==1)
+        {
+            code << "#define FUNCTION_" << functionName << "_DOES_NOT_DEPEND_ON_LAYER" << std::endl;
+        }
+        
         code << "inline float " << functionName << "(unsigned int layer, float wavelength)\n";
         code << "{\n";
         if (functionsToGenerate.size()==1) {
@@ -215,6 +220,9 @@ namespace I3CLSimHelper
                                                           "group refractive index",
                                                           "getGroupRefIndex");
 
+            code << "#ifdef FUNCTION_getGroupRefIndex_DOES_NOT_DEPEND_ON_LAYER" << std::endl;
+            code << "#define FUNCTION_getGroupVelocity_DOES_NOT_DEPEND_ON_LAYER" << std::endl;
+            code << "#endif" << std::endl;
             code << "// group velocity from group refractive index\n";
             code << "inline float getGroupVelocity(unsigned int layer, float wavelength)\n";
             code << "{\n";
@@ -227,6 +235,12 @@ namespace I3CLSimHelper
         else
         {    
             // group velocity from dispersion
+            code << "#ifdef FUNCTION_getPhaseRefIndex_DOES_NOT_DEPEND_ON_LAYER" << std::endl;
+            code << "//implies: FUNCTION_getDispersion_DOES_NOT_DEPEND_ON_LAYER"<< std::endl;
+            code << "#define FUNCTION_getGroupVelocity_DOES_NOT_DEPEND_ON_LAYER" << std::endl;
+            code << "#define FUNCTION_getGroupRefIndex_DOES_NOT_DEPEND_ON_LAYER" << std::endl;
+            code << "#endif" << std::endl;
+
             code << "// group velocity from dispersion\n";
             code << "inline float getGroupVelocity(unsigned int layer, float wavelength)\n";
             code << "{\n";

@@ -114,18 +114,18 @@ domAngularSensitivity = clsim.GetIceCubeDOMAngularSensitivity(holeIce=True)
 
 # parameterizations for fast simulation (bypassing Geant4)
 # converters first:
-cascadeConverter = clsim.I3CLSimParticleToStepConverterCascadeParameterization(randomService=randomService)
+cascadeConverter = clsim.I3CLSimParticleToStepConverterCascadeParameterization(randomService=randomService, photonsPerStep=200)
 
 # now set up a list of converters with particle types and valid energy ranges
 parameterizationsMuon = [
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.MuMinus,
-                                       fromEnergy=0.5*I3Units.GeV,
+                                       fromEnergy=0.0*I3Units.GeV,
                                        toEnergy=1000.*I3Units.PeV,
                                        needsLength=True),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.MuPlus,
-                                       fromEnergy=0.5*I3Units.GeV,
+                                       fromEnergy=0.0*I3Units.GeV,
                                        toEnergy=1000.*I3Units.PeV,
                                        needsLength=True)
 ]
@@ -177,10 +177,6 @@ parameterizationsOther = [
                                        forParticleType=dataclasses.I3Particle.K0_Short,
                                        fromEnergy=0.0*I3Units.GeV,
                                        toEnergy=1000.*I3Units.GeV),
- clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
-                                       forParticleType=dataclasses.I3Particle.NuclInt,
-                                       fromEnergy=0.0*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
 
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.EMinus,
@@ -206,7 +202,12 @@ parameterizationsOther = [
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.PairProd,
                                        fromEnergy=0.0*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.PeV)
+                                       toEnergy=1000.*I3Units.PeV),
+ clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+                                       forParticleType=dataclasses.I3Particle.NuclInt,
+                                       fromEnergy=0.0*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.PeV),
+                                        
 ]
 
 tray.AddModule("I3Reader","reader",
@@ -244,10 +245,14 @@ tray.AddModule("I3CLSimModule", "clsim",
                ParameterizationList=parameterizationsMuon+parameterizationsOther,
                #ParameterizationList=parameterizationsMuon,
                MaxNumParallelEvents=options.MAXPARALLELEVENTS,
-               #OpenCLPlatformName="NVIDIA CUDA",
-               #OpenCLDeviceName="GeForce GTX 580"
+               
+               OpenCLPlatformName="NVIDIA CUDA",
+               OpenCLDeviceName="GeForce GTX 580",
+               OpenCLUseNativeMath=True,
+               
                #OpenCLPlatformName="ATI Stream",
-               #OpenCLDeviceName="Intel(R) Core(TM) i5 CPU         760  @ 2.80GHz"
+               #OpenCLDeviceName="Intel(R) Core(TM) i5 CPU         760  @ 2.80GHz",
+               #OpenCLUseNativeMath=False
                )
 
 tray.AddModule("I3PhotonToMCHitConverter", "make_hits",

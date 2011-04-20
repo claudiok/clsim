@@ -535,6 +535,8 @@ namespace I3CLSimHelper
             }
         }
 
+        const bool useShortsInsteadOfFloats=false;
+        
         if (templateIndexIntoFlatList.size() < strings.size())
         {
             // templating works, there are identical strings
@@ -547,40 +549,45 @@ namespace I3CLSimHelper
             output.setf(std::ios::scientific,std::ios::floatfield);
             output.precision(std::numeric_limits<float>::digits10+4); // maximum precision for a float
 
-            //output << "#define GEO_DOM_POS_NUM_TEMPLATES " << templateIndexIntoFlatList.size() << std::endl;
-            //output << "__constant unsigned short geoDomPosTemplateIndexIntoFlatList[GEO_DOM_POS_NUM_TEMPLATES] = {" << std::endl;
-            //for (std::size_t i=0;i<templateIndexIntoFlatList.size();++i){     
-            //    output << "  " << templateIndexIntoFlatList[i] << "," << std::endl;
-            //}
-            //output << "};" << std::endl;
-            //output << "__constant unsigned short geoDomPosTemplateNumDoms[GEO_DOM_POS_NUM_TEMPLATES] = {" << std::endl;
-            //for (std::size_t i=0;i<templateIndexIntoFlatList.size();++i){     
-            //    output << "  " << templatePositionsZ[i].size() << "," << std::endl;
-            //}
-            //output << "};" << std::endl;
-            output << "#define GEO_DOM_POS_MAX_ABS_X " << geoDomPosMaxAbsX << "f" << std::endl;
-            output << "#define GEO_DOM_POS_MAX_ABS_Y " << geoDomPosMaxAbsY << "f" << std::endl;
-            output << "#define GEO_DOM_POS_MAX_ABS_Z " << geoDomPosMaxAbsZ << "f" << std::endl;
-            output << std::endl;
+            if (useShortsInsteadOfFloats) {
+                output << "#define GEO_DOM_POS_MAX_ABS_X " << geoDomPosMaxAbsX << "f" << std::endl;
+                output << "#define GEO_DOM_POS_MAX_ABS_Y " << geoDomPosMaxAbsY << "f" << std::endl;
+                output << "#define GEO_DOM_POS_MAX_ABS_Z " << geoDomPosMaxAbsZ << "f" << std::endl;
+                output << std::endl;
+            }
+
+            const std::string typeString = useShortsInsteadOfFloats?"short":"float";
             
             output << "#define GEO_DOM_POS_NUM_FLAT_LIST_ENTRIES " << templatePositionsX_flat.size() << std::endl;
-            output << "__constant short geoDomPosTemplatePositionsX_flat[GEO_DOM_POS_NUM_FLAT_LIST_ENTRIES] = {" << std::endl;
-            for (std::size_t i=0;i<templatePositionsX_flat.size();++i){     
-                const short value = static_cast<short>((templatePositionsX_flat[i]/geoDomPosMaxAbsX)*32767.);
-                output << "  " << value << "," << std::endl;
+            output << "__constant " << typeString << " geoDomPosTemplatePositionsX_flat[GEO_DOM_POS_NUM_FLAT_LIST_ENTRIES] = {" << std::endl;
+            for (std::size_t i=0;i<templatePositionsX_flat.size();++i){
+                if (useShortsInsteadOfFloats) {
+                    const short value = static_cast<short>((templatePositionsX_flat[i]/geoDomPosMaxAbsX)*32767.);
+                    output << "  " << value << "," << std::endl;
+                } else {
+                    output << "  " << templatePositionsX_flat[i] << "f," << std::endl;
+                }
             }
             output << "};" << std::endl;
-            output << "__constant short geoDomPosTemplatePositionsY_flat[GEO_DOM_POS_NUM_FLAT_LIST_ENTRIES] = {" << std::endl;
+            output << "__constant " << typeString << " geoDomPosTemplatePositionsY_flat[GEO_DOM_POS_NUM_FLAT_LIST_ENTRIES] = {" << std::endl;
             for (std::size_t i=0;i<templatePositionsY_flat.size();++i){     
-                const short value = static_cast<short>((templatePositionsY_flat[i]/geoDomPosMaxAbsY)*32767.);
-                output << "  " << value << "," << std::endl;
+                if (useShortsInsteadOfFloats) {
+                    const short value = static_cast<short>((templatePositionsY_flat[i]/geoDomPosMaxAbsY)*32767.);
+                    output << "  " << value << "," << std::endl;
+                } else {
+                    output << "  " << templatePositionsY_flat[i] << "f," << std::endl;
+                }
             }
             output << "};" << std::endl;
 
-            output << "__constant short geoDomPosTemplatePositionsZ_flat[GEO_DOM_POS_NUM_FLAT_LIST_ENTRIES] = {" << std::endl;
+            output << "__constant " << typeString << " geoDomPosTemplatePositionsZ_flat[GEO_DOM_POS_NUM_FLAT_LIST_ENTRIES] = {" << std::endl;
             for (std::size_t i=0;i<templatePositionsZ_flat.size();++i){     
-                const short value = static_cast<short>((templatePositionsZ_flat[i]/geoDomPosMaxAbsZ)*32767.);
-                output << "  " << value << "," << std::endl;
+                if (useShortsInsteadOfFloats) {
+                    const short value = static_cast<short>((templatePositionsZ_flat[i]/geoDomPosMaxAbsZ)*32767.);
+                    output << "  " << value << "," << std::endl;
+                } else {
+                    output << "  " << templatePositionsZ_flat[i] << "f," << std::endl;
+                }
             }
             output << "};" << std::endl;
             
@@ -591,17 +598,25 @@ namespace I3CLSimHelper
             }
             output << "};" << std::endl;
 
-            output << "__constant short geoDomPosStringMeanPosX[GEO_DOM_POS_NUM_STRINGS] = {" << std::endl;
+            output << "__constant " << typeString << " geoDomPosStringMeanPosX[GEO_DOM_POS_NUM_STRINGS] = {" << std::endl;
             for (std::size_t i=0;i<stringMeanPosX.size();++i){     
-                const short value = static_cast<short>((stringMeanPosX[i]/geoDomPosMaxAbsX)*32767.);
-                output << "  " << value << "," << std::endl;
+                if (useShortsInsteadOfFloats) {
+                    const short value = static_cast<short>((stringMeanPosX[i]/geoDomPosMaxAbsX)*32767.);
+                    output << "  " << value << "," << std::endl;
+                } else {
+                    output << "  " << stringMeanPosX[i] << "f," << std::endl;
+                }
             }
             output << "};" << std::endl;
 
-            output << "__constant short geoDomPosStringMeanPosY[GEO_DOM_POS_NUM_STRINGS] = {" << std::endl;
+            output << "__constant " << typeString << " geoDomPosStringMeanPosY[GEO_DOM_POS_NUM_STRINGS] = {" << std::endl;
             for (std::size_t i=0;i<stringMeanPosY.size();++i){     
-                const short value = static_cast<short>((stringMeanPosY[i]/geoDomPosMaxAbsY)*32767.);
-                output << "  " << value << "," << std::endl;
+                if (useShortsInsteadOfFloats) {
+                    const short value = static_cast<short>((stringMeanPosY[i]/geoDomPosMaxAbsY)*32767.);
+                    output << "  " << value << "," << std::endl;
+                } else {
+                    output << "  " << stringMeanPosY[i] << "f," << std::endl;
+                }
             }
             output << "};" << std::endl;
 
@@ -609,13 +624,25 @@ namespace I3CLSimHelper
             output << "inline void geometryGetDomPosition(unsigned short stringNum, unsigned char domNum, float *domPosX, float *domPosY, float *domPosZ)" << std::endl;
             output << "{" << std::endl;
             
-            output << "    const float stringMeanPosX = convert_float(geoDomPosStringMeanPosX[stringNum])*(GEO_DOM_POS_MAX_ABS_X/32767.f);" << std::endl;
-            output << "    const float stringMeanPosY = convert_float(geoDomPosStringMeanPosY[stringNum])*(GEO_DOM_POS_MAX_ABS_Y/32767.f);" << std::endl;
+            if (useShortsInsteadOfFloats) {
+                output << "    const float stringMeanPosX = convert_float(geoDomPosStringMeanPosX[stringNum])*(GEO_DOM_POS_MAX_ABS_X/32767.f);" << std::endl;
+                output << "    const float stringMeanPosY = convert_float(geoDomPosStringMeanPosY[stringNum])*(GEO_DOM_POS_MAX_ABS_Y/32767.f);" << std::endl;
+            } else {
+                output << "    const float stringMeanPosX = geoDomPosStringMeanPosX[stringNum];" << std::endl;
+                output << "    const float stringMeanPosY = geoDomPosStringMeanPosY[stringNum];" << std::endl;
+            }
             
             output << "    const unsigned int index = geoDomPosStringStartIndexInTemplateDomList[stringNum]+domNum;" << std::endl;
-            output << "    *domPosX = convert_float(geoDomPosTemplatePositionsX_flat[index])*(GEO_DOM_POS_MAX_ABS_X/32767.f) + stringMeanPosX;" << std::endl;
-            output << "    *domPosY = convert_float(geoDomPosTemplatePositionsY_flat[index])*(GEO_DOM_POS_MAX_ABS_Y/32767.f) + stringMeanPosY;" << std::endl;
-            output << "    *domPosZ = convert_float(geoDomPosTemplatePositionsZ_flat[index])*(GEO_DOM_POS_MAX_ABS_Z/32767.f);" << std::endl;
+
+            if (useShortsInsteadOfFloats) {
+                output << "    *domPosX = convert_float(geoDomPosTemplatePositionsX_flat[index])*(GEO_DOM_POS_MAX_ABS_X/32767.f) + stringMeanPosX;" << std::endl;
+                output << "    *domPosY = convert_float(geoDomPosTemplatePositionsY_flat[index])*(GEO_DOM_POS_MAX_ABS_Y/32767.f) + stringMeanPosY;" << std::endl;
+                output << "    *domPosZ = convert_float(geoDomPosTemplatePositionsZ_flat[index])*(GEO_DOM_POS_MAX_ABS_Z/32767.f);" << std::endl;
+            } else {
+                output << "    *domPosX = geoDomPosTemplatePositionsX_flat[index] + stringMeanPosX;" << std::endl;
+                output << "    *domPosY = geoDomPosTemplatePositionsY_flat[index] + stringMeanPosY;" << std::endl;
+                output << "    *domPosZ = geoDomPosTemplatePositionsZ_flat[index];" << std::endl;
+            }
             output << "}" << std::endl;
             output << std::endl;
             
@@ -645,35 +672,49 @@ namespace I3CLSimHelper
             
             // we only have a limited amount of constant memory. this needs lots of memory,
             // so store it as shorts with a known multiplier.
-            output << "#define GEO_DOM_POS_MAX_ABS_X " << geoDomPosMaxAbsX << "f" << std::endl;
-            output << "__constant short geoDomPosX[GEO_DOM_POS_NUM_STRINGS*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS] = {" << std::endl;
+            if (useShortsInsteadOfFloats) {
+                output << "#define GEO_DOM_POS_MAX_ABS_X " << geoDomPosMaxAbsX << "f" << std::endl;
+                output << "#define GEO_DOM_POS_MAX_ABS_Y " << geoDomPosMaxAbsY << "f" << std::endl;
+                output << "#define GEO_DOM_POS_MAX_ABS_Z " << geoDomPosMaxAbsZ << "f" << std::endl;
+            }
+
+            const std::string typeString = useShortsInsteadOfFloats?"short":"float";
+
+            output << "__constant " << typeString << " geoDomPosX[GEO_DOM_POS_NUM_STRINGS*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS] = {" << std::endl;
             for (std::size_t i=0;i<strings.size();++i){     
                 for (std::size_t j=0;j<maxNumDoms;++j){    
-                    short value = static_cast<short>((domPosBuffer[i*(maxNumDoms*4)+j*4 + 0]/geoDomPosMaxAbsX)*32767.);
-                    
-                    output << "  " << value << ", // string=" << i << ", dom=" << j << std::endl;
+                    if (useShortsInsteadOfFloats) {
+                        short value = static_cast<short>((domPosBuffer[i*(maxNumDoms*4)+j*4 + 0]/geoDomPosMaxAbsX)*32767.);
+                        output << "  " << value << ", // string=" << i << ", dom=" << j << std::endl;
+                    } else {
+                        output << "  " << domPosBuffer[i*(maxNumDoms*4)+j*4 + 0] << "f, // string=" << i << ", dom=" << j << std::endl;
+                    }
                 }
             }
             output << "};" << std::endl;
             
-            output << "#define GEO_DOM_POS_MAX_ABS_Y " << geoDomPosMaxAbsY << "f" << std::endl;
-            output << "__constant short geoDomPosY[GEO_DOM_POS_NUM_STRINGS*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS] = {" << std::endl;
+            output << "__constant " << typeString << " geoDomPosY[GEO_DOM_POS_NUM_STRINGS*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS] = {" << std::endl;
             for (std::size_t i=0;i<strings.size();++i){     
                 for (std::size_t j=0;j<maxNumDoms;++j){    
-                    short value = static_cast<short>((domPosBuffer[i*(maxNumDoms*4)+j*4 + 1]/geoDomPosMaxAbsY)*32767.);
-                    
-                    output << "  " << value << ", // string=" << i << ", dom=" << j << std::endl;
+                    if (useShortsInsteadOfFloats) {
+                        short value = static_cast<short>((domPosBuffer[i*(maxNumDoms*4)+j*4 + 1]/geoDomPosMaxAbsY)*32767.);
+                        output << "  " << value << ", // string=" << i << ", dom=" << j << std::endl;
+                    } else {
+                        output << "  " << domPosBuffer[i*(maxNumDoms*4)+j*4 + 1] << "f, // string=" << i << ", dom=" << j << std::endl;
+                    }
                 }
             }
             output << "};" << std::endl;
             
-            output << "#define GEO_DOM_POS_MAX_ABS_Z " << geoDomPosMaxAbsZ << "f" << std::endl;
-            output << "__constant short geoDomPosZ[GEO_DOM_POS_NUM_STRINGS*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS] = {" << std::endl;
+            output << "__constant " << typeString << " geoDomPosZ[GEO_DOM_POS_NUM_STRINGS*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS] = {" << std::endl;
             for (std::size_t i=0;i<strings.size();++i){     
                 for (std::size_t j=0;j<maxNumDoms;++j){    
-                    short value = static_cast<short>((domPosBuffer[i*(maxNumDoms*4)+j*4 + 2]/geoDomPosMaxAbsZ)*32767.);
-                    
-                    output << "  " << value << ", // string=" << i << ", dom=" << j << std::endl;
+                    if (useShortsInsteadOfFloats) {
+                        short value = static_cast<short>((domPosBuffer[i*(maxNumDoms*4)+j*4 + 2]/geoDomPosMaxAbsZ)*32767.);
+                        output << "  " << value << ", // string=" << i << ", dom=" << j << std::endl;
+                    } else {
+                        output << "  " << domPosBuffer[i*(maxNumDoms*4)+j*4 + 2] << "f, // string=" << i << ", dom=" << j << std::endl;
+                    }
                 }
             }
             output << "};" << std::endl;
@@ -683,9 +724,17 @@ namespace I3CLSimHelper
             output << "{" << std::endl;
             output << "    const unsigned int domIndex = stringNum*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS+domNum;" << std::endl;
             output << "    " << std::endl;
-            output << "    *domPosX = convert_float(geoDomPosX[domIndex])*(GEO_DOM_POS_MAX_ABS_X/32767.f);" << std::endl;
-            output << "    *domPosY = convert_float(geoDomPosY[domIndex])*(GEO_DOM_POS_MAX_ABS_Y/32767.f);" << std::endl;
-            output << "    *domPosZ = convert_float(geoDomPosZ[domIndex])*(GEO_DOM_POS_MAX_ABS_Z/32767.f);" << std::endl;
+
+            if (useShortsInsteadOfFloats) {
+                output << "    *domPosX = convert_float(geoDomPosX[domIndex])*(GEO_DOM_POS_MAX_ABS_X/32767.f);" << std::endl;
+                output << "    *domPosY = convert_float(geoDomPosY[domIndex])*(GEO_DOM_POS_MAX_ABS_Y/32767.f);" << std::endl;
+                output << "    *domPosZ = convert_float(geoDomPosZ[domIndex])*(GEO_DOM_POS_MAX_ABS_Z/32767.f);" << std::endl;
+            } else {
+                output << "    *domPosX = geoDomPosX[domIndex];" << std::endl;
+                output << "    *domPosY = geoDomPosY[domIndex];" << std::endl;
+                output << "    *domPosZ = geoDomPosZ[domIndex];" << std::endl;
+            }
+            
             output << "}" << std::endl;
             output << std::endl;
             
@@ -803,6 +852,24 @@ namespace I3CLSimHelper
         }
         
         log_trace("Number of strings is %zu", strings.size());
+        
+        if (false) {
+            // dump strings
+            for (std::size_t stringNum=0;stringNum<strings.size();++stringNum)
+            {
+                for (std::size_t domNum=0;domNum<strings[stringNum].doms.size();++domNum)
+                {
+                    log_warn("geo_add stringIndex=%2zu, domIndex=%2zu  stringNumber=%2i domNumber%2u  pos=(%f,%f,%f)",
+                             stringNum, domNum, strings[stringNum].stringID, strings[stringNum].doms[domNum].domID,
+                             strings[stringNum].doms[domNum].posX,
+                             strings[stringNum].doms[domNum].posY,
+                             strings[stringNum].doms[domNum].posZ
+                             );
+                    
+                }
+                
+            }
+        }
         
         // Try to split the detector into xy "cells" with 0 or 1 strings per cell.
         // We do not need to optimize this, so we do a brute froce approach:

@@ -107,7 +107,7 @@ private:
     ///            the total number of photons, only the distribution of wavelengths.
     bool generateCherenkovPhotonsWithoutDispersion_;
     
-    /// Parameter: An instance of I3CLSimWlenDependentValue describing the reciprocal weight a photon gets assigned as a function of its wavelegth.
+    /// Parameter: An instance of I3CLSimWlenDependentValue describing the reciprocal weight a photon gets assigned as a function of its wavelength.
     ///            You can set this to the wavelength depended acceptance of your DOM to pre-scale the number of generated photons.
     I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias_;
 
@@ -122,6 +122,12 @@ private:
 
     /// Parameter: Name of the OpenCL device. Leave empty for auto-selection.
     std::string openCLDeviceName_;
+
+    /// Parameter: Use native math instructions in the OpenCL kernel. Has proven not
+    /// to work correctly with kernels running on Intel CPUs. Seems to work correctly
+    /// on Nvidia GPUs (may speed up things, but make sure it does not change your
+    /// results).
+    bool openCLUseNativeMath_;
 
     /// Parameter: The DOM radius used during photon tracking.
     double DOMRadius_;
