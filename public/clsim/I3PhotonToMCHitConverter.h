@@ -90,6 +90,14 @@ private:
     /// Parameter: Angular acceptance of the (D)OM as a I3WlenDependedValue object.
     I3CLSimWlenDependentValueConstPtr angularAcceptance_;
 
+    /// Parameter: Specifiy the \"oversize factor\" (i.e. DOM radius scaling factor) you used during the
+    ///            CLSim run. The photon arrival times will be corrected. In practice this means your
+    ///            large spherical DOMs will become ellipsoids.
+    double DOMOversizeFactor_;
+
+    /// Parameter: Specifiy the DOM radius. Do not include oversize factors here.
+    double DOMRadiusWithoutOversize_;
+
     
 private:
     // default, assignment, and copy constructor declared private

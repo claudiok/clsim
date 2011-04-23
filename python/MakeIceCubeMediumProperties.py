@@ -77,6 +77,11 @@ def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m):
 
     b_400 = b_e400/(1.-meanCosineTheta) # scattering length (used in the simulation)
     
+    # Be compatible with PPC, which assumes the specified depths
+    # are in the middle of the layer. We need the depth at the
+    # top of the layer here, so correct for that:
+    depth = depth-layerHeight/2.
+    
     # layerZ is in z-coordinates, from bottom to top (ascending z)
     depthAtBottomOfLayer = depth + layerHeight
     layerZStart = detectorCenterDepth - depthAtBottomOfLayer

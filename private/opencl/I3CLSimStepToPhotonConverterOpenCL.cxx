@@ -1,7 +1,7 @@
 #include "clsim/I3CLSimStepToPhotonConverterOpenCL.h"
 
-//// debugging: show GPUtime/photon
-//#define DUMP_STATISTICS
+// debugging: show GPUtime/photon
+#define DUMP_STATISTICS
 
 #define __STDC_FORMAT_MACROS 
 #include <inttypes.h>
@@ -650,7 +650,6 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
 
             log_warn("kernel statistics: %g nanoseconds/photon",
                      static_cast<double>(timeEnd-timeStart)/static_cast<double>(totalNumberOfPhotons));
-            
 #endif
 
             // wait for the queue to really finish (just to make sure)

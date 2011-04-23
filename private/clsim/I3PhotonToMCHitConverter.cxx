@@ -72,7 +72,19 @@ I3PhotonToMCHitConverter::I3PhotonToMCHitConverter(const I3Context& context)
                  "Angular acceptance of the (D)OM as a I3WlenDependedValue object.",
                  angularAcceptance_);
 
+    DOMOversizeFactor_=1.;
+    AddParameter("DOMOversizeFactor",
+                 "Specifiy the \"oversize factor\" (i.e. DOM radius scaling factor) you used during the CLSim run.\n"
+                 "The photon arrival times will be corrected. In practice this means your large spherical DOMs will\n"
+                 "become ellipsoids.",
+                 DOMOversizeFactor_);
 
+    DOMRadiusWithoutOversize_=0.16510*I3Units::m; // 13 inch diameter
+    AddParameter("DOMRadiusWithoutOversize",
+                 "Specifiy the DOM radius. Do not include oversize factors here.",
+                 DOMRadiusWithoutOversize_);
+
+    
     // add an outbox
     AddOutBox("OutBox");
 
@@ -97,6 +109,9 @@ void I3PhotonToMCHitConverter::Configure()
 
     GetParameter("WavelengthAcceptance", wavelengthAcceptance_);
     GetParameter("AngularAcceptance", angularAcceptance_);
+
+    GetParameter("DOMOversizeFactor", DOMOversizeFactor_);
+    GetParameter("DOMRadiusWithoutOversize", DOMRadiusWithoutOversize_);
 
     if (!wavelengthAcceptance_)
         log_fatal("The \"WavelengthAcceptance\" parameter must not be empty.");
@@ -157,6 +172,8 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
     const double DOMDir_y = 0.;
     const double DOMDir_z = -1.;
     
+    const double oversizedDOMRadius2 = DOMRadiusWithoutOversize_*DOMRadiusWithoutOversize_ * DOMOversizeFactor_*DOMOversizeFactor_;
+    
     BOOST_FOREACH(const I3PhotonSeriesMap::value_type &it, *inputPhotonSeriesMap)
     {
         const OMKey &key = it.first;
@@ -179,20 +196,28 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
             if (hitProbability < 0.) log_fatal("Photon with negative weight found.");
             if (hitProbability == 0.) continue;
 
-            double photonCosAngle = -(photon.GetDir().GetX() * DOMDir_x +
-                                      photon.GetDir().GetY() * DOMDir_y +
-                                      photon.GetDir().GetZ() * DOMDir_z);
+            const double dx=photon.GetDir().GetX();
+            const double dy=photon.GetDir().GetY();
+            const double dz=photon.GetDir().GetZ();
+            const double px=om.position.GetX()-photon.GetPos().GetX();
+            const double py=om.position.GetY()-photon.GetPos().GetY();
+            const double pz=om.position.GetZ()-photon.GetPos().GetZ();
+            const double pr2 = px*px + py*py + pz*pz;
+            
+            double photonCosAngle = -(dx * DOMDir_x +
+                                      dy * DOMDir_y +
+                                      dz * DOMDir_z);
             photonCosAngle = std::max(-1., std::min(1., photonCosAngle));
             
 
-            const double distFromDOMCenter = std::sqrt(std::pow(photon.GetPos().GetX()-om.position.GetX(),2) + 
-                                                       std::pow(photon.GetPos().GetY()-om.position.GetY(),2) + 
-                                                       std::pow(photon.GetPos().GetZ()-om.position.GetZ(),2));
-            if (distFromDOMCenter > 5.*165.1*I3Units::mm + 1.*I3Units::cm) {
-                log_error("distance not 5*13\"/2=%fmm.. it is %fmm (diff=%gmm) (OMKey=(%i,%u)",
-                          5.*165.1,
+            const double distFromDOMCenter = std::sqrt(pr2);
+            if (distFromDOMCenter > DOMOversizeFactor_*DOMRadiusWithoutOversize_ + 1.*I3Units::cm) {
+                log_error("distance not %f*%f=%fmm.. it is %fmm (diff=%gmm) (OMKey=(%i,%u)",
+                          DOMOversizeFactor_,
+                          DOMRadiusWithoutOversize_/I3Units::mm,
+                          DOMOversizeFactor_*DOMRadiusWithoutOversize_/I3Units::mm,
                           distFromDOMCenter/I3Units::mm,
-                          (distFromDOMCenter-5.*165.1*I3Units::mm)/I3Units::mm,
+                          (distFromDOMCenter-DOMOversizeFactor_*DOMRadiusWithoutOversize_)/I3Units::mm,
                           key.GetString(), key.GetOM());
             } else {
                 //log_warn("distance OK!");
@@ -201,7 +226,6 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
             
 #ifndef I3_OPTIMIZE
             const double photonAngle = std::acos(photonCosAngle);
-            
             log_trace("Photon (lambda=%fnm, angle=%fdeg, dist=%fm) has weight %g",
                      photon.GetWavelength()/I3Units::nanometer,
                      photonAngle/I3Units::deg,
@@ -231,12 +255,22 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
             // allocate the output vector if not already done
             if (!hits) hits = &(outputMCHitSeriesMap->insert(std::make_pair(key, I3MCHitSeries())).first->second);
 
+            // correct timing for oversized DOMs
+            double correctedTime = photon.GetTime();
+            {
+                const double dot = px*dx + py*dy + pz*dz;
+                const double y2 = pr2 - dot*dot;
+                const double discr = std::sqrt(y2 + oversizedDOMRadius2);
+
+                const double bringForward = discr*(DOMOversizeFactor_-1.)/DOMOversizeFactor_;
+            }
+            
             // add a new hit
             hits->push_back(I3MCHit());
             I3MCHit &hit = hits->back();
             
             // fill in all information
-            hit.SetTime(photon.GetTime());
+            hit.SetTime(correctedTime);
             hit.SetHitID(photon.GetID());
             hit.SetWeight(1.);
             hit.SetParticleID(particle);
