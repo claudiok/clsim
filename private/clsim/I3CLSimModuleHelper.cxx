@@ -195,6 +195,7 @@ namespace I3CLSimModuleHelper {
                                                            I3CLSimMediumPropertiesPtr medium,
                                                            I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
                                                            I3CLSimRandomValueConstPtr wavelengthGenerator,
+                                                           uint32_t approximateNumberOfWorkItems,
                                                            bool useNativeMath)
     {
         I3CLSimStepToPhotonConverterOpenCLPtr conv(new I3CLSimStepToPhotonConverterOpenCL(rng, useNativeMath));
@@ -294,13 +295,19 @@ namespace I3CLSimModuleHelper {
 
         const std::size_t workgroupSize = conv->GetWorkgroupSize();
         
-        // use approximately 512000 work items, convert to a multiple of the workgroup size
-        const std::size_t maxNumWorkitems = (512000/workgroupSize)*workgroupSize;
+        // use approximately the given number of work items, convert to a multiple of the workgroup size
+        std::size_t maxNumWorkitems = (static_cast<std::size_t>(approximateNumberOfWorkItems)/workgroupSize)*workgroupSize;
+        if (maxNumWorkitems==0) maxNumWorkitems=workgroupSize;
+        
         conv->SetMaxNumWorkitems(maxNumWorkitems);
 
         log_info("maximum workgroup size is %zu", maxWorkgroupSize);
         log_info("configured workgroup size is %zu", workgroupSize);
-        log_info("maximum number of work items is %zu", maxNumWorkitems);
+        if (maxNumWorkitems != approximateNumberOfWorkItems) {
+            log_warn("maximum number of work items is %zu (user configured was %" PRIu32 ")", maxNumWorkitems, approximateNumberOfWorkItems);
+        } else {
+            log_info("maximum number of work items is %zu (user configured was %" PRIu32 ")", maxNumWorkitems, approximateNumberOfWorkItems);
+        }
 
         conv->Initialize();
         

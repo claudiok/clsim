@@ -52,6 +52,7 @@ namespace I3CLSimModuleHelper {
                      I3CLSimMediumPropertiesPtr medium,
                      I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
                      I3CLSimRandomValueConstPtr wavelengthGenerator,
+                     uint32_t approximateNumberOfWorkItems,
                      bool useNativeMath);
     
     I3CLSimParticleToStepConverterGeant4Ptr

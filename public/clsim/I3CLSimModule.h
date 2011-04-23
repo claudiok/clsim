@@ -129,6 +129,12 @@ private:
     /// results).
     bool openCLUseNativeMath_;
 
+    /// Parameter: The approximate number of work items per block. Larger numbers
+    /// (e.g. 512000) are ok for dedicated GPGPU cards, but try to keep the number
+    /// lower if you also use your GPU for display. Your display may freeze if you
+    /// use the card interactively and this number is too high.
+    uint32_t openCLApproximateNumberOfWorkItems_;
+
     /// Parameter: The DOM radius used during photon tracking.
     double DOMRadius_;
 

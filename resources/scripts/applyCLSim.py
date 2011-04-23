@@ -246,13 +246,31 @@ tray.AddModule("I3CLSimModule", "clsim",
                #ParameterizationList=parameterizationsMuon,
                MaxNumParallelEvents=options.MAXPARALLELEVENTS,
                
-               OpenCLPlatformName="NVIDIA CUDA",
-               OpenCLDeviceName="GeForce GTX 580",
-               OpenCLUseNativeMath=True,
+               #OpenCLPlatformName="NVIDIA CUDA",
+               #OpenCLDeviceName="GeForce GTX 580",
+               #OpenCLUseNativeMath=True,
+               #OpenCLApproximateNumberOfWorkItems=512000,
                
                #OpenCLPlatformName="ATI Stream",
                #OpenCLDeviceName="Intel(R) Core(TM) i5 CPU         760  @ 2.80GHz",
-               #OpenCLUseNativeMath=False
+               #OpenCLUseNativeMath=False,
+               #OpenCLApproximateNumberOfWorkItems=51200,
+
+               #OpenCLPlatformName="Apple",
+               #OpenCLDeviceName="GeForce 9600M GT",
+               #OpenCLUseNativeMath=True,
+               #OpenCLApproximateNumberOfWorkItems=1024,
+
+               #OpenCLPlatformName="Apple",
+               #OpenCLDeviceName="GeForce 9400M",
+               #OpenCLUseNativeMath=True,
+               #OpenCLApproximateNumberOfWorkItems=512,
+               
+               OpenCLPlatformName="Apple",
+               OpenCLDeviceName="Intel(R) Core(TM)2 Duo CPU     T9600  @ 2.80GHz",
+               OpenCLUseNativeMath=False,
+               OpenCLApproximateNumberOfWorkItems=51200,
+               
                )
 
 tray.AddModule("I3PhotonToMCHitConverter", "make_hits",

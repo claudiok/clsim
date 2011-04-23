@@ -113,7 +113,15 @@ geometryIsConfigured_(false)
                  "Nvidia GPUs (may speed up things, but make sure it does not change your\n"
                  "results).",
                  openCLUseNativeMath_);
-    
+
+    openCLApproximateNumberOfWorkItems_=512000;
+    AddParameter("OpenCLApproximateNumberOfWorkItems",
+                 "The approximate number of work items per block. Larger numbers (e.g. 512000)\n"
+                 "are ok for dedicated GPGPU cards, but try to keep the number lower if you also\n"
+                 "use your GPU for display. Your display may freeze if you use the card interactively\n"
+                 "and this number is too high.",
+                 openCLApproximateNumberOfWorkItems_);
+
     DOMRadius_=0.16510*I3Units::m; // 13 inch diameter
     AddParameter("DOMRadius",
                  "The DOM radius used during photon tracking.",
@@ -234,6 +242,7 @@ void I3CLSimModule::Configure()
     GetParameter("OpenCLPlatformName", openCLPlatformName_);
     GetParameter("OpenCLDeviceName", openCLDeviceName_);
     GetParameter("OpenCLUseNativeMath", openCLUseNativeMath_);
+    GetParameter("OpenCLApproximateNumberOfWorkItems", openCLApproximateNumberOfWorkItems_);
 
     GetParameter("DOMRadius", DOMRadius_);
     GetParameter("IgnoreNonIceCubeOMNumbers", ignoreNonIceCubeOMNumbers_);
@@ -435,6 +444,7 @@ void I3CLSimModule::Geometry(I3FramePtr frame)
                                           mediumProperties_,
                                           wavelengthGenerationBias_,
                                           wavelengthGenerator_,
+                                          openCLApproximateNumberOfWorkItems_,
                                           openCLUseNativeMath_);
     
     log_info("Initializing Geant4..");
