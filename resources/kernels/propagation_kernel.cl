@@ -21,6 +21,7 @@ inline float my_divide(float a, float b) {return native_divide(a,b);}
 inline float my_recip(float a) {return native_recip(a);}
 inline float my_powr(float a, float b) {return native_powr(a,b);}
 inline float my_sqrt(float a) {return native_sqrt(a);}
+inline float my_rsqrt(float a) {return native_rsqrt(a);}
 inline float my_cos(float a) {return native_cos(a);}
 inline float my_sin(float a) {return native_sin(a);}
 inline float my_log(float a) {return native_log(a);}
@@ -30,6 +31,7 @@ inline float my_divide(float a, float b) {return a/b;}
 inline float my_recip(float a) {return 1.f/a;}
 inline float my_powr(float a, float b) {return powr(a,b);}
 inline float my_sqrt(float a) {return sqrt(a);}
+inline float my_rsqrt(float a) {return rsqrt(a);}
 inline float my_cos(float a) {return cos(a);}
 inline float my_sin(float a) {return sin(a);}
 inline float my_log(float a) {return log(a);}
@@ -60,6 +62,10 @@ struct I3CLSimPhoton
     uint identifier;
     short stringID;
     ushort omID;
+    float4 startPosAndTime;
+    float2 startDir;
+    float groupVelocity;
+    uint dummy;
 } __attribute__ ((packed));
 
 
@@ -160,17 +166,17 @@ inline void createPhotonFromTrack(struct I3CLSimStep *step,
 inline float2 sphDirFromCar(float4 carDir)
 {
     // Calculate Spherical coordinates from Cartesian
-    const float r = my_sqrt(carDir.x*carDir.x+carDir.y*carDir.y+carDir.z*carDir.z);
+    const float r_inv = my_rsqrt(carDir.x*carDir.x+carDir.y*carDir.y+carDir.z*carDir.z);
 
     float theta = 0.f;
-    if (fabs(carDir.z/r)<=1.f) {
-        theta=acos(carDir.z/r);
+    if (fabs(carDir.z*r_inv)<=1.f) {
+        theta=acos(carDir.z*r_inv);
     } else {
         if (carDir.z<0.f) theta=PI;
     }
     if (theta<0.f) theta+=2.f*PI;
 
-    float phi=atan2(carDir.x,carDir.y);
+    float phi=atan2(carDir.y,carDir.x);
     if (phi<0.f) phi+=2.f*PI;
 
     return (float2)(theta, phi);
@@ -182,6 +188,8 @@ inline bool checkForCollision(const float4 photonPosAndTime,
     float inv_groupvel,
     float photonTotalPathLength,
     uint photonNumScatters,
+    float4 photonStartPosAndTime,
+    float4 photonStartDirAndWlen,
     const struct I3CLSimStep *step,
     float *thisStepLength,
     __global uint* hitIndex,
@@ -275,7 +283,7 @@ inline bool checkForCollision(const float4 photonPosAndTime,
             //else
             if (discr >= 0.0f) 
             {
-                discr = my_sqrt(discr); ///5.f;
+                discr = my_sqrt(discr);
 
                 float smin = -urdot - discr;
                 if (smin < 0.0f) smin = -urdot + discr;
@@ -323,6 +331,11 @@ inline bool checkForCollision(const float4 photonPosAndTime,
 
             outputPhotons[myIndex].stringID = convert_short(hitOnString);
             outputPhotons[myIndex].omID = convert_ushort(hitOnDom);
+
+            outputPhotons[myIndex].startPosAndTime=photonStartPosAndTime;
+            outputPhotons[myIndex].startDir = sphDirFromCar(photonStartDirAndWlen);
+
+            outputPhotons[myIndex].groupVelocity = my_recip(inv_groupvel);
 
 
             dbg_printf("     -> stored photon: p=(%f,%f,%f), d=(%f,%f), t=%f, wlen=%fnm\n",
@@ -400,6 +413,8 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
     uint photonsLeftToPropagate=step.numPhotons;
     float abs_lens_left=0.f;
     
+    float4 photonStartPosAndTime;
+    float4 photonStartDirAndWlen;
     float4 photonPosAndTime;
     float4 photonDirAndWlen;
     uint photonNumScatters=0;
@@ -422,6 +437,10 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
                 RNG_ARGS_TO_CALL,
                 &photonPosAndTime,
                 &photonDirAndWlen);
+            
+            // save the start position and time
+            photonStartPosAndTime=photonPosAndTime;
+            photonStartDirAndWlen=photonDirAndWlen;
             
             photonNumScatters=0;
             photonTotalPathLength=0.f;
@@ -516,6 +535,8 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             inv_groupvel,
             photonTotalPathLength,
             photonNumScatters,
+            photonStartPosAndTime,
+            photonStartDirAndWlen,
             &step,
             &distancePropagated, 
             hitIndex, 

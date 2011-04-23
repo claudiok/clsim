@@ -36,7 +36,7 @@
 using namespace boost::archive;
 
 namespace {
-    const std::size_t blobSizeV0 = 48; // size of our structure in bytes
+    const std::size_t blobSizeV0 = 80; // size of our structure in bytes
 }
 
 I3CLSimPhoton::~I3CLSimPhoton() { }
@@ -59,6 +59,16 @@ void I3CLSimPhoton::save(Archive &ar, unsigned version) const
     ar << make_nvp("id", identifier);
     ar << make_nvp("stringID", stringID);
     ar << make_nvp("omID", omID);
+
+    ar << make_nvp("startX", ((const cl_float *)&startPosAndTime)[0]);
+    ar << make_nvp("startY", ((const cl_float *)&startPosAndTime)[1]);
+    ar << make_nvp("startZ", ((const cl_float *)&startPosAndTime)[2]);
+    ar << make_nvp("startTime", ((const cl_float *)&startPosAndTime)[3]);
+    
+    ar << make_nvp("startTheta", ((const cl_float *)&startDir)[0]);
+    ar << make_nvp("startPhi", ((const cl_float *)&startDir)[1]);
+
+    ar << make_nvp("groupVelocity", groupVelocity);
 }     
 
 
@@ -84,6 +94,16 @@ void I3CLSimPhoton::load(Archive &ar, unsigned version)
     ar >> make_nvp("id", temp_uint); identifier=temp_uint;
     ar >> make_nvp("stringID", temp_short); stringID=temp_short;
     ar >> make_nvp("omID", temp_ushort); omID=temp_ushort;
+
+    ar >> make_nvp("startX", temp); ((cl_float *)&startPosAndTime)[0]=temp;
+    ar >> make_nvp("startY", temp); ((cl_float *)&startPosAndTime)[1]=temp;
+    ar >> make_nvp("startZ", temp); ((cl_float *)&startPosAndTime)[2]=temp;
+    ar >> make_nvp("startTime", temp); ((cl_float *)&startPosAndTime)[3]=temp;
+    
+    ar >> make_nvp("startTheta", temp); ((cl_float *)&startDir)[0]=temp;
+    ar >> make_nvp("startPhi", temp); ((cl_float *)&startDir)[1]=temp;
+
+    ar >> make_nvp("groupVelocity", temp); groupVelocity=temp;
 
 }     
 

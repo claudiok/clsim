@@ -40,17 +40,20 @@ void I3Photon::serialize (Archive &ar, unsigned version)
 	if (version > i3photon_version_)
 		log_fatal("Attempting to read version %u from file but running version %u of I3Photon class.",version,i3photon_version_);
 	
-	ar & make_nvp("time",time_);
+	ar & make_nvp("time", time_);
 	ar & make_nvp("weight", weight_);
 	ar & make_nvp("ID",ID_);
 	ar & make_nvp("particleID", particleID_);
 	ar & make_nvp("particleMajorID", particleMajorID_);
 	ar & make_nvp("cherenkovDist", cherenkovDist_);
-	ar & make_nvp("cherenkovTime", cherenkovTime_);
-	ar & make_nvp("Wavelength", wavelength_);
+	ar & make_nvp("wavelength", wavelength_);
+	ar & make_nvp("groupVelocity", groupVelocity_);
 	ar & make_nvp("dir", direction_);
 	ar & make_nvp("pos", position_);
-	ar & make_nvp("numScattered", numScattered_);
+	ar & make_nvp("startTime", startTime_);
+    ar & make_nvp("startDir", startDirection_);
+	ar & make_nvp("startPos", startPosition_);
+    ar & make_nvp("numScattered", numScattered_);
 }     
 
 I3_SERIALIZABLE(I3Photon);

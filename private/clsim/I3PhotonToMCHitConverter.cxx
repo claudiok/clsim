@@ -209,20 +209,38 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
                                       dz * DOMDir_z);
             photonCosAngle = std::max(-1., std::min(1., photonCosAngle));
             
-
+            // sanity check: are photons on the OM's surface?
             const double distFromDOMCenter = std::sqrt(pr2);
-            if (distFromDOMCenter > DOMOversizeFactor_*DOMRadiusWithoutOversize_ + 1.*I3Units::cm) {
-                log_error("distance not %f*%f=%fmm.. it is %fmm (diff=%gmm) (OMKey=(%i,%u)",
+            if (std::abs(distFromDOMCenter - DOMOversizeFactor_*DOMRadiusWithoutOversize_) > 1.*I3Units::cm) {
+                log_fatal("distance not %f*%f=%fmm.. it is %fmm (diff=%gmm) (OMKey=(%i,%u)",
                           DOMOversizeFactor_,
                           DOMRadiusWithoutOversize_/I3Units::mm,
                           DOMOversizeFactor_*DOMRadiusWithoutOversize_/I3Units::mm,
                           distFromDOMCenter/I3Units::mm,
                           (distFromDOMCenter-DOMOversizeFactor_*DOMRadiusWithoutOversize_)/I3Units::mm,
                           key.GetString(), key.GetOM());
-            } else {
-                //log_warn("distance OK!");
             }
+            
+            // sanity check for unscattered photons: is their direction ok
+            // w.r.t. the vector from emission to detection?
+            if (photon.GetNumScattered()==0)
+            {
+                double ppx = photon.GetPos().GetX()-photon.GetStartPos().GetX();
+                double ppy = photon.GetPos().GetY()-photon.GetStartPos().GetY();
+                double ppz = photon.GetPos().GetZ()-photon.GetStartPos().GetZ();
+                const double ppl = std::sqrt(ppx*ppx + ppy*ppy + ppz*ppz);
+                ppx/=ppl; ppy/=ppl; ppz/=ppl;
+                const double cosang = dx*ppx + dy*ppy + dz*ppz;
                 
+                if (cosang < 0.99) {
+                    log_fatal("unscattered photon direction is inconsistent: cos(ang)==%f, d=(%f,%f,%f), pp=(%f,%f,%f) pp_l=%f",
+                              cosang,
+                              dx, dy, dz,
+                              ppx, ppy, ppz,
+                              ppl
+                              );
+                }
+            }
             
 #ifndef I3_OPTIMIZE
             const double photonAngle = std::acos(photonCosAngle);
@@ -259,10 +277,8 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
             double correctedTime = photon.GetTime();
             {
                 const double dot = px*dx + py*dy + pz*dz;
-                const double y2 = pr2 - dot*dot;
-                const double discr = std::sqrt(y2 + oversizedDOMRadius2);
-
-                const double bringForward = discr*(DOMOversizeFactor_-1.)/DOMOversizeFactor_;
+                const double bringForward = dot*(1.-1./DOMOversizeFactor_);
+                correctedTime += bringForward/photon.GetGroupVelocity();
             }
             
             // add a new hit

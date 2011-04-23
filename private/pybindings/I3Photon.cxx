@@ -38,7 +38,15 @@ i3photon_prettyprint(const I3Photon& s)
         << "     dir (zen,azi) : [" << s.GetDir().GetZenith()/I3Units::rad << ", " << s.GetDir().GetAzimuth()/I3Units::rad << "]rad, [" << s.GetDir().GetZenith()/I3Units::deg << ", " << s.GetDir().GetAzimuth()/I3Units::deg << "]deg" << std::endl
         << "       dir (x,y,z) : [" << s.GetDir().GetX() << ", " << s.GetDir().GetY() << ", " << s.GetDir().GetZ() << "]" << std::endl
         << "              time : " << s.GetTime()/I3Units::ns << "ns" << std::endl
+
+        << "  startPos (x,y,z) : [" << s.GetStartPos().GetX()/I3Units::m << ", " << s.GetStartPos().GetY()/I3Units::m << ", " << s.GetStartPos().GetZ()/I3Units::m << "]m" << std::endl
+        << "strDir (theta,phi) : [" << s.GetStartDir().CalcTheta()/I3Units::rad << ", " << s.GetStartDir().CalcPhi()/I3Units::rad << "]rad, [" << s.GetStartDir().CalcTheta()/I3Units::deg << ", " << s.GetStartDir().CalcPhi()/I3Units::deg << "]deg" << std::endl
+        << "startDir (zen,azi) : [" << s.GetStartDir().GetZenith()/I3Units::rad << ", " << s.GetStartDir().GetAzimuth()/I3Units::rad << "]rad, [" << s.GetStartDir().GetZenith()/I3Units::deg << ", " << s.GetStartDir().GetAzimuth()/I3Units::deg << "]deg" << std::endl
+        << "  startDir (x,y,z) : [" << s.GetStartDir().GetX() << ", " << s.GetStartDir().GetY() << ", " << s.GetStartDir().GetZ() << "]" << std::endl
+        << "         startTime : " << s.GetStartTime()/I3Units::ns << "ns" << std::endl
+    
         << "        wavelength : " << s.GetWavelength()/I3Units::nanometer << "nm" << std::endl
+        << "    group velocity : " << s.GetGroupVelocity()/I3Units::nanometer << "nm" << std::endl
         << "      numScattered : " << s.GetNumScattered() << std::endl
         << "            weight : " << s.GetWeight() << std::endl
         << "     cherenkovDist : " << s.GetCherenkovDist()/I3Units::m << "m" << std::endl
@@ -68,6 +76,18 @@ void register_I3Photon()
         .def("GetDir", &I3Photon::GetDir, return_value_policy<copy_const_reference>())
         .def("SetDir", &I3Photon::SetDir)
 
+        .add_property("startPos", 
+                      make_function(&I3Photon::GetStartPos, return_value_policy<copy_const_reference>()),
+                      make_function(&I3Photon::SetStartPos))
+        .def("GetStartPos", &I3Photon::GetStartPos, return_value_policy<copy_const_reference>())
+        .def("SetStartPos", &I3Photon::SetStartPos)
+        
+        .add_property("startDir", 
+                      make_function(&I3Photon::GetStartDir, return_value_policy<copy_const_reference>()),
+                      make_function(&I3Photon::SetStartDir))
+        .def("GetStartDir", &I3Photon::GetStartDir, return_value_policy<copy_const_reference>())
+        .def("SetStartDir", &I3Photon::SetStartDir)
+
         .add_property("numScattered", &I3Photon::GetNumScattered, &I3Photon::SetNumScattered)
         .def("GetNumScattered", &I3Photon::GetNumScattered)
         .def("SetNumScattered", &I3Photon::SetNumScattered)
@@ -76,17 +96,24 @@ void register_I3Photon()
         .def("GetWavelength", &I3Photon::GetWavelength)
         .def("SetWavelength", &I3Photon::SetWavelength)
 
+        .add_property("groupVelocity", &I3Photon::GetGroupVelocity, &I3Photon::SetGroupVelocity)
+        .def("GetGroupVelocity", &I3Photon::GetGroupVelocity)
+        .def("SetGroupVelocity", &I3Photon::SetGroupVelocity)
+
         .add_property("time", &I3Photon::GetTime, &I3Photon::SetTime)
         .def("GetTime", &I3Photon::GetTime)
         .def("SetTime", &I3Photon::SetTime)
+
+        .add_property("startTime", &I3Photon::GetStartTime, &I3Photon::SetStartTime)
+        .def("GetStartTime", &I3Photon::GetStartTime)
+        .def("SetStartTime", &I3Photon::SetStartTime)
 
         .add_property("cherenkovDist", &I3Photon::GetCherenkovDist, &I3Photon::SetCherenkovDist)
         .def("GetCherenkovDist", &I3Photon::GetCherenkovDist)
         .def("SetCherenkovDist", &I3Photon::SetCherenkovDist)
 
-        .add_property("cherenkovTime", &I3Photon::GetCherenkovTime, &I3Photon::SetCherenkovTime)
+        .add_property("cherenkovTime", &I3Photon::GetCherenkovTime)
         .def("GetCherenkovTime", &I3Photon::GetCherenkovTime)
-        .def("SetCherenkovTime", &I3Photon::SetCherenkovTime)
         
         .add_property("ID", &I3Photon::GetID, &I3Photon::SetID)
         .def("GetID", &I3Photon::GetID)

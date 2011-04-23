@@ -76,6 +76,13 @@ public:
     inline float GetDirTheta() const {return ((const cl_float *)&dir)[0];}
     inline float GetDirPhi() const {return ((const cl_float *)&dir)[1];}
 
+    inline float GetStartPosX() const {return ((const cl_float *)&startPosAndTime)[0];}
+    inline float GetStartPosY() const {return ((const cl_float *)&startPosAndTime)[1];}
+    inline float GetStartPosZ() const {return ((const cl_float *)&startPosAndTime)[2];}
+    inline float GetStartTime() const {return ((const cl_float *)&startPosAndTime)[3];}
+    inline float GetStartDirTheta() const {return ((const cl_float *)&startDir)[0];}
+    inline float GetStartDirPhi() const {return ((const cl_float *)&startDir)[1];}
+
     inline float GetWavelength() const {return wavelength;}
     inline float GetCherenkovDist() const {return cherenkovDist;}
     inline uint32_t GetNumScatters() const {return numScatters;}
@@ -83,8 +90,15 @@ public:
     inline uint32_t GetID() const {return identifier;}
     inline int16_t GetStringID() const {return stringID;}
     inline uint16_t GetOMID() const {return omID;}
+    inline float GetGroupVelocity() const {return groupVelocity;}
 
     inline I3PositionPtr GetPos() const {return I3PositionPtr(new I3Position(((const cl_float *)&posAndTime)[0], ((const cl_float *)&posAndTime)[1], ((const cl_float *)&posAndTime)[2]));}
+    inline I3PositionPtr GetStartPos() const
+    {
+        return I3PositionPtr(new I3Position(((const cl_float *)&startPosAndTime)[0],
+                                            ((const cl_float *)&startPosAndTime)[1],
+                                            ((const cl_float *)&startPosAndTime)[2]));
+    }
 
     inline I3DirectionPtr GetDir() const 
     {
@@ -92,7 +106,14 @@ public:
         retval->SetThetaPhi(((const cl_float *)&dir)[0], ((const cl_float *)&dir)[1]);
         return retval;
     }
-    
+
+    inline I3DirectionPtr GetStartDir() const 
+    {
+        I3DirectionPtr retval(new I3Direction());
+        retval->SetThetaPhi(((const cl_float *)&startDir)[0], ((const cl_float *)&startDir)[1]);
+        return retval;
+    }
+
     
     
     inline void SetPosX(const float &val) {((cl_float *)&posAndTime)[0]=val;}
@@ -101,7 +122,14 @@ public:
     inline void SetTime(const float &val) {((cl_float *)&posAndTime)[3]=val;}
     inline void SetDirTheta(const float &val) {((cl_float *)&dir)[0]=val;}
     inline void SetDirPhi(const float &val) {((cl_float *)&dir)[1]=val;}
-    
+
+    inline void SetStartPosX(const float &val) {((cl_float *)&startPosAndTime)[0]=val;}
+    inline void SetStartPosY(const float &val) {((cl_float *)&startPosAndTime)[1]=val;}
+    inline void SetStartPosZ(const float &val) {((cl_float *)&startPosAndTime)[2]=val;}
+    inline void SetStartTime(const float &val) {((cl_float *)&startPosAndTime)[3]=val;}
+    inline void SetStartDirTheta(const float &val) {((cl_float *)&startDir)[0]=val;}
+    inline void SetStartDirPhi(const float &val) {((cl_float *)&startDir)[1]=val;}
+
     inline void SetWavelength(const float &val) {wavelength=val;}
     inline void SetCherenkovDist(const float &val) {cherenkovDist=val;}
     inline void SetNumScatters(const uint32_t &val) {numScatters=val;}
@@ -109,8 +137,20 @@ public:
     inline void SetID(const uint32_t &val) {identifier=val;}
     inline void SetStringID(const int16_t &val) {stringID=val;}
     inline void SetOMID(const uint16_t &val) {omID=val;}
-    
-    inline void SetPos(const I3Position &pos) {((cl_float *)&posAndTime)[0]=pos.GetX(); ((cl_float *)&posAndTime)[1]=pos.GetY(); ((cl_float *)&posAndTime)[2]=pos.GetZ();}
+    inline void SetGroupVelocity(const float &val) {groupVelocity=val;}
+
+    inline void SetPos(const I3Position &pos)
+    {
+        ((cl_float *)&posAndTime)[0]=pos.GetX();
+        ((cl_float *)&posAndTime)[1]=pos.GetY();
+        ((cl_float *)&posAndTime)[2]=pos.GetZ();
+    }
+    inline void SetStartPos(const I3Position &pos)
+    {
+        ((cl_float *)&startPosAndTime)[0]=pos.GetX();
+        ((cl_float *)&startPosAndTime)[1]=pos.GetY();
+        ((cl_float *)&startPosAndTime)[2]=pos.GetZ();
+    }
 
     inline void SetDir(const I3Direction &dir) 
     {
@@ -123,7 +163,19 @@ public:
         ((cl_float *)&dir)[0]=dir.CalcTheta();
         ((cl_float *)&dir)[1]=dir.CalcPhi();
     }
-    
+
+    inline void SetStartDir(const I3Direction &dir) 
+    {
+        ((cl_float *)&startDir)[0]=dir.CalcTheta();
+        ((cl_float *)&startDir)[1]=dir.CalcPhi();
+    }
+    inline void SetStartDir(const double &x, const double &y, const double &z) 
+    {
+        const I3Direction dir(x,y,z);
+        ((cl_float *)&startDir)[0]=dir.CalcTheta();
+        ((cl_float *)&startDir)[1]=dir.CalcPhi();
+    }
+
     
     
     // cl_float4 is a struct consisting of 4 floats named .x, .y, .z, .w
@@ -138,7 +190,11 @@ public:
     cl_uint identifier;
     cl_short stringID;
     cl_ushort omID;
-
+    cl_float4 startPosAndTime;
+    cl_float2 startDir;
+    cl_float groupVelocity;
+    cl_uint dummy;
+    
 private:
     friend class boost::serialization::access;
     template <class Archive> void load(Archive & ar, unsigned version);
@@ -149,8 +205,8 @@ private:
 
 inline bool operator==(const I3CLSimPhoton &a, const I3CLSimPhoton &b)
 {
-    // compare all fields (binary)
-    return (std::memcmp(&a, &b, sizeof(I3CLSimPhoton))==0);
+    // compare all fields (binary) [except the last field, which is a dummy)
+    return (std::memcmp(&a, &b, sizeof(I3CLSimPhoton)-sizeof(cl_uint))==0);
 }
 
 BOOST_CLASS_VERSION(I3CLSimPhoton, i3clsimphoton_version_);

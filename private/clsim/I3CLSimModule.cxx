@@ -510,8 +510,8 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons)
         outputPhoton.SetParticleMinorID(cacheEntry.particleMinorID);
         outputPhoton.SetParticleMajorID(cacheEntry.particleMajorID);
         outputPhoton.SetCherenkovDist(photon.GetCherenkovDist());
-        outputPhoton.SetCherenkovTime(NAN); // TODO: calculate cherenkov distance from wavelength
         outputPhoton.SetWavelength(photon.GetWavelength());
+        outputPhoton.SetGroupVelocity(photon.GetGroupVelocity());
         outputPhoton.SetNumScattered(photon.GetNumScatters());
 
         outputPhoton.SetPos(I3Position(photon.GetPosX(), photon.GetPosY(), photon.GetPosZ()));
@@ -519,6 +519,15 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons)
             I3Direction outDir;
             outDir.SetThetaPhi(photon.GetDirTheta(), photon.GetDirPhi());
             outputPhoton.SetDir(outDir);
+        }
+
+        outputPhoton.SetStartTime(photon.GetStartTime());
+
+        outputPhoton.SetStartPos(I3Position(photon.GetStartPosX(), photon.GetStartPosY(), photon.GetStartPosZ()));
+        {
+            I3Direction outStartDir;
+            outStartDir.SetThetaPhi(photon.GetStartDirTheta(), photon.GetStartDirPhi());
+            outputPhoton.SetStartDir(outStartDir);
         }
 
         if (collectStatistics_)

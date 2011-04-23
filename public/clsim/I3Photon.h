@@ -58,10 +58,13 @@ public:
     particleID_(-1), 
     particleMajorID_(0), 
     cherenkovDist_(NAN),
-    cherenkovTime_(NAN),
     wavelength_(NAN),
+    groupVelocity_(NAN),
     direction_(),
     position_(),
+    startTime_(NAN),
+    startDirection_(),
+    startPosition_(),
     numScattered_(0)
     { }
     
@@ -72,10 +75,13 @@ public:
     particleID_(id), 
     particleMajorID_(mid), 
     cherenkovDist_(NAN),
-    cherenkovTime_(NAN),
     wavelength_(NAN),
+    groupVelocity_(NAN),
     direction_(),
     position_(),
+    startTime_(NAN),
+    startDirection_(),
+    startPosition_(),
     numScattered_(0)
     { }
     
@@ -120,18 +126,16 @@ public:
      * @return The full time it took the photon to travel from its emission
      * point to the OM.
      */
-    double GetCherenkovTime() const {return cherenkovTime_; }
-    
-    /**
-     * @param CherenkovTime The full time it took the photon to travel from its emission
-     * point to the OM.
-     */
-    void SetCherenkovTime(double CherenkovTime) {cherenkovTime_ = CherenkovTime; }
+    double GetCherenkovTime() const {return time_-startTime_; }
     
     double GetWavelength() const {return wavelength_;}
     
     void SetWavelength(double wlen) {wavelength_ = wlen;}
+
+    double GetGroupVelocity() const {return groupVelocity_;}
     
+    void SetGroupVelocity(double gvel) {groupVelocity_ = gvel;}
+
     /**
      * @return The position of this photon on the OM. This
      * position is relative to the global coordinate system, where the
@@ -159,6 +163,38 @@ public:
      * z-axis is facing upwards. It is NOT relative to the OM axis!!
      */
     void SetDir(const I3Direction& d) { direction_.SetDirection(d); }
+
+    
+    /**
+     * @return The time of emission of this photon.
+     */
+    double GetStartTime() const {return startTime_;}
+    
+    /**
+     * @param p The time of emission of this photon.
+     */
+    void SetStartTime(double time) {startTime_ = time;}
+    
+    /**
+     * @return The position of emission of this photon.
+     */
+    const I3Position& GetStartPos() const { return startPosition_; }
+    
+    /**
+     * @param p The position of emission of this photon.
+     */
+    void SetStartPos(const I3Position& p) { startPosition_.SetPosition(p); }
+    
+    /**
+     * @return The direction of emission of this photon.
+     */
+    const I3Direction& GetStartDir() const { return startDirection_; }
+    
+    /**
+     * @param d The direction of emission of this photon.
+     */
+    void SetStartDir(const I3Direction& d) { startDirection_.SetDirection(d); }
+
     
     /** 
      * @return this returns the number of times this photon was scattered.
@@ -172,18 +208,24 @@ public:
     
     bool operator==(const I3Photon& rhs) {
         return time_ == rhs.time_
+        && startTime_ == rhs.startTime_
         && ID_ == rhs.ID_
         && weight_ == rhs.weight_
         && particleID_ == rhs.particleID_
         && particleMajorID_ == rhs.particleMajorID_
         && cherenkovDist_ == rhs.cherenkovDist_
-        && cherenkovTime_ == rhs.cherenkovTime_
         && wavelength_ == rhs.wavelength_
         && direction_.GetAzimuth() == rhs.direction_.GetAzimuth()
         && direction_.GetZenith() == rhs.direction_.GetZenith()
         && position_.GetX() == rhs.position_.GetX()
         && position_.GetY() == rhs.position_.GetY()
         && position_.GetZ() == rhs.position_.GetZ()
+        && startDirection_.GetAzimuth() == rhs.startDirection_.GetAzimuth()
+        && startDirection_.GetZenith() == rhs.startDirection_.GetZenith()
+        && startPosition_.GetX() == rhs.startPosition_.GetX()
+        && startPosition_.GetY() == rhs.startPosition_.GetY()
+        && startPosition_.GetZ() == rhs.startPosition_.GetZ()
+        && groupVelocity_ == rhs.groupVelocity_
         && numScattered_ == rhs.numScattered_;
     }
     
@@ -194,11 +236,15 @@ private:
     int32_t particleID_;
     uint64_t particleMajorID_;
     double cherenkovDist_;
-    double cherenkovTime_;
     double wavelength_;
+    double groupVelocity_;
     
     I3Direction direction_;
     I3Position position_;
+
+    double startTime_;
+    I3Direction startDirection_;
+    I3Position startPosition_;
 
     uint32_t numScattered_;
 
