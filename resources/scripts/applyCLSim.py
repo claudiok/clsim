@@ -246,30 +246,35 @@ tray.AddModule("I3CLSimModule", "clsim",
                #ParameterizationList=parameterizationsMuon,
                MaxNumParallelEvents=options.MAXPARALLELEVENTS,
                
+               # 33.5 nanoseconds/photon
                #OpenCLPlatformName="NVIDIA CUDA",
                #OpenCLDeviceName="GeForce GTX 580",
                #OpenCLUseNativeMath=True,
-               #OpenCLApproximateNumberOfWorkItems=512000,
+               #OpenCLApproximateNumberOfWorkItems=1024000,
                
+               # 2690 nanoseconds/photon (4 cores)    [w/ native math: 2648 nanoseconds/photon]
                #OpenCLPlatformName="ATI Stream",
                #OpenCLDeviceName="Intel(R) Core(TM) i5 CPU         760  @ 2.80GHz",
                #OpenCLUseNativeMath=False,
                #OpenCLApproximateNumberOfWorkItems=51200,
-
+               
+               # 750 nanoseconds/photon
                #OpenCLPlatformName="Apple",
                #OpenCLDeviceName="GeForce 9600M GT",
                #OpenCLUseNativeMath=True,
-               #OpenCLApproximateNumberOfWorkItems=1024,
-
+               #OpenCLApproximateNumberOfWorkItems=1024, # GPU could handle more, but system begins to freeze
+               
+               # kernel does not run (out of memory)
                #OpenCLPlatformName="Apple",
                #OpenCLDeviceName="GeForce 9400M",
                #OpenCLUseNativeMath=True,
                #OpenCLApproximateNumberOfWorkItems=512,
                
-               OpenCLPlatformName="Apple",
-               OpenCLDeviceName="Intel(R) Core(TM)2 Duo CPU     T9600  @ 2.80GHz",
-               OpenCLUseNativeMath=False,
-               OpenCLApproximateNumberOfWorkItems=51200,
+               # 5400 nanoseconds/photon (2 cores)    [w/ native math: 4430 nanoseconds/photon]
+               #OpenCLPlatformName="Apple",
+               #OpenCLDeviceName="Intel(R) Core(TM)2 Duo CPU     T9600  @ 2.80GHz",
+               #OpenCLUseNativeMath=False,
+               #OpenCLApproximateNumberOfWorkItems=25600,
                
                )
 

@@ -114,7 +114,7 @@ geometryIsConfigured_(false)
                  "results).",
                  openCLUseNativeMath_);
 
-    openCLApproximateNumberOfWorkItems_=512000;
+    openCLApproximateNumberOfWorkItems_=1024;
     AddParameter("OpenCLApproximateNumberOfWorkItems",
                  "The approximate number of work items per block. Larger numbers (e.g. 512000)\n"
                  "are ok for dedicated GPGPU cards, but try to keep the number lower if you also\n"
