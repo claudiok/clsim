@@ -269,7 +269,7 @@ void I3CLSimModule::Configure()
      generateCherenkovPhotonsWithoutDispersion_,
      mediumProperties_);
     
-    currentParticleCacheIndex_ = 0;
+    currentParticleCacheIndex_ = 1;
     geometryIsConfigured_ = false;
     totalSimulatedEnergyForFlush_ = 0.;
     totalNumParticlesForFlush_ = 0;
@@ -349,6 +349,12 @@ bool I3CLSimModule::Thread(boost::this_thread::disable_interruption &di)
                 BOOST_FOREACH(const I3CLSimStep &step, *steps)
                 {
                     const uint32_t particleID = step.identifier;
+
+                    // skip dummy steps
+                    if ((step.weight<=0.) || (step.numPhotons<=0)) continue;
+                    
+                    // sanity check
+                    if (particleID==0) log_fatal("particleID==0, this should not happen (this index is never used)");
                     
                     (photonNumGeneratedPerParticle_.insert(std::make_pair(particleID, 0)).first->second)+=step.numPhotons;
                     (photonWeightSumGeneratedPerParticle_.insert(std::make_pair(particleID, 0.)).first->second)+=static_cast<double>(step.numPhotons)*step.weight;
@@ -619,8 +625,8 @@ void I3CLSimModule::FlushFrameCache()
             // find identifier in particle cache
             std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_.find(it->first);
             if (it_cache == particleCache_.end())
-                log_fatal("Internal error: unknown particle id from Geant4: %" PRIu32,
-                          it_cache->first);
+                log_error("Internal error: unknown particle id from Geant4: %" PRIu32,
+                          it->first);
             const particleCacheEntry &cacheEntry = it_cache->second;
             
             if (cacheEntry.frameListEntry >= eventStatisticsForFrame.size())
@@ -639,7 +645,7 @@ void I3CLSimModule::FlushFrameCache()
             std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_.find(it->first);
             if (it_cache == particleCache_.end())
                 log_fatal("Internal error: unknown particle id from Geant4: %" PRIu32,
-                          it_cache->first);
+                          it->first);
             const particleCacheEntry &cacheEntry = it_cache->second;
             
             if (cacheEntry.frameListEntry >= eventStatisticsForFrame.size())
@@ -659,7 +665,7 @@ void I3CLSimModule::FlushFrameCache()
             std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_.find(it->first);
             if (it_cache == particleCache_.end())
                 log_fatal("Internal error: unknown particle id from Geant4: %" PRIu32,
-                          it_cache->first);
+                          it->first);
             const particleCacheEntry &cacheEntry = it_cache->second;
             
             if (cacheEntry.frameListEntry >= eventStatisticsForFrame.size())
@@ -678,7 +684,7 @@ void I3CLSimModule::FlushFrameCache()
             std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_.find(it->first);
             if (it_cache == particleCache_.end())
                 log_fatal("Internal error: unknown particle id from Geant4: %" PRIu32,
-                          it_cache->first);
+                          it->first);
             const particleCacheEntry &cacheEntry = it_cache->second;
             
             if (cacheEntry.frameListEntry >= eventStatisticsForFrame.size())
@@ -813,6 +819,7 @@ void I3CLSimModule::Physics(I3FramePtr frame)
         // make a new index. This will eventually overflow,
         // but at that time, index 0 should be unused again.
         ++currentParticleCacheIndex_;
+        if (currentParticleCacheIndex_==0) ++currentParticleCacheIndex_; // never use index==0
     }
     
     if (frameList_.size() >= maxNumParallelEvents_)
