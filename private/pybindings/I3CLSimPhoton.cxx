@@ -47,7 +47,8 @@ i3clsimphoton_prettyprint(const I3CLSimPhoton& s)
         << "       numScatters : " << s.GetNumScatters() << std::endl
         << "            weight : " << s.GetWeight() << std::endl
         << "     cherenkovDist : " << s.GetCherenkovDist()/I3Units::m << "m" << std::endl
-        << "             dummy : " << s.GetDummy() << std::endl
+        << "          stringID : " << s.GetStringID() << std::endl
+        << "              omID : " << s.GetOMID() << std::endl
         << "]" ;
     
     return oss.str();
@@ -75,7 +76,8 @@ void register_I3CLSimPhoton()
         .add_property("numScatters", &I3CLSimPhoton::GetNumScatters, &I3CLSimPhoton::SetNumScatters)
         .add_property("weight", &I3CLSimPhoton::GetWeight, &I3CLSimPhoton::SetWeight)
         .add_property("id", &I3CLSimPhoton::GetID, &I3CLSimPhoton::SetID)
-        .add_property("dummy", &I3CLSimPhoton::GetDummy, &I3CLSimPhoton::SetDummy)
+        .add_property("stringID", &I3CLSimPhoton::GetStringID, &I3CLSimPhoton::SetStringID)
+        .add_property("omID", &I3CLSimPhoton::GetOMID, &I3CLSimPhoton::SetOMID)
 
         .add_property("pos", &I3CLSimPhoton::GetPos, &I3CLSimPhoton::SetPos)
         .add_property("dir", &I3CLSimPhoton::GetDir, SetDir_oneary)

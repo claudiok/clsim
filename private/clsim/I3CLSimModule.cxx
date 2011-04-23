@@ -458,26 +458,8 @@ void I3CLSimModule::Geometry(I3FramePtr frame)
 }
 
 namespace {
-    // this is specific to the OpenCL simulator.
-    // TODO: I don't like this, it's using a magic number..
-    static inline OMKey OMKeyFromOpenCLSimDummy(int32_t stringAndDomID)
+    static inline OMKey OMKeyFromOpenCLSimIDs(int16_t stringID, uint16_t domID)
     {
-        int32_t stringID;
-        uint32_t domID;
-        
-        if (stringAndDomID >= 0)
-        {
-            stringID = stringAndDomID / 1000;
-            domID = stringAndDomID % 1000;
-        }
-        else
-        {
-            // convention for negative string IDs
-            stringID = -((-stringAndDomID) / 1000);
-            domID = (-stringAndDomID) % 1000;
-        }
-
-        // now the OMKey can be generated
         return OMKey(stringID, domID);
     }
     
@@ -510,7 +492,7 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons)
         int32_t &currentPhotonId = currentPhotonIdForFrame_[cacheEntry.frameListEntry];
         
         // generate the OMKey
-        const OMKey key = OMKeyFromOpenCLSimDummy(photon.dummy);
+        const OMKey key = OMKeyFromOpenCLSimIDs(photon.stringID, photon.omID);
         
         // this either inserts a new vector or retrieves an existing one
         I3PhotonSeries &outputPhotonSeries = outputPhotonMap.insert(std::make_pair(key, I3PhotonSeries())).first->second;

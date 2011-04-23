@@ -260,6 +260,8 @@ tray.AddModule("I3PhotonToMCHitConverter", "make_hits",
                MCTreeName=clSimMCTreeName,
                InputPhotonSeriesMapName = "PropagatedPhotons",
                OutputMCHitSeriesMapName = "MCHitSeriesMap_clsim",
+               DOMRadiusWithoutOversize=0.16510*I3Units.m,
+               DOMOversizeFactor=radiusOverSizeFactor,
                WavelengthAcceptance = domAcceptance,
                AngularAcceptance = domAngularSensitivity)
 

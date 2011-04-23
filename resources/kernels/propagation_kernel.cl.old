@@ -47,7 +47,7 @@ struct I3CLSimStep
     float weight;
     uint identifier;
     uint dummy;
-};
+} __attribute__ ((packed));
 
 struct I3CLSimPhoton 
 {
@@ -58,8 +58,9 @@ struct I3CLSimPhoton
     uint numScatters; // number of scatters
     float weight;
     uint identifier;
-    uint dummy;
-};
+    short stringID;
+    ushort omID;
+} __attribute__ ((packed));
 
 
 inline int findLayerForGivenZPos(float posZ)
@@ -321,7 +322,8 @@ inline bool checkForCollision(const float4 photonPosAndTime,
             outputPhotons[myIndex].weight = step->weight / getWavelengthBias(photonDirAndWlen.w);
             outputPhotons[myIndex].identifier = step->identifier;
             
-            outputPhotons[myIndex].dummy = convert_int(hitOnString)*1000+convert_int(hitOnDom);
+            outputPhotons[myIndex].stringID = convert_short(hitOnString);
+            outputPhotons[myIndex].omID = convert_ushort(hitOnDom);
             
             
             dbg_printf("     -> stored photon: p=(%f,%f,%f), d=(%f,%f), t=%f, wlen=%fnm\n",

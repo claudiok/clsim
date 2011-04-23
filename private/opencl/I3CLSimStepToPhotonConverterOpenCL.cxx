@@ -827,23 +827,29 @@ namespace {
     {
         BOOST_FOREACH(I3CLSimPhoton &photon, photons)
         {
-            const uint32_t stringIndexWithDOMIndex = *reinterpret_cast<cl_uint *>(&photon.dummy);
-            
-            const uint32_t stringIndex = stringIndexWithDOMIndex/1000;
-            const uint32_t DOMIndex = stringIndexWithDOMIndex%1000;
+            const int16_t stringIndex = photon.stringID;
+            const uint16_t DOMIndex = photon.omID;
             
             const int stringID = stringIndexToStringIDBuffer.at(stringIndex);
-
             const unsigned int domID = domIndexToDomIDBuffer_perStringIndex.at(stringIndex).at(DOMIndex);
 
-            if (stringID >= 0)
-                photon.dummy = stringID*1000 + domID;
-            else
-                photon.dummy = -((-stringID)*1000 + domID);
+            if ((stringID < std::numeric_limits<int16_t>::min()) ||
+                (stringID > std::numeric_limits<int16_t>::max()))
+                log_fatal("Your detector I3Geometry uses a string ID \"%i\". Large IDs like that are currently not supported by clsim.",
+                          stringID);
+
+            if (domID > std::numeric_limits<uint16_t>::max())
+                log_fatal("Your detector I3Geometry uses a OM ID \"%u\". Large IDs like that are currently not supported by clsim.",
+                          domID);
+
+            photon.stringID = static_cast<int16_t>(stringID);
+            photon.omID = static_cast<uint16_t>(domID);
             
-            log_trace("Replaced dummy %u with %i (photon @ pos=(%g,%g,%g))",
-                      stringIndexWithDOMIndex,
-                      photon.dummy,
+            log_trace("Replaced ID (%" PRIi16 "/%" PRIu16 ") with ID (%" PRIi16 "/%" PRIu16 ") (photon @ pos=(%g,%g,%g))",
+                      stringIndex,
+                      DOMIndex,
+                      photon.stringID,
+                      photon.omID,
                       photon.GetPosX(),
                       photon.GetPosY(),
                       photon.GetPosZ()
