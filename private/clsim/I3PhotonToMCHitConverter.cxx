@@ -95,6 +95,11 @@ I3PhotonToMCHitConverter::I3PhotonToMCHitConverter(const I3Context& context)
                  "Default relative efficiency. This value is used if no entry is available from I3Calibration.",
                  defaultRelativeDOMEfficiency_);
 
+    ignoreDOMsWithoutDetectorStatusEntry_=false;
+    AddParameter("IgnoreDOMsWithoutDetectorStatusEntry",
+                 "Do not generate hits for OMKeys not found in the I3DetectorStatus.I3DOMStatusMap",
+                 ignoreDOMsWithoutDetectorStatusEntry_);
+
     // add an outbox
     AddOutBox("OutBox");
 
@@ -125,6 +130,7 @@ void I3PhotonToMCHitConverter::Configure()
 
     GetParameter("PMTPhotonSimulator", pmtPhotonSimulator_);
     GetParameter("DefaultRelativeDOMEfficiency", defaultRelativeDOMEfficiency_);
+    GetParameter("IgnoreDOMsWithoutDetectorStatusEntry", ignoreDOMsWithoutDetectorStatusEntry_);
 
     if (defaultRelativeDOMEfficiency_<0.) 
         log_fatal("The \"DefaultRelativeDOMEfficiency\" parameter must not be < 0!");
@@ -153,19 +159,16 @@ void I3PhotonToMCHitConverter::Configure()
 void I3PhotonToMCHitConverter::DetectorStatus(I3FramePtr frame)
 {
     log_trace("%s", __PRETTY_FUNCTION__);
-    
-    if (!pmtPhotonSimulator_)
-    {
-        // no need to get the detector status
-        PushFrame(frame);
-        return;
-    }
-    
+        
     I3DetectorStatusConstPtr detectorStatus = frame->Get<I3DetectorStatusConstPtr>("I3DetectorStatus");
     if (!detectorStatus)
         log_fatal("detector status frame does not have an I3DetectorStatus entry");
     
-    pmtPhotonSimulator_->SetDetectorStatus(detectorStatus);
+    if (pmtPhotonSimulator_)
+        pmtPhotonSimulator_->SetDetectorStatus(detectorStatus);
+
+    // store it for later
+    status_ = detectorStatus;
 
     PushFrame(frame);
 }
@@ -197,6 +200,9 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
     if (!calibration_)
         log_fatal("no Calibration frame yet, but received a Physics frame.");
 
+    if ((!status_) && (ignoreDOMsWithoutDetectorStatusEntry_))
+        log_fatal("no DetectorStatus frame yet, but received a Physics frame.");
+    
     I3PhotonSeriesMapConstPtr inputPhotonSeriesMap = frame->Get<I3PhotonSeriesMapConstPtr>(inputPhotonSeriesMapName_);
     if (!inputPhotonSeriesMap) log_fatal("Frame does not contain an I3PhotonSeriesMap named \"%s\".",
                                          inputPhotonSeriesMapName_.c_str());
@@ -234,6 +240,11 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
         const OMKey &key = it.first;
         const I3PhotonSeries &photons = it.second;
 
+        if (ignoreDOMsWithoutDetectorStatusEntry_) {
+            std::map<OMKey, I3DOMStatus>::const_iterator om_stat = status_->domStatus.find(key);
+            if (om_stat==status_->domStatus.end()) continue; // ignore it
+        }
+        
         // Find the current OM in the geometry map
 		I3OMGeoMap::const_iterator geo_it = geometry.omgeo.find(key);
 		if (geo_it == geometry.omgeo.end())
@@ -260,10 +271,14 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
             efficiency_from_calibration=domCalibration.GetRelativeDomEff();
             
             if (isnan(efficiency_from_calibration)) {
-                efficiency_from_calibration = defaultRelativeDOMEfficiency_;
-                log_debug("OM (%i/%u): efficiency_from_calibration=%g (default (was: NaN))",
-                          key.GetString(), key.GetOM(),
-                          efficiency_from_calibration);
+                if (isnan(defaultRelativeDOMEfficiency_)) {
+                    log_fatal("OM (%i/%u) found in the current calibration map, but it is NaN! (Consider setting \"DefaultRelativeDOMEfficiency\" != NaN)", key.GetString(), key.GetOM());
+                } else {                
+                    efficiency_from_calibration = defaultRelativeDOMEfficiency_;
+                    log_debug("OM (%i/%u): efficiency_from_calibration=%g (default (was: NaN))",
+                              key.GetString(), key.GetOM(),
+                              efficiency_from_calibration);
+                }
             } else {
                 log_debug("OM (%i/%u): efficiency_from_calibration=%g",
                           key.GetString(), key.GetOM(),

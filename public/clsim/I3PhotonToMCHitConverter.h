@@ -120,6 +120,9 @@ private:
     /// Parameter: Default relative efficiency. This value is used if no entry is available from I3Calibration.
     double defaultRelativeDOMEfficiency_;
 
+    /// Parameter: Do not generate hits for OMKeys not found in the I3DetectorStatus.I3DOMStatusMap
+    bool ignoreDOMsWithoutDetectorStatusEntry_;
+
     
 private:
     // default, assignment, and copy constructor declared private
@@ -128,6 +131,7 @@ private:
     I3PhotonToMCHitConverter& operator=(const I3PhotonToMCHitConverter&);
 
     I3CalibrationConstPtr calibration_;
+    I3DetectorStatusConstPtr status_;
     
     SET_LOGGER("I3PhotonToMCHitConverter");
 };

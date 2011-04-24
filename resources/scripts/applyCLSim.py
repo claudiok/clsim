@@ -278,15 +278,18 @@ tray.AddModule("I3CLSimModule", "clsim",
                
                )
 
+pmtPhotonSimulator = clsim.I3CLSimPMTPhotonSimulatorIceCube(randomService=randomService, jitter=2.*I3Units.ns)
 tray.AddModule("I3PhotonToMCHitConverter", "make_hits",
                RandomService = randomService,
-               MCTreeName=clSimMCTreeName,
+               MCTreeName = clSimMCTreeName,
                InputPhotonSeriesMapName = "PropagatedPhotons",
                OutputMCHitSeriesMapName = "MCHitSeriesMap_clsim",
                DOMRadiusWithoutOversize=0.16510*I3Units.m,
-               DOMOversizeFactor=radiusOverSizeFactor,
+               DOMOversizeFactor = radiusOverSizeFactor,
                WavelengthAcceptance = domAcceptance,
-               AngularAcceptance = domAngularSensitivity)
+               AngularAcceptance = domAngularSensitivity,
+               PMTPhotonSimulator = pmtPhotonSimulator, # simulate jitter, after-pulses and late-pulses
+               IgnoreDOMsWithoutDetectorStatusEntry = True)
 
 tray.AddModule("I3Writer","writer",
     Filename = options.OUTFILE)
