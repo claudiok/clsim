@@ -30,9 +30,15 @@
 #include "icetray/I3Module.h"
 #include "icetray/I3ConditionalModule.h"
 
+#include "dataclasses/geometry/I3Geometry.h"
+#include "dataclasses/calibration/I3Calibration.h"
+#include "dataclasses/status/I3DetectorStatus.h"
+
 #include "phys-services/I3RandomService.h"
 
 #include "clsim/I3CLSimWlenDependentValue.h"
+#include "clsim/I3CLSimPMTPhotonSimulator.h"
+
 #include <string>
 
 
@@ -68,6 +74,16 @@ public:
      */
     virtual void Physics(I3FramePtr frame);
 
+    /**
+     * The module needs to process DetectorStatus frames
+     */
+    virtual void DetectorStatus(I3FramePtr frame);
+    
+    /**
+     * The module needs to process Calibration frames
+     */
+    virtual void Calibration(I3FramePtr frame);
+
     
 private:
     // parameters
@@ -98,6 +114,12 @@ private:
     /// Parameter: Specifiy the DOM radius. Do not include oversize factors here.
     double DOMRadiusWithoutOversize_;
 
+    /// Parameter: Optional after-pulse, late-pulse and jitter simulator object, an instance of I3CLSimPMTPhotonSimulator
+    I3CLSimPMTPhotonSimulatorPtr pmtPhotonSimulator_;
+
+    /// Parameter: Default relative efficiency. This value is used if no entry is available from I3Calibration.
+    double defaultRelativeDOMEfficiency_;
+
     
 private:
     // default, assignment, and copy constructor declared private
@@ -105,6 +127,7 @@ private:
     I3PhotonToMCHitConverter(const I3PhotonToMCHitConverter&);
     I3PhotonToMCHitConverter& operator=(const I3PhotonToMCHitConverter&);
 
+    I3CalibrationConstPtr calibration_;
     
     SET_LOGGER("I3PhotonToMCHitConverter");
 };

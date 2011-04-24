@@ -46,7 +46,8 @@ namespace bp = boost::python;
     (I3Photon)(I3CLSimParticleParameterization)     \
     (I3CLSimTester)(I3ModuleHelper)                 \
     (I3CLSimParticleToStepConverterUtils)           \
-    (I3CLSimEventStatistics)
+    (I3CLSimEventStatistics)                        \
+    (I3CLSimPMTPhotonSimulator)
 
 #define I3_REGISTRATION_FN_DECL(r, data, t) void BOOST_PP_CAT(register_,t)();
 #define I3_REGISTER(r, data, t) BOOST_PP_CAT(register_,t)();

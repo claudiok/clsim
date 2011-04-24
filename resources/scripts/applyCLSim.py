@@ -247,10 +247,10 @@ tray.AddModule("I3CLSimModule", "clsim",
                MaxNumParallelEvents=options.MAXPARALLELEVENTS,
                
                # 33.5 nanoseconds/photon
-               #OpenCLPlatformName="NVIDIA CUDA",
-               #OpenCLDeviceName="GeForce GTX 580",
-               #OpenCLUseNativeMath=True,
-               #OpenCLApproximateNumberOfWorkItems=1024000,
+               OpenCLPlatformName="NVIDIA CUDA",
+               OpenCLDeviceName="GeForce GTX 580",
+               OpenCLUseNativeMath=True,
+               OpenCLApproximateNumberOfWorkItems=1024000,
                
                # 2690 nanoseconds/photon (4 cores)    [w/ native math: 2648 nanoseconds/photon]
                #OpenCLPlatformName="ATI Stream",

@@ -22,21 +22,105 @@ i3_project(clsim
   DOCS_DIR resources/docs
   )
 
+SET(LIB_${PROJECT_NAME}_SOURCEFILES
+    
+    # private/clsim
+    private/clsim/I3CLSimEventStatistics.cxx
+    private/clsim/I3CLSimMediumProperties.cxx
+    private/clsim/I3CLSimModule.cxx
+    private/clsim/I3CLSimModuleHelper.cxx
+    private/clsim/I3CLSimParticleParameterization.cxx
+    private/clsim/I3CLSimParticleToStepConverterCascadeParameterization.cxx
+    private/clsim/I3CLSimParticleToStepConverter.cxx
+    private/clsim/I3CLSimParticleToStepConverterUtils.cxx
+    private/clsim/I3CLSimPhoton.cxx
+    private/clsim/I3CLSimPMTPhotonSimulator.cxx
+    private/clsim/I3CLSimRandomValueApplyFunction.cxx
+    private/clsim/I3CLSimRandomValue.cxx
+    private/clsim/I3CLSimRandomValueHenyeyGreenstein.cxx
+    private/clsim/I3CLSimRandomValueInterpolatedDistribution.cxx
+    private/clsim/I3CLSimRandomValueMixed.cxx
+    private/clsim/I3CLSimRandomValueRayleighScatteringCosAngle.cxx
+    private/clsim/I3CLSimRandomValueSimplifiedLiu.cxx
+    private/clsim/I3CLSimRandomValueWlenCherenkovNoDispersion.cxx
+    private/clsim/I3CLSimSimpleGeometryFromI3Geometry.cxx
+    private/clsim/I3CLSimSimpleGeometryTextFile.cxx
+    private/clsim/I3CLSimSimpleGeometryUserConfigurable.cxx
+    private/clsim/I3CLSimStep.cxx
+    private/clsim/I3CLSimWlenDependentValueAbsLenIceCube.cxx
+    private/clsim/I3CLSimWlenDependentValueConstant.cxx
+    private/clsim/I3CLSimWlenDependentValue.cxx
+    private/clsim/I3CLSimWlenDependentValueFromTable.cxx
+    private/clsim/I3CLSimWlenDependentValuePolynomial.cxx
+    private/clsim/I3CLSimWlenDependentValueRefIndexIceCube.cxx
+    private/clsim/I3CLSimWlenDependentValueRefIndexQuanFry.cxx
+    private/clsim/I3CLSimWlenDependentValueScatLenIceCube.cxx
+    private/clsim/I3CLSimWlenDependentValueScatLenPartic.cxx
+    private/clsim/I3MuonSlicer.cxx
+    private/clsim/I3Photon.cxx
+    private/clsim/I3PhotonToMCHitConverter.cxx
+    
+    # private/geant4
+    private/geant4/I3CLSimParticleToStepConverterGeant4.cxx
+    private/geant4/TrkCerenkov.cxx
+    private/geant4/TrkDetectorConstruction.cxx
+    private/geant4/TrkEMPhysicsUHE.cxx
+    private/geant4/TrkEnergyCut.cxx
+    private/geant4/TrkEventAction.cxx
+    private/geant4/TrkOpticalPhysics.cxx
+    private/geant4/TrkPrimaryGeneratorAction.cxx
+    private/geant4/TrkStackingAction.cxx
+    private/geant4/TrkUISessionToQueue.cxx
+    private/geant4/TrkUserEventInformation.cxx
 
-i3_add_library(clsim
-  private/clsim/*.cxx
-  private/geant4/*.cxx
-  private/opencl/*.cxx
-  private/test/*.cxx
-  USE_TOOLS python boost log4cplus gsl clhep geant4 opencl
-  USE_PROJECTS icetray dataio dataclasses phys-services simclasses
-  )
+    # private/opencl/
+    private/opencl/I3CLSimHelperGenerateGeometrySource.cxx
+    private/opencl/I3CLSimHelperGenerateMediumPropertiesSource.cxx
+    private/opencl/I3CLSimHelperGenerateMediumPropertiesSource_Optimizers.cxx
+    private/opencl/I3CLSimStepToPhotonConverterOpenCL.cxx
 
-i3_executable(make_safeprimes
-  private/make_safeprimes/main.c
-  #USE_PROJECTS g4sim
-  USE_TOOLS python boost gmp
-  )
+    # private/test/
+    private/test/I3CLSimMediumPropertiesTester.cxx
+    private/test/I3CLSimRandomDistributionTester.cxx
+    private/test/I3CLSimTesterBase.cxx
+    private/test/I3CLSimWlenDependentValueTester.cxx
+    )
+SET(LIB_${PROJECT_NAME}_PROJECTS icetray dataio dataclasses phys-services simclasses)
+SET(LIB_${PROJECT_NAME}_TOOLS python boost log4cplus gsl clhep geant4 opencl)
+
+
+# add some things if hit-maker is available (IceCube-specific)
+if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/hit-maker)
+    LIST(APPEND LIB_${PROJECT_NAME}_PROJECTS hit-maker)
+    #LIST(APPEND LIB_${PROJECT_NAME}_TOOLS nothing) # no extra tools
+    LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
+         private/clsim/I3CLSimPMTPhotonSimulatorIceCube.cxx
+         )
+    
+    ADD_DEFINITIONS(-DUSE_HIT_MAKER)
+    MESSAGE(STATUS "  + hit-maker support")
+endif(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/hit-maker)
+
+
+i3_add_library(${PROJECT_NAME}
+    ${LIB_${PROJECT_NAME}_SOURCEFILES}
+    USE_TOOLS ${LIB_${PROJECT_NAME}_TOOLS}
+    USE_PROJECTS ${LIB_${PROJECT_NAME}_PROJECTS}
+    )
+
+
+# the make-safeprimes tool needs gmp, so only compile it if that tool is available
+
+# add some things if hit-maker is available (IceCube-specific)
+if(GMP_FOUND)
+    i3_executable(make_safeprimes
+      private/make_safeprimes/main.c
+      USE_TOOLS python boost gmp
+      )
+    MESSAGE(STATUS "  + gmp support (make_safeprimes utility)")
+else(GMP_FOUND)
+    MESSAGE(STATUS "  - no gmp support (make_safeprimes utility)")
+endif(GMP_FOUND)
 
 add_subdirectory(private/pybindings)
 

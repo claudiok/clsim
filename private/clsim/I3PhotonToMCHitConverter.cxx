@@ -84,7 +84,17 @@ I3PhotonToMCHitConverter::I3PhotonToMCHitConverter(const I3Context& context)
                  "Specifiy the DOM radius. Do not include oversize factors here.",
                  DOMRadiusWithoutOversize_);
 
+    AddParameter("PMTPhotonSimulator",
+                 "Optional after-pulse, late-pulse and jitter simulator object,\n"
+                 "an instance of I3CLSimPMTPhotonSimulator",
+                 pmtPhotonSimulator_);
+
     
+    defaultRelativeDOMEfficiency_=1.;
+    AddParameter("DefaultRelativeDOMEfficiency",
+                 "Default relative efficiency. This value is used if no entry is available from I3Calibration.",
+                 defaultRelativeDOMEfficiency_);
+
     // add an outbox
     AddOutBox("OutBox");
 
@@ -113,6 +123,12 @@ void I3PhotonToMCHitConverter::Configure()
     GetParameter("DOMOversizeFactor", DOMOversizeFactor_);
     GetParameter("DOMRadiusWithoutOversize", DOMRadiusWithoutOversize_);
 
+    GetParameter("PMTPhotonSimulator", pmtPhotonSimulator_);
+    GetParameter("DefaultRelativeDOMEfficiency", defaultRelativeDOMEfficiency_);
+
+    if (defaultRelativeDOMEfficiency_<0.) 
+        log_fatal("The \"DefaultRelativeDOMEfficiency\" parameter must not be < 0!");
+    
     if (!wavelengthAcceptance_)
         log_fatal("The \"WavelengthAcceptance\" parameter must not be empty.");
     if (!angularAcceptance_)
@@ -134,6 +150,42 @@ void I3PhotonToMCHitConverter::Configure()
     
 }
 
+void I3PhotonToMCHitConverter::DetectorStatus(I3FramePtr frame)
+{
+    log_trace("%s", __PRETTY_FUNCTION__);
+    
+    if (!pmtPhotonSimulator_)
+    {
+        // no need to get the detector status
+        PushFrame(frame);
+        return;
+    }
+    
+    I3DetectorStatusConstPtr detectorStatus = frame->Get<I3DetectorStatusConstPtr>("I3DetectorStatus");
+    if (!detectorStatus)
+        log_fatal("detector status frame does not have an I3DetectorStatus entry");
+    
+    pmtPhotonSimulator_->SetDetectorStatus(detectorStatus);
+
+    PushFrame(frame);
+}
+
+void I3PhotonToMCHitConverter::Calibration(I3FramePtr frame)
+{
+    log_trace("%s", __PRETTY_FUNCTION__);
+    
+    I3CalibrationConstPtr calibration = frame->Get<I3CalibrationConstPtr>("I3Calibration");
+    if (!calibration)
+        log_fatal("calibration frame does not have an I3Calibration entry");
+    
+    if (pmtPhotonSimulator_)
+        pmtPhotonSimulator_->SetCalibration(calibration);
+
+    // store it for later
+    calibration_ = calibration;
+    
+    PushFrame(frame);
+}
 
 void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
 {
@@ -141,6 +193,9 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
     
     // First we need to get our geometry
 	const I3Geometry& geometry = frame->Get<I3Geometry>();
+
+    if (!calibration_)
+        log_fatal("no Calibration frame yet, but received a Physics frame.");
 
     I3PhotonSeriesMapConstPtr inputPhotonSeriesMap = frame->Get<I3PhotonSeriesMapConstPtr>(inputPhotonSeriesMapName_);
     if (!inputPhotonSeriesMap) log_fatal("Frame does not contain an I3PhotonSeriesMap named \"%s\".",
@@ -185,6 +240,37 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
 			log_fatal("OM (%i/%u) not found in the current geometry map!", key.GetString(), key.GetOM());
 		const I3OMGeo &om = geo_it->second;
 
+        // Find the current OM in the calibration map
+        
+        // relative DOM efficiency from calibration
+        double efficiency_from_calibration=NAN;
+
+        std::map<OMKey, I3DOMCalibration>::const_iterator cal_it = calibration_->domCal.find(key);
+        if (cal_it == calibration_->domCal.end()) {
+            if (isnan(defaultRelativeDOMEfficiency_)) {
+                log_fatal("OM (%i/%u) not found in the current calibration map! (Consider setting \"DefaultRelativeDOMEfficiency\" != NaN)", key.GetString(), key.GetOM());
+            } else {
+                efficiency_from_calibration = defaultRelativeDOMEfficiency_;
+                log_debug("OM (%i/%u): efficiency_from_calibration=%g (default (no calib))",
+                          key.GetString(), key.GetOM(),
+                          efficiency_from_calibration);
+            }
+        } else {
+            const I3DOMCalibration &domCalibration = cal_it->second;
+            efficiency_from_calibration=domCalibration.GetRelativeDomEff();
+            
+            if (isnan(efficiency_from_calibration)) {
+                efficiency_from_calibration = defaultRelativeDOMEfficiency_;
+                log_debug("OM (%i/%u): efficiency_from_calibration=%g (default (was: NaN))",
+                          key.GetString(), key.GetOM(),
+                          efficiency_from_calibration);
+            } else {
+                log_debug("OM (%i/%u): efficiency_from_calibration=%g",
+                          key.GetString(), key.GetOM(),
+                          efficiency_from_calibration);
+            }
+        }
+        
         // a pointer to the output vector. The vector will be allocated 
         // by the map, this is merely a pointer to it in case we have multiple
         // hits per OM.
@@ -259,6 +345,13 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
             log_trace("After wlen&angular acceptance: prob=%g (angular acceptance is %f)",
                       hitProbability, angularAcceptance_->GetValue(photonCosAngle));
 
+            hitProbability *= efficiency_from_calibration;
+            log_trace("After efficiency from calibration: prob=%g (efficiency_from_calibration=%f)",
+                      hitProbability, efficiency_from_calibration);
+
+            if (hitProbability > 1.)
+                log_fatal("hitProbability > 1: cannot continue. your hit weights are too high.");
+            
             // does it survive?
             if (hitProbability <= randomService_->Uniform()) continue;
 
@@ -281,18 +374,37 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
                 correctedTime += bringForward/photon.GetGroupVelocity();
             }
             
-            // add a new hit
-            hits->push_back(I3MCHit());
-            I3MCHit &hit = hits->back();
-            
-            // fill in all information
-            hit.SetTime(correctedTime);
-            hit.SetHitID(photon.GetID());
-            hit.SetWeight(1.);
-            hit.SetParticleID(particle);
-            hit.SetCherenkovDistance(NAN);
-            hit.SetHitSource(I3MCHit::SPE); // SPE for now, may be changed by afterpulse simulation
+            if (!pmtPhotonSimulator_)
+            {
+                // add a new hit
+                hits->push_back(I3MCHit());
+                I3MCHit &hit = hits->back();
+                
+                // fill in all information
+                hit.SetTime(correctedTime);
+                hit.SetHitID(photon.GetID());
+                hit.SetWeight(1.);
+                hit.SetParticleID(particle);
+                hit.SetCherenkovDistance(NAN);
+                hit.SetHitSource(I3MCHit::SPE); // SPE for now, may be changed by afterpulse simulation
+            }
+            else
+            {
+                // make a new hit
+                
+                // let pmtPhotonSimulator add the hit and all afterpulses
+                I3MCHit hit;
 
+                // fill in all information
+                hit.SetTime(correctedTime);
+                hit.SetHitID(photon.GetID());
+                hit.SetWeight(1.);
+                hit.SetParticleID(particle);
+                hit.SetCherenkovDistance(NAN);
+
+                pmtPhotonSimulator_->ApplyAfterPulseLatePulseAndJitterSim
+                (key, hit, *hits);
+            }
         }
         
         
