@@ -192,7 +192,7 @@ cx.grid(True)
 cx.set_xlabel("DOM number")
 
 
-the_range=(-5.,5.)
+the_range=(-20.,20.)
 num_bins=200
 
 if True:

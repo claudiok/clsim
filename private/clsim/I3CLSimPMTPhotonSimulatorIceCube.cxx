@@ -49,7 +49,7 @@ namespace {
         {
             const double time = randomService->Gaus(0.,2.*I3Units::ns);
             
-            if ((time >= 5.*I3Units::ns) && (time <= 25.*I3Units::ns))
+            if ((time >= -5.*I3Units::ns) && (time <= 25.*I3Units::ns))
                 return time;
         }
     }
@@ -81,17 +81,27 @@ ApplyAfterPulseLatePulseAndJitterSim(const OMKey &key,
         log_fatal("No DOMStatus entry found for OMKey(%i,%u)",
                   key.GetString(), key.GetOM());
     const double pmtHV = om_stat->second.pmtHV;
-    
+
+    if (isnan(pmtHV))
+        log_fatal("OMKey(%i,%u): pmtHV is NaN",
+                  key.GetString(), key.GetOM());
+
+    if (pmtHV<0.)
+        log_fatal("OMKey(%i,%u): pmtHV<0. (value=%gV)",
+                  key.GetString(), key.GetOM(), pmtHV/I3Units::V);
+
+    // ignore hits on DOMs with pmtHV==0
+    if (pmtHV==0.) return;
+
     
     // add the input hit to the output vector
     output_vector.push_back(input_hit);
     I3MCHit &output_hit = output_vector.back();
     
-    
     // taken from PPC by D. Chirkin
     const double rnd = randomService_->Uniform();
 
-    double hit_time = output_hit.GetTime();
+    double hit_time = input_hit.GetTime();
     
     if(rnd < pre_pulse_probability_)
     {

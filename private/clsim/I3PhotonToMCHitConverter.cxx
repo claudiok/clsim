@@ -243,6 +243,7 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
         if (ignoreDOMsWithoutDetectorStatusEntry_) {
             std::map<OMKey, I3DOMStatus>::const_iterator om_stat = status_->domStatus.find(key);
             if (om_stat==status_->domStatus.end()) continue; // ignore it
+            if (om_stat->second.pmtHV==0.) continue; // ignore pmtHV==0
         }
         
         // Find the current OM in the geometry map
@@ -333,7 +334,7 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
                 ppx/=ppl; ppy/=ppl; ppz/=ppl;
                 const double cosang = dx*ppx + dy*ppy + dz*ppz;
                 
-                if (cosang < 0.99) {
+                if ((cosang < 0.9) && (ppl>1.*I3Units::m)) {
                     log_fatal("unscattered photon direction is inconsistent: cos(ang)==%f, d=(%f,%f,%f), pp=(%f,%f,%f) pp_l=%f",
                               cosang,
                               dx, dy, dz,
