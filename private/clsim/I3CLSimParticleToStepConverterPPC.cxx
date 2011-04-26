@@ -1,7 +1,7 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-#include "clsim/I3CLSimParticleToStepConverterCascadeParameterization.h"
+#include "clsim/I3CLSimParticleToStepConverterPPC.h"
 
 #include "clsim/I3CLSimWlenDependentValue.h"
 
@@ -10,10 +10,10 @@
 using namespace I3CLSimParticleToStepConverterUtils;
 
 
-const uint32_t I3CLSimParticleToStepConverterCascadeParameterization::default_photonsPerStep=200;
+const uint32_t I3CLSimParticleToStepConverterPPC::default_photonsPerStep=200;
 
 
-I3CLSimParticleToStepConverterCascadeParameterization::I3CLSimParticleToStepConverterCascadeParameterization
+I3CLSimParticleToStepConverterPPC::I3CLSimParticleToStepConverterPPC
 (I3RandomServicePtr randomService,
  uint32_t photonsPerStep)
 :
@@ -32,15 +32,15 @@ photonsPerStep_(photonsPerStep)
         
 }
 
-I3CLSimParticleToStepConverterCascadeParameterization::~I3CLSimParticleToStepConverterCascadeParameterization()
+I3CLSimParticleToStepConverterPPC::~I3CLSimParticleToStepConverterPPC()
 {
 
 }
 
-void I3CLSimParticleToStepConverterCascadeParameterization::Initialize()
+void I3CLSimParticleToStepConverterPPC::Initialize()
 {
     if (initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterCascadeParameterization already initialized!");
+        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC already initialized!");
 
     if (!wlenBias_)
         throw I3CLSimParticleToStepConverter_exception("WlenBias not set!");
@@ -83,15 +83,15 @@ void I3CLSimParticleToStepConverterCascadeParameterization::Initialize()
 }
 
 
-bool I3CLSimParticleToStepConverterCascadeParameterization::IsInitialized() const
+bool I3CLSimParticleToStepConverterPPC::IsInitialized() const
 {
     return initialized_;
 }
 
-void I3CLSimParticleToStepConverterCascadeParameterization::SetBunchSizeGranularity(uint64_t num)
+void I3CLSimParticleToStepConverterPPC::SetBunchSizeGranularity(uint64_t num)
 {
     if (initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterCascadeParameterization already initialized!");
+        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC already initialized!");
     
     if (num<=0)
         throw I3CLSimParticleToStepConverter_exception("BunchSizeGranularity of 0 is invalid!");
@@ -99,10 +99,10 @@ void I3CLSimParticleToStepConverterCascadeParameterization::SetBunchSizeGranular
     bunchSizeGranularity_=num;
 }
 
-void I3CLSimParticleToStepConverterCascadeParameterization::SetMaxBunchSize(uint64_t num)
+void I3CLSimParticleToStepConverterPPC::SetMaxBunchSize(uint64_t num)
 {
     if (initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterCascadeParameterization already initialized!");
+        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC already initialized!");
 
     if (num<=0)
         throw I3CLSimParticleToStepConverter_exception("MaxBunchSize of 0 is invalid!");
@@ -110,26 +110,26 @@ void I3CLSimParticleToStepConverterCascadeParameterization::SetMaxBunchSize(uint
     maxBunchSize_=num;
 }
 
-void I3CLSimParticleToStepConverterCascadeParameterization::SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias)
+void I3CLSimParticleToStepConverterPPC::SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias)
 {
     if (initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterCascadeParameterization already initialized!");
+        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC already initialized!");
     
     wlenBias_=wlenBias;
 }
 
-void I3CLSimParticleToStepConverterCascadeParameterization::SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties)
+void I3CLSimParticleToStepConverterPPC::SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties)
 {
     if (initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterCascadeParameterization already initialized!");
+        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC already initialized!");
 
     mediumProperties_=mediumProperties;
 }
 
-void I3CLSimParticleToStepConverterCascadeParameterization::EnqueueParticle(const I3Particle &particle, uint32_t identifier)
+void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &particle, uint32_t identifier)
 {
     if (!initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterCascadeParameterization is not initialized!");
+        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC is not initialized!");
 
     if (barrier_is_enqueued_)
         throw I3CLSimParticleToStepConverter_exception("A barrier is enqueued! You must receive all steps before enqueuing a new particle.");
@@ -378,15 +378,15 @@ void I3CLSimParticleToStepConverterCascadeParameterization::EnqueueParticle(cons
         log_trace("Generate %u steps for E=%fGeV, l=%fm. (muon[cascade])", static_cast<unsigned int>((numStepsFromCascades+((numPhotonsFromCascadesInLastStep>0)?1:0))), E, length/I3Units::m);
         
     } else {
-        log_fatal("I3CLSimParticleToStepConverterCascadeParameterization cannot handle a %s.",
+        log_fatal("I3CLSimParticleToStepConverterPPC cannot handle a %s.",
                   particle.GetTypeString().c_str());
     }
 }
 
-void I3CLSimParticleToStepConverterCascadeParameterization::EnqueueBarrier()
+void I3CLSimParticleToStepConverterPPC::EnqueueBarrier()
 {
     if (!initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterCascadeParameterization is not initialized!");
+        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC is not initialized!");
 
     if (barrier_is_enqueued_)
         throw I3CLSimParticleToStepConverter_exception("A barrier is already enqueued!");
@@ -394,27 +394,27 @@ void I3CLSimParticleToStepConverterCascadeParameterization::EnqueueBarrier()
     barrier_is_enqueued_=true;
 }
 
-bool I3CLSimParticleToStepConverterCascadeParameterization::BarrierActive() const
+bool I3CLSimParticleToStepConverterPPC::BarrierActive() const
 {
     if (!initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterCascadeParameterization is not initialized!");
+        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC is not initialized!");
 
     return barrier_is_enqueued_;
 }
 
-bool I3CLSimParticleToStepConverterCascadeParameterization::MoreStepsAvailable() const
+bool I3CLSimParticleToStepConverterPPC::MoreStepsAvailable() const
 {
     if (!initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterCascadeParameterization is not initialized!");
+        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC is not initialized!");
 
     if (currentStepSeries_) return true;
     return false;
 }
 
-I3CLSimStepSeriesConstPtr I3CLSimParticleToStepConverterCascadeParameterization::GetConversionResultWithBarrierInfo(bool &barrierWasReset, double timeout)
+I3CLSimStepSeriesConstPtr I3CLSimParticleToStepConverterPPC::GetConversionResultWithBarrierInfo(bool &barrierWasReset, double timeout)
 {
     if (!initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterCascadeParameterization is not initialized!");
+        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC is not initialized!");
     
     barrierWasReset=false;
     
@@ -424,7 +424,7 @@ I3CLSimStepSeriesConstPtr I3CLSimParticleToStepConverterCascadeParameterization:
             barrier_is_enqueued_=false;
             return I3CLSimStepSeriesConstPtr();
         }
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterCascadeParameterization: no particle is enqueued!");
+        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC: no particle is enqueued!");
     }
     if (barrier_is_enqueued_) barrierWasReset=true;
     barrier_is_enqueued_=false;

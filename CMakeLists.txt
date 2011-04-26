@@ -30,7 +30,7 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
     private/clsim/I3CLSimModule.cxx
     private/clsim/I3CLSimModuleHelper.cxx
     private/clsim/I3CLSimParticleParameterization.cxx
-    private/clsim/I3CLSimParticleToStepConverterCascadeParameterization.cxx
+    private/clsim/I3CLSimParticleToStepConverterPPC.cxx
     private/clsim/I3CLSimParticleToStepConverter.cxx
     private/clsim/I3CLSimParticleToStepConverterUtils.cxx
     private/clsim/I3CLSimPhoton.cxx

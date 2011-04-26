@@ -1,5 +1,5 @@
-#ifndef I3CLSIMPARTICLETOSTEPCONVERTERCASCADEPARAMETERIZATION_H_INCLUDED
-#define I3CLSIMPARTICLETOSTEPCONVERTERCASCADEPARAMETERIZATION_H_INCLUDED
+#ifndef I3CLSimParticleToStepConverterPPC_H_INCLUDED
+#define I3CLSimParticleToStepConverterPPC_H_INCLUDED
 
 #include "clsim/I3CLSimParticleToStepConverter.h"
 #include "dataclasses/physics/I3Particle.h"
@@ -15,14 +15,14 @@
  * @brief A particle-to-step converter for cascades
  * using pre-defined parameterizations.
  */
-struct I3CLSimParticleToStepConverterCascadeParameterization : public I3CLSimParticleToStepConverter
+struct I3CLSimParticleToStepConverterPPC : public I3CLSimParticleToStepConverter
 {
 public:
     static const uint32_t default_photonsPerStep;
     
-    I3CLSimParticleToStepConverterCascadeParameterization(I3RandomServicePtr randomService,
+    I3CLSimParticleToStepConverterPPC(I3RandomServicePtr randomService,
                                                           uint32_t photonsPerStep=default_photonsPerStep);
-    virtual ~I3CLSimParticleToStepConverterCascadeParameterization();
+    virtual ~I3CLSimParticleToStepConverterPPC();
 
     // inherited:
     
@@ -65,6 +65,6 @@ private:
     std::vector<double> meanPhotonsPerMeterInLayer_;
 };
 
-I3_POINTER_TYPEDEFS(I3CLSimParticleToStepConverterCascadeParameterization);
+I3_POINTER_TYPEDEFS(I3CLSimParticleToStepConverterPPC);
 
-#endif //I3CLSIMPARTICLETOSTEPCONVERTERCASCADEPARAMETERIZATION_H_INCLUDED
+#endif //I3CLSimParticleToStepConverterPPC_H_INCLUDED

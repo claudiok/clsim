@@ -23,7 +23,7 @@
 
 #include <clsim/I3CLSimParticleToStepConverter.h>
 #include <clsim/I3CLSimParticleToStepConverterGeant4.h>
-#include <clsim/I3CLSimParticleToStepConverterCascadeParameterization.h>
+#include <clsim/I3CLSimParticleToStepConverterPPC.h>
 
 #include <boost/preprocessor/seq.hpp>
 #include <icetray/python/std_vector_indexing_suite.hpp>
@@ -203,31 +203,31 @@ void register_I3CLSimParticleToStepConverter()
     bp::implicitly_convertible<shared_ptr<I3CLSimParticleToStepConverterGeant4>, shared_ptr<const I3CLSimParticleToStepConverter> >();
     
     
-    // I3CLSimParticleToStepConverterCascadeParameterization
+    // I3CLSimParticleToStepConverterPPC
     {
         bp::class_<
-        I3CLSimParticleToStepConverterCascadeParameterization, 
-        boost::shared_ptr<I3CLSimParticleToStepConverterCascadeParameterization>, 
+        I3CLSimParticleToStepConverterPPC, 
+        boost::shared_ptr<I3CLSimParticleToStepConverterPPC>, 
         bases<I3CLSimParticleToStepConverter>,
         boost::noncopyable
         >
         (
-         "I3CLSimParticleToStepConverterCascadeParameterization",
+         "I3CLSimParticleToStepConverterPPC",
          bp::init<
          I3RandomServicePtr,
          uint32_t
          >(
            (
             bp::arg("randomService"),
-            bp::arg("photonsPerStep") = I3CLSimParticleToStepConverterCascadeParameterization::default_photonsPerStep
+            bp::arg("photonsPerStep") = I3CLSimParticleToStepConverterPPC::default_photonsPerStep
             )
            )
          )
         ;
     }
     
-    bp::implicitly_convertible<shared_ptr<I3CLSimParticleToStepConverterCascadeParameterization>, shared_ptr<const I3CLSimParticleToStepConverterCascadeParameterization> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimParticleToStepConverterCascadeParameterization>, shared_ptr<I3CLSimParticleToStepConverter> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimParticleToStepConverterCascadeParameterization>, shared_ptr<const I3CLSimParticleToStepConverter> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimParticleToStepConverterPPC>, shared_ptr<const I3CLSimParticleToStepConverterPPC> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimParticleToStepConverterPPC>, shared_ptr<I3CLSimParticleToStepConverter> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimParticleToStepConverterPPC>, shared_ptr<const I3CLSimParticleToStepConverter> >();
 
 }
