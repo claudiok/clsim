@@ -257,33 +257,41 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
         // relative DOM efficiency from calibration
         double efficiency_from_calibration=NAN;
 
-        std::map<OMKey, I3DOMCalibration>::const_iterator cal_it = calibration_->domCal.find(key);
-        if (cal_it == calibration_->domCal.end()) {
+        if (!calibration_) {
             if (isnan(defaultRelativeDOMEfficiency_)) {
-                log_fatal("OM (%i/%u) not found in the current calibration map! (Consider setting \"DefaultRelativeDOMEfficiency\" != NaN)", key.GetString(), key.GetOM());
+                log_fatal("There is no valid calibration! (Consider setting \"DefaultRelativeDOMEfficiency\" != NaN)");
             } else {
                 efficiency_from_calibration = defaultRelativeDOMEfficiency_;
-                log_debug("OM (%i/%u): efficiency_from_calibration=%g (default (no calib))",
-                          key.GetString(), key.GetOM(),
-                          efficiency_from_calibration);
             }
         } else {
-            const I3DOMCalibration &domCalibration = cal_it->second;
-            efficiency_from_calibration=domCalibration.GetRelativeDomEff();
-            
-            if (isnan(efficiency_from_calibration)) {
+            std::map<OMKey, I3DOMCalibration>::const_iterator cal_it = calibration_->domCal.find(key);
+            if (cal_it == calibration_->domCal.end()) {
                 if (isnan(defaultRelativeDOMEfficiency_)) {
-                    log_fatal("OM (%i/%u) found in the current calibration map, but it is NaN! (Consider setting \"DefaultRelativeDOMEfficiency\" != NaN)", key.GetString(), key.GetOM());
-                } else {                
+                    log_fatal("OM (%i/%u) not found in the current calibration map! (Consider setting \"DefaultRelativeDOMEfficiency\" != NaN)", key.GetString(), key.GetOM());
+                } else {
                     efficiency_from_calibration = defaultRelativeDOMEfficiency_;
-                    log_debug("OM (%i/%u): efficiency_from_calibration=%g (default (was: NaN))",
+                    log_debug("OM (%i/%u): efficiency_from_calibration=%g (default (no calib))",
                               key.GetString(), key.GetOM(),
                               efficiency_from_calibration);
                 }
             } else {
-                log_debug("OM (%i/%u): efficiency_from_calibration=%g",
-                          key.GetString(), key.GetOM(),
-                          efficiency_from_calibration);
+                const I3DOMCalibration &domCalibration = cal_it->second;
+                efficiency_from_calibration=domCalibration.GetRelativeDomEff();
+                
+                if (isnan(efficiency_from_calibration)) {
+                    if (isnan(defaultRelativeDOMEfficiency_)) {
+                        log_fatal("OM (%i/%u) found in the current calibration map, but it is NaN! (Consider setting \"DefaultRelativeDOMEfficiency\" != NaN)", key.GetString(), key.GetOM());
+                    } else {                
+                        efficiency_from_calibration = defaultRelativeDOMEfficiency_;
+                        log_debug("OM (%i/%u): efficiency_from_calibration=%g (default (was: NaN))",
+                                  key.GetString(), key.GetOM(),
+                                  efficiency_from_calibration);
+                    }
+                } else {
+                    log_debug("OM (%i/%u): efficiency_from_calibration=%g",
+                              key.GetString(), key.GetOM(),
+                              efficiency_from_calibration);
+                }
             }
         }
         

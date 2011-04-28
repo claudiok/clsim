@@ -25,6 +25,10 @@ after_pulse_probability_(after_pulse_probability)
 { 
     afterPulseGenerator_ = AfterPulseGeneratorPtr(new AfterPulseGenerator(randomService));;
     latePulseGenerator_ = LatePulseGeneratorPtr(new LatePulseGenerator(randomService));;
+
+    log_trace("pre_pulse_probability=%g, late_pulse_probability=%g, after_pulse_probability=%g",
+              pre_pulse_probability_, late_pulse_probability_, after_pulse_probability_);
+
 }
 
 I3CLSimPMTPhotonSimulatorIceCube::~I3CLSimPMTPhotonSimulatorIceCube() 
@@ -74,25 +78,33 @@ ApplyAfterPulseLatePulseAndJitterSim(const OMKey &key,
         output_vector.push_back(input_hit);
         return;
     }
+    
+    bool jitterOnly = ((pre_pulse_probability_<=0.) &&
+                       (late_pulse_probability_<=0.) &&
+                       (after_pulse_probability_<=0.));
 
-    // retrieve the HV for this DOM
-    std::map<OMKey, I3DOMStatus>::const_iterator om_stat = status_->domStatus.find(key);
-    if (om_stat==status_->domStatus.end())
-        log_fatal("No DOMStatus entry found for OMKey(%i,%u)",
-                  key.GetString(), key.GetOM());
-    const double pmtHV = om_stat->second.pmtHV;
+    double pmtHV=NAN;
+    
+    if (!jitterOnly)
+    {
+        // retrieve the HV for this DOM
+        std::map<OMKey, I3DOMStatus>::const_iterator om_stat = status_->domStatus.find(key);
+        if (om_stat==status_->domStatus.end())
+            log_fatal("No DOMStatus entry found for OMKey(%i,%u)",
+                      key.GetString(), key.GetOM());
+        pmtHV = om_stat->second.pmtHV;
 
-    if (isnan(pmtHV))
-        log_fatal("OMKey(%i,%u): pmtHV is NaN",
-                  key.GetString(), key.GetOM());
+        if (isnan(pmtHV))
+            log_fatal("OMKey(%i,%u): pmtHV is NaN",
+                      key.GetString(), key.GetOM());
 
-    if (pmtHV<0.)
-        log_fatal("OMKey(%i,%u): pmtHV<0. (value=%gV)",
-                  key.GetString(), key.GetOM(), pmtHV/I3Units::V);
+        if (pmtHV<0.)
+            log_fatal("OMKey(%i,%u): pmtHV<0. (value=%gV)",
+                      key.GetString(), key.GetOM(), pmtHV/I3Units::V);
 
-    // ignore hits on DOMs with pmtHV==0
-    if (pmtHV==0.) return;
-
+        // ignore hits on DOMs with pmtHV==0
+        if (pmtHV==0.) return;
+    }
     
     // add the input hit to the output vector
     output_vector.push_back(input_hit);
@@ -103,36 +115,40 @@ ApplyAfterPulseLatePulseAndJitterSim(const OMKey &key,
 
     double hit_time = input_hit.GetTime();
     
-    if(rnd < pre_pulse_probability_)
-    {
-        output_hit.SetHitSource(I3MCHit::PRE_PULSE);
-        hit_time += pts(pmtHV) + jitter(randomService_);
-    }
-    else if(rnd < pre_pulse_probability_+late_pulse_probability_)
-    {
-        output_hit.SetHitSource(I3MCHit::ELASTIC_LATE_PULSE);
-        hit_time = latePulseGenerator_->GenerateSingleLatePulse(hit_time, pmtHV);
-    }
-    else
-    {
-        output_hit.SetHitSource(I3MCHit::SPE);
+    if (jitterOnly) {
         hit_time += jitter(randomService_);
-    }
-    
-    output_hit.SetTime(hit_time);
-
-    
-    if (randomService_->Uniform() < after_pulse_probability_)
-    {
-        std::vector<I3MCHit> afterPulses;
-        afterPulseGenerator_->GenerateAfterPulses(afterPulses, output_hit);
-        
-        BOOST_FOREACH(const I3MCHit &afterPulse, afterPulses)
+        output_hit.SetTime(hit_time);
+    } else {
+        if(rnd < pre_pulse_probability_)
         {
-            output_vector.push_back(afterPulse);
+            output_hit.SetHitSource(I3MCHit::PRE_PULSE);
+            hit_time += pts(pmtHV) + jitter(randomService_);
         }
-    }
-    // end - PPC code
-    
+        else if(rnd < pre_pulse_probability_+late_pulse_probability_)
+        {
+            output_hit.SetHitSource(I3MCHit::ELASTIC_LATE_PULSE);
+            hit_time = latePulseGenerator_->GenerateSingleLatePulse(hit_time, pmtHV);
+        }
+        else
+        {
+            output_hit.SetHitSource(I3MCHit::SPE);
+            hit_time += jitter(randomService_);
+        }
+        
+        output_hit.SetTime(hit_time);
+
+        
+        if (randomService_->Uniform() < after_pulse_probability_)
+        {
+            std::vector<I3MCHit> afterPulses;
+            afterPulseGenerator_->GenerateAfterPulses(afterPulses, output_hit);
+            
+            BOOST_FOREACH(const I3MCHit &afterPulse, afterPulses)
+            {
+                output_vector.push_back(afterPulse);
+            }
+        }
+        // end - PPC code
+    }    
     
 }
