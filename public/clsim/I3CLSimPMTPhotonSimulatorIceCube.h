@@ -48,6 +48,8 @@ public:
                                                       std::vector<I3MCHit> &output_vector) const;
     
 private:
+    double GenerateJitter() const;
+    
     I3RandomServicePtr randomService_;
     double jitter_;
     double pre_pulse_probability_;

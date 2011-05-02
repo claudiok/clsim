@@ -46,18 +46,18 @@ void I3CLSimPMTPhotonSimulatorIceCube::SetDetectorStatus(I3DetectorStatusConstPt
     status_=status;
 }
 
-namespace {
-    inline double jitter(I3RandomServicePtr randomService)
+double I3CLSimPMTPhotonSimulatorIceCube::GenerateJitter() const
+{
+    for(;;) 
     {
-        for(;;) 
-        {
-            const double time = randomService->Gaus(0.,2.*I3Units::ns);
-            
-            if ((time >= -5.*I3Units::ns) && (time <= 25.*I3Units::ns))
-                return time;
-        }
+        const double time = randomService_->Gaus(0.,jitter_);
+        
+        if ((time >= -5.*I3Units::ns) && (time <= 25.*I3Units::ns))
+            return time;
     }
-    
+}
+
+namespace {
     inline double pts(double v)
     {
         return -31.8*I3Units::ns*sqrt(1345*I3Units::V/v);
@@ -116,13 +116,13 @@ ApplyAfterPulseLatePulseAndJitterSim(const OMKey &key,
     double hit_time = input_hit.GetTime();
     
     if (jitterOnly) {
-        hit_time += jitter(randomService_);
+        hit_time += GenerateJitter();
         output_hit.SetTime(hit_time);
     } else {
         if(rnd < pre_pulse_probability_)
         {
             output_hit.SetHitSource(I3MCHit::PRE_PULSE);
-            hit_time += pts(pmtHV) + jitter(randomService_);
+            hit_time += pts(pmtHV) + GenerateJitter();
         }
         else if(rnd < pre_pulse_probability_+late_pulse_probability_)
         {
@@ -132,7 +132,7 @@ ApplyAfterPulseLatePulseAndJitterSim(const OMKey &key,
         else
         {
             output_hit.SetHitSource(I3MCHit::SPE);
-            hit_time += jitter(randomService_);
+            hit_time += GenerateJitter();
         }
         
         output_hit.SetTime(hit_time);
