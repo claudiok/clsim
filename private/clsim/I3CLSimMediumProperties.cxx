@@ -1,11 +1,12 @@
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 #include <icetray/serialization.h>
 #include <icetray/I3Units.h>
 #include <clsim/I3CLSimMediumProperties.h>
 
 #include <limits>
 
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/serialization/shared_ptr.hpp>

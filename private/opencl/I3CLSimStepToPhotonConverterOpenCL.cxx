@@ -1,10 +1,11 @@
+#define __STDC_FORMAT_MACROS 
+#include <inttypes.h>
+
 #include "clsim/I3CLSimStepToPhotonConverterOpenCL.h"
 
 // debugging: show GPUtime/photon
 #define DUMP_STATISTICS
 
-#define __STDC_FORMAT_MACROS 
-#include <inttypes.h>
 
 #include <string>
 #include <sstream>

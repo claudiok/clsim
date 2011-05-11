@@ -24,6 +24,9 @@
  *  
  */
 
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 #include "clsim/I3CLSimModule.h"
 
 #include <boost/foreach.hpp>
@@ -41,8 +44,6 @@
 
 #include <limits>
 
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 // The module
 I3_MODULE(I3CLSimModule);

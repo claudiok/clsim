@@ -233,7 +233,7 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
     const double DOMDir_y = 0.;
     const double DOMDir_z = -1.;
     
-    const double oversizedDOMRadius2 = DOMRadiusWithoutOversize_*DOMRadiusWithoutOversize_ * DOMOversizeFactor_*DOMOversizeFactor_;
+    //const double oversizedDOMRadius2 = DOMRadiusWithoutOversize_*DOMRadiusWithoutOversize_ * DOMOversizeFactor_*DOMOversizeFactor_;
     
     BOOST_FOREACH(const I3PhotonSeriesMap::value_type &it, *inputPhotonSeriesMap)
     {
