@@ -364,6 +364,26 @@ void register_I3CLSimWlenDependentValue()
             )
            )
          )
+        .def(init<const std::vector<double> &, double, double>
+             (
+              (
+               bp::arg("coeffs"),
+               bp::arg("rangemin"),
+               bp::arg("rangemax")
+              )
+             )
+            )
+        .def(init<const std::vector<double> &, double, double, double, double>
+             (
+              (
+               bp::arg("coeffs"),
+               bp::arg("rangemin"),
+               bp::arg("rangemax"),
+               bp::arg("underflow"),
+               bp::arg("overflow")
+               )
+              )
+             )
         .def("GetCoefficients", &I3CLSimWlenDependentValuePolynomial::GetCoefficients, bp::return_value_policy<bp::copy_const_reference>())
         ;
     }
