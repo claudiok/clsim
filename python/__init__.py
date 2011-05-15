@@ -19,6 +19,9 @@ from MakeIceCubeMediumProperties import MakeIceCubeMediumProperties
 from GetIceCubeDOMAcceptance import GetIceCubeDOMAcceptance
 from GetIceCubeDOMAngularSensitivity import GetIceCubeDOMAngularSensitivity
 
+from GetAntaresOMAcceptance import GetAntaresOMAcceptance
+from GetAntaresOMAngularSensitivity import GetAntaresOMAngularSensitivity
+
 # clean up the clsim namespace
 del augmentClassWithPicklingSupport
 del icetray

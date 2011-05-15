@@ -257,6 +257,12 @@ tray.AddModule("I3CLSimModule", "clsim",
                #OpenCLDeviceName="Intel(R) Core(TM) i5 CPU         760  @ 2.80GHz",
                #OpenCLUseNativeMath=False,
                #OpenCLApproximateNumberOfWorkItems=51200,
+
+               # 2470 nanoseconds/photon (4 cores)
+               #OpenCLPlatformName="Intel(R) OpenCL",
+               #OpenCLDeviceName="Intel(R) Core(TM) i5 CPU         760  @ 2.80GHz",
+               #OpenCLUseNativeMath=False,
+               #OpenCLApproximateNumberOfWorkItems=51200,
                
                # 750 nanoseconds/photon
                #OpenCLPlatformName="Apple",

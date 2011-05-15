@@ -1,15 +1,18 @@
-
 #pragma OPENCL EXTENSION cl_khr_global_int32_base_atomics : enable
 #pragma OPENCL EXTENSION cl_khr_local_int32_base_atomics : enable
 #pragma OPENCL EXTENSION cl_khr_byte_addressable_store : enable
 //#pragma OPENCL EXTENSION cl_khr_fp16 : enable
 
-// disable dbg_printf for GPU
-#define dbg_printf(format, ...)
+//#define PRINTF_ENABLED
 
+// disable dbg_printf for GPU
+//#define dbg_printf(format, ...)
+
+#ifdef PRINTF_ENABLED
 // enable printf for CPU
-//#pragma OPENCL EXTENSION cl_amd_printf : enable
-//#define dbg_printf(format, ...) printf(format, ##__VA_ARGS__)
+#pragma OPENCL EXTENSION cl_amd_printf : enable
+#define dbg_printf(format, ...) printf(format, ##__VA_ARGS__)
+#endif
 
 __constant float speedOfLight = 0.299792458f; // [m/ns]
 __constant float recip_speedOfLight = 3.33564095f; // [ns/m]
@@ -309,9 +312,10 @@ inline bool checkForCollision(const float4 photonPosAndTime,
         uint myIndex = atom_inc(hitIndex);
         if (myIndex < maxHitIndex)
         {
+#ifdef PRINTF_ENABLED
             dbg_printf("     -> photon record added at position %u.\n",
                 myIndex);
-
+#endif
 
             outputPhotons[myIndex].posAndTime = (float4)
                 (
@@ -338,11 +342,12 @@ inline bool checkForCollision(const float4 photonPosAndTime,
             outputPhotons[myIndex].groupVelocity = my_recip(inv_groupvel);
 
 
+#ifdef PRINTF_ENABLED
             dbg_printf("     -> stored photon: p=(%f,%f,%f), d=(%f,%f), t=%f, wlen=%fnm\n",
                 outputPhotons[myIndex].posAndTime.x, outputPhotons[myIndex].posAndTime.y, outputPhotons[myIndex].posAndTime.z,
                 outputPhotons[myIndex].dir.x, outputPhotons[myIndex].dir.y,
                 outputPhotons[myIndex].posAndTime.w, outputPhotons[myIndex].wavelength/1e-9f);
-
+#endif
 
         }
     }   
@@ -362,7 +367,9 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
     __global ulong* MWC_RNG_x,
     __global uint* MWC_RNG_a)
 {
+#ifdef PRINTF_ENABLED
     dbg_printf("Start kernel... (work item %u of %u)\n", get_global_id(0), get_global_size(0));
+#endif
 
     __local unsigned char geoLayerToOMNumIndexPerStringSetLocal[GEO_geoLayerToOMNumIndexPerStringSet_BUFFER_SIZE];
 
@@ -398,6 +405,7 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             0.f);
     }
 
+#ifdef PRINTF_ENABLED
     dbg_printf("Step at: p=(%f,%f,%f), d=(%f,%f,%f), t=%f, l=%f, N=%u\n",
         step.posAndTime.x,
         step.posAndTime.y,
@@ -406,7 +414,7 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
         step.posAndTime.w,
         step.dirAndLengthAndBeta.z,
         step.numPhotons);
-
+#endif
 
     #define EPSILON 0.00001f
 
@@ -445,15 +453,19 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             photonNumScatters=0;
             photonTotalPathLength=0.f;
             
+#ifdef PRINTF_ENABLED
             dbg_printf("   created photon %u at: p=(%f,%f,%f), d=(%f,%f,%f), t=%f, wlen=%fnm\n",
                 photonsLeftToPropagate-step.numPhotons,
                 photonPosAndTime.x, photonPosAndTime.y, photonPosAndTime.z,
                 photonDirAndWlen.x, photonDirAndWlen.y, photonDirAndWlen.z,
                 photonPosAndTime.w, photonDirAndWlen.w/1e-9f);
+#endif
             
             currentPhotonLayer = min(max(findLayerForGivenZPos(photonPosAndTime.z), 0), MEDIUM_LAYERS-1);
             //currentPhotonLayer = findLayerForGivenZPos(photonPosAndTime.z);
+#ifdef PRINTF_ENABLED
             dbg_printf("   in layer %i (valid between 0 and up to including %u)\n", currentPhotonLayer, MEDIUM_LAYERS-1);
+#endif
             
             inv_groupvel = my_recip(getGroupVelocity(0, photonDirAndWlen.w));
             
@@ -463,7 +475,9 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             
             //if ((currentPhotonLayer < 0) || (currentPhotonLayer >= MEDIUM_LAYERS)) abs_lens_left=0.f; // outside, do not track
             
+#ifdef PRINTF_ENABLED
             dbg_printf("   - total track length will be %f absorption lengths\n", abs_lens_left);
+#endif
         }
 
         // this block is along the lines of the PPC kernel
@@ -476,7 +490,9 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
 
             // track this thing to the next scattering point
             float sca_step_left = -my_log(RNG_CALL_UNIFORM_OC);
+#ifdef PRINTF_ENABLED
             dbg_printf("   - next scatter in %f scattering lengths\n", sca_step_left);
+#endif
             
             float currentScaLen = getScatteringLength(currentPhotonLayer, photonDirAndWlen.w);
             float currentAbsLen = getAbsorptionLength(currentPhotonLayer, photonDirAndWlen.w);
@@ -484,7 +500,9 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             float ais=( photon_dz*sca_step_left - my_divide((mediumBoundary-photonPosAndTime.z),currentScaLen) )*(1.f/(float)MEDIUM_LAYER_THICKNESS);
             float aia=( photon_dz*abs_lens_left - my_divide((mediumBoundary-photonPosAndTime.z),currentAbsLen) )*(1.f/(float)MEDIUM_LAYER_THICKNESS);
 
+#ifdef PRINTF_ENABLED
             dbg_printf("   - ais=%f, aia=%f, j_initial=%i\n", ais, aia, currentPhotonLayer);
+#endif
         
             // propagate through layers
             int j=currentPhotonLayer;
@@ -504,7 +522,9 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
                      aia-=my_recip(currentAbsLen)) ++j;
             }
         
+#ifdef PRINTF_ENABLED
             dbg_printf("   - j_final=%i\n", j);
+#endif
         
             float tot;
             if ((currentPhotonLayer==j) || fabs(photon_dz)<EPSILON) {
@@ -517,7 +537,9 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             }
             currentPhotonLayer=j;
             
+#ifdef PRINTF_ENABLED
             dbg_printf("   - distancePropagated=%f\n", distancePropagated);
+#endif
         
             // get overburden for distance
             if (tot<distancePropagated) {
@@ -548,8 +570,10 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             // get rid of the photon if we detected it
             abs_lens_left = 0.f;
 
+#ifdef PRINTF_ENABLED
             dbg_printf("    . colission detected, step limited to thisStepLength=%f!\n", 
                 distancePropagated);
+#endif
         }
 
         // update the track to its next position
@@ -572,34 +596,46 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             // photon was NOT absorbed. scatter it and re-start the loop
             
             // calculate a new direction
+#ifdef PRINTF_ENABLED
             dbg_printf("   - photon is not yet absorbed (abs_len_left=%f)! Scattering!\n", abs_lens_left);
+#endif
 
+#ifdef PRINTF_ENABLED
             dbg_printf("    . photon direction before: d=(%f,%f,%f), wlen=%f\n",
                 photonDirAndWlen.x, photonDirAndWlen.y, photonDirAndWlen.z,
                 photonDirAndWlen.w/1e-9f);
+#endif
 
             const float cosScatAngle = makeScatteringCosAngle(RNG_ARGS_TO_CALL);
             const float sinScatAngle = my_sqrt(1.0f - sqr(cosScatAngle));
 
             scatterDirectionByAngle(cosScatAngle, sinScatAngle, &photonDirAndWlen, RNG_CALL_UNIFORM_CO);
 
+#ifdef PRINTF_ENABLED
             dbg_printf("    . cos(scat_angle)=%f sin(scat_angle)=%f\n",
                 cosScatAngle, sinScatAngle);
+#endif
 
+#ifdef PRINTF_ENABLED
             dbg_printf("    . photon direction after:  d=(%f,%f,%f), wlen=%f\n",
                 photonDirAndWlen.x, photonDirAndWlen.y, photonDirAndWlen.z,
                 photonDirAndWlen.w/1e-9f);
+#endif
 
             ++photonNumScatters;
 
+#ifdef PRINTF_ENABLED
             dbg_printf("    . the photon has now been scattered %u time(s).\n", photonNumScatters);
+#endif
         }
 
 
     }
 
+#ifdef PRINTF_ENABLED
     dbg_printf("Stop kernel... (work item %u of %u)\n", i, global_size);
     dbg_printf("Kernel finished.\n");
+#endif
 
     //upload MWC RNG state
     MWC_RNG_x[i] = real_rnd_x;

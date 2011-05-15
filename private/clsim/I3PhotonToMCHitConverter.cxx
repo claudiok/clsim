@@ -227,13 +227,12 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
     }
     
     
-    
-    // DOM is looking downwards (this is currently specific to IceCube)
+#ifndef HAS_MULTIPMT_SUPPORT    
+    // DOM is looking downwards
     const double DOMDir_x = 0.;
     const double DOMDir_y = 0.;
     const double DOMDir_z = -1.;
-    
-    //const double oversizedDOMRadius2 = DOMRadiusWithoutOversize_*DOMRadiusWithoutOversize_ * DOMOversizeFactor_*DOMOversizeFactor_;
+#endif
     
     BOOST_FOREACH(const I3PhotonSeriesMap::value_type &it, *inputPhotonSeriesMap)
     {
@@ -252,6 +251,20 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
 			log_fatal("OM (%i/%u) not found in the current geometry map!", key.GetString(), key.GetOM());
 		const I3OMGeo &om = geo_it->second;
 
+#ifdef HAS_MULTIPMT_SUPPORT    
+        // get DOM (PMT) direction from geometry
+        const I3OMTypeInfo &omTypeInfo = geometry.GetOMTypeInfo(key);
+        if (omTypeInfo.GetNumPMTs() != 1) {
+            log_fatal("This module does only support DOMs with a single PMT. numPMTs=%u",
+                      omTypeInfo.GetNumPMTs());
+        }
+        I3Direction pmtDir = geometry.GetPMTDir(key, 0); // pmtNum==0
+
+        const double DOMDir_x = pmtDir.GetX();
+        const double DOMDir_y = pmtDir.GetY();
+        const double DOMDir_z = pmtDir.GetZ();
+#endif
+        
         // Find the current OM in the calibration map
         
         // relative DOM efficiency from calibration

@@ -1,22 +1,24 @@
 
 #--------------------------------------------
 # GetAntaresOMAngularSensitivity
+#
+# A python function to return the Antares OM angular acceptance
+# stored in an instance of I3CLSimWlenDependetValuePolynomial
+#--------------------------------------------
 
 import numpy, math, sys
 from os.path import expandvars
 
-from icecube import icetray, dataclasses, antares_common
+from icecube import icetray, dataclasses
 from icecube.clsim import I3CLSimWlenDependentValuePolynomial
 
 from I3Tray import I3Units
 
 
 def GetAntaresOMAngularSensitivity(name='NotSet'):
-
-	coefficients = None
     
 	if name == 'NotSet':
-		print "GetAntaresOMAngularSensitivity ERROR: '"+name+"' does not name an angulare sensitivity type! Possible are 'Spring09', 'Genova', 'NIM' and 'old'."
+		print "GetAntaresOMAngularSensitivity ERROR: Please specify an angulare sensitivity type! Possible are 'Spring09', 'Genova', 'NIM' and 'old'."
 		sys.exit()
 		
 	elif name == 'Spring09':
@@ -59,9 +61,9 @@ def GetAntaresOMAngularSensitivity(name='NotSet'):
 		#
 		# cutoff at costheta=-0.65
 		
-		coefficients = [ 0.2549
-						 0.6093
-						 0.2556
+		coefficients = [ 0.2549,
+						 0.6093,
+						 0.2556,
 						-0.1231
 					   ]
 					   
@@ -122,6 +124,10 @@ def GetAntaresOMAngularSensitivity(name='NotSet'):
 						
 
 		return I3CLSimWlenDependentValuePolynomial(coefficients, -0.36, 1., 0., 1.)
+	
+	else:
+		print "GetAntaresOMAngularSensitivity ERROR: '"+name+"' does not name an angulare sensitivity type! Possible are 'Spring09', 'Genova', 'NIM' and 'old'."
+		sys.exit()
 
 
 

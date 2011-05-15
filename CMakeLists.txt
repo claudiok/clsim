@@ -102,6 +102,13 @@ if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/hit-maker)
 endif(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/hit-maker)
 
 
+# check if multiPMT support is available
+if(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3OMTypeInfo.h)
+    ADD_DEFINITIONS(-DHAS_MULTIPMT_SUPPORT)
+    MESSAGE(STATUS "  + multiPMT support")
+endif(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3OMTypeInfo.h)
+
+
 i3_add_library(${PROJECT_NAME}
     ${LIB_${PROJECT_NAME}_SOURCEFILES}
     USE_TOOLS ${LIB_${PROJECT_NAME}_TOOLS}
