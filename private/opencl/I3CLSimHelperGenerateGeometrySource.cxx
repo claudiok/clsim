@@ -28,14 +28,14 @@ namespace I3CLSimHelper
                                              const std::vector<double> &posY,
                                              const std::vector<double> &posZ,
                                              const double omRadius,
-                                             std::vector<cl_uchar> &geoLayerToOMNumIndexPerStringSetBuffer,
+                                             std::vector<cl_ushort> &geoLayerToOMNumIndexPerStringSetBuffer,
                                              std::vector<int> &stringIndexToStringIDBuffer,
                                              std::vector<std::vector<unsigned int> > &domIndexToDomIDBuffer_perStringIndex
                                              );
     
     // the main converter
     std::string GenerateGeometrySource(const I3CLSimSimpleGeometry &geometry,
-                                       std::vector<unsigned char> &geoLayerToOMNumIndexPerStringSetBuffer,
+                                       std::vector<unsigned short> &geoLayerToOMNumIndexPerStringSetBuffer,
                                        std::vector<int> &stringIndexToStringIDBuffer,
                                        std::vector<std::vector<unsigned int> > &domIndexToDomIDBuffer_perStringIndex)
     {
@@ -230,12 +230,12 @@ namespace I3CLSimHelper
                            double layerHeight,
                            unsigned int layerNum,
                            const double domRadius,
-                           const std::vector<unsigned char> &layerToOMNumIndex)
+                           const std::vector<unsigned short> &layerToOMNumIndex)
     {
         if (layerNum==0) return false;
         if (domRadius < 0.) return false;
-        if (currentString.doms.size() >= 0xFF) {
-            log_fatal("Dom numbers >= 255 are not supported!");
+        if (currentString.doms.size() >= 0xFFFF) {
+            log_fatal("Dom numbers >= 65535 are not supported!");
         }
         if (layerToOMNumIndex.size() != layerNum) {
             log_fatal("Internal error: layerToOMNumIndex.size() != layerNum");
@@ -246,7 +246,7 @@ namespace I3CLSimHelper
             const double layerZMin = layerStartZ+static_cast<double>(i)*layerHeight;
             const double layerZMax = layerStartZ+static_cast<double>(i+1)*layerHeight;
             
-            unsigned char layerShouldContainDom=0xFF;
+            unsigned short layerShouldContainDom=0xFFFF;
             
             for (unsigned long thisDom=0;thisDom<currentString.doms.size();++thisDom)
             {
@@ -268,7 +268,7 @@ namespace I3CLSimHelper
                 
                 if (layerContainsDom)
                 {
-                    if (layerShouldContainDom!=0xFF) {
+                    if (layerShouldContainDom!=0xFFFF) {
                         return false; // two different doms from the same string per layer -> fail!
                     } else {
                         layerShouldContainDom = thisDom;
@@ -311,16 +311,16 @@ namespace I3CLSimHelper
                           unsigned int layerNum,
                           const double domRadius,
                           double minZHint, double maxZHint,
-                          std::vector<unsigned char> &layerToOMNumIndex)
+                          std::vector<unsigned short> &layerToOMNumIndex)
     {
         if (layerNum==0) return false;
         if (domRadius < 0.) return false;
-        if (currentString.doms.size() >= 0xFF) {
-            log_fatal("Dom numbers >= 255 are not supported!");
+        if (currentString.doms.size() >= 0xFFFF) {
+            log_fatal("Dom numbers >= 65535 are not supported!");
         }
         
         // set all layers on each string to "no doms inside"
-        layerToOMNumIndex.assign(layerNum, 0xFF);
+        layerToOMNumIndex.assign(layerNum, 0xFFFF);
         
         // find minimum and maximum z detector coordinates
         double minZ=minZHint, maxZ=maxZHint;
@@ -362,7 +362,7 @@ namespace I3CLSimHelper
                 
                 if (layerContainsDom)
                 {
-                    if (layerToOMNumIndex[i]!=0xFF) {
+                    if (layerToOMNumIndex[i]!=0xFFFF) {
                         return false; // two different doms from the same string per layer -> fail!
                     } else {
                         layerToOMNumIndex[i] = thisDom;
@@ -621,7 +621,7 @@ namespace I3CLSimHelper
             output << "};" << std::endl;
 
             
-            output << "inline void geometryGetDomPosition(unsigned short stringNum, unsigned char domNum, float *domPosX, float *domPosY, float *domPosZ)" << std::endl;
+            output << "inline void geometryGetDomPosition(unsigned short stringNum, unsigned short domNum, float *domPosX, float *domPosY, float *domPosZ)" << std::endl;
             output << "{" << std::endl;
             
             if (useShortsInsteadOfFloats) {
@@ -632,7 +632,7 @@ namespace I3CLSimHelper
                 output << "    const float stringMeanPosY = geoDomPosStringMeanPosY[stringNum];" << std::endl;
             }
             
-            output << "    const unsigned int index = geoDomPosStringStartIndexInTemplateDomList[stringNum]+domNum;" << std::endl;
+            output << "    const unsigned int index = geoDomPosStringStartIndexInTemplateDomList[stringNum]+convert_uint(domNum);" << std::endl;
 
             if (useShortsInsteadOfFloats) {
                 output << "    *domPosX = convert_float(geoDomPosTemplatePositionsX_flat[index])*(GEO_DOM_POS_MAX_ABS_X/32767.f) + stringMeanPosX;" << std::endl;
@@ -720,9 +720,9 @@ namespace I3CLSimHelper
             output << "};" << std::endl;
             output << std::endl;
 
-            output << "inline void geometryGetDomPosition(unsigned short stringNum, unsigned char domNum, float *domPosX, float *domPosY, float *domPosZ)" << std::endl;
+            output << "inline void geometryGetDomPosition(unsigned short stringNum, unsigned short domNum, float *domPosX, float *domPosY, float *domPosZ)" << std::endl;
             output << "{" << std::endl;
-            output << "    const unsigned int domIndex = stringNum*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS+domNum;" << std::endl;
+            output << "    const unsigned int domIndex = stringNum*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS+convert_uint(domNum);" << std::endl;
             output << "    " << std::endl;
 
             if (useShortsInsteadOfFloats) {
@@ -756,7 +756,7 @@ namespace I3CLSimHelper
                                              const std::vector<double> &posY,
                                              const std::vector<double> &posZ,
                                              const double omRadius,
-                                             std::vector<cl_uchar> &geoLayerToOMNumIndexPerStringSetBuffer,
+                                             std::vector<cl_ushort> &geoLayerToOMNumIndexPerStringSetBuffer,
                                              std::vector<int> &stringIndexToStringIDBuffer,
                                              std::vector<std::vector<unsigned int> > &domIndexToDomIDBuffer_perStringIndex
                                              )
@@ -910,7 +910,7 @@ namespace I3CLSimHelper
         std::vector<unsigned int> geoLayerNum;
         std::vector<double> layerStartZ, layerHeight;
         
-        std::vector<std::vector<unsigned char> > layerToOMNumIndexPerStringSet;
+        std::vector<std::vector<unsigned short> > layerToOMNumIndexPerStringSet;
         std::vector<unsigned char> stringInStringSet(strings.size()); 
         
         double minZHint, maxZHint;
@@ -958,7 +958,7 @@ namespace I3CLSimHelper
                 layerStartZ.push_back(NAN);
                 layerHeight.push_back(NAN);
                 geoLayerNum.push_back(1);
-                layerToOMNumIndexPerStringSet.push_back(std::vector<unsigned char>());
+                layerToOMNumIndexPerStringSet.push_back(std::vector<unsigned short>());
                 
                 for(;;)
                 {
@@ -991,7 +991,7 @@ namespace I3CLSimHelper
             
         } // for (stringNum)
         
-        std::vector<unsigned char> geoLayerToOMNumIndex(maxLayerNum*numStringSets, 0xFF);
+        std::vector<unsigned short> geoLayerToOMNumIndex(maxLayerNum*numStringSets, 0xFFFF);
         for (unsigned int j=0;j<numStringSets;++j)
         {
             for (unsigned int i=0;i<geoLayerNum[j];++i)
@@ -1015,7 +1015,7 @@ namespace I3CLSimHelper
         geoLayerToOMNumIndexPerStringSetBuffer_size *= 64;
         log_debug("BSize: %u -> %u", numStringSets*maxLayerNum, geoLayerToOMNumIndexPerStringSetBuffer_size);
         
-        geoLayerToOMNumIndexPerStringSetBuffer.assign(geoLayerToOMNumIndexPerStringSetBuffer_size,0xFF);
+        geoLayerToOMNumIndexPerStringSetBuffer.assign(geoLayerToOMNumIndexPerStringSetBuffer_size,0xFFFF);
         for (unsigned int i=0;i<numStringSets*maxLayerNum;++i)
         {
             geoLayerToOMNumIndexPerStringSetBuffer[i] = geoLayerToOMNumIndex[i];
@@ -1082,12 +1082,12 @@ namespace I3CLSimHelper
         //output << "};" << std::endl;
         //output << std::endl;
         
-        output << "__constant unsigned char geoStringNumDoms[NUM_STRINGS] = {" << std::endl;
-        for (sizeType j=0;j<strings.size();++j){     
-            output << "  " << strings[j].doms.size() << ", " << std::endl;
-        }
-        output << "};" << std::endl;
-        output << std::endl;
+        //output << "__constant unsigned short geoStringNumDoms[NUM_STRINGS] = {" << std::endl;
+        //for (sizeType j=0;j<strings.size();++j){     
+        //    output << "  " << strings[j].doms.size() << ", " << std::endl;
+        //}
+        //output << "};" << std::endl;
+        //output << std::endl;
         
         output << "__constant float geoStringPosX[NUM_STRINGS] = {" << std::endl;
         for (sizeType j=0;j<strings.size();++j){     
@@ -1169,21 +1169,24 @@ namespace I3CLSimHelper
         output << "};" << std::endl;
         
         output << "#define GEO_geoLayerToOMNumIndexPerStringSet_BUFFER_SIZE " << geoLayerToOMNumIndexPerStringSetBuffer_size << std::endl;
-        output << "__constant unsigned char geoLayerToOMNumIndexPerStringSet[GEO_LAYER_STRINGSET_NUM*GEO_LAYER_STRINGSET_MAX_NUM_LAYERS] = {" << std::endl;
-        for (unsigned int j=0;j<numStringSets;++j)
-        {
-            for (unsigned int i=0;i<maxLayerNum;++i)
-            {
-                unsigned int value = geoLayerToOMNumIndex[j*maxLayerNum+i];
-                if (value == 0xFF) {
-                    output << "  " << "0xFF" << ", ";
-                } else {
-                    output << "  " << value << ", ";
-                }
-            }
-            output << std::endl;
-        }
-        output << "};" << std::endl;
+        
+        // this goes to local/shared memory, not constant memory..
+        
+        //output << "__constant unsigned short geoLayerToOMNumIndexPerStringSet[GEO_LAYER_STRINGSET_NUM*GEO_LAYER_STRINGSET_MAX_NUM_LAYERS] = {" << std::endl;
+        //for (unsigned int j=0;j<numStringSets;++j)
+        //{
+        //    for (unsigned int i=0;i<maxLayerNum;++i)
+        //    {
+        //        unsigned int value = geoLayerToOMNumIndex[j*maxLayerNum+i];
+        //        if (value == 0xFFFF) {
+        //            output << "  " << "0xFFFF" << ", ";
+        //        } else {
+        //            output << "  " << value << ", ";
+        //        }
+        //    }
+        //    output << std::endl;
+        //}
+        //output << "};" << std::endl;
         
         // return the code we just wrote to the caller
         code = output.str();

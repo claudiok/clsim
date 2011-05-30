@@ -290,7 +290,7 @@ void I3CLSimStepToPhotonConverterOpenCL::Initialize()
     (new cl::Buffer(*context_, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, MWC_RNG_a.size() * sizeof(uint32_t), &(MWC_RNG_a[0])));
 
     deviceBuffer_GeoLayerToOMNumIndexPerStringSet = shared_ptr<cl::Buffer>
-    (new cl::Buffer(*context_, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, geoLayerToOMNumIndexPerStringSetInfo_.size() * sizeof(unsigned char), &(geoLayerToOMNumIndexPerStringSetInfo_[0])));
+    (new cl::Buffer(*context_, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, geoLayerToOMNumIndexPerStringSetInfo_.size() * sizeof(unsigned short), &(geoLayerToOMNumIndexPerStringSetInfo_[0])));
 
     
     // allocate empty buffers on the device

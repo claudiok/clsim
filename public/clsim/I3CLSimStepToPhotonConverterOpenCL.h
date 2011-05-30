@@ -234,7 +234,7 @@ private:
     std::string propagationKernelSource_;
     
     // this is extra geometry information, we upload it to global memory
-    std::vector<unsigned char> geoLayerToOMNumIndexPerStringSetInfo_;
+    std::vector<unsigned short> geoLayerToOMNumIndexPerStringSetInfo_;
     
     // this allows us to convert the string index back to the string ID (which may be negative and non-contiguous)
     std::vector<int> stringIndexToStringIDBuffer_;

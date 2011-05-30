@@ -198,12 +198,12 @@ inline bool checkForCollision(const float4 photonPosAndTime,
     __global uint* hitIndex,
     uint maxHitIndex,
     __write_only __global struct I3CLSimPhoton *outputPhotons,
-    __local const unsigned char *geoLayerToOMNumIndexPerStringSetLocal
+    __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal
     )
 {
     bool hitRecorded=false;
     unsigned short hitOnString;
-    unsigned char hitOnDom;
+    unsigned short hitOnDom;
 
     // check for collisions
     const float photonDirLenXYSqr = sqr(photonDirAndWlen.x) + sqr(photonDirAndWlen.y);
@@ -253,12 +253,12 @@ inline bool checkForCollision(const float4 photonPosAndTime,
         lowLayerZ = min(max(lowLayerZ, 0), geoLayerNum[stringSet]-1);
         highLayerZ = min(max(highLayerZ, 0), geoLayerNum[stringSet]-1);
 
-        //__constant const unsigned char *geoLayerToOMNumIndex=geoLayerToOMNumIndexPerStringSet + (stringSet*GEO_LAYER_STRINGSET_MAX_NUM_LAYERS) + lowLayerZ;
-        __local const unsigned char *geoLayerToOMNumIndex=geoLayerToOMNumIndexPerStringSetLocal + (stringSet*GEO_LAYER_STRINGSET_MAX_NUM_LAYERS) + lowLayerZ;
+        //__constant const unsigned short *geoLayerToOMNumIndex=geoLayerToOMNumIndexPerStringSet + (convert_uint(stringSet)*GEO_LAYER_STRINGSET_MAX_NUM_LAYERS) + lowLayerZ;
+        __local const unsigned short *geoLayerToOMNumIndex=geoLayerToOMNumIndexPerStringSetLocal + (convert_uint(stringSet)*GEO_LAYER_STRINGSET_MAX_NUM_LAYERS) + lowLayerZ;
         for (unsigned int layer_z=lowLayerZ;layer_z<=highLayerZ;++layer_z,++geoLayerToOMNumIndex)
         {
-            const unsigned char domNum = *geoLayerToOMNumIndex;
-            if (domNum==0xFF) continue; // empty layer for this string
+            const unsigned short domNum = *geoLayerToOMNumIndex;
+            if (domNum==0xFFFF) continue; // empty layer for this string
 
             float domPosX, domPosY, domPosZ;
             geometryGetDomPosition(stringNum, domNum, &domPosX, &domPosY, &domPosZ);
@@ -359,7 +359,7 @@ inline bool checkForCollision(const float4 photonPosAndTime,
 
 __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOutputPhotons
     const uint maxHitIndex2,    // maxNumOutputPhotons_
-    __read_only __global unsigned char *geoLayerToOMNumIndexPerStringSet,
+    __read_only __global unsigned short *geoLayerToOMNumIndexPerStringSet,
 
     __read_only __global struct I3CLSimStep *inputSteps, // deviceBuffer_InputSteps
     __write_only __global struct I3CLSimPhoton *outputPhotons, // deviceBuffer_OutputPhotons
@@ -371,7 +371,7 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
     dbg_printf("Start kernel... (work item %u of %u)\n", get_global_id(0), get_global_size(0));
 #endif
 
-    __local unsigned char geoLayerToOMNumIndexPerStringSetLocal[GEO_geoLayerToOMNumIndexPerStringSet_BUFFER_SIZE];
+    __local unsigned short geoLayerToOMNumIndexPerStringSetLocal[GEO_geoLayerToOMNumIndexPerStringSet_BUFFER_SIZE];
 
     // copy the geo data to our local memory (this is done by a whole work group in parallel)
     event_t copyFinishedEvent =
