@@ -35,7 +35,26 @@ from I3Tray import I3Units
 import numpy, math
 from os.path import expandvars
 
+	#################################################################
+    # Some getters to store ANTARES specific constants
+	# copied from km3 (hit-eff_area_pmt.f and hit-transmit.f)
+	#################################################################
+def GetAntaresPMTCollectionEfficiency():
+	return 0.9
 
+def GetAntaresOMGlassThickness():
+	return 1.5*I3Units.cm
+	
+def GetAntaresOMGelThickness():
+	return 1.*I3Units.cm
+	
+def GetAntaresPMTDiameter():
+	return 9.3 * 0.0254*I3Units.m # 9.3 inch PMT
+	
+
+	
+	
+	
 #################################################################
 # A function to return the quantum efficiency as instance of
 # I3CLSimWlenDependentValueFromTable
@@ -206,20 +225,17 @@ def GetAntaresOMGelAbsorptionLength():
 # of the Antares OM
 #################################################################
 def GetAntaresOMAcceptance(domRadius = 0.2159*I3Units.m): # 17 inch diameter
-    # Some constants from km3 (hit-eff_area_pmt.f and hit-transmit.f)
-    pm_collection_efficiency = 0.9
-    glass_width = 1.5*I3Units.cm
-    gel_width = 1.*I3Units.cm
     
-    # 9.3 inch PMT
-    pmt_diameter = 9.3 * 0.0254*I3Units.m
+	# Load the constants
+    glass_width = GetAntaresOMGlassThickness()
+    gel_width = GetAntaresOMGelThickness()
+    pmt_collection_efficiency = GetAntaresPMTCollectionEfficiency()
+    pmt_diameter = GetAntaresPMTDiameter()
     
-    # Geometrical area of the om profile
+	# Geometrical area of the om profile
     pmt_area = math.pi * (pmt_diameter/2.)**2 #is im square meters
-    
     om_area = math.pi*domRadius**2.
-    
-    
+	
     # Get the tables from above
     q_eff = GetAntaresOMQuantumEfficiency()
     abs_glass = GetAntaresOMGlassAbsorptionLength()
@@ -231,7 +247,7 @@ def GetAntaresOMAcceptance(domRadius = 0.2159*I3Units.m): # 17 inch diameter
     # value of bin  1 belongs to 310nm
     # value of bin 31 belongs to 610nm
     # Now combine them
-    om_eff_area = [0.]
+    om_eff_area = [0.] # use a single entry at 290nm to have the same range as other functions(wlen)
     for wavelength in range(300, 611, 10):
         this_abs_glass = abs_glass.GetValue(wavelength*I3Units.nanometer)
         this_abs_gel = abs_gel.GetValue(wavelength*I3Units.nanometer)
@@ -240,7 +256,7 @@ def GetAntaresOMAcceptance(domRadius = 0.2159*I3Units.m): # 17 inch diameter
             current_om_eff_area = 0.
         else:
             current_om_eff_area = pmt_area * \
-                                  pm_collection_efficiency * \
+                                  pmt_collection_efficiency * \
                                   q_eff.GetValue(wavelength*I3Units.nanometer) * \
                                   math.exp( -( glass_width / this_abs_glass ) ) * \
                                   math.exp( -( gel_width / this_abs_gel ) )
