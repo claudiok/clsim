@@ -50,7 +50,7 @@ double I3CLSimWlenDependentValueFromTable::GetValue(double wlen) const
     double fraction = modf((wlen-startWlen_)/wlenStep_, &fbin);
     int ibin=static_cast<int>(fbin);
 
-    if (ibin<0) {
+    if ((ibin<0) || ((ibin==0) && (fraction<0)))  {
         ibin=0;
         fraction=0.;
     } else if (static_cast<std::size_t>(ibin)>=values_.size()-1) {
@@ -60,8 +60,8 @@ double I3CLSimWlenDependentValueFromTable::GetValue(double wlen) const
     const unsigned int bin = ibin;
 
     return mix(values_[bin], 
-			   values_[bin+1],
-			   fraction);
+               values_[bin+1],
+               fraction);
 }
 
 double I3CLSimWlenDependentValueFromTable::GetMinWlen() const
@@ -98,7 +98,7 @@ std::string I3CLSimWlenDependentValueFromTable::GetOpenCLFunction(const std::str
     "    \n"
     "    int ibin=(int)fbin;\n"
     "    \n"
-    "    if (ibin<0) {\n"
+    "    if ((ibin<0) || ((ibin==0) && (*fraction<0))) {\n"
     "        ibin=0;\n"
     "        *fraction=0.f;\n"
     "    } else if (ibin>=" + boost::lexical_cast<std::string>(values_.size()) + "-1) {\n"
