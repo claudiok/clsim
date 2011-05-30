@@ -43,12 +43,15 @@ struct I3CLSimSimpleGeometryWrapper : I3CLSimSimpleGeometry, bp::wrapper<I3CLSim
     virtual const std::vector<double> &GetPosXVector() const {return this->get_override("GetPosXVector")();}
     virtual const std::vector<double> &GetPosYVector() const {return this->get_override("GetPosYVector")();}
     virtual const std::vector<double> &GetPosZVector() const {return this->get_override("GetPosZVector")();}
+    virtual const std::vector<std::string> &GetSubdetectorVector() const  {return this->get_override("GetSubdetectorVector")();}
     
     virtual int32_t GetStringID(std::size_t pos) const {return this->get_override("GetStringID")();}
     virtual uint32_t GetDomID(std::size_t pos) const {return this->get_override("GetDomID")();}
     virtual double GetPosX(std::size_t pos) const {return this->get_override("GetPosX")();}
     virtual double GetPosY(std::size_t pos) const {return this->get_override("GetPosY")();}
     virtual double GetPosZ(std::size_t pos) const {return this->get_override("GetPosZ")();}
+    virtual std::string GetSubdetector(std::size_t pos) const {return this->get_override("GetSubdetector")();}
+
 };
 
 void register_I3CLSimSimpleGeometry()
@@ -66,23 +69,21 @@ void register_I3CLSimSimpleGeometry()
         .def("GetPosXVector", bp::pure_virtual(&I3CLSimSimpleGeometry::GetPosXVector), bp::return_value_policy<bp::copy_const_reference>())
         .def("GetPosYVector", bp::pure_virtual(&I3CLSimSimpleGeometry::GetPosYVector), bp::return_value_policy<bp::copy_const_reference>())
         .def("GetPosZVector", bp::pure_virtual(&I3CLSimSimpleGeometry::GetPosZVector), bp::return_value_policy<bp::copy_const_reference>())
+        .def("GetSubdetectorVector", bp::pure_virtual(&I3CLSimSimpleGeometry::GetSubdetectorVector), bp::return_value_policy<bp::copy_const_reference>())
 
         .add_property("stringIDs", bp::make_function(&I3CLSimSimpleGeometry::GetStringIDVector, bp::return_value_policy<bp::copy_const_reference>()))
         .add_property("domIDs", bp::make_function(&I3CLSimSimpleGeometry::GetDomIDVector, bp::return_value_policy<bp::copy_const_reference>()))
         .add_property("posX", bp::make_function(&I3CLSimSimpleGeometry::GetPosXVector, bp::return_value_policy<bp::copy_const_reference>()))
         .add_property("posY", bp::make_function(&I3CLSimSimpleGeometry::GetPosYVector, bp::return_value_policy<bp::copy_const_reference>()))
         .add_property("posZ", bp::make_function(&I3CLSimSimpleGeometry::GetPosZVector, bp::return_value_policy<bp::copy_const_reference>()))
-
-        .def("GetDomIDVector", bp::pure_virtual(&I3CLSimSimpleGeometry::GetDomIDVector), bp::return_value_policy<bp::copy_const_reference>())
-        .def("GetPosXVector", bp::pure_virtual(&I3CLSimSimpleGeometry::GetPosXVector), bp::return_value_policy<bp::copy_const_reference>())
-        .def("GetPosYVector", bp::pure_virtual(&I3CLSimSimpleGeometry::GetPosYVector), bp::return_value_policy<bp::copy_const_reference>())
-        .def("GetPosZVector", bp::pure_virtual(&I3CLSimSimpleGeometry::GetPosZVector), bp::return_value_policy<bp::copy_const_reference>())
+        .add_property("subdetectors", bp::make_function(&I3CLSimSimpleGeometry::GetSubdetectorVector, bp::return_value_policy<bp::copy_const_reference>()))
         
         .def("GetStringID", bp::pure_virtual(&I3CLSimSimpleGeometry::GetStringID))
         .def("GetDomID", bp::pure_virtual(&I3CLSimSimpleGeometry::GetDomID))
         .def("GetPosX", bp::pure_virtual(&I3CLSimSimpleGeometry::GetPosX))
         .def("GetPosY", bp::pure_virtual(&I3CLSimSimpleGeometry::GetPosY))
         .def("GetPosZ", bp::pure_virtual(&I3CLSimSimpleGeometry::GetPosZ))
+        .def("GetSubdetector", bp::pure_virtual(&I3CLSimSimpleGeometry::GetSubdetector))
         ;
     }
     
@@ -114,6 +115,7 @@ void register_I3CLSimSimpleGeometry()
         .def("SetPosX", &I3CLSimSimpleGeometryUserConfigurable::SetPosX)
         .def("SetPosY", &I3CLSimSimpleGeometryUserConfigurable::SetPosY)
         .def("SetPosZ", &I3CLSimSimpleGeometryUserConfigurable::SetPosZ)
+        .def("SetSubdetector", &I3CLSimSimpleGeometryUserConfigurable::SetSubdetector)
         ;
     }
     bp::implicitly_convertible<shared_ptr<I3CLSimSimpleGeometryUserConfigurable>, shared_ptr<const I3CLSimSimpleGeometryUserConfigurable> >();
@@ -167,14 +169,16 @@ void register_I3CLSimSimpleGeometry()
          double, const I3GeometryConstPtr &,
          const std::set<int> &,
          const std::set<unsigned int> &,
+         const std::set<std::string> &,
          int32_t, int32_t,
          uint32_t, uint32_t
          >(
            (
             bp::arg("OMRadius"),
             bp::arg("geometry"),
-            bp::arg("ignoreStrings"),
-            bp::arg("ignoreDomIDs"),
+            bp::arg("ignoreStrings"), //=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreStrings,
+            bp::arg("ignoreDomIDs"), //=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreDomIDs,
+            bp::arg("ignoreSubdetectors"), //=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreSubdetectors,
             bp::arg("ignoreStringIDsSmallerThan")=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreStringIDsSmallerThan,
             bp::arg("ignoreStringIDsLargerThan")=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreStringIDsLargerThan,
             bp::arg("ignoreDomIDsSmallerThan")=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreDomIDsSmallerThan,

@@ -4,6 +4,7 @@
 #include "icetray/I3TrayHeaders.h"
 
 #include <vector>
+#include <string>
 
 /**
  * @brief Describes a detector geometry (abstract base class)
@@ -21,12 +22,14 @@ public:
     virtual const std::vector<double> &GetPosXVector() const = 0;
     virtual const std::vector<double> &GetPosYVector() const = 0;
     virtual const std::vector<double> &GetPosZVector() const = 0;
+    virtual const std::vector<std::string> &GetSubdetectorVector() const = 0;
     
     virtual int32_t GetStringID(std::size_t pos) const = 0;
     virtual uint32_t GetDomID(std::size_t pos) const = 0;
     virtual double GetPosX(std::size_t pos) const = 0;
     virtual double GetPosY(std::size_t pos) const = 0;
     virtual double GetPosZ(std::size_t pos) const = 0;
+    virtual std::string GetSubdetector(std::size_t pos) const = 0;
     
     
 };

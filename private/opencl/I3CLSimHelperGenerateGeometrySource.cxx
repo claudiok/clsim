@@ -27,6 +27,7 @@ namespace I3CLSimHelper
                                              const std::vector<double> &posX,
                                              const std::vector<double> &posY,
                                              const std::vector<double> &posZ,
+                                             const std::vector<std::string> &subdetectors,
                                              const double omRadius,
                                              std::vector<cl_ushort> &geoLayerToOMNumIndexPerStringSetBuffer,
                                              std::vector<int> &stringIndexToStringIDBuffer,
@@ -62,6 +63,7 @@ namespace I3CLSimHelper
                                                 geometry.GetPosXVector(),
                                                 geometry.GetPosYVector(),
                                                 geometry.GetPosZVector(),
+                                                geometry.GetSubdetectorVector(),
                                                 geometry.GetOMRadius(),
                                                 geoLayerToOMNumIndexPerStringSetBuffer,
                                                 stringIndexToStringIDBuffer,
@@ -98,9 +100,11 @@ namespace I3CLSimHelper
         double maxZ, minZ;
         double maxR;
         std::vector<domStruct> doms;
+        unsigned short subdetectorNum;
     };
     
     bool divideIntoCells(const std::vector<stringStruct> &strings,
+                         int subdetectorNum,
                          double &cellStartX,
                          double &cellStartY,
                          double &cellWidthX,
@@ -117,9 +121,16 @@ namespace I3CLSimHelper
         cellToStringIndex.resize(cellNumX*cellNumY);
         
         // find minimum x and y detector coordinates
+        std::size_t numberOfStrings=0;
         double minX=NAN, minY=NAN, maxX=NAN, maxY=NAN;
         BOOST_FOREACH(const stringStruct &currentString, strings)
         {
+            if (subdetectorNum >= 0) {
+                if (currentString.subdetectorNum != static_cast<unsigned short>(subdetectorNum)) continue;
+            }
+            
+            ++numberOfStrings;
+            
             if ((currentString.meanX-currentString.maxR < minX) || isnan(minX)) {
                 minX = currentString.meanX-currentString.maxR;
             }
@@ -133,7 +144,8 @@ namespace I3CLSimHelper
                 maxY = currentString.meanY+currentString.maxR;
             }
         }
-        
+        if (numberOfStrings<=0) {log_fatal("no strings found");}
+
         // calculte cell widths
         cellStartX=minX;
         cellStartY=minY;
@@ -161,6 +173,10 @@ namespace I3CLSimHelper
                 {
                     const stringStruct &currentString = strings[thisString];
                     
+                    if (subdetectorNum >= 0) {
+                        if (currentString.subdetectorNum != static_cast<unsigned short>(subdetectorNum)) continue;
+                    }
+
                     bool cellContainsStringX=false;
                     bool cellContainsStringY=false;
                     
@@ -217,7 +233,7 @@ namespace I3CLSimHelper
         } // for(i)
         
         
-        if (assignedStringNums.size()!=strings.size()) {
+        if (assignedStringNums.size()!=numberOfStrings) {
             std::cerr << "Internal error in cell division algorithm." << std::endl;
         }
         
@@ -755,6 +771,7 @@ namespace I3CLSimHelper
                                              const std::vector<double> &posX,
                                              const std::vector<double> &posY,
                                              const std::vector<double> &posZ,
+                                             const std::vector<std::string> &subdetectors,
                                              const double omRadius,
                                              std::vector<cl_ushort> &geoLayerToOMNumIndexPerStringSetBuffer,
                                              std::vector<int> &stringIndexToStringIDBuffer,
@@ -768,24 +785,58 @@ namespace I3CLSimHelper
         if ((domIDs.size() != numEntries) ||
             (posX.size() != numEntries) ||
             (posY.size() != numEntries) ||
-            (posZ.size() != numEntries))
+            (posZ.size() != numEntries) ||
+            (subdetectors.size() != numEntries))
             return false;
         if (omRadius < 0.) {std::cerr << "Zero or negative OM radius." << std::endl; return false;}
         
-        std::set<int> stringIDSet;
-        BOOST_FOREACH(int stringID, stringIDs) {stringIDSet.insert(stringID);}
+        typedef std::pair<int, std::string> intStringPair_t;
+        std::set<intStringPair_t> stringIDSet;
+        std::set<std::string> subdetectorSet;
+        for (sizeType i=0; i<numEntries; ++i)
+        {
+            stringIDSet.insert(std::make_pair(stringIDs[i], subdetectors[i]));
+            subdetectorSet.insert(subdetectors[i]);
+        }
         
         #define MAX_SUPPORTED_NUM_STRINGS 0xFFFF-1
         if (stringIDSet.size() >= MAX_SUPPORTED_NUM_STRINGS) {
-            std::cerr << "More than " << MAX_SUPPORTED_NUM_STRINGS << " are not supported." << std::endl;
+            std::cerr << "More than " << MAX_SUPPORTED_NUM_STRINGS << " strings are not supported." << std::endl;
             return false;
         }
+
+        #define MAX_SUPPORTED_NUM_SUBDETECTORS 0xFFFF-1
+        if (subdetectorSet.size() >= MAX_SUPPORTED_NUM_SUBDETECTORS) {
+            std::cerr << "More than " << MAX_SUPPORTED_NUM_SUBDETECTORS << " subdetectors are not supported." << std::endl;
+            return false;
+        }
+        log_trace("Number of subdetectors is %zu:", subdetectorSet.size());
+
+        const unsigned short numSubdetectors = static_cast<unsigned short>(subdetectorSet.size());
         
+        std::map<std::string, unsigned short> subdetectorNameToIDMap;
+        std::vector<std::string> subdetectorNameList;
+        {
+            unsigned short currentIndex=0;
+            BOOST_FOREACH(const std::string &subdetectorName, subdetectorSet)
+            {
+                log_trace(" #%us -> \"%s\"", currentIndex, subdetectorName.c_str());
+
+                subdetectorNameToIDMap.insert(std::make_pair(subdetectorName, currentIndex));
+                subdetectorNameList.push_back(subdetectorName);
+                ++currentIndex;
+            }
+        }
+        
+        // build string structure
         std::vector<stringStruct> strings(stringIDSet.size());
         unsigned int stringIndex=0;
         double stringMaxR=NAN;
-        BOOST_FOREACH(int stringID, stringIDSet)
+        BOOST_FOREACH(const intStringPair_t &pairRef, stringIDSet)
         {
+            const int stringID = pairRef.first;
+            const std::string &subdetectorName = pairRef.second;
+            
             stringStruct &currentStringStruct = strings[stringIndex];
             
             currentStringStruct.stringID = stringID;
@@ -794,14 +845,17 @@ namespace I3CLSimHelper
             currentStringStruct.meanX=0.;
             currentStringStruct.meanY=0.;
             currentStringStruct.maxR=NAN;
+            currentStringStruct.subdetectorNum = subdetectorNameToIDMap[subdetectorName];
             currentStringStruct.doms.clear();
             
             // loop over all doms. only use them if they are on the current string
             unsigned long numDoms=0;
             for (unsigned long i=0;i<numEntries;++i)
             {
-                if (stringIDs[i]!=stringID) continue;
+                if (stringIDs[i] != stringID) continue;
                 // index i is on the current string!
+                
+                if (subdetectors[i] != subdetectorName) continue;
                 
                 currentStringStruct.meanX += posX[i];
                 currentStringStruct.meanY += posY[i];
@@ -834,6 +888,8 @@ namespace I3CLSimHelper
                 if (stringIDs[i]!=stringID) continue;
                 // index i is on the current string!
                 
+                if (subdetectors[i] != subdetectorName) continue;
+
                 const double dX = currentStringStruct.meanX - posX[i];
                 const double dY = currentStringStruct.meanY - posY[i];
                 const double thisR = std::sqrt(dX*dX + dY*dY)+omRadius;
@@ -848,6 +904,10 @@ namespace I3CLSimHelper
             log_trace("String %u has radius %f",
                       stringIndex, currentStringStruct.maxR);
             
+            
+            log_trace("string #%u (id %i) on subdetector %u (\"%s\") has %zu DOMs",
+                      stringIndex, stringID, currentStringStruct.subdetectorNum, subdetectorName.c_str(), currentStringStruct.doms.size());
+
             ++stringIndex;
         }
         
@@ -871,36 +931,53 @@ namespace I3CLSimHelper
             }
         }
         
-        // Try to split the detector into xy "cells" with 0 or 1 strings per cell.
-        // We do not need to optimize this, so we do a brute froce approach:
-        // start with only one cell and subdivide it until the requirement 
-        // max(Nstringpercell)==1 is fulfilled.
-        unsigned int cellGridNumX=1;
-        unsigned int cellGridNumY=1;
-        std::vector<unsigned short> cellToStringIndex;
-        double cellStartX, cellStartY, cellWidthX, cellWidthY;
-        for(;;)
+        
+        std::vector<unsigned short> cellGridNumX(numSubdetectors, 1);
+        std::vector<unsigned short> cellGridNumY(numSubdetectors, 1);
+        std::vector<std::vector<unsigned short> > cellToStringIndex(numSubdetectors, std::vector<unsigned short>());
+        std::vector<double> cellStartX(numSubdetectors, NAN);
+        std::vector<double> cellStartY(numSubdetectors, NAN);
+        std::vector<double> cellWidthX(numSubdetectors, NAN);
+        std::vector<double> cellWidthY(numSubdetectors, NAN);
+
+        for (unsigned short subdetectorNum=0;subdetectorNum<numSubdetectors;++subdetectorNum)
         {
-            bool divisionIsPossible = divideIntoCells(strings,
-                                                      cellStartX,
-                                                      cellStartY,
-                                                      cellWidthX,
-                                                      cellWidthY,
-                                                      cellGridNumX,
-                                                      cellGridNumY,
-                                                      cellToStringIndex);
-            
-            if (divisionIsPossible) break;
-            ++cellGridNumX;
-            ++cellGridNumY;
-            
-            if (cellGridNumX >= 1000) {
-                log_fatal("Could not generate a x-y cell division for your detector.");
+            // Try to split the detector into xy "cells" with 0 or 1 strings per cell.
+            // We do not need to optimize this, so we use a brute force approach:
+            // start with only one cell and subdivide it until the requirement 
+            // max(Nstringpercell)==1 is fulfilled.
+            cellGridNumX[subdetectorNum]=1;
+            cellGridNumY[subdetectorNum]=1;
+            cellToStringIndex[subdetectorNum].clear();
+
+            for(;;)
+            {
+                bool divisionIsPossible = divideIntoCells(strings,
+                                                          static_cast<int>(subdetectorNum),
+                                                          cellStartX[subdetectorNum],
+                                                          cellStartY[subdetectorNum],
+                                                          cellWidthX[subdetectorNum],
+                                                          cellWidthY[subdetectorNum],
+                                                          cellGridNumX[subdetectorNum],
+                                                          cellGridNumY[subdetectorNum],
+                                                          cellToStringIndex[subdetectorNum]);
+                
+                if (divisionIsPossible) break;
+                ++cellGridNumX[subdetectorNum];
+                ++cellGridNumY[subdetectorNum];
+                
+                if (cellGridNumX[subdetectorNum] >= 1000) {
+                    log_fatal("Could not generate a x-y cell division for your subdetector \"%s\".",
+                              subdetectorNameList[subdetectorNum].c_str());
+                }
             }
+            
+            log_info("subdetector #%u (\"%s\"):", subdetectorNum, subdetectorNameList[subdetectorNum].c_str());
+            log_info("Geometry cell division: %ux%u", cellGridNumX[subdetectorNum], cellGridNumY[subdetectorNum]);
+            log_info("from x=%fm, width=%fm", cellStartX[subdetectorNum], cellWidthX[subdetectorNum]);
+            log_info("from y=%fm, width=%fm", cellStartY[subdetectorNum], cellWidthY[subdetectorNum]);
         }
-        log_debug("Geometry cell division: %ux%u", cellGridNumX, cellGridNumY);
-        log_debug("from x=%fm, width=%fm", cellStartX, cellWidthX);
-        log_debug("from y=%fm, width=%fm", cellStartY, cellWidthY);
+        
         
         // try to split the detector into z "layers" with either a single dom number in it or
         // no dom number at all. We restrict ourselves to a detector where dom z-positions are
@@ -973,7 +1050,21 @@ namespace I3CLSimHelper
                     ++geoLayerNum.back();
                     
                     if (geoLayerNum.back() >= 1000) {
-                        log_fatal("There does not seem to be a possible layer division for your detector.");
+                        
+                        std::size_t counter=0;
+                        BOOST_FOREACH(const domStruct &currentDomStruct, strings[stringNum].doms)
+                        {
+                            log_error("DOM #%zu (id %u) @ pos=(%f,%f,%f)",
+                                      counter,
+                                      currentDomStruct.domID, 
+                                      currentDomStruct.posX,
+                                      currentDomStruct.posY,
+                                      currentDomStruct.posZ);
+                            ++counter;
+                        }
+                        
+                        log_fatal("There does not seem to be a possible layer division for your string %i on subdetector %i (\"%s\").",
+                                  stringNum, strings[stringNum].subdetectorNum, subdetectorNameList[strings[stringNum].subdetectorNum].c_str());
                     }
                 }
                 
@@ -1063,13 +1154,6 @@ namespace I3CLSimHelper
         output << "#define NUM_STRINGS " << strings.size() << std::endl;
         output << "#define OM_RADIUS " << omRadius << "f" << std::endl;
         
-        output << "#define GEO_CELL_NUM_X " << cellGridNumX << std::endl;
-        output << "#define GEO_CELL_NUM_Y " << cellGridNumY << std::endl;
-        output << "#define GEO_CELL_WIDTH_X " << cellWidthX << "f" << std::endl;
-        output << "#define GEO_CELL_WIDTH_Y " << cellWidthY << "f" << std::endl;
-        output << "#define GEO_CELL_START_X " << cellStartX << "f" << std::endl;
-        output << "#define GEO_CELL_START_Y " << cellStartY << "f" << std::endl;
-        
         output << "#define GEO_LAYER_STRINGSET_NUM " << numStringSets << std::endl;
         output << "#define GEO_LAYER_STRINGSET_MAX_NUM_LAYERS " << maxLayerNum << std::endl;
         
@@ -1126,19 +1210,34 @@ namespace I3CLSimHelper
         output << std::endl;
 
         
-        output << "__constant unsigned short geoCellIndex[GEO_CELL_NUM_X*GEO_CELL_NUM_Y] = {" << std::endl;
-        for (sizeType j=0;j<cellGridNumY;++j){
-            for (sizeType i=0;i<cellGridNumX;++i){     
-                unsigned short value = cellToStringIndex[j*cellGridNumX+i];
-                if (value == 0xFFFF) {
-                    output << "  " << "0xFFFF" << ", " << std::endl;
-                } else {
-                    output << "  " << value << ", " << std::endl;
+        output << "#define GEO_CELL_NUM_SUBDETECTORS " << numSubdetectors << std::endl;
+        for (unsigned short subdetectorNum=0;subdetectorNum<numSubdetectors;++subdetectorNum)
+        {
+            std::string subdetectorNumStringSuffix = "_" + boost::lexical_cast<std::string>(subdetectorNum);
+            
+            output << "#define GEO_CELL_NUM_X" << subdetectorNumStringSuffix << " " << cellGridNumX[subdetectorNum] << std::endl;
+            output << "#define GEO_CELL_NUM_Y" << subdetectorNumStringSuffix << " " << cellGridNumY[subdetectorNum] << std::endl;
+            output << "#define GEO_CELL_WIDTH_X" << subdetectorNumStringSuffix << " " << cellWidthX[subdetectorNum] << "f" << std::endl;
+            output << "#define GEO_CELL_WIDTH_Y" << subdetectorNumStringSuffix << " " << cellWidthY[subdetectorNum] << "f" << std::endl;
+            output << "#define GEO_CELL_START_X" << subdetectorNumStringSuffix << " " << cellStartX[subdetectorNum] << "f" << std::endl;
+            output << "#define GEO_CELL_START_Y" << subdetectorNumStringSuffix << " " << cellStartY[subdetectorNum] << "f" << std::endl;
+
+            output << "__constant unsigned short geoCellIndex" << subdetectorNumStringSuffix << "[GEO_CELL_NUM_X" << subdetectorNumStringSuffix << "*GEO_CELL_NUM_Y" << subdetectorNumStringSuffix << "] = {" << std::endl;
+            for (sizeType j=0;j<cellGridNumY[subdetectorNum];++j){
+                for (sizeType i=0;i<cellGridNumX[subdetectorNum];++i){     
+                    const std::vector<unsigned short> &this_cellToStringIndex = cellToStringIndex[subdetectorNum];
+                    const unsigned short value = this_cellToStringIndex[j*cellGridNumX[subdetectorNum]+i];
+                    
+                    if (value == 0xFFFF) {
+                        output << "  " << "0xFFFF" << ", " << std::endl;
+                    } else {
+                        output << "  " << value << ", " << std::endl;
+                    }
                 }
             }
-        }
-        output << "};" << std::endl;
-        
+            output << "};" << std::endl;
+            output << std::endl;
+        }        
         
         output << "__constant unsigned char geoStringInStringSet[NUM_STRINGS] = {" << std::endl;
         for (unsigned int i=0;i<strings.size();++i)

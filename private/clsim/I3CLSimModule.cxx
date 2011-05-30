@@ -161,6 +161,11 @@ geometryIsConfigured_(false)
                  "Ignore all OMKeys with these DOM IDs",
                  ignoreDomIDs_);
 
+    AddParameter("IgnoreSubdetectors",
+                 "Ignore all OMKeys with these subdetector names",
+                 ignoreSubdetectors_);
+
+    
     // add an outbox
     AddOutBox("OutBox");
 
@@ -264,6 +269,7 @@ void I3CLSimModule::Configure()
     
     GetParameter("IgnoreStrings", ignoreStrings_);
     GetParameter("IgnoreDomIDs", ignoreDomIDs_);
+    GetParameter("IgnoreSubdetectors", ignoreSubdetectors_);
 
     if (!wavelengthGenerationBias_) {
         wavelengthGenerationBias_ = I3CLSimWlenDependentValueConstantConstPtr(new I3CLSimWlenDependentValueConstant(1.));
@@ -431,6 +437,7 @@ void I3CLSimModule::Geometry(I3FramePtr frame)
     
     std::set<int> ignoreStringsSet(ignoreStrings_.begin(), ignoreStrings_.end());
     std::set<unsigned int> ignoreDomIDsSet(ignoreDomIDs_.begin(), ignoreDomIDs_.end());
+    std::set<std::string> ignoreSubdetectorsSet(ignoreSubdetectors_.begin(), ignoreSubdetectors_.end());
     
     if (ignoreNonIceCubeOMNumbers_) 
     {    
@@ -439,6 +446,7 @@ void I3CLSimModule::Geometry(I3FramePtr frame)
          new I3CLSimSimpleGeometryFromI3Geometry(DOMRadius_, geometryObject,
                                                  ignoreStringsSet,
                                                  ignoreDomIDsSet,
+                                                 ignoreSubdetectorsSet,
                                                  1,                                     // ignoreStringIDsSmallerThan
                                                  std::numeric_limits<int32_t>::max(),   // ignoreStringIDsLargerThan
                                                  1,                                     // ignoreDomIDsSmallerThan
@@ -452,6 +460,7 @@ void I3CLSimModule::Geometry(I3FramePtr frame)
          new I3CLSimSimpleGeometryFromI3Geometry(DOMRadius_, geometryObject,
                                                  ignoreStringsSet,
                                                  ignoreDomIDsSet,
+                                                 ignoreSubdetectorsSet,
                                                  std::numeric_limits<int32_t>::min(),   // ignoreStringIDsSmallerThan
                                                  std::numeric_limits<int32_t>::max(),   // ignoreStringIDsLargerThan
                                                  std::numeric_limits<uint32_t>::min(),  // ignoreDomIDsSmallerThan

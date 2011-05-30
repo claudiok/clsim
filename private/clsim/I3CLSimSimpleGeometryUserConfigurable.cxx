@@ -11,7 +11,8 @@ stringIDs_(numOMs, 0),
 domIDs_(numOMs, 0),
 posX_(numOMs, NAN),
 posY_(numOMs, NAN),
-posZ_(numOMs, NAN)
+posZ_(numOMs, NAN),
+subdetectors_(numOMs, "")
 {
     
 }

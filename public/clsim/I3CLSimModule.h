@@ -169,6 +169,9 @@ private:
     /// Parameter: Ignore all OMKeys with these DOM IDs
     std::vector<unsigned int> ignoreDomIDs_;
 
+    /// Parameter: Ignore all OMKeys with these subdetector names
+    std::vector<std::string> ignoreSubdetectors_;
+
 private:
     // default, assignment, and copy constructor declared private
     I3CLSimModule();

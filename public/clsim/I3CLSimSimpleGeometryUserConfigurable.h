@@ -25,12 +25,14 @@ public:
     virtual const std::vector<double> &GetPosXVector() const {return posX_;}
     virtual const std::vector<double> &GetPosYVector() const {return posY_;}
     virtual const std::vector<double> &GetPosZVector() const {return posZ_;}
+    virtual const std::vector<std::string> &GetSubdetectorVector() const {return subdetectors_;}
 
     virtual int32_t GetStringID(std::size_t pos) const {return stringIDs_.at(pos);}
     virtual uint32_t GetDomID(std::size_t pos) const {return domIDs_.at(pos);}
     virtual double GetPosX(std::size_t pos) const {return posX_.at(pos);}
     virtual double GetPosY(std::size_t pos) const {return posY_.at(pos);}
     virtual double GetPosZ(std::size_t pos) const {return posZ_.at(pos);}
+    virtual std::string GetSubdetector(std::size_t pos) const {return subdetectors_.at(pos);}
     
     
     // additional methods
@@ -39,6 +41,7 @@ public:
     virtual void SetPosX(std::size_t pos, double val) {posX_.at(pos) = val;}
     virtual void SetPosY(std::size_t pos, double val) {posY_.at(pos) = val;}
     virtual void SetPosZ(std::size_t pos, double val) {posZ_.at(pos) = val;}
+    virtual void SetSubdetector(std::size_t pos, const std::string &val) {subdetectors_.at(pos) = val;}
 
     
 private:
@@ -50,6 +53,7 @@ private:
     std::vector<double> posX_;
     std::vector<double> posY_;
     std::vector<double> posZ_;
+    std::vector<std::string> subdetectors_;
 };
 
 I3_POINTER_TYPEDEFS(I3CLSimSimpleGeometryUserConfigurable);

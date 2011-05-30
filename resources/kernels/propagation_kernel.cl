@@ -186,6 +186,216 @@ inline float2 sphDirFromCar(float4 carDir)
 }
 
 
+inline void checkForCollision_OnString(
+    const unsigned short stringNum,
+    const float photonDirLenXYSqr,
+    const float4 photonPosAndTime,
+    const float4 photonDirAndWlen,
+    float *thisStepLength,
+    bool *hitRecorded,
+    unsigned short *hitOnString,
+    unsigned short *hitOnDom,
+    __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal
+    )
+{
+    // find the string set for this string
+    unsigned char stringSet = geoStringInStringSet[stringNum];
+
+    { // check intersection with string cylinder
+        // only use test if uhat lateral component is bigger than about 0.1 (NEED to check bigger than zero)
+        const float smin = my_divide(sqr(((photonPosAndTime.x - convert_float(geoStringPosX[stringNum]))*photonDirAndWlen.y - (photonPosAndTime.y - convert_float(geoStringPosY[stringNum]))*photonDirAndWlen.x)), photonDirLenXYSqr);
+        //if (smin > sqr(convert_float(geoStringRadius[stringNum]))) return;  // NOTE: smin == distance squared
+        if (smin > sqr(convert_float(GEO_STRING_MAX_RADIUS))) return;  // NOTE: smin == distance squared
+    }
+
+    { // check if photon is above or below the string
+        if ((photonDirAndWlen.z > 0.f) && (photonPosAndTime.z > geoStringMaxZ[stringNum])) return;
+        if ((photonDirAndWlen.z < 0.f) && (photonPosAndTime.z < geoStringMinZ[stringNum])) return;
+    }
+
+    // this photon could potentially be hitting an om
+    // -> check them all
+
+    int lowLayerZ = convert_int((photonPosAndTime.z-geoLayerStartZ[stringSet])/geoLayerHeight[stringSet]);
+    int highLayerZ = convert_int((photonPosAndTime.z+photonDirAndWlen.z*(*thisStepLength)-geoLayerStartZ[stringSet])/geoLayerHeight[stringSet]);
+    if (highLayerZ<lowLayerZ) {int tmp=lowLayerZ; lowLayerZ=highLayerZ; highLayerZ=tmp;}
+    lowLayerZ = min(max(lowLayerZ, 0), geoLayerNum[stringSet]-1);
+    highLayerZ = min(max(highLayerZ, 0), geoLayerNum[stringSet]-1);
+
+    //__constant const unsigned short *geoLayerToOMNumIndex=geoLayerToOMNumIndexPerStringSet + (convert_uint(stringSet)*GEO_LAYER_STRINGSET_MAX_NUM_LAYERS) + lowLayerZ;
+    __local const unsigned short *geoLayerToOMNumIndex=geoLayerToOMNumIndexPerStringSetLocal + (convert_uint(stringSet)*GEO_LAYER_STRINGSET_MAX_NUM_LAYERS) + lowLayerZ;
+    for (unsigned int layer_z=lowLayerZ;layer_z<=highLayerZ;++layer_z,++geoLayerToOMNumIndex)
+    {
+        const unsigned short domNum = *geoLayerToOMNumIndex;
+        if (domNum==0xFFFF) continue; // empty layer for this string
+
+        float domPosX, domPosY, domPosZ;
+        geometryGetDomPosition(stringNum, domNum, &domPosX, &domPosY, &domPosZ);
+
+        const float4 drvec = (const float4)(photonPosAndTime.x - domPosX,
+            photonPosAndTime.y - domPosY,
+            photonPosAndTime.z - domPosZ,
+            0.f);
+
+        const float dr2     = dot(drvec,drvec);
+        const float urdot   = dot(drvec, photonDirAndWlen); // this assumes drvec.w==0
+
+        float discr   = sqr(urdot) - dr2 + OM_RADIUS*OM_RADIUS;   // (discr)^2
+
+        //if (dr2 < OM_RADIUS*OM_RADIUS) // start point inside the OM
+        //{
+        //    *thisStepLength=0.f;
+        //
+        //    // record a hit
+        //    *hitOnString=stringNum;
+        //    *hitOnDom=domNum;
+        //
+        //    *hitRecorded=true;
+        //}
+        //else
+        if (discr >= 0.0f) 
+        {
+            discr = my_sqrt(discr);
+
+            float smin = -urdot - discr;
+            if (smin < 0.0f) smin = -urdot + discr;
+
+            // check if distance to intersection <= thisStepLength; if not then no detection 
+            if ((smin >= 0.0f) && (smin < *thisStepLength))
+            {
+                *thisStepLength=smin; // limit step length
+
+                // record a hit
+                *hitOnString=stringNum;
+                *hitOnDom=domNum;
+
+                *hitRecorded=true;
+                // continue searching, maybe we hit a closer OM..
+            }
+        }
+    }
+
+}
+
+inline void checkForCollision_InCell(
+    const float photonDirLenXYSqr,
+    const float4 photonPosAndTime,
+    const float4 photonDirAndWlen,
+    float *thisStepLength,
+    bool *hitRecorded,
+    unsigned short *hitOnString,
+    unsigned short *hitOnDom,
+    __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal,
+    
+    __constant unsigned short *this_geoCellIndex,
+    const float this_geoCellStartX,
+    const float this_geoCellStartY,
+    const float this_geoCellWidthX,
+    const float this_geoCellWidthY,
+    const int this_geoCellNumX,
+    const int this_geoCellNumY
+    )
+{
+    int lowCellX = convert_int((photonPosAndTime.x-this_geoCellStartX)/this_geoCellWidthX);
+    int lowCellY = convert_int((photonPosAndTime.y-this_geoCellStartY)/this_geoCellWidthY);
+
+    int highCellX = convert_int((photonPosAndTime.x+photonDirAndWlen.x*(*thisStepLength)-this_geoCellStartX)/this_geoCellWidthX);
+    int highCellY = convert_int((photonPosAndTime.y+photonDirAndWlen.y*(*thisStepLength)-this_geoCellStartY)/this_geoCellWidthY);
+
+    if (highCellX<lowCellX) {int tmp=lowCellX; lowCellX=highCellX; highCellX=tmp;}
+    if (highCellY<lowCellY) {int tmp=lowCellY; lowCellY=highCellY; highCellY=tmp;}
+
+    lowCellX = min(max(lowCellX, 0), this_geoCellNumX-1);
+    lowCellY = min(max(lowCellY, 0), this_geoCellNumY-1);
+    highCellX = min(max(highCellX, 0), this_geoCellNumX-1);
+    highCellY = min(max(highCellY, 0), this_geoCellNumY-1);
+
+    for (unsigned int cell_y=lowCellY;cell_y<=highCellY;++cell_y)
+    {
+        for (unsigned int cell_x=lowCellX;cell_x<=highCellX;++cell_x)
+        {
+            const unsigned short stringNum = this_geoCellIndex[cell_y*this_geoCellNumX+cell_x];
+            if (stringNum==0xFFFF) continue; // empty cell
+        
+            checkForCollision_OnString(
+                stringNum,
+                photonDirLenXYSqr,
+                photonPosAndTime,
+                photonDirAndWlen,
+                thisStepLength,
+                hitRecorded,
+                hitOnString,
+                hitOnDom,
+                geoLayerToOMNumIndexPerStringSetLocal
+                );
+        }
+    }
+    
+}
+
+inline void checkForCollision_InCells(
+    const float photonDirLenXYSqr,
+    const float4 photonPosAndTime,
+    const float4 photonDirAndWlen,
+    float *thisStepLength,
+    bool *hitRecorded,
+    unsigned short *hitOnString,
+    unsigned short *hitOnDom,
+    __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal
+    )
+{
+    // using macros and hard-coded names is
+    // not really the best thing to do here..
+    // replace with a loop sometime.
+    
+#define DO_CHECK(subdetectorNum)                \
+    checkForCollision_InCell(                   \
+        photonDirLenXYSqr,                      \
+        photonPosAndTime,                       \
+        photonDirAndWlen,                       \
+        thisStepLength,                         \
+        hitRecorded,                            \
+        hitOnString,                            \
+        hitOnDom,                               \
+        geoLayerToOMNumIndexPerStringSetLocal,  \
+                                                \
+        geoCellIndex_ ## subdetectorNum,        \
+        GEO_CELL_START_X_ ## subdetectorNum,    \
+        GEO_CELL_START_Y_ ## subdetectorNum,    \
+        GEO_CELL_WIDTH_X_ ## subdetectorNum,    \
+        GEO_CELL_WIDTH_Y_ ## subdetectorNum,    \
+        GEO_CELL_NUM_X_ ## subdetectorNum,      \
+        GEO_CELL_NUM_Y_ ## subdetectorNum       \
+        );                                      \
+
+    // argh..
+#if GEO_CELL_NUM_SUBDETECTORS > 0
+    DO_CHECK(0);
+#endif        
+
+#if GEO_CELL_NUM_SUBDETECTORS > 1
+    DO_CHECK(1);
+#endif        
+
+#if GEO_CELL_NUM_SUBDETECTORS > 2
+    DO_CHECK(2);
+#endif        
+
+#if GEO_CELL_NUM_SUBDETECTORS > 3
+    DO_CHECK(3);
+#endif        
+
+#if GEO_CELL_NUM_SUBDETECTORS > 4
+    DO_CHECK(4);
+#endif        
+        
+#if GEO_CELL_NUM_SUBDETECTORS > 5
+#error more than 5 subdetectors are currently not supported.
+#endif
+
+#undef DO_CHECK
+}
+    
 inline bool checkForCollision(const float4 photonPosAndTime,
     const float4 photonDirAndWlen,
     float inv_groupvel,
@@ -204,109 +414,21 @@ inline bool checkForCollision(const float4 photonPosAndTime,
     bool hitRecorded=false;
     unsigned short hitOnString;
     unsigned short hitOnDom;
-
+    
     // check for collisions
     const float photonDirLenXYSqr = sqr(photonDirAndWlen.x) + sqr(photonDirAndWlen.y);
     if (photonDirLenXYSqr <= 0.f) return false;
 
-    int lowCellX = convert_int((photonPosAndTime.x-GEO_CELL_START_X)/GEO_CELL_WIDTH_X);
-    int lowCellY = convert_int((photonPosAndTime.y-GEO_CELL_START_Y)/GEO_CELL_WIDTH_Y);
-
-    int highCellX = convert_int((photonPosAndTime.x+photonDirAndWlen.x*(*thisStepLength)-GEO_CELL_START_X)/GEO_CELL_WIDTH_X);
-    int highCellY = convert_int((photonPosAndTime.y+photonDirAndWlen.y*(*thisStepLength)-GEO_CELL_START_Y)/GEO_CELL_WIDTH_Y);
-
-    if (highCellX<lowCellX) {int tmp=lowCellX; lowCellX=highCellX; highCellX=tmp;}
-    if (highCellY<lowCellY) {int tmp=lowCellY; lowCellY=highCellY; highCellY=tmp;}
-
-    lowCellX = min(max(lowCellX, 0), GEO_CELL_NUM_X-1);
-    lowCellY = min(max(lowCellY, 0), GEO_CELL_NUM_X-1);
-    highCellX = min(max(highCellX, 0), GEO_CELL_NUM_X-1);
-    highCellY = min(max(highCellY, 0), GEO_CELL_NUM_Y-1);
-
-    for (unsigned int cell_y=lowCellY;cell_y<=highCellY;++cell_y)
-        for (unsigned int cell_x=lowCellX;cell_x<=highCellX;++cell_x)
-    {
-        const unsigned short stringNum = geoCellIndex[cell_y*GEO_CELL_NUM_X+cell_x];
-        if (stringNum==0xFFFF) continue; // empty cell
-
-        // find the string set for this string
-        unsigned char stringSet = geoStringInStringSet[stringNum];
-
-        { // check intersection with string cylinder
-            // only use test if uhat lateral component is bigger than about 0.1 (NEED to check bigger than zero)
-            const float smin = my_divide(sqr(((photonPosAndTime.x - convert_float(geoStringPosX[stringNum]))*photonDirAndWlen.y - (photonPosAndTime.y - convert_float(geoStringPosY[stringNum]))*photonDirAndWlen.x)), photonDirLenXYSqr);
-            //if (smin > sqr(convert_float(geoStringRadius[stringNum]))) continue;  // NOTE: smin == distance squared
-            if (smin > sqr(convert_float(GEO_STRING_MAX_RADIUS))) continue;  // NOTE: smin == distance squared
-        }
-
-        { // check if photon is above or below the string
-            if ((photonDirAndWlen.z > 0.f) && (photonPosAndTime.z > geoStringMaxZ[stringNum])) continue;
-            if ((photonDirAndWlen.z < 0.f) && (photonPosAndTime.z < geoStringMinZ[stringNum])) continue;
-        }
-
-        // this photon could potentially be hitting an om
-        // -> check them all
-
-        int lowLayerZ = convert_int((photonPosAndTime.z-geoLayerStartZ[stringSet])/geoLayerHeight[stringSet]);
-        int highLayerZ = convert_int((photonPosAndTime.z+photonDirAndWlen.z*(*thisStepLength)-geoLayerStartZ[stringSet])/geoLayerHeight[stringSet]);
-        if (highLayerZ<lowLayerZ) {int tmp=lowLayerZ; lowLayerZ=highLayerZ; highLayerZ=tmp;}
-        lowLayerZ = min(max(lowLayerZ, 0), geoLayerNum[stringSet]-1);
-        highLayerZ = min(max(highLayerZ, 0), geoLayerNum[stringSet]-1);
-
-        //__constant const unsigned short *geoLayerToOMNumIndex=geoLayerToOMNumIndexPerStringSet + (convert_uint(stringSet)*GEO_LAYER_STRINGSET_MAX_NUM_LAYERS) + lowLayerZ;
-        __local const unsigned short *geoLayerToOMNumIndex=geoLayerToOMNumIndexPerStringSetLocal + (convert_uint(stringSet)*GEO_LAYER_STRINGSET_MAX_NUM_LAYERS) + lowLayerZ;
-        for (unsigned int layer_z=lowLayerZ;layer_z<=highLayerZ;++layer_z,++geoLayerToOMNumIndex)
-        {
-            const unsigned short domNum = *geoLayerToOMNumIndex;
-            if (domNum==0xFFFF) continue; // empty layer for this string
-
-            float domPosX, domPosY, domPosZ;
-            geometryGetDomPosition(stringNum, domNum, &domPosX, &domPosY, &domPosZ);
-
-            const float4 drvec = (const float4)(photonPosAndTime.x - domPosX,
-                photonPosAndTime.y - domPosY,
-                photonPosAndTime.z - domPosZ,
-                0.f);
-
-            const float dr2     = dot(drvec,drvec);
-            const float urdot   = dot(drvec, photonDirAndWlen); // this assumes drvec.w==0
-
-            float discr   = sqr(urdot) - dr2 + OM_RADIUS*OM_RADIUS;   // (discr)^2
-
-            //if (dr2 < OM_RADIUS*OM_RADIUS) // start point inside the OM
-            //{
-            //    *thisStepLength=0.f;
-            //
-            //    // record a hit
-            //    hitOnString=stringNum;
-            //    hitOnDom=domNum;
-            //
-            //    hitRecorded=true;
-            //}
-            //else
-            if (discr >= 0.0f) 
-            {
-                discr = my_sqrt(discr);
-
-                float smin = -urdot - discr;
-                if (smin < 0.0f) smin = -urdot + discr;
-
-                // check if distance to intersection <= thisStepLength; if not then no detection 
-                if ((smin >= 0.0f) && (smin < *thisStepLength))
-                {
-                    *thisStepLength=smin; // limit step length
-
-                    // record a hit
-                    hitOnString=stringNum;
-                    hitOnDom=domNum;
-
-                    hitRecorded=true;
-                    // continue searching, maybe we hit a closer OM..
-                }
-            }
-        }
-    } // for (strings/cells)
-
+    checkForCollision_InCells(
+        photonDirLenXYSqr,
+        photonPosAndTime,
+        photonDirAndWlen,
+        thisStepLength,
+        &hitRecorded,
+        &hitOnString,
+        &hitOnDom,
+        geoLayerToOMNumIndexPerStringSetLocal);
+    
     if (hitRecorded)
     {
         uint myIndex = atom_inc(hitIndex);
@@ -354,7 +476,6 @@ inline bool checkForCollision(const float4 photonPosAndTime,
 
     return hitRecorded;
 }
-
 
 
 __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOutputPhotons

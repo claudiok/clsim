@@ -36,12 +36,14 @@ public:
     virtual const std::vector<double> &GetPosXVector() const {return posX_;}
     virtual const std::vector<double> &GetPosYVector() const {return posY_;}
     virtual const std::vector<double> &GetPosZVector() const {return posZ_;}
+    virtual const std::vector<std::string> &GetSubdetectorVector() const {return subdetectors_;}
 
     virtual int32_t GetStringID(std::size_t pos) const {return stringIDs_.at(pos);}
     virtual uint32_t GetDomID(std::size_t pos) const {return domIDs_.at(pos);}
     virtual double GetPosX(std::size_t pos) const {return posX_.at(pos);}
     virtual double GetPosY(std::size_t pos) const {return posY_.at(pos);}
     virtual double GetPosZ(std::size_t pos) const {return posZ_.at(pos);}
+    virtual std::string GetSubdetector(std::size_t pos) const {return subdetectors_.at(pos);}
     
 private:
     double OMRadius_;
@@ -52,6 +54,7 @@ private:
     std::vector<double> posX_;
     std::vector<double> posY_;
     std::vector<double> posZ_;
+    std::vector<std::string> subdetectors_;
     
     int32_t ignoreStringIDsSmallerThan_;
     int32_t ignoreStringIDsLargerThan_;

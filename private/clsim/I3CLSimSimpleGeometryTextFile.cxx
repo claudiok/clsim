@@ -69,6 +69,7 @@ ignoreDomIDsLargerThan_(ignoreDomIDsLargerThan)
         posX_.push_back(x);
         posY_.push_back(y);
         posZ_.push_back(z);
+        subdetectors_.push_back("default"); // just some default name
         ++numOMs_;
     }
 
