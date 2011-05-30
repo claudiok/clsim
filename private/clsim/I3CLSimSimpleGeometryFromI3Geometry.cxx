@@ -17,12 +17,16 @@ const uint32_t I3CLSimSimpleGeometryFromI3Geometry::default_ignoreDomIDsLargerTh
 I3CLSimSimpleGeometryFromI3Geometry::
 I3CLSimSimpleGeometryFromI3Geometry(double OMRadius,
                                     const I3GeometryConstPtr &geometry,
+                                    const std::set<int> &ignoreStrings,
+                                    const std::set<unsigned int> &ignoreDomIDs,
                                     int32_t ignoreStringIDsSmallerThan,
                                     int32_t ignoreStringIDsLargerThan,
                                     uint32_t ignoreDomIDsSmallerThan,
                                     uint32_t ignoreDomIDsLargerThan)
 :
 OMRadius_(OMRadius),
+ignoreStrings_(ignoreStrings),
+ignoreDomIDs_(ignoreDomIDs),
 ignoreStringIDsSmallerThan_(ignoreStringIDsSmallerThan),
 ignoreStringIDsLargerThan_(ignoreStringIDsLargerThan),
 ignoreDomIDsSmallerThan_(ignoreDomIDsSmallerThan),
@@ -49,6 +53,9 @@ ignoreDomIDsLargerThan_(ignoreDomIDsLargerThan)
             (dom > ignoreDomIDsLargerThan_))
             continue;
 
+        if (ignoreStrings_.count(string)!=0) continue;
+        if (ignoreDomIDs_.count(dom)!=0) continue;
+        
         stringIDs_.push_back(string);
         domIDs_.push_back(dom);
         posX_.push_back(geo.position.GetX());

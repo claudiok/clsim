@@ -205,17 +205,20 @@ def GetAntaresOMGelAbsorptionLength():
 # The main function to return the effective area
 # of the Antares OM
 #################################################################
-def GetAntaresOMAcceptance(): 
+def GetAntaresOMAcceptance(domRadius = 0.2159*I3Units.m): # 17 inch diameter
     # Some constants from km3 (hit-eff_area_pmt.f and hit-transmit.f)
     pm_collection_efficiency = 0.9
     glass_width = 1.5*I3Units.cm
     gel_width = 1.*I3Units.cm
     
-    # 
+    # 9.3 inch PMT
     pmt_diameter = 9.3 * 0.0254*I3Units.m
     
     # Geometrical area of the om profile
-    om_area = math.pi * (pmt_diameter/2.)**2 #is im square meters
+    pmt_area = math.pi * (pmt_diameter/2.)**2 #is im square meters
+    
+    om_area = math.pi*domRadius**2.
+    
     
     # Get the tables from above
     q_eff = GetAntaresOMQuantumEfficiency()
@@ -228,7 +231,7 @@ def GetAntaresOMAcceptance():
     # value of bin  1 belongs to 310nm
     # value of bin 31 belongs to 610nm
     # Now combine them
-    om_eff_area = []
+    om_eff_area = [0.]
     for wavelength in range(300, 611, 10):
         this_abs_glass = abs_glass.GetValue(wavelength*I3Units.nanometer)
         this_abs_gel = abs_gel.GetValue(wavelength*I3Units.nanometer)
@@ -236,7 +239,7 @@ def GetAntaresOMAcceptance():
         if (this_abs_glass <= 0.) or (this_abs_gel <= 0.):
             current_om_eff_area = 0.
         else:
-            current_om_eff_area = om_area * \
+            current_om_eff_area = pmt_area * \
                                   pm_collection_efficiency * \
                                   q_eff.GetValue(wavelength*I3Units.nanometer) * \
                                   math.exp( -( glass_width / this_abs_glass ) ) * \
@@ -244,7 +247,9 @@ def GetAntaresOMAcceptance():
 
         om_eff_area.append(current_om_eff_area)
     
-    return I3CLSimWlenDependentValueFromTable(300.*I3Units.nanometer, 10.*I3Units.nanometer, numpy.array(om_eff_area))
+    
+    
+    return I3CLSimWlenDependentValueFromTable(290.*I3Units.nanometer, 10.*I3Units.nanometer, numpy.array(om_eff_area)/om_area)
 
 
 

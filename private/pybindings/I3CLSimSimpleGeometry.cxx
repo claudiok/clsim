@@ -165,12 +165,16 @@ void register_I3CLSimSimpleGeometry()
          "I3CLSimSimpleGeometryFromI3Geometry",
          bp::init<
          double, const I3GeometryConstPtr &,
+         const std::set<int> &,
+         const std::set<unsigned int> &,
          int32_t, int32_t,
          uint32_t, uint32_t
          >(
            (
             bp::arg("OMRadius"),
             bp::arg("geometry"),
+            bp::arg("ignoreStrings"),
+            bp::arg("ignoreDomIDs"),
             bp::arg("ignoreStringIDsSmallerThan")=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreStringIDsSmallerThan,
             bp::arg("ignoreStringIDsLargerThan")=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreStringIDsLargerThan,
             bp::arg("ignoreDomIDsSmallerThan")=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreDomIDsSmallerThan,

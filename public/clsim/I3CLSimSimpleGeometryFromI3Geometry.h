@@ -5,6 +5,7 @@
 #include "dataclasses/geometry/I3Geometry.h"
 
 #include <string>
+#include <set>
 
 /**
  * @brief Describes a detector geometry.
@@ -21,6 +22,8 @@ public:
 
     I3CLSimSimpleGeometryFromI3Geometry(double OMRadius, 
                                         const I3GeometryConstPtr &geometry,
+                                        const std::set<int> &ignoreStrings,
+                                        const std::set<unsigned int> &ignoreDomIDs,
                                         int32_t ignoreStringIDsSmallerThan=default_ignoreStringIDsSmallerThan,
                                         int32_t ignoreStringIDsLargerThan=default_ignoreStringIDsLargerThan,
                                         uint32_t ignoreDomIDsSmallerThan=default_ignoreDomIDsSmallerThan,
@@ -53,6 +56,9 @@ private:
     std::vector<double> posY_;
     std::vector<double> posZ_;
     
+    std::set<int> ignoreStrings_;
+    std::set<unsigned int> ignoreDomIDs_;
+
     int32_t ignoreStringIDsSmallerThan_;
     int32_t ignoreStringIDsLargerThan_;
     uint32_t ignoreDomIDsSmallerThan_;

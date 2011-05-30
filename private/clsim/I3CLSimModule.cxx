@@ -43,7 +43,7 @@
 #include "clsim/I3CLSimModuleHelper.h"
 
 #include <limits>
-
+#include <set>
 
 // The module
 I3_MODULE(I3CLSimModule);
@@ -153,6 +153,13 @@ geometryIsConfigured_(false)
                  "Collect statistics in this frame object (e.g. number of photons generated or reaching the DOMs)",
                  statisticsName_);
 
+    AddParameter("IgnoreStrings",
+                 "Ignore all OMKeys with these string IDs",
+                 ignoreStrings_);
+
+    AddParameter("IgnoreDomIDs",
+                 "Ignore all OMKeys with these DOM IDs",
+                 ignoreDomIDs_);
 
     // add an outbox
     AddOutBox("OutBox");
@@ -255,6 +262,9 @@ void I3CLSimModule::Configure()
     GetParameter("StatisticsName", statisticsName_);
     collectStatistics_ = (statisticsName_!="");
     
+    GetParameter("IgnoreStrings", ignoreStrings_);
+    GetParameter("IgnoreDomIDs", ignoreDomIDs_);
+
     if (!wavelengthGenerationBias_) {
         wavelengthGenerationBias_ = I3CLSimWlenDependentValueConstantConstPtr(new I3CLSimWlenDependentValueConstant(1.));
     }
@@ -418,11 +428,17 @@ void I3CLSimModule::Geometry(I3FramePtr frame)
     if (!geometryObject) log_fatal("Geometry frame does not have an I3Geometry object!");
     
     log_info("Converting geometry..");
+    
+    std::set<int> ignoreStringsSet(ignoreStrings_.begin(), ignoreStrings_.end());
+    std::set<unsigned int> ignoreDomIDsSet(ignoreDomIDs_.begin(), ignoreDomIDs_.end());
+    
     if (ignoreNonIceCubeOMNumbers_) 
     {    
         geometry_ = I3CLSimSimpleGeometryFromI3GeometryPtr
         (
          new I3CLSimSimpleGeometryFromI3Geometry(DOMRadius_, geometryObject,
+                                                 ignoreStringsSet,
+                                                 ignoreDomIDsSet,
                                                  1,                                     // ignoreStringIDsSmallerThan
                                                  std::numeric_limits<int32_t>::max(),   // ignoreStringIDsLargerThan
                                                  1,                                     // ignoreDomIDsSmallerThan
@@ -434,6 +450,8 @@ void I3CLSimModule::Geometry(I3FramePtr frame)
         geometry_ = I3CLSimSimpleGeometryFromI3GeometryPtr
         (
          new I3CLSimSimpleGeometryFromI3Geometry(DOMRadius_, geometryObject,
+                                                 ignoreStringsSet,
+                                                 ignoreDomIDsSet,
                                                  std::numeric_limits<int32_t>::min(),   // ignoreStringIDsSmallerThan
                                                  std::numeric_limits<int32_t>::max(),   // ignoreStringIDsLargerThan
                                                  std::numeric_limits<uint32_t>::min(),  // ignoreDomIDsSmallerThan

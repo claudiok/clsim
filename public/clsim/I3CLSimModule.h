@@ -163,6 +163,12 @@ private:
     std::string statisticsName_;
     bool collectStatistics_;
     
+    /// Parameter: Ignore all OMKeys with these string IDs
+    std::vector<int> ignoreStrings_;
+
+    /// Parameter: Ignore all OMKeys with these DOM IDs
+    std::vector<unsigned int> ignoreDomIDs_;
+
 private:
     // default, assignment, and copy constructor declared private
     I3CLSimModule();
