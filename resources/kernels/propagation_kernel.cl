@@ -3,6 +3,9 @@
 #pragma OPENCL EXTENSION cl_khr_byte_addressable_store : enable
 //#pragma OPENCL EXTENSION cl_khr_fp16 : enable
 
+// debug mode: store all photons right after they are generated on string0/OM0
+//#define DEBUG_STORE_GENERATED_PHOTONS
+
 //#define PRINTF_ENABLED
 
 // disable dbg_printf for GPU
@@ -417,6 +420,12 @@ inline bool checkForCollision(const float4 photonPosAndTime,
     
     // check for collisions
     const float photonDirLenXYSqr = sqr(photonDirAndWlen.x) + sqr(photonDirAndWlen.y);
+#ifdef DEBUG_STORE_GENERATED_PHOTONS
+    hitRecorded=true;
+    hitOnString=0;
+    hitOnDom=0;
+
+#else
     if (photonDirLenXYSqr <= 0.f) return false;
 
     checkForCollision_InCells(
@@ -428,6 +437,7 @@ inline bool checkForCollision(const float4 photonPosAndTime,
         &hitOnString,
         &hitOnDom,
         geoLayerToOMNumIndexPerStringSetLocal);
+#endif    
     
     if (hitRecorded)
     {
@@ -673,7 +683,13 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
 
         // the photon is now either being absorbed or scattered.
         // Check for collisions in its way
-        bool collided = checkForCollision(photonPosAndTime, 
+#ifdef DEBUG_STORE_GENERATED_PHOTONS
+        bool collided;
+        if (RNG_CALL_UNIFORM_OC > 0.9)  // prescale: 10%
+#else
+        bool
+#endif
+        collided = checkForCollision(photonPosAndTime, 
             photonDirAndWlen, 
             inv_groupvel,
             photonTotalPathLength,
@@ -687,6 +703,10 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             outputPhotons, 
             geoLayerToOMNumIndexPerStringSetLocal
             );
+            
+#ifdef DEBUG_STORE_GENERATED_PHOTONS
+        collided = true;
+#endif
         if (collided) {
             // get rid of the photon if we detected it
             abs_lens_left = 0.f;
