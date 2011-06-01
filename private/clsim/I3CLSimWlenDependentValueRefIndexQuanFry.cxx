@@ -79,7 +79,7 @@ double I3CLSimWlenDependentValueRefIndexQuanFry::GetValue(double wlen) const
 double I3CLSimWlenDependentValueRefIndexQuanFry::GetDerivative(double wlen) const
 {
 	const double x = I3Units::nanometer/wlen;
-	return -x*x*(a2 + x*(2.0f*a3 + x*3.0f*a4));
+	return -x*x*(a2 + x*(2.0f*a3 + x*3.0f*a4))/I3Units::nanometer;
 }
 
 std::string I3CLSimWlenDependentValueRefIndexQuanFry::GetOpenCLFunction(const std::string &functionName) const
@@ -114,7 +114,7 @@ std::string I3CLSimWlenDependentValueRefIndexQuanFry::GetOpenCLFunctionDerivativ
     "    const float a4 = " + to_float_string(a4) + ";\n"
     "    \n"
     "    const float x = " + to_float_string(I3Units::nanometer) + "/wavelength;\n"
-    "    return -x*x*(a2 + x*(2.0f*a3 + x*3.0f*a4));\n"
+    "    return -x*x*(a2 + x*(2.0f*a3 + x*3.0f*a4))/" + to_float_string(I3Units::nanometer) + ";\n"
     "}\n"
     ;
     

@@ -352,7 +352,7 @@ bx.errorbar([374.5],
 bx.xaxis.set_major_locator(matplotlib.ticker.MaxNLocator(20))
 bx.set_xlim(290.,610.)
 #bx.set_ylim(0.,100.)
-bx.legend(loc="upper left")
+bx.legend(loc="upper right")
 bx.grid(True)
 bx.set_xlabel("wavelength $\\lambda [\\mathrm{nm}]$")
 bx.set_ylabel("absorption length $[\\mathrm{m}]$")
@@ -395,7 +395,7 @@ cx.plot(wlens, getScatteringLengthSaclay(wlens), linewidth=2, color='m', label=r
 cx.xaxis.set_major_locator(matplotlib.ticker.MaxNLocator(20))
 cx.set_xlim(290.,610.)
 cx.grid(True)
-cx.legend(loc='upper right')
+cx.legend(loc='upper left')
 cx.set_xlabel(r"wavelength $\lambda [\mathrm{nm}]$")
 cx.set_ylabel(r"scattering length $\lambda_\mathrm{scat;geom}$ $[\mathrm{m}]$")
 
