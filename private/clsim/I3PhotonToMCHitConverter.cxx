@@ -275,6 +275,9 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
                 log_fatal("There is no valid calibration! (Consider setting \"DefaultRelativeDOMEfficiency\" != NaN)");
             } else {
                 efficiency_from_calibration = defaultRelativeDOMEfficiency_;
+                log_debug("OM (%i/%u): efficiency_from_calibration=%g (default (I3Calibration not found))",
+                          key.GetString(), key.GetOM(),
+                          efficiency_from_calibration);
             }
         } else {
             std::map<OMKey, I3DOMCalibration>::const_iterator cal_it = calibration_->domCal.find(key);
@@ -334,7 +337,7 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
             
             // sanity check: are photons on the OM's surface?
             const double distFromDOMCenter = std::sqrt(pr2);
-            if (std::abs(distFromDOMCenter - DOMOversizeFactor_*DOMRadiusWithoutOversize_) > 1.*I3Units::cm) {
+            if (std::abs(distFromDOMCenter - DOMOversizeFactor_*DOMRadiusWithoutOversize_) > 10.*I3Units::cm) {
                 log_fatal("distance not %f*%f=%fmm.. it is %fmm (diff=%gmm) (OMKey=(%i,%u)",
                           DOMOversizeFactor_,
                           DOMRadiusWithoutOversize_/I3Units::mm,

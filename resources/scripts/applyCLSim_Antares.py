@@ -84,6 +84,8 @@ print "output file is %s" % outdir + outfile
 
 ########################
 
+
+
 if options.MMCWITHRECC and (not options.APPLYMMC):
     print "using the --mmc-with-recc without --apply-mmc will have no effect"
 
@@ -146,11 +148,11 @@ randomService = phys_services.I3SPRNGRandomService(
     nstreams = 10000,
     streamnum = options.RUNNUMBER)
 
-# ice properties (SPICE-Mie model)
-mediumProperties = clsim.MakeIceCubeMediumProperties()
+# water properties (partic-0.0075)
+mediumProperties = clsim.MakeAntaresMediumProperties()
 
-domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius = 0.16510*I3Units.m*radiusOverSizeFactor)
-domAngularSensitivity = clsim.GetIceCubeDOMAngularSensitivity(holeIce=True)
+domAcceptance = clsim.GetAntaresOMAcceptance(domRadius = (17./2.) * 0.0254*I3Units.m*radiusOverSizeFactor)
+domAngularSensitivity = clsim.GetAntaresOMAngularSensitivity(name='Spring09')
 
 # parameterizations for fast simulation (bypassing Geant4)
 # converters first:
@@ -276,11 +278,10 @@ else:
 
 tray.AddModule("I3CLSimModule", "clsim",
                MCTreeName=clSimMCTreeName,
-               DOMRadius = 0.16510*I3Units.m*radiusOverSizeFactor, # 13" diameter
+               DOMRadius = (17./2.) * 0.0254*I3Units.m*radiusOverSizeFactor, # 13" diameter
                RandomService=randomService,
                MediumProperties=mediumProperties,
-               IgnoreSubdetectors = ["IceTop"],
-               IgnoreNonIceCubeOMNumbers=False, # ignore AMANDA and IceTop OMKeys (do NOT use for any other detector!)
+               IgnoreNonIceCubeOMNumbers=True, # ignore AMANDA and IceTop OMKeys (do NOT use for any other detector!)
                GenerateCherenkovPhotonsWithoutDispersion=False,
                WavelengthGenerationBias=domAcceptance,
                ParameterizationList=parameterizationsMuon+parameterizationsOther,
@@ -325,18 +326,18 @@ tray.AddModule("I3CLSimModule", "clsim",
                
                )
 
-pmtPhotonSimulator = clsim.I3CLSimPMTPhotonSimulatorIceCube(randomService=randomService, jitter=2.*I3Units.ns)
+#pmtPhotonSimulator = clsim.I3CLSimPMTPhotonSimulatorIceCube(randomService=randomService, jitter=2.*I3Units.ns)
 tray.AddModule("I3PhotonToMCHitConverter", "make_hits",
                RandomService = randomService,
                MCTreeName = clSimMCTreeName,
                InputPhotonSeriesMapName = "PropagatedPhotons",
-               OutputMCHitSeriesMapName = "MCHitSeriesMap_clsim",
-               DOMRadiusWithoutOversize=0.16510*I3Units.m,
+               OutputMCHitSeriesMapName = "MCHitSeriesMap",
+               DOMRadiusWithoutOversize=(17./2.) * 0.0254*I3Units.m,
                DOMOversizeFactor = radiusOverSizeFactor,
                WavelengthAcceptance = domAcceptance,
                AngularAcceptance = domAngularSensitivity,
-               PMTPhotonSimulator = pmtPhotonSimulator, # simulate jitter, after-pulses and late-pulses
-               IgnoreDOMsWithoutDetectorStatusEntry = True)
+               PMTPhotonSimulator = None, # no jitter or after-pulse simulation here for Antares
+               IgnoreDOMsWithoutDetectorStatusEntry = False)
 
 tray.AddModule("I3Writer","writer",
     Filename = outdir+outfile)

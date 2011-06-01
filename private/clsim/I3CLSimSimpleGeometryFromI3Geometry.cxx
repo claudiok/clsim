@@ -7,6 +7,7 @@
 #include <limits>
 
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 
 // TODO: these defaults are IceCube-specific!
 const std::set<int> I3CLSimSimpleGeometryFromI3Geometry::default_ignoreStrings;
@@ -53,7 +54,7 @@ ignoreDomIDsLargerThan_(ignoreDomIDsLargerThan)
         uint32_t dom=key.GetOM();
 
 #ifdef HAS_MULTIPMT_SUPPORT
-        const std::string &subdetectorName = geo.subdetector;
+        std::string subdetectorName = geo.subdetector;
 #else
         std::string subdetectorName;
         switch (geo.omtype)
@@ -76,6 +77,16 @@ ignoreDomIDsLargerThan_(ignoreDomIDsLargerThan)
         if (ignoreDomIDs_.count(dom)!=0) continue;
         if (ignoreSubdetectors_.count(subdetectorName)!=0) continue;
 
+#ifdef HAS_MULTIPMT_SUPPORT
+        // assign different subdetectors for each floor index.
+        // this should make it easier to find a geometry binning later on.
+        // Should be irrelevant for IceCube/KM3NeT string detectors, 
+        // only Antares (3 OMs per floor) and KM3NeT bar detectors (2 OMs per
+        // floor) should be affected. -ck
+        const unsigned int floorIndex = geometry->layout.GetFloorIndex(key);
+        subdetectorName = subdetectorName + "_" + boost::lexical_cast<std::string>(floorIndex);
+#endif
+        
         stringIDs_.push_back(string);
         domIDs_.push_back(dom);
         posX_.push_back(geo.position.GetX());

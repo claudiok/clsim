@@ -24,6 +24,9 @@
  *  
  */
 
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 #include "clsim/I3MuonSlicer.h"
 
 #include <boost/foreach.hpp>
@@ -164,14 +167,35 @@ namespace {
             if (isnan(particle.GetEnergy())) log_fatal("Muon must have an energy");
             if (isnan(particle.GetTime())) log_fatal("Muon must have a time");
             
+            // get MMC track times and energies
+            double ti=NAN;
+            double Ei=NAN;
+            double tf=NAN;
+            double Ef=NAN;
+
             // find it in the I3MMCTrackList
             std::map<std::pair<uint64_t, int>, const I3MMCTrack *>::const_iterator it =
             mmcTrackListIndex.find(std::make_pair(particle.GetMajorID(), particle.GetMinorID()));
             if (it==mmcTrackListIndex.end())
             {
-                log_fatal("Muon is not in I3MMCTrackList.");
+                log_debug("Muon is not in I3MMCTrackList. (minorID=%i, majorID=%" PRIu64 ") length=%fm.",
+                          particle.GetMinorID(), particle.GetMajorID(), particle.GetLength()/I3Units::m);
+
+                ti=NAN;
+                Ei=NAN;
+                tf=NAN;
+                Ef=NAN;
             }
-            const I3MMCTrack &mmcTrack = *(it->second);
+            else
+            {
+                const I3MMCTrack &mmcTrack = *(it->second);
+                
+                // get MMC track times and energies
+                ti = mmcTrack.GetTi();
+                Ei = mmcTrack.GetEi();
+                tf = mmcTrack.GetTf();
+                Ef = mmcTrack.GetEf();
+            }
             
             // daughters need to be sorted in time (ascending)
             if (!AreParticlesSortedInTime(daughters))
@@ -179,12 +203,6 @@ namespace {
                 log_fatal("Muon daughters are not sorted in time (ascending).");
             }
 
-
-            // get MMC track times and energies
-            double ti = mmcTrack.GetTi();
-            double Ei = mmcTrack.GetEi();
-            double tf = mmcTrack.GetTf();
-            double Ef = mmcTrack.GetEf();
             
             // correct values with information from I3Particle
             if ((Ei<=0.) || (isnan(Ei)))
@@ -208,12 +226,14 @@ namespace {
             }
             else if (tf<ti)
             {
-                log_fatal("Muon stops before it starts.. (t_final < t_initial)");
+                log_warn("Muon stops before it starts.. (t_final==%fns < t_initial==%fns) (minorID=%i, majorID=%" PRIu64 ") ignoring.",
+                          tf/I3Units::ns, ti/I3Units::ns, particle.GetMinorID(), particle.GetMajorID());
             }
             else if (tf==ti)
             {
                 if (particle.GetLength()>0.)
-                    log_fatal("Particle has length but t_final==t_initial.");
+                    log_warn("Particle has length but t_final==t_initial==%fns. (minorID=%i, majorID=%" PRIu64 ") ignoring.",
+                              tf/I3Units::ns, particle.GetMinorID(), particle.GetMajorID());
             }
             else // (ti<tf) && (Ei>0.)
             {
