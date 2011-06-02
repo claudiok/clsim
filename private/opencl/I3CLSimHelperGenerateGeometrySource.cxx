@@ -699,11 +699,21 @@ namespace I3CLSimHelper
             output << "__constant " << typeString << " geoDomPosX[GEO_DOM_POS_NUM_STRINGS*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS] = {" << std::endl;
             for (std::size_t i=0;i<strings.size();++i){     
                 for (std::size_t j=0;j<maxNumDoms;++j){    
+                    const double value = domPosBuffer[i*(maxNumDoms*4)+j*4 + 0];
+                    
                     if (useShortsInsteadOfFloats) {
-                        short value = static_cast<short>((domPosBuffer[i*(maxNumDoms*4)+j*4 + 0]/geoDomPosMaxAbsX)*32767.);
-                        output << "  " << value << ", // string=" << i << ", dom=" << j << std::endl;
+                        if (isnan(value)) {
+                            output << "  0, // string=" << i << ", dom=" << j << std::endl;
+                        } else {
+                            short shortValue = static_cast<short>((value/geoDomPosMaxAbsX)*32767.);
+                            output << "  " << shortValue << ", // string=" << i << ", dom=" << j << std::endl;
+                        }
                     } else {
-                        output << "  " << domPosBuffer[i*(maxNumDoms*4)+j*4 + 0] << "f, // string=" << i << ", dom=" << j << std::endl;
+                        if (isnan(value)) {
+                            output << "  0.f, // string=" << i << ", dom=" << j << std::endl;
+                        } else {
+                            output << "  " << value << "f, // string=" << i << ", dom=" << j << std::endl;
+                        }
                     }
                 }
             }
@@ -712,11 +722,21 @@ namespace I3CLSimHelper
             output << "__constant " << typeString << " geoDomPosY[GEO_DOM_POS_NUM_STRINGS*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS] = {" << std::endl;
             for (std::size_t i=0;i<strings.size();++i){     
                 for (std::size_t j=0;j<maxNumDoms;++j){    
+                    const double value = domPosBuffer[i*(maxNumDoms*4)+j*4 + 1];
+
                     if (useShortsInsteadOfFloats) {
-                        short value = static_cast<short>((domPosBuffer[i*(maxNumDoms*4)+j*4 + 1]/geoDomPosMaxAbsY)*32767.);
-                        output << "  " << value << ", // string=" << i << ", dom=" << j << std::endl;
+                        if (isnan(value)) {
+                            output << "  0, // string=" << i << ", dom=" << j << std::endl;
+                        } else {
+                            short shortValue = static_cast<short>((value/geoDomPosMaxAbsY)*32767.);
+                            output << "  " << shortValue << ", // string=" << i << ", dom=" << j << std::endl;
+                        }
                     } else {
-                        output << "  " << domPosBuffer[i*(maxNumDoms*4)+j*4 + 1] << "f, // string=" << i << ", dom=" << j << std::endl;
+                        if (isnan(value)) {
+                            output << "  0.f, // string=" << i << ", dom=" << j << std::endl;
+                        } else {
+                            output << "  " << value << "f, // string=" << i << ", dom=" << j << std::endl;
+                        }
                     }
                 }
             }
@@ -725,11 +745,21 @@ namespace I3CLSimHelper
             output << "__constant " << typeString << " geoDomPosZ[GEO_DOM_POS_NUM_STRINGS*GEO_DOM_POS_MAX_NUM_DOMS_PER_STRINGS] = {" << std::endl;
             for (std::size_t i=0;i<strings.size();++i){     
                 for (std::size_t j=0;j<maxNumDoms;++j){    
+                    const double value = domPosBuffer[i*(maxNumDoms*4)+j*4 + 2];
+
                     if (useShortsInsteadOfFloats) {
-                        short value = static_cast<short>((domPosBuffer[i*(maxNumDoms*4)+j*4 + 2]/geoDomPosMaxAbsZ)*32767.);
-                        output << "  " << value << ", // string=" << i << ", dom=" << j << std::endl;
+                        if (isnan(value)) {
+                            output << "  0, // string=" << i << ", dom=" << j << std::endl;
+                        } else {
+                            short shortValue = static_cast<short>((value/geoDomPosMaxAbsZ)*32767.);
+                            output << "  " << shortValue << ", // string=" << i << ", dom=" << j << std::endl;
+                        }
                     } else {
-                        output << "  " << domPosBuffer[i*(maxNumDoms*4)+j*4 + 2] << "f, // string=" << i << ", dom=" << j << std::endl;
+                        if (isnan(value)) {
+                            output << "  0.f, // string=" << i << ", dom=" << j << std::endl;
+                        } else {
+                            output << "  " << value << "f, // string=" << i << ", dom=" << j << std::endl;
+                        }
                     }
                 }
             }

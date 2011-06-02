@@ -281,7 +281,7 @@ tray.AddModule("I3CLSimModule", "clsim",
                DOMRadius = (17./2.) * 0.0254*I3Units.m*radiusOverSizeFactor, # 13" diameter
                RandomService=randomService,
                MediumProperties=mediumProperties,
-               IgnoreNonIceCubeOMNumbers=True, # ignore AMANDA and IceTop OMKeys (do NOT use for any other detector!)
+               IgnoreNonIceCubeOMNumbers=False, # ignore AMANDA and IceTop OMKeys (do NOT use for any other detector!)
                GenerateCherenkovPhotonsWithoutDispersion=False,
                WavelengthGenerationBias=domAcceptance,
                ParameterizationList=parameterizationsMuon+parameterizationsOther,
