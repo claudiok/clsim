@@ -126,14 +126,13 @@ namespace {
 
         // sanity check: are photons on the OM's surface?
         const double distFromDOMCenter = std::sqrt(pr2);
-        if (std::abs(distFromDOMCenter - omRadius) > 10.*I3Units::cm) {
+        if (std::abs(distFromDOMCenter - omRadius) > 3.*I3Units::cm) {
             log_fatal("distance not %fmm.. it is %fmm (diff=%gmm)",
                       omRadius/I3Units::mm,
                       distFromDOMCenter/I3Units::mm,
                       (distFromDOMCenter-omRadius)/I3Units::mm);
         }
 
-        
 		pathLengthInOM = NAN;
 		
 		const double dx = photonDir.GetX();

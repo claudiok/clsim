@@ -337,7 +337,7 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
             
             // sanity check: are photons on the OM's surface?
             const double distFromDOMCenter = std::sqrt(pr2);
-            if (std::abs(distFromDOMCenter - DOMOversizeFactor_*DOMRadiusWithoutOversize_) > 10.*I3Units::cm) {
+            if (std::abs(distFromDOMCenter - DOMOversizeFactor_*DOMRadiusWithoutOversize_) > 3.*I3Units::cm) {
                 log_fatal("distance not %f*%f=%fmm.. it is %fmm (diff=%gmm) (OMKey=(%i,%u)",
                           DOMOversizeFactor_,
                           DOMRadiusWithoutOversize_/I3Units::mm,
