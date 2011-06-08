@@ -24,7 +24,7 @@ def GetAntaresOMAngularSensitivity(name='NotSet'):
 	elif name == 'Spring09':
 		# Parameterisation of angular acceptance, "spring 2009"
 		# AUTHOR: Heide Costantini, December, 2008,
-		# also named dec08
+		# also named dic08
 		#
 		# Fit from Genova - GEANT4
 		# GE6 param, cutoff at costheta=-0.65

@@ -56,7 +56,7 @@ I3PhotonToMCHitConverter::I3PhotonToMCHitConverter(const I3Context& context)
 
     outputMCHitSeriesMapName_="MCHitSeriesMap";
     AddParameter("OutputMCHitSeriesMapName",
-                 "Name of the output I3MCHitSeries frame object. ",
+                 "Name of the output I3MCHitSeries frame object.",
                  outputMCHitSeriesMapName_);
 
     MCTreeName_="I3MCTree";
@@ -207,7 +207,7 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
     if (!inputPhotonSeriesMap) log_fatal("Frame does not contain an I3PhotonSeriesMap named \"%s\".",
                                          inputPhotonSeriesMapName_.c_str());
     
-    // urrently, the only reason we need the MCTree is that I3MCHit does
+    // currently, the only reason we need the MCTree is that I3MCHit does
     // only allow setting the major/minor particle IDs using an existing
     // I3Particle instance with that ID combination.
     I3MCTreeConstPtr MCTree = frame->Get<I3MCTreeConstPtr>(MCTreeName_);

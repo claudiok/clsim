@@ -102,8 +102,13 @@ if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/hit-maker)
 endif(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/hit-maker)
 
 
-# check if multiPMT support is available
+# check if multiPMT support is available and add multiPMT-only 
+# source files
 if(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3OMTypeInfo.h)
+  LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
+       private/clsim/I3PhotonToMCHitConverterForMultiPMT.cxx
+       )
+
     ADD_DEFINITIONS(-DHAS_MULTIPMT_SUPPORT)
     MESSAGE(STATUS "  + multiPMT support")
 endif(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3OMTypeInfo.h)
