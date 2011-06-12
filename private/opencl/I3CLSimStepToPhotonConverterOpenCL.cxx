@@ -337,6 +337,8 @@ void I3CLSimStepToPhotonConverterOpenCL::Initialize()
     
     log_debug("OpenCL worker thread started.");
 
+    log_info("OpenCL setup complete.");
+
     initialized_=true;
 }
 
@@ -649,8 +651,15 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
             kernelFinishEvent.getProfilingInfo(CL_PROFILING_COMMAND_START, &timeStart);
             kernelFinishEvent.getProfilingInfo(CL_PROFILING_COMMAND_END, &timeEnd);
 
-            log_warn("kernel statistics: %g nanoseconds/photon",
+#ifdef I3_OPTIMIZE
+            std::cout << "kernel statistics: " 
+                      << static_cast<double>(timeEnd-timeStart)/static_cast<double>(totalNumberOfPhotons) 
+                      << " nanoseconds/photon"
+                      << std::endl;
+#else
+            log_info("kernel statistics: %g nanoseconds/photon",
                      static_cast<double>(timeEnd-timeStart)/static_cast<double>(totalNumberOfPhotons));
+#endif
 #endif
 
             // wait for the queue to really finish (just to make sure)
@@ -669,7 +678,7 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
             {
                 cl::Event mappingComplete;
                 uint32_t *mapped_CurrentNumOutputPhotons = (uint32_t *)queue_->enqueueMapBuffer(*deviceBuffer_CurrentNumOutputPhotons, CL_FALSE, CL_MAP_READ, 0, sizeof(uint32_t), NULL, &mappingComplete);
-                queue_->flush(); // make sure it begins executing on the device
+                queue_->flush(); // make sure it starts executing on the device
                 mappingComplete.wait();
                 numberOfGeneratedPhotons = *mapped_CurrentNumOutputPhotons;
                 queue_->enqueueUnmapMemObject(*deviceBuffer_CurrentNumOutputPhotons, mapped_CurrentNumOutputPhotons);
@@ -688,7 +697,7 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
             {
                 cl::Event mappingComplete;
                 I3CLSimPhoton *mapped_OutputPhotons = (I3CLSimPhoton *)queue_->enqueueMapBuffer(*deviceBuffer_OutputPhotons, CL_FALSE, CL_MAP_READ, 0, numberOfGeneratedPhotons*sizeof(I3CLSimPhoton), NULL, &mappingComplete);
-                queue_->flush(); // make sure it begins executing on the device
+                queue_->flush(); // make sure it starts executing on the device
                 
                 // allocate the result vector while waiting for the mapping operation to complete
                 photons = I3CLSimPhotonSeriesPtr(new I3CLSimPhotonSeries(numberOfGeneratedPhotons));

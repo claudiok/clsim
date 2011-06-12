@@ -352,11 +352,11 @@ bool I3CLSimModule::Thread(boost::this_thread::disable_interruption &di)
         }
         else if (steps->empty())
         {
-            log_warn("Got 0 steps from Geant4, nothing to do for OpenCL.");
+            log_debug("Got 0 steps from Geant4, nothing to do for OpenCL.");
         }
         else
         {
-            log_warn("Got %zu steps from Geant4, sending them to OpenCL",
+            log_debug("Got %zu steps from Geant4, sending them to OpenCL",
                      steps->size());
 
             
@@ -429,11 +429,11 @@ void I3CLSimModule::Geometry(I3FramePtr frame)
     if (geometryIsConfigured_)
         log_fatal("This module currently supports only a single geometry per input file.");
     
-    log_info("Retrieving geometry..");
+    log_debug("Retrieving geometry..");
     I3GeometryConstPtr geometryObject = frame->Get<I3GeometryConstPtr>();
     if (!geometryObject) log_fatal("Geometry frame does not have an I3Geometry object!");
     
-    log_info("Converting geometry..");
+    log_debug("Converting geometry..");
     
     std::set<int> ignoreStringsSet(ignoreStrings_.begin(), ignoreStrings_.end());
     std::set<unsigned int> ignoreDomIDsSet(ignoreDomIDs_.begin(), ignoreDomIDs_.end());
@@ -614,7 +614,7 @@ void I3CLSimModule::FlushFrameCache()
     log_debug("thread finished.");
 
     
-    log_info("Geant4 finished, retrieving results from GPU..");
+    log_debug("Geant4 finished, retrieving results from GPU..");
 
     std::size_t totalNumOutPhotons=0;
     
@@ -634,9 +634,9 @@ void I3CLSimModule::FlushFrameCache()
         totalNumOutPhotons += res.second->size();
     }
     
-    log_info("results fetched from OpenCL.");
+    log_debug("results fetched from OpenCL.");
     
-    log_warn("Got %zu photons in total during flush.", totalNumOutPhotons);
+    log_debug("Got %zu photons in total during flush.", totalNumOutPhotons);
 
     if (collectStatistics_)
     {
@@ -738,14 +738,14 @@ void I3CLSimModule::FlushFrameCache()
     photonWeightSumAtOMPerParticle_.clear();
 
     
-    log_info("finished.");
+    log_debug("finished.");
     
     for (std::size_t identifier=0;identifier<frameList_.size();++identifier)
     {
-        log_info("putting photons into frame %zu...", identifier);
+        log_debug("putting photons into frame %zu...", identifier);
         frameList_[identifier]->Put(photonSeriesMapName_, photonsForFrameList_[identifier]);
         
-        log_info("pushing frame number %zu...", identifier);
+        log_debug("pushing frame number %zu...", identifier);
         PushFrame(frameList_[identifier]);
     }
     
@@ -852,7 +852,7 @@ void I3CLSimModule::Physics(I3FramePtr frame)
     
     if (frameList_.size() >= maxNumParallelEvents_)
     {
-        log_info("Flushing results for a total energy of %fGeV for %" PRIu64 " particles",
+        log_debug("Flushing results for a total energy of %fGeV for %" PRIu64 " particles",
                  totalSimulatedEnergyForFlush_/I3Units::GeV, totalNumParticlesForFlush_);
                  
         totalSimulatedEnergyForFlush_=0.;
@@ -860,7 +860,7 @@ void I3CLSimModule::Physics(I3FramePtr frame)
         
         FlushFrameCache();
         
-        log_warn("============== CACHE FLUSHED ================");
+        log_debug("============== CACHE FLUSHED ================");
     }
     
     
@@ -870,7 +870,7 @@ void I3CLSimModule::Finish()
 {
     log_trace("%s", __PRETTY_FUNCTION__);
     
-    log_info("Flushing results for a total energy of %fGeV for %" PRIu64 " particles",
+    log_debug("Flushing results for a total energy of %fGeV for %" PRIu64 " particles",
              totalSimulatedEnergyForFlush_/I3Units::GeV, totalNumParticlesForFlush_);
 
     totalSimulatedEnergyForFlush_=0.;

@@ -198,7 +198,7 @@ void I3CLSimParticleToStepConverterGeant4::Initialize()
     }
 
     
-    log_info("Starting the Geant4 thread..");
+    log_debug("Starting the Geant4 thread..");
     geant4Started_=false;
     barrier_is_enqueued_=false;
 
@@ -214,7 +214,7 @@ void I3CLSimParticleToStepConverterGeant4::Initialize()
         }
     }        
     
-    log_info("Geant4 thread started.");
+    log_debug("Geant4 thread started.");
 
     LogGeant4Messages();
 
@@ -781,7 +781,7 @@ void I3CLSimParticleToStepConverterGeant4::LogGeant4Messages(bool allAsWarn) con
                 if (allAsWarn)
                     log_warn("Geant4 says:  %s", out.c_str());
                 else
-                    log_info("Geant4 says:  %s", out.c_str());
+                    log_debug("Geant4 says:  %s", out.c_str());
             }
         }
     }
