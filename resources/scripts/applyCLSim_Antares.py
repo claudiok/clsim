@@ -9,8 +9,8 @@ parser.add_option("-o", "--outfile", default="test_muons_photons.i3",
                   dest="OUTFILE", help="Write output to OUTFILE (.i3{.gz} format)")
 parser.add_option("-i", "--infile", default="test_muons.i3",
                   dest="INFILE", help="Read input from INFILE (.i3{.gz} format)")
-parser.add_option("-s", "--seed",type="int",default=12345,
-                                  dest="SEED", help="Initial seed for the random number generator")
+parser.add_option("-s", "--seed",type="int",
+                  dest="SEED", help="Initial seed for the random number generator")
 parser.add_option("-r", "--runnumber", type="int", default=1,
                   dest="RUNNUMBER", help="The run number for this simulation")
 parser.add_option("-p", "--max-parallel-events", type="int", default=100,
@@ -25,6 +25,8 @@ parser.add_option("--chop-muons", action="store_const", default=-1, const=1,
                   dest="CHOPMUONS", help="Tries to estimate the muon energy between each pair of cascades along its track")
 parser.add_option("--no-chop-muons", action="store_const", default=-1, const=0,
                   dest="CHOPMUONS", help="Tries to estimate the muon energy between each pair of cascades along its track")
+parser.add_option("--remove-photon-data", action="store_true", default=False,
+                  dest="REMOVEPHOTONDATA", help="Remove I3Photons before writing the output file (only keep hits)")
 
 # parse cmd line args, bail out if anything is not understood
 (options,args) = parser.parse_args()
@@ -118,6 +120,22 @@ else:
     print "not chopping muons"
 
 
+if options.REMOVEPHOTONDATA:
+    print "not storing I3Photons"
+else:
+    print "storing I3Photons"
+
+
+if options.SEED is None:
+    # this is not the best possible option, but at least it's not a fixed seed
+    theSeed = hash(options.INFILE)
+    if theSeed < 0: theSeed = -theSeed
+    theSeed = theSeed % 100000
+    print "using auto-seed generated from input filename:", theSeed
+else:
+    theSeed = options.SEED
+    
+
 from I3Tray import *
 from os.path import expandvars
 import os
@@ -129,7 +147,7 @@ from icecube import clsim
 if options.APPLYMMC:
     load("libc2j-icetray")
     load("libmmc-icetray")
-    MMCseed=options.SEED
+    MMCseed=theSeed
 
 radiusOverSizeFactor=options.OVERSIZEFACTOR
 
@@ -144,7 +162,7 @@ if options.APPLYMMC:
 
 # a random number generator
 randomService = phys_services.I3SPRNGRandomService(
-    seed = options.SEED,
+    seed = theSeed,
     nstreams = 10000,
     streamnum = options.RUNNUMBER)
 
@@ -337,7 +355,12 @@ tray.AddModule("I3PhotonToMCHitConverter", "make_hits",
                WavelengthAcceptance = domAcceptance,
                AngularAcceptance = domAngularSensitivity,
                PMTPhotonSimulator = None, # no jitter or after-pulse simulation here for Antares
-               IgnoreDOMsWithoutDetectorStatusEntry = False)
+               IgnoreDOMsWithoutDetectorStatusEntry = False,
+               OnlyWarnAboutInvalidPhotonPositions=True)
+
+if options.REMOVEPHOTONDATA:
+    tray.AddModule("Delete", "delete_photons",
+        Keys = ["PropagatedPhotons"])
 
 tray.AddModule("I3Writer","writer",
     Filename = outdir+outfile)

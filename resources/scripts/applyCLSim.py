@@ -25,6 +25,8 @@ parser.add_option("--chop-muons", action="store_const", default=-1, const=1,
                   dest="CHOPMUONS", help="Tries to estimate the muon energy between each pair of cascades along its track")
 parser.add_option("--no-chop-muons", action="store_const", default=-1, const=0,
                   dest="CHOPMUONS", help="Tries to estimate the muon energy between each pair of cascades along its track")
+parser.add_option("--remove-photon-data", action="store_true", default=False,
+                  dest="REMOVEPHOTONDATA", help="Remove I3Photons before writing the output file (only keep hits)")
 
 # parse cmd line args, bail out if anything is not understood
 (options,args) = parser.parse_args()
@@ -114,6 +116,12 @@ if options.CHOPMUONS:
     print "chopping muons"
 else:
     print "not chopping muons"
+
+
+if options.REMOVEPHOTONDATA:
+    print "not storing I3Photons"
+else:
+    print "storing I3Photons"
 
 
 from I3Tray import *
@@ -337,6 +345,10 @@ tray.AddModule("I3PhotonToMCHitConverter", "make_hits",
                AngularAcceptance = domAngularSensitivity,
                PMTPhotonSimulator = pmtPhotonSimulator, # simulate jitter, after-pulses and late-pulses
                IgnoreDOMsWithoutDetectorStatusEntry = True)
+
+if options.REMOVEPHOTONDATA:
+    tray.AddModule("Delete", "delete_photons",
+        Keys = ["PropagatedPhotons"])
 
 tray.AddModule("I3Writer","writer",
     Filename = outdir+outfile)

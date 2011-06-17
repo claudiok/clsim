@@ -123,6 +123,9 @@ private:
     /// Parameter: Do not generate hits for OMKeys not found in the I3DetectorStatus.I3DOMStatusMap
     bool ignoreDOMsWithoutDetectorStatusEntry_;
 
+    /// Parameter: Make photon position/radius check a warning only (instead of a fatal condition)
+    bool onlyWarnAboutInvalidPhotonPositions_;
+
     
 private:
     // default, assignment, and copy constructor declared private

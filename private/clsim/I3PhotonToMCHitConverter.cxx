@@ -100,6 +100,11 @@ I3PhotonToMCHitConverter::I3PhotonToMCHitConverter(const I3Context& context)
                  "Do not generate hits for OMKeys not found in the I3DetectorStatus.I3DOMStatusMap",
                  ignoreDOMsWithoutDetectorStatusEntry_);
 
+    onlyWarnAboutInvalidPhotonPositions_=false;
+    AddParameter("OnlyWarnAboutInvalidPhotonPositions",
+                 "Make photon position/radius check a warning only (instead of a fatal condition)",
+                 onlyWarnAboutInvalidPhotonPositions_);
+
     // add an outbox
     AddOutBox("OutBox");
 
@@ -131,6 +136,8 @@ void I3PhotonToMCHitConverter::Configure()
     GetParameter("PMTPhotonSimulator", pmtPhotonSimulator_);
     GetParameter("DefaultRelativeDOMEfficiency", defaultRelativeDOMEfficiency_);
     GetParameter("IgnoreDOMsWithoutDetectorStatusEntry", ignoreDOMsWithoutDetectorStatusEntry_);
+
+    GetParameter("OnlyWarnAboutInvalidPhotonPositions", onlyWarnAboutInvalidPhotonPositions_);
 
     if (defaultRelativeDOMEfficiency_<0.) 
         log_fatal("The \"DefaultRelativeDOMEfficiency\" parameter must not be < 0!");
@@ -338,13 +345,23 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
             // sanity check: are photons on the OM's surface?
             const double distFromDOMCenter = std::sqrt(pr2);
             if (std::abs(distFromDOMCenter - DOMOversizeFactor_*DOMRadiusWithoutOversize_) > 3.*I3Units::cm) {
-                log_fatal("distance not %f*%f=%fmm.. it is %fmm (diff=%gmm) (OMKey=(%i,%u)",
-                          DOMOversizeFactor_,
-                          DOMRadiusWithoutOversize_/I3Units::mm,
-                          DOMOversizeFactor_*DOMRadiusWithoutOversize_/I3Units::mm,
-                          distFromDOMCenter/I3Units::mm,
-                          (distFromDOMCenter-DOMOversizeFactor_*DOMRadiusWithoutOversize_)/I3Units::mm,
-                          key.GetString(), key.GetOM());
+                if (onlyWarnAboutInvalidPhotonPositions_) {
+                    log_warn("distance not %f*%f=%fmm.. it is %fmm (diff=%gmm) (OMKey=(%i,%u)",
+                             DOMOversizeFactor_,
+                             DOMRadiusWithoutOversize_/I3Units::mm,
+                             DOMOversizeFactor_*DOMRadiusWithoutOversize_/I3Units::mm,
+                             distFromDOMCenter/I3Units::mm,
+                             (distFromDOMCenter-DOMOversizeFactor_*DOMRadiusWithoutOversize_)/I3Units::mm,
+                             key.GetString(), key.GetOM());
+                } else {
+                    log_fatal("distance not %f*%f=%fmm.. it is %fmm (diff=%gmm) (OMKey=(%i,%u)",
+                              DOMOversizeFactor_,
+                              DOMRadiusWithoutOversize_/I3Units::mm,
+                              DOMOversizeFactor_*DOMRadiusWithoutOversize_/I3Units::mm,
+                              distFromDOMCenter/I3Units::mm,
+                              (distFromDOMCenter-DOMOversizeFactor_*DOMRadiusWithoutOversize_)/I3Units::mm,
+                              key.GetString(), key.GetOM());
+                }
             }
             
             // sanity check for unscattered photons: is their direction ok
