@@ -85,14 +85,14 @@ std::string I3CLSimWlenDependentValuePolynomial::GetOpenCLFunction(const std::st
     output << "{" << std::endl;
 	
 	// check the range
-    if (!isinf(rangemin_)) {
+    if (!std::isinf(rangemin_)) {
         output << "if (x < " << to_float_string(rangemin_) << ")" << std::endl;
 	    output << "{" << std::endl;
 	    output << "    return " << to_float_string(underflow_) << ";" << std::endl;
 	    output << "}" << std::endl;
     }
     
-    if (!isinf(rangemax_)) {
+    if (!std::isinf(rangemax_)) {
         output << "if (x > " << to_float_string(rangemax_) << ")" << std::endl;
         output << "{" << std::endl;
         output << "    return " << to_float_string(overflow_) << ";" << std::endl;
