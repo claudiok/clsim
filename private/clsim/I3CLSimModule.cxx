@@ -53,6 +53,16 @@ I3CLSimModule::I3CLSimModule(const I3Context& context)
 geometryIsConfigured_(false)
 {
     // define parameters
+    workOnTheseStops_.clear();
+#ifdef IS_Q_FRAME_ENABLED
+    workOnTheseStops_.push_back(I3Frame::DAQ);
+#else
+    workOnTheseStops_.push_back(I3Frame::Physics);
+#endif
+    AddParameter("WorkOnTheseStops",
+                 "Work on MCTrees found in the stream types (\"stops\") specified in this list",
+                 workOnTheseStops_);
+
     AddParameter("RandomService",
                  "A random number generating service (derived from I3RandomService).",
                  randomService_);
@@ -169,6 +179,7 @@ geometryIsConfigured_(false)
     // add an outbox
     AddOutBox("OutBox");
 
+    frameListPhysicsFrameCounter_=0;
 }
 
 I3CLSimModule::~I3CLSimModule()
@@ -240,6 +251,9 @@ void I3CLSimModule::Configure()
 {
     log_trace("%s", __PRETTY_FUNCTION__);
 
+    GetParameter("WorkOnTheseStops", workOnTheseStops_);
+    workOnTheseStops_set_ = std::set<I3Frame::Stream>(workOnTheseStops_.begin(), workOnTheseStops_.end());
+    
     GetParameter("RandomService", randomService_);
 
     GetParameter("GenerateCherenkovPhotonsWithoutDispersion", generateCherenkovPhotonsWithoutDispersion_);
@@ -422,7 +436,7 @@ void I3CLSimModule::Thread_starter()
 }
 
 
-void I3CLSimModule::Geometry(I3FramePtr frame)
+void I3CLSimModule::DigestGeometry(I3FramePtr frame)
 {
     log_trace("%s", __PRETTY_FUNCTION__);
     
@@ -497,8 +511,6 @@ void I3CLSimModule::Geometry(I3FramePtr frame)
     
     log_info("Initialization complete.");
     geometryIsConfigured_=true;
-
-    PushFrame(frame);
 }
 
 namespace {
@@ -642,7 +654,11 @@ void I3CLSimModule::FlushFrameCache()
     {
         std::vector<I3CLSimEventStatisticsPtr> eventStatisticsForFrame;
         for (std::size_t i=0;i<frameList_.size();++i) {
-            eventStatisticsForFrame.push_back(I3CLSimEventStatisticsPtr(new I3CLSimEventStatistics()));
+            if (workOnTheseStops_set_.count(frameList_[i]->GetStop()) >= 1) {
+                eventStatisticsForFrame.push_back(I3CLSimEventStatisticsPtr(new I3CLSimEventStatistics()));
+            } else {
+                eventStatisticsForFrame.push_back(I3CLSimEventStatisticsPtr()); // NULL pointer for non-physics(/DAQ)-frames
+            }
         }
 
         
@@ -727,7 +743,9 @@ void I3CLSimModule::FlushFrameCache()
         // store statistics to frame
         for (std::size_t i=0;i<frameList_.size();++i)
         {
-            frameList_[i]->Put(statisticsName_, eventStatisticsForFrame[i]);
+            if (workOnTheseStops_set_.count(frameList_[i]->GetStop()) >= 1) {
+                frameList_[i]->Put(statisticsName_, eventStatisticsForFrame[i]);
+            }
         }
     }    
     
@@ -754,6 +772,7 @@ void I3CLSimModule::FlushFrameCache()
     frameList_.clear();
     photonsForFrameList_.clear();
     currentPhotonIdForFrame_.clear();
+    frameListPhysicsFrameCounter_=0;
 }
 
 namespace {
@@ -772,7 +791,36 @@ namespace {
     }
 }
 
-void I3CLSimModule::Physics(I3FramePtr frame)
+void I3CLSimModule::Process()
+{
+    I3FramePtr frame = PopFrame();
+    if (!frame) return;
+    
+    if (frame->GetStop() == I3Frame::Geometry)
+    {
+        // special handling for Geometry frames
+        // these will trigger a full re-initialization of OpenCL
+        // (currently a second Geometry frame triggers a fatal error
+        // in DigestGeometry()..)
+        
+        DigestGeometry(frame);
+        PushFrame(frame);
+        return;
+    }
+    
+    // if the cache is empty and the frame stop is not Physics/DAQ, we can immediately push it
+    // (and not add it to the cache)
+    if ((frameList_.empty()) && (workOnTheseStops_set_.count(frame->GetStop()) == 0) )
+    {
+        PushFrame(frame);
+        return;
+    }
+    
+    // it's either Physics or something else..
+    DigestOtherFrame(frame);
+}
+
+void I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
 {
     log_trace("%s", __PRETTY_FUNCTION__);
     
@@ -785,84 +833,88 @@ void I3CLSimModule::Physics(I3FramePtr frame)
         StartThread();
     }
     
-    I3MCTreeConstPtr MCTree = frame->Get<I3MCTreeConstPtr>(MCTreeName_);
-    if (!MCTree) log_fatal("Frame does not contain an I3MCTree named \"%s\".",
-                           MCTreeName_.c_str());
-    
     frameList_.push_back(frame);
     photonsForFrameList_.push_back(I3PhotonSeriesMapPtr(new I3PhotonSeriesMap()));
     currentPhotonIdForFrame_.push_back(0);
     std::size_t currentFrameListIndex = frameList_.size()-1;
-    
-    for (I3MCTree::iterator it = MCTree->begin();
-         it != MCTree->end(); ++it)
+
+    if (workOnTheseStops_set_.count(frame->GetStop()) >= 1)
     {
-        const I3Particle &particle = *it;
+        frameListPhysicsFrameCounter_++;
         
-        // In-ice particles only
-        if (particle.GetLocationType() != I3Particle::InIce) continue;
+        I3MCTreeConstPtr MCTree = frame->Get<I3MCTreeConstPtr>(MCTreeName_);
+        if (!MCTree) log_fatal("Frame does not contain an I3MCTree named \"%s\".",
+                               MCTreeName_.c_str());
 
-        // check particle type
-        const bool isMuon = (particle.GetType() == I3Particle::MuMinus) || (particle.GetType() == I3Particle::MuPlus);
-        const bool isNeutrino = particle.IsNeutrino();
+        for (I3MCTree::iterator it = MCTree->begin();
+             it != MCTree->end(); ++it)
+        {
+            const I3Particle &particle = *it;
+            
+            // In-ice particles only
+            if (particle.GetLocationType() != I3Particle::InIce) continue;
 
-        // mmc-icetray currently stores continuous loss entries as "unknown"
-        const bool isContinuousLoss = (particle.GetType() == -1111) || (particle.GetType() == I3Particle::unknown); // special magic number used by MMC
-        
-        // ignore continuous loss entries
-        if (isContinuousLoss) {
-            log_debug("ignored a continuous loss I3MCTree entry");
-            continue;
-        }
-        
-        // always ignore neutrinos
-        if (isNeutrino) continue;
+            // check particle type
+            const bool isMuon = (particle.GetType() == I3Particle::MuMinus) || (particle.GetType() == I3Particle::MuPlus);
+            const bool isNeutrino = particle.IsNeutrino();
 
-        // ignore muons if requested
-        if ((ignoreMuons_) && (isMuon)) continue;
-        
-        // ignore muons with muons as child particles
-        // -> those already ran through MMC(-recc) or
-        // were sliced with I3MuonSlicer. Only add their
-        // children.
-        if (!ignoreMuons_) {
-            if (ParticleHasMuonDaughter(particle, *MCTree))
+            // mmc-icetray currently stores continuous loss entries as "unknown"
+            const bool isContinuousLoss = (particle.GetType() == -1111) || (particle.GetType() == I3Particle::unknown); // special magic number used by MMC
+            
+            // ignore continuous loss entries
+            if (isContinuousLoss) {
+                log_debug("ignored a continuous loss I3MCTree entry");
                 continue;
+            }
+            
+            // always ignore neutrinos
+            if (isNeutrino) continue;
+
+            // ignore muons if requested
+            if ((ignoreMuons_) && (isMuon)) continue;
+            
+            // ignore muons with muons as child particles
+            // -> those already ran through MMC(-recc) or
+            // were sliced with I3MuonSlicer. Only add their
+            // children.
+            if (!ignoreMuons_) {
+                if (ParticleHasMuonDaughter(particle, *MCTree))
+                    continue;
+            }
+            
+            totalSimulatedEnergyForFlush_ += particle.GetEnergy();
+            totalNumParticlesForFlush_++;
+            geant4ParticleToStepsConverter_->EnqueueParticle(particle, currentParticleCacheIndex_);
+
+            if (particleCache_.find(currentParticleCacheIndex_) != particleCache_.end())
+                log_fatal("Internal error. Particle cache index already used.");
+            
+            particleCacheEntry &cacheEntry = 
+            particleCache_.insert(std::make_pair(currentParticleCacheIndex_, particleCacheEntry())).first->second;
+            
+            cacheEntry.frameListEntry = currentFrameListIndex;
+            cacheEntry.particleMajorID = particle.GetMajorID();
+            cacheEntry.particleMinorID = particle.GetMinorID();
+            
+            // make a new index. This will eventually overflow,
+            // but at that time, index 0 should be unused again.
+            ++currentParticleCacheIndex_;
+            if (currentParticleCacheIndex_==0) ++currentParticleCacheIndex_; // never use index==0
         }
         
-        totalSimulatedEnergyForFlush_ += particle.GetEnergy();
-        totalNumParticlesForFlush_++;
-        geant4ParticleToStepsConverter_->EnqueueParticle(particle, currentParticleCacheIndex_);
-
-        if (particleCache_.find(currentParticleCacheIndex_) != particleCache_.end())
-            log_fatal("Internal error. Particle cache index already used.");
-        
-        particleCacheEntry &cacheEntry = 
-        particleCache_.insert(std::make_pair(currentParticleCacheIndex_, particleCacheEntry())).first->second;
-        
-        cacheEntry.frameListEntry = currentFrameListIndex;
-        cacheEntry.particleMajorID = particle.GetMajorID();
-        cacheEntry.particleMinorID = particle.GetMinorID();
-        
-        // make a new index. This will eventually overflow,
-        // but at that time, index 0 should be unused again.
-        ++currentParticleCacheIndex_;
-        if (currentParticleCacheIndex_==0) ++currentParticleCacheIndex_; // never use index==0
-    }
-    
-    if (frameList_.size() >= maxNumParallelEvents_)
-    {
-        log_debug("Flushing results for a total energy of %fGeV for %" PRIu64 " particles",
-                 totalSimulatedEnergyForFlush_/I3Units::GeV, totalNumParticlesForFlush_);
-                 
-        totalSimulatedEnergyForFlush_=0.;
-        totalNumParticlesForFlush_=0;
-        
-        FlushFrameCache();
-        
-        log_debug("============== CACHE FLUSHED ================");
-    }
-    
+        if (frameListPhysicsFrameCounter_ >= maxNumParallelEvents_)
+        {
+            log_debug("Flushing results for a total energy of %fGeV for %" PRIu64 " particles",
+                     totalSimulatedEnergyForFlush_/I3Units::GeV, totalNumParticlesForFlush_);
+                     
+            totalSimulatedEnergyForFlush_=0.;
+            totalNumParticlesForFlush_=0;
+            
+            FlushFrameCache();
+            
+            log_debug("============== CACHE FLUSHED ================");
+        }
+    }    
     
 }
 

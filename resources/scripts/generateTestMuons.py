@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from optparse import OptionParser
+from os.path import expandvars
 
 usage = "usage: %prog [options] inputfile"
 parser = OptionParser(usage)
@@ -8,7 +9,7 @@ parser.add_option("-o", "--outfile",default="test_muons.i3",
                   dest="OUTFILE", help="Write output to OUTFILE (.i3{.gz} format)")
 parser.add_option("-s", "--seed",type="int",default=12345,
                   dest="SEED", help="Initial seed for the random number generator")
-parser.add_option("-g", "--gcd",default="GeoCalibDetectorStatus_IC86.55040_official.i3.gz",
+parser.add_option("-g", "--gcd",default=expandvars("$I3_PORTS/test-data/sim/GeoCalibDetectorStatus_IC86.55380_corrected.i3.gz"),
                   dest="GCDFILE", help="Read geometry from GCDFILE (.i3{.gz} format)")
 parser.add_option("-r", "--runnumber", type="int", default=1,
                   dest="RUNNUMBER", help="The run number for this simulation")
@@ -32,7 +33,6 @@ if options.MMCWITHRECC and (not options.APPLYMMC):
     print "using the --mmc-with-recc without --apply-mmc will have no effect"
 
 from I3Tray import *
-from os.path import expandvars
 import os
 import sys
 
@@ -40,6 +40,15 @@ from icecube import icetray, dataclasses, dataio, phys_services, sim_services
 
 from icecube import simple_injector
 from icecube.simple_injector.simple_muon import I3SimpleMuon
+
+# simple (maybe too simple?) runtime check to see
+# if we should support Q-frames
+isQified = "QConverter" in icetray.modules("dataio")
+
+if isQified:
+    print "using fully Qified modules"
+else:
+    print "using old-school non-Q-frame enabled modules/services"
 
 if options.APPLYMMC:
     load("libc2j-icetray")
@@ -58,21 +67,34 @@ randomService = phys_services.I3SPRNGRandomService(
     nstreams = 10000,
     streamnum = options.RUNNUMBER)
 
-tray.AddService("I3ReaderServiceFactory", "gcd_reader",
-    Filename = options.GCDFILE,
-    OmitGeometry=False,
-    OmitCalibration=False,
-    OmitStatus=False,
-    OmitEvent=True)
+if isQified:
+    tray.AddModule("I3InfiniteSource","streams",
+                   Prefix=options.GCDFILE,
+                   Stream=icetray.I3Frame.DAQ)
 
-tray.AddService("I3MCTimeGeneratorServiceFactory", "events",
-    Year=2009,
-    DAQTime=179500000000000000,
-    RunNumber=1,
-    EventID=1,
-    IncrementEventID=True)
+    tray.AddModule("I3MCEventHeaderGenerator","gen_header",
+                   Year=2009,
+                   DAQTime=179500000000000000,
+                   RunNumber=1,
+                   EventID=1,
+                   IncrementEventID=True)
 
-tray.AddModule("I3Muxer", "muxme")
+else:
+    tray.AddService("I3ReaderServiceFactory", "gcd_reader",
+        Filename = options.GCDFILE,
+        OmitGeometry=False,
+        OmitCalibration=False,
+        OmitStatus=False,
+        OmitEvent=True)
+
+    tray.AddService("I3MCTimeGeneratorServiceFactory", "gen_header",
+        Year=2009,
+        DAQTime=179500000000000000,
+        RunNumber=1,
+        EventID=1,
+        IncrementEventID=True)
+
+    tray.AddModule("I3Muxer", "muxme")
 
 tray.AddModule(I3SimpleMuon, "injectMuon",
                I3RandomService = randomService,

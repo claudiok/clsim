@@ -235,7 +235,11 @@ namespace {
 /********
  Physics
  *********/
-void I3PhotonToMCHitConverterForMultiPMT::Physics(I3FramePtr frame) 
+#ifdef IS_Q_FRAME_ENABLED
+void I3PhotonToMCHitConverterForMultiPMT::DAQ(I3FramePtr frame)
+#else
+void I3PhotonToMCHitConverterForMultiPMT::Physics(I3FramePtr frame)
+#endif
 {
 	log_trace("Entering Physics()");
 

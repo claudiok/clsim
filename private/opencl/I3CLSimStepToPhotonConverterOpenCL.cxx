@@ -537,8 +537,9 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread()
     try {
         OpenCLThread_impl(di);
     } catch(...) { // any exceptions?
-        log_fatal("OpenCL worker thread died unexpectedly..");
-        throw;
+        std::cerr << "OpenCL worker thread died unexpectedly.." << std::endl;
+        exit(0); // get out as quickly as possible, we probably just had a FATAL error anyway..
+        throw; // will never be reached
     }
 }
 
@@ -659,6 +660,12 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
 #else
             log_info("kernel statistics: %g nanoseconds/photon",
                      static_cast<double>(timeEnd-timeStart)/static_cast<double>(totalNumberOfPhotons));
+#endif
+#else
+#ifdef I3_OPTIMIZE
+            std::cout << "kernel finished. (no statistics collected)" << std::endl; 
+#else
+            log_info("kernel statistics:  (no statistics collected)");
 #endif
 #endif
 

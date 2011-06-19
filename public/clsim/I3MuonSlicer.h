@@ -74,7 +74,11 @@ public:
     /**
      * The module needs to process Physics frames
      */
+#ifdef IS_Q_FRAME_ENABLED
+    virtual void DAQ(I3FramePtr frame);
+#else
     virtual void Physics(I3FramePtr frame);
+#endif
 
     
 private:

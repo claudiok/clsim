@@ -51,6 +51,7 @@
 #include <boost/thread/locks.hpp>
 
 #include <vector>
+#include <set>
 #include <map>
 #include <string>
 
@@ -78,14 +79,10 @@ public:
     virtual void Configure();
     
     /**
-     * The module needs to process Physics frames
+     * The module needs full control of all streams
+     * -> implement Process()!
      */
-    virtual void Physics(I3FramePtr frame);
-
-    /**
-     * The module needs to process Geometry frames
-     */
-    virtual void Geometry(I3FramePtr frame);
+    virtual void Process();
 
     /**
      * Warn the user if the module is aborted prematurely
@@ -94,7 +91,21 @@ public:
     
     
 private:
+    /**
+     * The module needs to process Physics frames
+     */
+    void DigestOtherFrame(I3FramePtr frame);
+    
+    /**
+     * The module needs to process Geometry frames
+     */
+    void DigestGeometry(I3FramePtr frame);
+
     // parameters
+    
+    /// Parameter: work on MCTrees found in the stream types ("stops") specified in this list
+    std::vector<I3Frame::Stream> workOnTheseStops_;
+    std::set<I3Frame::Stream> workOnTheseStops_set_; // will be converted to a set internally
     
     /// Parameter: An instance I3CLSimParticleParameterizationSeries specifying the fast simulation parameterizations to be used.
     I3CLSimParticleParameterizationSeries parameterizationList_;
@@ -218,6 +229,7 @@ private:
     I3CLSimParticleToStepConverterGeant4Ptr geant4ParticleToStepsConverter_;
     
     // list of all currently held frames, in order
+    unsigned int frameListPhysicsFrameCounter_;
     std::vector<I3FramePtr> frameList_;
     std::vector<I3PhotonSeriesMapPtr> photonsForFrameList_;
     std::vector<int32_t> currentPhotonIdForFrame_;

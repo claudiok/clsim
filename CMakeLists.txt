@@ -16,7 +16,7 @@
 #  
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
-#  
+#
 i3_project(clsim
   PYTHON_DIR python
   DOCS_DIR resources/docs
@@ -87,6 +87,17 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
     )
 SET(LIB_${PROJECT_NAME}_PROJECTS icetray dataio dataclasses phys-services simclasses)
 SET(LIB_${PROJECT_NAME}_TOOLS python boost log4cplus gsl clhep geant4 opencl)
+
+
+# check for Q-Frame support
+if(EXISTS ${CMAKE_SOURCE_DIR}/dataio/private/dataio/QConverter.cxx)
+    # we assume that the existence of this module means that we have
+    # to deal with a Q-frame-enabled meta-project
+    ADD_DEFINITIONS(-DIS_Q_FRAME_ENABLED)
+    MESSAGE(STATUS "  + Q-frame-enabled")
+else(EXISTS ${CMAKE_SOURCE_DIR}/dataio/private/dataio/QConverter.cxx)
+    MESSAGE(STATUS "  - old-style, non-Q-frame module")
+endif(EXISTS ${CMAKE_SOURCE_DIR}/dataio/private/dataio/QConverter.cxx)
 
 
 # add some things if hit-maker is available (IceCube-specific)
