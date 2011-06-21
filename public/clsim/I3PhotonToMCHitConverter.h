@@ -124,6 +124,9 @@ private:
     /// Parameter: Default relative efficiency. This value is used if no entry is available from I3Calibration.
     double defaultRelativeDOMEfficiency_;
 
+    /// Parameter: Always use the default relative efficiency, ignore other values from I3Calibration.
+    bool replaceRelativeDOMEfficiencyWithDefault_;
+
     /// Parameter: Do not generate hits for OMKeys not found in the I3DetectorStatus.I3DOMStatusMap
     bool ignoreDOMsWithoutDetectorStatusEntry_;
 
