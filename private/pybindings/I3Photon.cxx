@@ -119,6 +119,10 @@ void register_I3Photon()
         .def("GetID", &I3Photon::GetID)
         .def("SetID", &I3Photon::SetID)
 
+        .add_property("weight", &I3Photon::GetWeight, &I3Photon::SetWeight)
+        .def("GetWeight", &I3Photon::GetWeight)
+        .def("SetWeight", &I3Photon::SetWeight)
+
         .add_property("particleMajorID", &I3Photon::GetParticleMajorID, &I3Photon::SetParticleMajorID)
         .def("GetParticleMajorID", &I3Photon::GetParticleMajorID)
         .def("SetParticleMajorID", &I3Photon::SetParticleMajorID)
