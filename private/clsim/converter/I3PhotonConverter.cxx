@@ -62,9 +62,9 @@ I3PhotonConverter::FillRows
     rows->Set<double>  ("group_velocity",     photon.GetGroupVelocity()/(I3Units::m/I3Units::ns));
     
     rows->Set<double>  ("time",               photon.GetTime()/I3Units::ns);
-    rows->Set<double>  ("x",                  photon.GetPos().GetX()/I3Units::m);
-    rows->Set<double>  ("y",                  photon.GetPos().GetY()/I3Units::m);
-    rows->Set<double>  ("z",                  photon.GetPos().GetZ()/I3Units::m);
+    rows->Set<double>  ("hit_x",              photon.GetPos().GetX()/I3Units::m);
+    rows->Set<double>  ("hit_y",              photon.GetPos().GetY()/I3Units::m);
+    rows->Set<double>  ("hit_z",              photon.GetPos().GetZ()/I3Units::m);
     
     rows->Set<double>  ("zen",                photon.GetDir().GetZenith()/I3Units::rad);
     rows->Set<double>  ("azi",                photon.GetDir().GetAzimuth()/I3Units::rad);
