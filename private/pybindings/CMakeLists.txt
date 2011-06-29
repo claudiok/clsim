@@ -38,6 +38,7 @@ if(BUILD_PYBINDINGS)
     I3Photon.cxx
     I3CLSimEventStatistics.cxx
     I3CLSimPMTPhotonSimulator.cxx
+    I3Converters.cxx
     module.cxx
     USE_TOOLS boost python log4cplus
     USE_PROJECTS icetray dataclasses clsim

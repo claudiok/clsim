@@ -60,6 +60,9 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
     private/clsim/I3Photon.cxx
     private/clsim/I3PhotonToMCHitConverter.cxx
     
+    # tableio converters
+    private/clsim/converter/I3PhotonConverter.cxx
+    
     # private/geant4
     private/geant4/I3CLSimParticleToStepConverterGeant4.cxx
     private/geant4/TrkCerenkov.cxx
@@ -85,7 +88,7 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
     private/test/I3CLSimTesterBase.cxx
     private/test/I3CLSimWlenDependentValueTester.cxx
     )
-SET(LIB_${PROJECT_NAME}_PROJECTS icetray dataio dataclasses phys-services simclasses)
+SET(LIB_${PROJECT_NAME}_PROJECTS icetray dataio dataclasses phys-services tableio simclasses)
 SET(LIB_${PROJECT_NAME}_TOOLS python boost log4cplus gsl clhep geant4 opencl)
 
 

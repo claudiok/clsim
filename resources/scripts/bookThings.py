@@ -18,7 +18,7 @@ if len(args) != 1:
 infile = args[0]
 outfile = os.path.basename(args[0]) + '.' + options.format
 
-from icecube import icetray,dataclasses,dataio,tableio
+from icecube import icetray,dataclasses,dataio,tableio,clsim
 from I3Tray import I3Tray
 
 if options.format == 'hdf5':
@@ -83,6 +83,7 @@ tray.AddModule(tableio.I3TableWriter,'writer1',
           dict(key="MCMostEnergeticPrimary", name="MCMostEnergeticPrimary"),
           dict(key="MCHitSeriesMap", converter=dataclasses.converters.I3MCHitSeriesMapConverter(True), name="MCHitSeriesMap"),
           dict(key="MCHitSeriesMap_clsim", converter=dataclasses.converters.I3MCHitSeriesMapConverter(True), name="MCHitSeriesMap_clsim"),
+          #dict(key="PropagatedPhotons", name="PropagatedPhotons"),
          ])
 
 #tray.AddModule(tableio.I3TableWriter,'writer2',
