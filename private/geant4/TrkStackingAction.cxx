@@ -66,23 +66,31 @@ G4ClassificationOfNewTrack TrkStackingAction::ClassifyNewTrack(const G4Track * a
     // see if there are eny parameterizations available for this particle
     const I3CLSimParticleParameterizationSeries &parameterizations = eventInformation->parameterizationAvailable;
 
+#ifndef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
     const I3Particle::ParticleType trackI3ParticleType =
     I3CLSimI3ParticleGeantConverter::ConvertPDGEncodingToI3ParticleType(aTrack->GetDefinition()->GetPDGEncoding());
+#endif
     
     const G4double trackEnergy = aTrack->GetKineticEnergy();
 
+#ifndef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
     if (trackI3ParticleType==I3Particle::unknown)
     {
         // there are no parameterizations for particles unknown to IceTray
         return fUrgent;
     }
+#endif
     
     for (I3CLSimParticleParameterizationSeries::const_iterator it=parameterizations.begin();
          it!=parameterizations.end(); ++it)
     {
         const I3CLSimParticleParameterization &parameterization = *it;
         
+#ifndef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
         if (parameterization.IsValid(trackI3ParticleType, trackEnergy*I3Units::GeV/GeV))
+#else
+        if (parameterization.IsValidForPdgEncoding(aTrack->GetDefinition()->GetPDGEncoding(), trackEnergy*I3Units::GeV/GeV))
+#endif
         {
             I3CLSimStepStorePtr stepStore = eventInformation->stepStore;
 
@@ -92,7 +100,11 @@ G4ClassificationOfNewTrack TrkStackingAction::ClassifyNewTrack(const G4Track * a
             const G4double trackTime = aTrack->GetGlobalTime();
             const G4ThreeVector &trackDir = aTrack->GetMomentumDirection();
 
+#ifdef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
+            particle->SetPdgEncoding(aTrack->GetDefinition()->GetPDGEncoding());
+#else
             particle->SetType(trackI3ParticleType);
+#endif
             particle->SetPos(trackPos.x()*I3Units::m/m,trackPos.y()*I3Units::m/m,trackPos.z()*I3Units::m/m);
             particle->SetDir(trackDir.x(),trackDir.y(),trackDir.z());
             particle->SetTime(trackTime*I3Units::ns/ns);

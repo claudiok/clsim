@@ -171,7 +171,8 @@ void register_I3CLSimSimpleGeometry()
          const std::set<unsigned int> &,
          const std::set<std::string> &,
          int32_t, int32_t,
-         uint32_t, uint32_t
+         uint32_t, uint32_t,
+         bool
          >(
            (
             bp::arg("OMRadius"),
@@ -182,7 +183,8 @@ void register_I3CLSimSimpleGeometry()
             bp::arg("ignoreStringIDsSmallerThan")=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreStringIDsSmallerThan,
             bp::arg("ignoreStringIDsLargerThan")=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreStringIDsLargerThan,
             bp::arg("ignoreDomIDsSmallerThan")=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreDomIDsSmallerThan,
-            bp::arg("ignoreDomIDsLargerThan")=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreDomIDsLargerThan
+            bp::arg("ignoreDomIDsLargerThan")=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreDomIDsLargerThan,
+            bp::arg("splitIntoPartsAccordingToPosition")=I3CLSimSimpleGeometryFromI3Geometry::default_splitIntoPartsAccordingToPosition
             )
            )
          )

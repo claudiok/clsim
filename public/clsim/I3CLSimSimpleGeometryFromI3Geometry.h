@@ -22,6 +22,7 @@ public:
     static const int32_t default_ignoreStringIDsLargerThan;
     static const uint32_t default_ignoreDomIDsSmallerThan;
     static const uint32_t default_ignoreDomIDsLargerThan;
+    static const bool default_splitIntoPartsAccordingToPosition;
 
     I3CLSimSimpleGeometryFromI3Geometry(double OMRadius, 
                                         const I3GeometryConstPtr &geometry,
@@ -31,7 +32,8 @@ public:
                                         int32_t ignoreStringIDsSmallerThan=default_ignoreStringIDsSmallerThan,
                                         int32_t ignoreStringIDsLargerThan=default_ignoreStringIDsLargerThan,
                                         uint32_t ignoreDomIDsSmallerThan=default_ignoreDomIDsSmallerThan,
-                                        uint32_t ignoreDomIDsLargerThan=default_ignoreDomIDsLargerThan);
+                                        uint32_t ignoreDomIDsLargerThan=default_ignoreDomIDsLargerThan,
+                                        bool splitIntoPartsAccordingToPosition=default_splitIntoPartsAccordingToPosition);
     ~I3CLSimSimpleGeometryFromI3Geometry();
 
     virtual std::size_t size() const {return numOMs_;}
@@ -54,6 +56,7 @@ public:
     
 private:
     double OMRadius_;
+    bool splitIntoPartsAccordingToPosition_;
     std::size_t numOMs_;
     
     std::vector<int32_t> stringIDs_;

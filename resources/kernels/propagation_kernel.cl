@@ -391,9 +391,25 @@ inline void checkForCollision_InCells(
 #if GEO_CELL_NUM_SUBDETECTORS > 4
     DO_CHECK(4);
 #endif        
-        
+
 #if GEO_CELL_NUM_SUBDETECTORS > 5
-#error more than 5 subdetectors are currently not supported.
+    DO_CHECK(5);
+#endif        
+
+#if GEO_CELL_NUM_SUBDETECTORS > 6
+    DO_CHECK(6);
+#endif        
+
+#if GEO_CELL_NUM_SUBDETECTORS > 7
+    DO_CHECK(7);
+#endif        
+
+#if GEO_CELL_NUM_SUBDETECTORS > 8
+    DO_CHECK(8);
+#endif        
+
+#if GEO_CELL_NUM_SUBDETECTORS > 9
+    #error more than 9 subdetectors are currently not supported.
 #endif
 
 #undef DO_CHECK

@@ -11,24 +11,39 @@ using namespace I3CLSimParticleToStepConverterUtils;
 
 
 const uint32_t I3CLSimParticleToStepConverterPPC::default_photonsPerStep=200;
+const uint32_t I3CLSimParticleToStepConverterPPC::default_highPhotonsPerStep=0;
+const double I3CLSimParticleToStepConverterPPC::default_useHighPhotonsPerStepStartingFromNumPhotons=1.0e9;
+
 
 
 I3CLSimParticleToStepConverterPPC::I3CLSimParticleToStepConverterPPC
 (I3RandomServicePtr randomService,
- uint32_t photonsPerStep)
+ uint32_t photonsPerStep,
+ uint32_t highPhotonsPerStep,
+ double useHighPhotonsPerStepStartingFromNumPhotons)
 :
 randomService_(randomService),
 initialized_(false),
 barrier_is_enqueued_(false),
 bunchSizeGranularity_(512),
 maxBunchSize_(512000),
-photonsPerStep_(photonsPerStep)
+photonsPerStep_(photonsPerStep),
+highPhotonsPerStep_(highPhotonsPerStep),
+useHighPhotonsPerStepStartingFromNumPhotons_(useHighPhotonsPerStepStartingFromNumPhotons)
 {
     if (!randomService_)
         throw I3CLSimParticleToStepConverter_exception("No random services was provided!");
     
     if (photonsPerStep_<=0)
         throw I3CLSimParticleToStepConverter_exception("photonsPerStep may not be <= 0!");
+    
+    if (highPhotonsPerStep_==0) highPhotonsPerStep_=photonsPerStep_;
+    
+    if (highPhotonsPerStep_<photonsPerStep_)
+        throw I3CLSimParticleToStepConverter_exception("highPhotonsPerStep may not be < photonsPerStep!");
+
+    if (useHighPhotonsPerStepStartingFromNumPhotons_<=0.)
+        throw I3CLSimParticleToStepConverter_exception("useHighPhotonsPerStepStartingFromNumPhotons may not be <= 0!");
         
 }
 
@@ -157,6 +172,11 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
     (particle.GetType()==I3Particle::Gamma);
 
     const bool isHadron =
+#ifdef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
+    // if we don't know it but it has a pdg code,
+    // it is probably a hadron..
+    (particle.GetType()==I3Particle::UnknownWithPdgEncoding) ||
+#endif
     (particle.GetType()==I3Particle::Hadrons) ||
     (particle.GetType()==I3Particle::Neutron) ||
     (particle.GetType()==I3Particle::Pi0) ||
@@ -183,72 +203,33 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
         const double pb=Lrad/0.633;
         
         const double nph=5.21*(0.924*I3Units::g/I3Units::cm3)/density;
-
+        
         const double meanNumPhotons = meanPhotonsPerMeter*nph*E;
-        const uint32_t numPhotons = randomService_->Poisson(meanNumPhotons);
         
-        const uint32_t numSteps = numPhotons/photonsPerStep_;
-        const uint32_t numPhotonsInLastStep = numPhotons%photonsPerStep_;
-        
-        log_trace("Generating %" PRIu32 " steps for electromagetic", numSteps);
-        
-        for (uint32_t i=0; i<numSteps; ++i)
+        uint64_t numPhotons;
+        if (meanNumPhotons > 1e7)
         {
-            currentStepSeries_->push_back(I3CLSimStep());
-            I3CLSimStep &newStep = currentStepSeries_->back();
-
-            const double longitudinalPos = pb*gammaDistributedNumber(pa, randomService_)*I3Units::m;
-            GenerateStep(newStep, particle,
-                         identifier,
-                         randomService_,
-                         photonsPerStep_,
-                         longitudinalPos);
+            log_debug("HUGE EVENT: (e-m) meanNumPhotons=%f, nph=%f, E=%f (approximating possion by gaussian)", meanNumPhotons, nph, E);
+            double numPhotonsDouble=0;
+            do {
+                numPhotonsDouble = randomService_->Gaus(meanNumPhotons, std::sqrt(meanNumPhotons));
+            } while (numPhotonsDouble<0.);
+            
+            if (numPhotonsDouble > static_cast<double>(std::numeric_limits<uint64_t>::max()))
+                log_fatal("Too many photons for counter. internal limitation.");
+            numPhotons = static_cast<uint64_t>(numPhotonsDouble);
+        }
+        else
+        {
+            numPhotons = static_cast<uint64_t>(randomService_->Poisson(meanNumPhotons));
         }
         
-        if (numPhotonsInLastStep > 0)
-        {
-            currentStepSeries_->push_back(I3CLSimStep());
-            I3CLSimStep &newStep = currentStepSeries_->back();
-
-            const double longitudinalPos = pb*gammaDistributedNumber(pa, randomService_)*I3Units::m;
-            GenerateStep(newStep, particle,
-                         identifier,
-                         randomService_,
-                         numPhotonsInLastStep,
-                         longitudinalPos);
-        }
+        const uint64_t numSteps = numPhotons/static_cast<uint64_t>(photonsPerStep_);
+        const uint64_t numPhotonsInLastStep = numPhotons%static_cast<uint64_t>(photonsPerStep_);
         
+        log_trace("Generating %" PRIu64 " steps for electromagetic", numSteps);
         
-        log_trace("Generate %u steps for E=%fGeV. (electron)", static_cast<unsigned int>(numSteps+1), E);
-    } else if (isHadron) {
-        double pa=1.49+0.359*logE;
-        double pb=Lrad/0.772;
-
-        const double em=5.21*(0.924*I3Units::g/I3Units::cm3)/density;
-        
-        double f=1.0;
-        const double E0=0.399;
-        const double m=0.130;
-        const double f0=0.467;
-        const double rms0=0.379;
-        const double gamma=1.160;
-        
-        double e=max(10.0, E);
-        double F=1.-pow(e/E0, -m)*(1.-f0);
-        double dF=F*rms0*pow(log10(e), -gamma);
-        do {f=F+dF*randomService_->Gaus(0.,1.);} while((f<0.) || (1.<f));
-
-        const double nph=f*em;
-
-        const double meanNumPhotons = meanPhotonsPerMeter*nph*E;
-        const uint32_t numPhotons = randomService_->Poisson(meanNumPhotons);
-
-        const uint32_t numSteps = numPhotons/photonsPerStep_;
-        const uint32_t numPhotonsInLastStep = numPhotons%photonsPerStep_;
-        
-        log_trace("Generating %" PRIu32 " steps for hadron", numSteps);
-
-        for (uint32_t i=0; i<numSteps; ++i)
+        for (uint64_t i=0; i<numSteps; ++i)
         {
             currentStepSeries_->push_back(I3CLSimStep());
             I3CLSimStep &newStep = currentStepSeries_->back();
@@ -265,16 +246,93 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
         {
             currentStepSeries_->push_back(I3CLSimStep());
             I3CLSimStep &newStep = currentStepSeries_->back();
-
+            
             const double longitudinalPos = pb*gammaDistributedNumber(pa, randomService_)*I3Units::m;
             GenerateStep(newStep, particle,
                          identifier,
                          randomService_,
-                         numPhotonsInLastStep,
+                         static_cast<uint32_t>(numPhotonsInLastStep),
+                         longitudinalPos);
+        }
+        
+        
+        log_trace("Generate %u steps for E=%fGeV. (electron)", static_cast<unsigned int>(numSteps+1), E);
+    } else if (isHadron) {
+        double pa=1.49+0.359*logE;
+        double pb=Lrad/0.772;
+        
+        const double em=5.21*(0.924*I3Units::g/I3Units::cm3)/density;
+        
+        double f=1.0;
+        const double E0=0.399;
+        const double m=0.130;
+        const double f0=0.467;
+        const double rms0=0.379;
+        const double gamma=1.160;
+        
+        double e=max(10.0, E);
+        double F=1.-pow(e/E0, -m)*(1.-f0);
+        double dF=F*rms0*pow(log10(e), -gamma);
+        do {f=F+dF*randomService_->Gaus(0.,1.);} while((f<0.) || (1.<f));
+        
+        const double nph=f*em;
+        
+        const double meanNumPhotons = meanPhotonsPerMeter*nph*E;
+        
+        uint64_t numPhotons;
+        if (meanNumPhotons > 1e7)
+        {
+            log_debug("HUGE EVENT: (hadron) meanNumPhotons=%f, nph=%f, E=%f (approximating possion by gaussian)", meanNumPhotons, nph, E);
+            double numPhotonsDouble=0;
+            do {
+                numPhotonsDouble = randomService_->Gaus(meanNumPhotons, std::sqrt(meanNumPhotons));
+            } while (numPhotonsDouble<0.);
+            
+            if (numPhotonsDouble > static_cast<double>(std::numeric_limits<uint64_t>::max()))
+                log_fatal("Too many photons for counter. internal limitation.");
+            numPhotons = static_cast<uint64_t>(numPhotonsDouble);
+        }
+        else
+        {
+            numPhotons = static_cast<uint64_t>(randomService_->Poisson(meanNumPhotons));
+        }
+        
+        uint64_t usePhotonsPerStep = static_cast<uint64_t>(photonsPerStep_);
+        if (static_cast<double>(numPhotons) > useHighPhotonsPerStepStartingFromNumPhotons_)
+            usePhotonsPerStep = static_cast<uint64_t>(highPhotonsPerStep_);
+        
+        const uint64_t numSteps = numPhotons/usePhotonsPerStep;
+        const uint64_t numPhotonsInLastStep = numPhotons%usePhotonsPerStep;
+        
+        log_trace("Generating %" PRIu64 " steps for hadron", numSteps);
+        
+        for (uint64_t i=0; i<numSteps; ++i)
+        {
+            currentStepSeries_->push_back(I3CLSimStep());
+            I3CLSimStep &newStep = currentStepSeries_->back();
+            
+            const double longitudinalPos = pb*gammaDistributedNumber(pa, randomService_)*I3Units::m;
+            GenerateStep(newStep, particle,
+                         identifier,
+                         randomService_,
+                         usePhotonsPerStep,
+                         longitudinalPos);
+        }
+        
+        if (numPhotonsInLastStep > 0)
+        {
+            currentStepSeries_->push_back(I3CLSimStep());
+            I3CLSimStep &newStep = currentStepSeries_->back();
+            
+            const double longitudinalPos = pb*gammaDistributedNumber(pa, randomService_)*I3Units::m;
+            GenerateStep(newStep, particle,
+                         identifier,
+                         randomService_,
+                         static_cast<uint32_t>(numPhotonsInLastStep),
                          longitudinalPos);
         }        
         
-        log_trace("Generate %u steps for E=%fGeV. (hadron)", static_cast<unsigned int>(numSteps+1), E);
+        log_trace("Generate %lu steps for E=%fGeV. (hadron)", static_cast<unsigned long>(numSteps+1), E);
     } else if (isMuon) {
         const double length = isnan(particle.GetLength())?(2000.*I3Units::m):(particle.GetLength());
         
@@ -294,27 +352,64 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
         log_trace("meanNumPhotonsTotal=%f", meanNumPhotonsTotal);
         
         const double meanNumPhotonsFromMuon = meanNumPhotonsTotal*muonFraction;
-        const uint32_t numPhotonsFromMuon = randomService_->Poisson(meanNumPhotonsFromMuon);
-
-        log_trace("Generating %" PRIu32 " muon-steps for muon (mean=%f)", numPhotonsFromMuon, meanNumPhotonsFromMuon);
+        
+        uint64_t numPhotonsFromMuon;
+        if (meanNumPhotonsFromMuon > 1e7)
+        {
+            log_debug("HUGE EVENT: (muon [   muon-like steps]) meanNumPhotons=%f, E=%f, len=%fm (approximating possion by gaussian)", meanNumPhotonsFromMuon, E, length/I3Units::m);
+            double numPhotonsDouble=0;
+            do {
+                numPhotonsDouble = randomService_->Gaus(meanNumPhotonsFromMuon, std::sqrt(meanNumPhotonsFromMuon));
+            } while (numPhotonsDouble<0.);
+            
+            if (numPhotonsDouble > static_cast<double>(std::numeric_limits<uint64_t>::max()))
+                log_fatal("Too many photons for counter. internal limitation.");
+            numPhotonsFromMuon = static_cast<uint64_t>(numPhotonsDouble);
+        }
+        else
+        {
+            numPhotonsFromMuon = static_cast<uint64_t>(randomService_->Poisson(meanNumPhotonsFromMuon));
+        }
+        log_trace("Generating %" PRIu64 " muon-steps for muon (mean=%f)", numPhotonsFromMuon, meanNumPhotonsFromMuon);
 
         const double meanNumPhotonsFromCascades = meanNumPhotonsTotal*(1.-muonFraction);
 
         log_trace("Generating a mean of %f cascade-steps for muon", meanNumPhotonsFromCascades);
 
-        const uint32_t numPhotonsFromCascades = randomService_->Poisson(meanNumPhotonsFromCascades);
-        log_trace("Generating %" PRIu32 " cascade-steps for muon (mean=%f)", numPhotonsFromCascades, meanNumPhotonsFromCascades);
 
-         
+        uint64_t numPhotonsFromCascades;
+        if (meanNumPhotonsFromCascades > 1e7)
+        {
+            log_debug("HUGE EVENT: (muon [cascade-like steps]) meanNumPhotons=%f, E=%f, len=%fm (approximating possion by gaussian)", meanNumPhotonsFromCascades, E, length/I3Units::m);
+            double numPhotonsDouble=0;
+            do {
+                numPhotonsDouble = randomService_->Gaus(meanNumPhotonsFromCascades, std::sqrt(meanNumPhotonsFromCascades));
+            } while (numPhotonsDouble<0.);
+            
+            if (numPhotonsDouble > static_cast<double>(std::numeric_limits<uint64_t>::max()))
+                log_fatal("Too many photons for counter. internal limitation.");
+            numPhotonsFromCascades = static_cast<uint64_t>(numPhotonsDouble);
+        }
+        else
+        {
+            numPhotonsFromCascades = static_cast<uint64_t>(randomService_->Poisson(meanNumPhotonsFromCascades));
+        }
+        log_trace("Generating %" PRIu64 " cascade-steps for muon (mean=%f)", numPhotonsFromCascades, meanNumPhotonsFromCascades);
+
          
         // steps from muon
-        const uint32_t numStepsFromMuon = numPhotonsFromMuon/photonsPerStep_;
-        const uint32_t numPhotonsFromMuonInLastStep = numPhotonsFromMuon%photonsPerStep_;
         
-        log_trace("Generating %" PRIu32 " steps for muon", numStepsFromMuon);
+        uint64_t usePhotonsPerStep = static_cast<uint64_t>(photonsPerStep_);
+        if (static_cast<double>(numPhotonsFromMuon) > useHighPhotonsPerStepStartingFromNumPhotons_)
+            usePhotonsPerStep = static_cast<uint64_t>(highPhotonsPerStep_);
+        
+        const uint64_t numStepsFromMuon = numPhotonsFromMuon/usePhotonsPerStep;
+        const uint64_t numPhotonsFromMuonInLastStep = numPhotonsFromMuon%usePhotonsPerStep;
+        
+        log_trace("Generating %" PRIu64 " steps for muon", numStepsFromMuon);
 
         
-        for (uint32_t i=0; i<numStepsFromMuon; ++i)
+        for (uint64_t i=0; i<numStepsFromMuon; ++i)
         {
             currentStepSeries_->push_back(I3CLSimStep());
             I3CLSimStep &newStep = currentStepSeries_->back();
@@ -322,7 +417,7 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
             GenerateStepForMuon(newStep,
                                 particle,
                                 identifier,
-                                photonsPerStep_,
+                                usePhotonsPerStep,
                                 length);
         }
         
@@ -334,22 +429,24 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
             GenerateStepForMuon(newStep,
                                 particle,
                                 identifier,
-                                numPhotonsFromMuonInLastStep,
+                                static_cast<uint32_t>(numPhotonsFromMuonInLastStep),
                                 length);
         }
         
-        log_trace("Generate %u steps for E=%fGeV, l=%fm. (muon[muon])", static_cast<unsigned int>((numStepsFromMuon+((numPhotonsFromMuonInLastStep>0)?1:0))), E, length/I3Units::m);
+        log_trace("Generate %lu steps for E=%fGeV, l=%fm. (muon[muon])", static_cast<unsigned long>((numStepsFromMuon+((numPhotonsFromMuonInLastStep>0)?1:0))), E, length/I3Units::m);
         
         
         // steps from cascade
         
-        uint32_t photonsPerStepForCascadeLight=photonsPerStep_/1;
-        if (photonsPerStepForCascadeLight==0) photonsPerStepForCascadeLight=1;
-        
-        const uint32_t numStepsFromCascades = numPhotonsFromCascades/photonsPerStepForCascadeLight;
-        const uint32_t numPhotonsFromCascadesInLastStep = numStepsFromCascades%photonsPerStepForCascadeLight;
+        usePhotonsPerStep = static_cast<uint64_t>(photonsPerStep_);
+        if (static_cast<double>(numPhotonsFromCascades) > useHighPhotonsPerStepStartingFromNumPhotons_)
+            usePhotonsPerStep = static_cast<uint64_t>(highPhotonsPerStep_);
 
-        for (uint32_t i=0; i<numStepsFromCascades; ++i)
+        
+        const uint64_t numStepsFromCascades = numPhotonsFromCascades/usePhotonsPerStep;
+        const uint64_t numPhotonsFromCascadesInLastStep = numStepsFromCascades%usePhotonsPerStep;
+
+        for (uint64_t i=0; i<numStepsFromCascades; ++i)
         {
             currentStepSeries_->push_back(I3CLSimStep());
             I3CLSimStep &newStep = currentStepSeries_->back();
@@ -358,7 +455,7 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
             GenerateStep(newStep, particle,
                          identifier,
                          randomService_,
-                         photonsPerStepForCascadeLight,
+                         usePhotonsPerStep,
                          longitudinalPos);
         }
         
@@ -371,7 +468,7 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
             GenerateStep(newStep, particle,
                          identifier,
                          randomService_,
-                         numPhotonsFromCascadesInLastStep,
+                         static_cast<uint32_t>(numPhotonsFromCascadesInLastStep),
                          longitudinalPos);
         }        
         

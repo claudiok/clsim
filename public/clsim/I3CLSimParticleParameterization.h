@@ -47,14 +47,26 @@ public:
                                     double fromEnergy_, double toEnergy_,
                                     bool needsLength_=false);
 
+    I3CLSimParticleParameterization(I3CLSimParticleToStepConverterPtr converter_,
+                                    const I3Particle &forParticleType_,
+                                    double fromEnergy_, double toEnergy_,
+                                    bool needsLength_=false);
+
     
     I3CLSimParticleToStepConverterPtr converter;
+#ifndef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
     I3Particle::ParticleType forParticleType;
+#else
+    int32_t forPdgEncoding;
+#endif
     double fromEnergy, toEnergy;
     bool needsLength;
     
     bool IsValidForParticle(const I3Particle &particle) const;
     bool IsValid(I3Particle::ParticleType type, double energy, double length=NAN) const;
+#ifdef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
+    bool IsValidForPdgEncoding(int32_t encoding, double energy, double length=NAN) const;
+#endif
     
 private:
 };
@@ -63,7 +75,11 @@ inline bool operator==(const I3CLSimParticleParameterization &a, const I3CLSimPa
 {
     if (a.fromEnergy != b.fromEnergy) return false;
     if (a.toEnergy != b.toEnergy) return false;
+#ifndef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
     if (a.forParticleType != b.forParticleType) return false;
+#else
+    if (a.forPdgEncoding != b.forPdgEncoding) return false;
+#endif
     if (a.converter != b.converter) return false;
     if (a.needsLength != b.needsLength) return false;
     return true;

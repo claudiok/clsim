@@ -175,6 +175,15 @@ geometryIsConfigured_(false)
                  "Ignore all OMKeys with these subdetector names",
                  ignoreSubdetectors_);
 
+    splitGeometryIntoPartsAcordingToPosition_=false;
+    AddParameter("SplitGeometryIntoPartsAcordingToPosition",
+                 "If you have a geometry with multiple OMs per floor (e.g. Antares or KM3NeT-tower-like),\n"
+                 "it will internally get split into subdetectors to save memory on the GPU. This is 100% transparent.\n"
+                 "By default the split is according to the \"floor index\" of an OM on a floor. If you enable this\n"
+                 "option, the split will also be done according to the x-y projected positions of the OMs per string.\n"
+                 "This may be necessary for \"tower\" geometries.",
+                 splitGeometryIntoPartsAcordingToPosition_);
+
     
     // add an outbox
     AddOutBox("OutBox");
@@ -285,6 +294,8 @@ void I3CLSimModule::Configure()
     GetParameter("IgnoreDomIDs", ignoreDomIDs_);
     GetParameter("IgnoreSubdetectors", ignoreSubdetectors_);
 
+    GetParameter("SplitGeometryIntoPartsAcordingToPosition", splitGeometryIntoPartsAcordingToPosition_);
+
     if (!wavelengthGenerationBias_) {
         wavelengthGenerationBias_ = I3CLSimWlenDependentValueConstantConstPtr(new I3CLSimWlenDependentValueConstant(1.));
     }
@@ -311,8 +322,12 @@ void I3CLSimModule::Configure()
         BOOST_FOREACH(const I3CLSimParticleParameterization &parameterization, parameterizationList_)
         {
             I3Particle tmpParticle;
+#ifndef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
             tmpParticle.SetType(parameterization.forParticleType);
-            
+#else
+            tmpParticle.SetPdgEncoding(parameterization.forPdgEncoding);
+#endif
+
             log_info("  * particle=%s, from energy=%fGeV, to energy=%fGeV",
                      tmpParticle.GetTypeString().c_str(),
                      parameterization.fromEnergy/I3Units::GeV,
@@ -464,7 +479,8 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
                                                  1,                                     // ignoreStringIDsSmallerThan
                                                  std::numeric_limits<int32_t>::max(),   // ignoreStringIDsLargerThan
                                                  1,                                     // ignoreDomIDsSmallerThan
-                                                 60)                                    // ignoreDomIDsLargerThan
+                                                 60,                                    // ignoreDomIDsLargerThan
+                                                 splitGeometryIntoPartsAcordingToPosition_)
         );
     }
     else
@@ -478,7 +494,8 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
                                                  std::numeric_limits<int32_t>::min(),   // ignoreStringIDsSmallerThan
                                                  std::numeric_limits<int32_t>::max(),   // ignoreStringIDsLargerThan
                                                  std::numeric_limits<uint32_t>::min(),  // ignoreDomIDsSmallerThan
-                                                 std::numeric_limits<uint32_t>::max())  // ignoreDomIDsLargerThan
+                                                 std::numeric_limits<uint32_t>::max(),  // ignoreDomIDsLargerThan
+                                                 splitGeometryIntoPartsAcordingToPosition_)
         );
     }
     
@@ -789,6 +806,85 @@ namespace {
         }
         return false;
     }
+    
+    // version for point sources
+    double DistToClosestDOM(const I3CLSimSimpleGeometry &geometry, const I3Position &pos)
+    {
+        double closestDist=NAN;
+        
+        const std::vector<double> xVect = geometry.GetPosXVector();
+        const std::vector<double> yVect = geometry.GetPosYVector();
+        const std::vector<double> zVect = geometry.GetPosZVector();
+
+        
+        for (std::size_t i=0;i<geometry.size();++i)
+        {
+            const double dx = xVect[i]-pos.GetX();
+            const double dy = yVect[i]-pos.GetY();
+            const double dz = zVect[i]-pos.GetZ();
+            
+            const double thisDist = std::sqrt(dx*dx + dy*dy + dz*dz);
+            
+            if (isnan(closestDist)) {
+                closestDist=thisDist;
+            } else {
+                if (thisDist<closestDist) closestDist=thisDist;
+            }
+        }
+        
+        if (isnan(closestDist)) return 0.;
+        return closestDist;
+    }
+
+    // version for tracks
+    double DistToClosestDOM(const I3CLSimSimpleGeometry &geometry, const I3Position &pos, const I3Direction &dir, double length, bool nostart=false, bool nostop=false)
+    {
+        double closestDist=NAN;
+        
+        const std::vector<double> xVect = geometry.GetPosXVector();
+        const std::vector<double> yVect = geometry.GetPosYVector();
+        const std::vector<double> zVect = geometry.GetPosZVector();
+        
+        
+        for (std::size_t i=0;i<geometry.size();++i)
+        {
+            const double Ax = xVect[i]-pos.GetX();
+            const double Ay = yVect[i]-pos.GetY();
+            const double Az = zVect[i]-pos.GetZ();
+            
+            double d_along = Ax*dir.GetX() + Ay*dir.GetY() + Az*dir.GetZ();
+            
+            if (!nostart) {
+                if (d_along < 0.) d_along=0.;         // there is no track before its start
+            }
+            
+            if (!nostop) {
+                if (d_along > length) d_along=length; // there is no track after its end
+            }
+            
+            const double p_along_x = pos.GetX() + dir.GetX()*d_along;
+            const double p_along_y = pos.GetY() + dir.GetY()*d_along;
+            const double p_along_z = pos.GetZ() + dir.GetZ()*d_along;
+
+            // distance from point to DOM
+            
+            const double dx = xVect[i]-p_along_x;
+            const double dy = yVect[i]-p_along_y;
+            const double dz = zVect[i]-p_along_z;
+            
+            const double thisDist = std::sqrt(dx*dx + dy*dy + dz*dz);
+            
+            if (isnan(closestDist)) {
+                closestDist=thisDist;
+            } else {
+                if (thisDist<closestDist) closestDist=thisDist;
+            }
+        }
+        
+        if (isnan(closestDist)) return 0.;
+        return closestDist;
+    }
+
 }
 
 void I3CLSimModule::Process()
@@ -849,17 +945,21 @@ void I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
         for (I3MCTree::iterator it = MCTree->begin();
              it != MCTree->end(); ++it)
         {
-            const I3Particle &particle = *it;
+            const I3Particle &particle_ref = *it;
             
             // In-ice particles only
-            if (particle.GetLocationType() != I3Particle::InIce) continue;
+            if (particle_ref.GetLocationType() != I3Particle::InIce) continue;
+
+            // ignore particles with shape "Dark"
+            if (particle_ref.GetShape() == I3Particle::Dark) continue;
 
             // check particle type
-            const bool isMuon = (particle.GetType() == I3Particle::MuMinus) || (particle.GetType() == I3Particle::MuPlus);
-            const bool isNeutrino = particle.IsNeutrino();
+            const bool isMuon = (particle_ref.GetType() == I3Particle::MuMinus) || (particle_ref.GetType() == I3Particle::MuPlus);
+            const bool isNeutrino = particle_ref.IsNeutrino();
+            const bool isTrack = particle_ref.IsTrack();
 
             // mmc-icetray currently stores continuous loss entries as "unknown"
-            const bool isContinuousLoss = (particle.GetType() == -1111) || (particle.GetType() == I3Particle::unknown); // special magic number used by MMC
+            const bool isContinuousLoss = (particle_ref.GetType() == -1111) || (particle_ref.GetType() == I3Particle::unknown); // special magic number used by MMC
             
             // ignore continuous loss entries
             if (isContinuousLoss) {
@@ -873,13 +973,59 @@ void I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
             // ignore muons if requested
             if ((ignoreMuons_) && (isMuon)) continue;
             
+            if (!isTrack) 
+            {
+                const double distToClosestDOM = DistToClosestDOM(*geometry_, particle_ref.GetPos());
+
+                if (distToClosestDOM >= 300.*I3Units::m)
+                {
+                    log_debug("Ignored a non-track that is %fm (>300m) away from the closest DOM.",
+                             distToClosestDOM);
+                    continue;
+                }
+            }
+
+            // make a copy of the particle, we may need to change its length
+            I3Particle particle = particle_ref;
+
+            if (isTrack)
+            {
+                bool nostart = false;
+                bool nostop = false;
+                double particleLength = particle.GetLength();
+                
+                if (isnan(particleLength)) {
+                    // assume infinite track (starting at given position)
+                    nostop = true;
+                } else if (particleLength < 0.) {
+                    log_warn("got track with negative length. assuming it starts at given position.");
+                    nostop = true;
+                } else if (particleLength == 0.){
+                    // zero length: starting track
+                    nostop = true;
+                }
+                
+                const double distToClosestDOM = DistToClosestDOM(*geometry_, particle.GetPos(), particle.GetDir(), particleLength, nostart, nostop);
+                if (distToClosestDOM >= 300.*I3Units::m)
+                {
+                    log_debug("Ignored a track that is always at least %fm (>300m) away from the closest DOM.",
+                             distToClosestDOM);
+                    continue;
+                }
+                
+                
+            }
+            
+            
             // ignore muons with muons as child particles
             // -> those already ran through MMC(-recc) or
             // were sliced with I3MuonSlicer. Only add their
             // children.
             if (!ignoreMuons_) {
-                if (ParticleHasMuonDaughter(particle, *MCTree))
+                if (ParticleHasMuonDaughter(particle_ref, *MCTree)) {
+                    log_warn("particle has muon as daughter(s) but is not \"Dark\". Strange. Ignoring.");
                     continue;
+                }
             }
             
             totalSimulatedEnergyForFlush_ += particle.GetEnergy();

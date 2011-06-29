@@ -19,9 +19,13 @@ struct I3CLSimParticleToStepConverterPPC : public I3CLSimParticleToStepConverter
 {
 public:
     static const uint32_t default_photonsPerStep;
-    
+    static const uint32_t default_highPhotonsPerStep;
+    static const double default_useHighPhotonsPerStepStartingFromNumPhotons;
+
     I3CLSimParticleToStepConverterPPC(I3RandomServicePtr randomService,
-                                                          uint32_t photonsPerStep=default_photonsPerStep);
+                                      uint32_t photonsPerStep=default_photonsPerStep,
+                                      uint32_t highPhotonsPerStep=default_highPhotonsPerStep,
+                                      double useHighPhotonsPerStepStartingFromNumPhotons=default_useHighPhotonsPerStepStartingFromNumPhotons);
     virtual ~I3CLSimParticleToStepConverterPPC();
 
     // inherited:
@@ -58,7 +62,9 @@ private:
     uint64_t bunchSizeGranularity_;
     uint64_t maxBunchSize_;
     uint32_t photonsPerStep_;
-
+    uint32_t highPhotonsPerStep_;
+    double useHighPhotonsPerStepStartingFromNumPhotons_;
+    
     I3CLSimWlenDependentValueConstPtr wlenBias_;
     I3CLSimMediumPropertiesConstPtr mediumProperties_;
     

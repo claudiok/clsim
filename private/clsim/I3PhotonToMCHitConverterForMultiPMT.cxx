@@ -124,20 +124,28 @@ namespace {
         const double pz=photonPos.GetZ()-omPos.GetZ();
         const double pr2 = px*px + py*py + pz*pz;
 
+        const double dx = photonDir.GetX();
+		const double dy = photonDir.GetY();
+		const double dz = photonDir.GetZ();
+
+        // is photon entering?
+        const double dot = px*dx + py*dy + pz*dz;
+        if (dot > 0.) {
+            log_debug("photon is leaving, dot=%f", dot);
+            return -1;
+        }
+        
         // sanity check: are photons on the OM's surface?
         const double distFromDOMCenter = std::sqrt(pr2);
         if (std::abs(distFromDOMCenter - omRadius) > 3.*I3Units::cm) {
-            log_fatal("distance not %fmm.. it is %fmm (diff=%gmm)",
-                      omRadius/I3Units::mm,
-                      distFromDOMCenter/I3Units::mm,
-                      (distFromDOMCenter-omRadius)/I3Units::mm);
+            log_warn("distance not %fmm.. it is %fmm (diff=%gmm)",
+                     omRadius/I3Units::mm,
+                     distFromDOMCenter/I3Units::mm,
+                     (distFromDOMCenter-omRadius)/I3Units::mm);
         }
 
 		pathLengthInOM = NAN;
 		
-		const double dx = photonDir.GetX();
-		const double dy = photonDir.GetY();
-		const double dz = photonDir.GetZ();
 		
 		log_trace("OM orientation=(%f,%f,%f)", omOrientation.GetX(), omOrientation.GetY(), omOrientation.GetZ());
 		
@@ -318,7 +326,8 @@ void I3PhotonToMCHitConverterForMultiPMT::Physics(I3FramePtr frame)
 											 rotatedPmtDir.GetY()*photon.GetDir().GetY() +
 											 rotatedPmtDir.GetZ()*photon.GetDir().GetZ()));
 			
-			
+			if (hit_angle >= 90.*I3Units::deg) continue; // flat disc cannot be hit from behind
+            
 			// TODO: FIXME: pathLengthInsideOM should be only the length within the glass,
 			// not the full length. The rest should be a length in the gel, which is assumed
 			// to be fixed right now..
@@ -343,7 +352,9 @@ void I3PhotonToMCHitConverterForMultiPMT::Physics(I3FramePtr frame)
 			measurement_prob *= ang_fac;
 			
             if (measurement_prob > 1.)
-                log_fatal("measurement_prob > 1: cannot continue. your hit weights are too high.");
+                log_fatal("measurement_prob > 1 (it's %f): cannot continue. your hit weights are too high. (weight=%f, wlen=%fnm)",
+                          measurement_prob, photon.GetWeight(),
+                          photon.GetWavelength()/I3Units::nanometer);
 
             if (measurement_prob <= randomService_->Uniform()) continue;
 

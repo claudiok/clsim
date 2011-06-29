@@ -215,11 +215,13 @@ void register_I3CLSimParticleToStepConverter()
          "I3CLSimParticleToStepConverterPPC",
          bp::init<
          I3RandomServicePtr,
-         uint32_t
+         uint32_t, uint32_t, double
          >(
            (
             bp::arg("randomService"),
-            bp::arg("photonsPerStep") = I3CLSimParticleToStepConverterPPC::default_photonsPerStep
+            bp::arg("photonsPerStep") = I3CLSimParticleToStepConverterPPC::default_photonsPerStep,
+            bp::arg("highPhotonsPerStep") = I3CLSimParticleToStepConverterPPC::default_highPhotonsPerStep,
+            bp::arg("useHighPhotonsPerStepStartingFromNumPhotons") = I3CLSimParticleToStepConverterPPC::default_useHighPhotonsPerStepStartingFromNumPhotons
             )
            )
          )

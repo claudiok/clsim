@@ -22,6 +22,8 @@ from GetIceCubeDOMAngularSensitivity import GetIceCubeDOMAngularSensitivity
 from GetAntaresOMAcceptance import GetAntaresOMAcceptance
 from GetAntaresOMAngularSensitivity import GetAntaresOMAngularSensitivity
 
+from GetKM3NeTDOMAcceptance import GetKM3NeTDOMAcceptance
+
 # clean up the clsim namespace
 del augmentClassWithPicklingSupport
 del icetray

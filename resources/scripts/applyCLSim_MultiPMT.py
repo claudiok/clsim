@@ -15,8 +15,6 @@ parser.add_option("-r", "--runnumber", type="int", default=1,
                   dest="RUNNUMBER", help="The run number for this simulation")
 parser.add_option("-p", "--max-parallel-events", type="int", default=100,
                   dest="MAXPARALLELEVENTS", help="maximum number of events(==frames) that will be processed in parallel")
-parser.add_option("-m", "--oversize-factor", type="float", default=1.,
-                  dest="OVERSIZEFACTOR", help="scale the OM radius by this factor, but scale back the OM acceptance accordingly")
 parser.add_option("--apply-mmc", action="store_true", default=False,
                   dest="APPLYMMC", help="apply MMC to the I3MCTree before passing it to CLSim")
 parser.add_option("--mmc-with-recc", action="store_true", default=False,
@@ -138,11 +136,6 @@ if options.APPLYMMC:
     load("libmmc-icetray")
     MMCseed=options.SEED
 
-radiusOverSizeFactor=options.OVERSIZEFACTOR
-
-if radiusOverSizeFactor != 1.:
-    print "using a OM radius oversize factor of {0}".format(radiusOverSizeFactor)
-
 tray = I3Tray()
 
 if options.APPLYMMC:
@@ -158,12 +151,15 @@ randomService = phys_services.I3SPRNGRandomService(
 # water properties (partic-0.0075)
 mediumProperties = clsim.MakeAntaresMediumProperties()
 
-domAcceptance = clsim.GetAntaresOMAcceptance(domRadius = (17./2.) * 0.0254*I3Units.m*radiusOverSizeFactor)
-domAngularSensitivity = clsim.GetAntaresOMAngularSensitivity(name='Spring09')
+#generationSpectrumBias = clsim.GetAntaresOMAcceptance(domRadius = (17./2.) * 0.0254*I3Units.m)
+#generationSpectrumBias = clsim.GetKM3NeTDOMAcceptance(domRadius = (17./2.) * 0.0254*I3Units.m, wpdQE=False, withWinstonCone=True, peakQE=0.32)
+generationSpectrumBias = clsim.GetKM3NeTDOMAcceptance(domRadius = (17./2.) * 0.0254*I3Units.m, wpdQE=True, withWinstonCone=True) # new version (acceptance from WPD document)
 
 # parameterizations for fast simulation (bypassing Geant4)
 # converters first:
-cascadeConverter = clsim.I3CLSimParticleToStepConverterPPC(randomService=randomService, photonsPerStep=200)
+cascadeConverter = clsim.I3CLSimParticleToStepConverterPPC(randomService=randomService, 
+                                                           photonsPerStep=200,
+                                                           highPhotonsPerStep=2000)
 
 # now set up a list of converters with particle types and valid energy ranges
 parameterizationsMuon = [
@@ -189,43 +185,43 @@ parameterizationsOther = [
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.Hadrons,
                                        fromEnergy=0.0*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+                                       toEnergy=1000.*I3Units.PeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.Pi0,
                                        fromEnergy=0.0*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+                                       toEnergy=1000.*I3Units.PeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.PiPlus,
                                        fromEnergy=0.0*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+                                       toEnergy=1000.*I3Units.PeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.PiMinus,
                                        fromEnergy=0.0*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+                                       toEnergy=1000.*I3Units.PeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.K0_Long,
                                        fromEnergy=0.0*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+                                       toEnergy=1000.*I3Units.PeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.KPlus,
                                        fromEnergy=0.0*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+                                       toEnergy=1000.*I3Units.PeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.KMinus,
                                        fromEnergy=0.0*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+                                       toEnergy=1000.*I3Units.PeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.PPlus,
                                        fromEnergy=0.0*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+                                       toEnergy=1000.*I3Units.PeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.PMinus,
                                        fromEnergy=0.0*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+                                       toEnergy=1000.*I3Units.PeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.K0_Short,
                                        fromEnergy=0.0*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+                                       toEnergy=1000.*I3Units.PeV),
 
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.EMinus,
@@ -262,6 +258,15 @@ parameterizationsOther = [
 tray.AddModule("I3Reader","reader",
                Filename=infile)
 
+count1 = 0
+def counter1(frame):
+    global count1
+    if (count1%10==0):
+        print "%d frames in"%count1
+    count1 +=1
+tray.AddModule(counter1,'counter1')
+
+
 if options.APPLYMMC:
     mmcOpts = "-seed=%i -radius=900 -length=1600" % (MMCseed)
     if options.MMCWITHRECC:
@@ -285,12 +290,14 @@ else:
 
 tray.AddModule("I3CLSimModule", "clsim",
                MCTreeName=clSimMCTreeName,
-               DOMRadius = (17./2.) * 0.0254*I3Units.m*radiusOverSizeFactor, # 13" diameter
+               DOMRadius = (17./2.) * 0.0254*I3Units.m, # 17" diameter
                RandomService=randomService,
                MediumProperties=mediumProperties,
                IgnoreNonIceCubeOMNumbers=False, # ignore AMANDA and IceTop OMKeys (do NOT use for any other detector!)
+               SplitGeometryIntoPartsAcordingToPosition=True, # necessary for "tower" geometries, should not hurt for others
+               
                GenerateCherenkovPhotonsWithoutDispersion=False,
-               WavelengthGenerationBias=domAcceptance,
+               WavelengthGenerationBias=generationSpectrumBias,
                ParameterizationList=parameterizationsMuon+parameterizationsOther,
                #ParameterizationList=parameterizationsMuon,
                MaxNumParallelEvents=options.MAXPARALLELEVENTS,
@@ -342,6 +349,14 @@ tray.AddModule("I3PhotonToMCHitConverterForMultiPMT", "make_hits_multiPMT",
 if options.REMOVEPHOTONDATA:
     tray.AddModule("Delete", "delete_photons",
         Keys = ["PropagatedPhotons"])
+
+count2 = 0
+def counter2(frame):
+    global count2
+    if (count2%10==0):
+        print "%d frames out"%(count2)
+    count2 +=1
+tray.AddModule(counter2,'counter2')
 
 tray.AddModule("I3Writer","writer",
     Filename = outdir+outfile)

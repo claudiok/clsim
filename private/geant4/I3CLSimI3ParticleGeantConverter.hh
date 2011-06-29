@@ -20,6 +20,7 @@
 
 namespace I3CLSimI3ParticleGeantConverter
 {
+#ifndef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
     inline I3Particle::ParticleType ConvertPDGEncodingToI3ParticleType(int pdg_code)
     {
         switch (pdg_code)
@@ -166,6 +167,7 @@ namespace I3CLSimI3ParticleGeantConverter
             default: return 0;          // invalid
         }
     }
+#endif
     
     
     /**
@@ -208,8 +210,22 @@ namespace I3CLSimI3ParticleGeantConverter
             return false;
         }
         
+#ifndef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
         int pdgcode = ConvertI3ParticleTypeToPDGEncoding(particle.GetType());
         if (pdgcode==0) 
+#else
+        int pdgcode = particle.GetPdgEncoding();
+        
+        // simple replacements for a few special codes
+        if      (pdgcode==-2000001001) pdgcode=11;  // Brems    -> EMinus // NOTE: check these
+        else if (pdgcode==-2000001002) pdgcode=11;  // DeltaE   -> EMinus // NOTE: check these
+        else if (pdgcode==-2000001003) pdgcode=22;  // PairProd -> Gamma  // NOTE: check these
+        else if (pdgcode==-2000001004) pdgcode=211; // NuclInt  -> PiPlus (just assume this is a pion..)
+        else if (pdgcode==-2000001005) pdgcode=22;  // MuPair   -> EMinus // NOTE: check these
+        else if (pdgcode==-2000001006) pdgcode=211; // Hadrons  -> PiPlus (just assume this is a pion..)
+        
+        if ((pdgcode==0) || (pdgcode <= -2000000000) || (pdgcode >= 2000000000)) // no special IceTray codes allowed in Geant4..
+#endif
         {
             log_warn("Particle with type \"%s\" is not supported by Geant4. Ignoring.",
                      particle.GetTypeString().c_str());

@@ -139,7 +139,21 @@ namespace {
         
         return totalEnergy;
     }
-                                            
+                                        
+    
+    namespace {
+        I3MCTree::iterator
+        GetMCTreeIterator(I3MCTree &t, const I3Particle& p){
+            I3MCTree::iterator i;
+            for(i=t.begin() ; i!= t.end(); i++)
+                if((i->GetMinorID() == p.GetMinorID()) &&
+                   (i->GetMajorID() == p.GetMajorID()))
+                    return i;
+            return t.end();
+        }
+
+        
+    }
     
     void SliceMuonOrCopySubtree(const I3MCTree &inputTree,
                                 const I3MMCTrackList &mmcTrackList,
@@ -203,17 +217,21 @@ namespace {
                 log_fatal("Muon daughters are not sorted in time (ascending).");
             }
 
+            bool hadInvalidEi=false;
+            bool hadInvalidEf=false;
             
             // correct values with information from I3Particle
             if ((Ei<=0.) || (isnan(Ei)))
             {
                 Ei = particle.GetEnergy();
                 ti = particle.GetTime();
+                hadInvalidEi=true;
             }
             if ((Ef<0.) || (isnan(Ef)))
             {
                 Ef = 0.;
                 tf = particle.GetTime() + particle.GetLength()/I3Constants::c;
+                hadInvalidEf=true;
             }
 
             if (isnan(ti)) log_fatal("t_initial is NaN");
@@ -226,17 +244,38 @@ namespace {
             }
             else if (tf<ti)
             {
-                log_warn("Muon stops before it starts.. (t_final==%fns < t_initial==%fns) (minorID=%i, majorID=%" PRIu64 ") ignoring.",
-                          tf/I3Units::ns, ti/I3Units::ns, particle.GetMinorID(), particle.GetMajorID());
+                log_warn("Muon stops before it starts.. [Setting to shape \"Dark\"] (t_final==%fns < t_initial==%fns) (GetTime()=%fns, minorID=%i, majorID=%" PRIu64 ") ignoring.",
+                         tf/I3Units::ns, ti/I3Units::ns, particle.GetTime()/I3Units::ns, particle.GetMinorID(), particle.GetMajorID());
+
+                // set the current muon shape to "Dark"
+                {
+                    I3MCTree::iterator tree_it = GetMCTreeIterator(outputTree, particle);
+                    if (tree_it == outputTree.end()) log_fatal("internal error. output particle not in output tree.");
+                    tree_it->SetShape(I3Particle::Dark);
+                }
             }
             else if (tf==ti)
             {
                 if (particle.GetLength()>0.)
-                    log_warn("Particle has length but t_final==t_initial==%fns. (minorID=%i, majorID=%" PRIu64 ") ignoring.",
-                              tf/I3Units::ns, particle.GetMinorID(), particle.GetMajorID());
+                    log_warn("Particle has length but t_final==t_initial==%fns. [Setting to shape \"Dark\"] (GetTime()=%fns, minorID=%i, majorID=%" PRIu64 ") ignoring.",
+                              tf/I3Units::ns, particle.GetTime()/I3Units::ns, particle.GetMinorID(), particle.GetMajorID());
+
+                // set the current muon shape to "Dark"
+                {
+                    I3MCTree::iterator tree_it = GetMCTreeIterator(outputTree, particle);
+                    if (tree_it == outputTree.end()) log_fatal("internal error. output particle not in output tree.");
+                    tree_it->SetShape(I3Particle::Dark);
+                }
             }
             else // (ti<tf) && (Ei>0.)
             {
+                // set the current muon shape to "Dark"
+                {
+                    I3MCTree::iterator tree_it = GetMCTreeIterator(outputTree, particle);
+                    if (tree_it == outputTree.end()) log_fatal("internal error. output particle not in output tree.");
+                    tree_it->SetShape(I3Particle::Dark);
+                }
+                
                 const double totalEnergyInCascades = 
                 GetTotalEnergyOfParticles(daughters, ti, tf);
                 const double dEdt_calc = ((Ef-Ei+totalEnergyInCascades)/(ti-tf));
@@ -248,6 +287,8 @@ namespace {
                 
                 double currentEnergy = Ei;
                 double currentTime = ti;
+                
+                unsigned int iterationNum=0;
                 
                 BOOST_FOREACH(const I3Particle &daughter, daughters)
                 {
@@ -267,11 +308,22 @@ namespace {
                     muonSlice.SetTime(currentTime);
                     muonSlice.SetLength(sliceLength);
                     muonSlice.SetEnergy(currentEnergy);
+#ifdef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
+                    muonSlice.SetPdgEncoding(particle.GetPdgEncoding());
+#else
                     muonSlice.SetType(particle.GetType());
+#endif
                     muonSlice.SetShape(particle.GetShape());
                     muonSlice.SetFitStatus(I3Particle::NotSet);
                     muonSlice.SetLocationType(particle.GetLocationType());
                 
+                    if (sliceLength>1.*I3Units::km)
+                        log_warn("Extremely long slice detected in iteration %u len=%fkm (hadInvalidEi=%s, hadInvalidEf=%s)",
+                                 iterationNum,
+                                 sliceLength/I3Units::km,
+                                 hadInvalidEi?"YES":"NO",
+                                 hadInvalidEf?"YES":"NO");
+                    
                     I3MCTreeUtils::AppendChild(outputTree, particle, muonSlice);
                     I3MCTreeUtils::AppendChild(outputTree, particle, daughter);
                     
@@ -280,8 +332,21 @@ namespace {
                     
                     if (currentEnergy<0.)
                         log_fatal("Muon looses more energy than it has.");
+                    
+                    ++iterationNum;
                 }
 
+                if (iterationNum==0)
+                {
+                    // if it had no daughters and Ei and Ef are invalid, it
+                    // seems to be an outgoing muon behind the can. Ignore it.
+                    if ((hadInvalidEi) && (hadInvalidEf)) {
+                        log_debug("Ignored an outgoing muon that starts behind the detector.");
+                        return;
+                    }
+                }
+                
+                
                 // slice after last daughter
                 const double sliceDuration = tf-currentTime;
                 const double sliceLength = sliceDuration*I3Constants::c;
@@ -295,11 +360,22 @@ namespace {
                 muonSlice.SetTime(currentTime);
                 muonSlice.SetLength(sliceLength);
                 muonSlice.SetEnergy(currentEnergy);
+#ifdef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
+                muonSlice.SetPdgEncoding(particle.GetPdgEncoding());
+#else
                 muonSlice.SetType(particle.GetType());
+#endif
                 muonSlice.SetShape(particle.GetShape());
                 muonSlice.SetFitStatus(I3Particle::NotSet);
                 muonSlice.SetLocationType(particle.GetLocationType());
                 
+                if (sliceLength>1.*I3Units::km)
+                    log_warn("Extremely long slice detected in iteration %u len=%fkm (hadInvalidEi=%s, hadInvalidEf=%s)",
+                             iterationNum,
+                             sliceLength/I3Units::km,
+                             hadInvalidEi?"YES":"NO",
+                             hadInvalidEf?"YES":"NO");
+
                 I3MCTreeUtils::AppendChild(outputTree, particle, muonSlice);
                 
                 return; // return here in order _not_ to do the default loop below

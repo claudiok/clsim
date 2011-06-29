@@ -183,6 +183,13 @@ private:
     /// Parameter: Ignore all OMKeys with these subdetector names
     std::vector<std::string> ignoreSubdetectors_;
 
+    /// Parmeter: If you have a geometry with multiple OMs per floor (e.g. Antares or KM3NeT-tower-like),
+    ///   it will internally get split into subdetectors to save memory on the GPU. This is 100% transparent.
+    ///   By default the split is according to the "floor index" of an OM on a floor. If you enable this
+    ///   option, the split will also be done according to the x-y projected positions of the OMs per string.
+    ///   This may be necessary for "tower" geometries.
+    bool splitGeometryIntoPartsAcordingToPosition_;
+
 private:
     // default, assignment, and copy constructor declared private
     I3CLSimModule();
