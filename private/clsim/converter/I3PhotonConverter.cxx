@@ -18,8 +18,8 @@ I3PhotonConverter::CreateDescription
     
     desc->AddField<int32_t> ("id",                 "",       "photon id");
     desc->AddField<double>  ("weight",             "",       "photon weight");
-    desc->AddField<uint64_t>("partmajorid",        "",       "negative log likelihood");
-    desc->AddField<int32_t> ("partminorid",        "",       "negative log likelihood");
+    desc->AddField<uint64_t>("partmajorid",        "",       "the particle major ID");
+    desc->AddField<int32_t> ("partminorid",        "",       "the particle minor ID");
 
     desc->AddField<double>  ("cherenkov_distance", "m",      "full photon track length from emission to detection");
     desc->AddField<double>  ("cherenkov_time",     "ns",     "time difference between emission to detection");

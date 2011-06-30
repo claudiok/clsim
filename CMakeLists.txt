@@ -62,6 +62,7 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
     
     # tableio converters
     private/clsim/converter/I3PhotonConverter.cxx
+    private/clsim/converter/I3MCHitConverterWithIDs.cxx
     
     # private/geant4
     private/geant4/I3CLSimParticleToStepConverterGeant4.cxx

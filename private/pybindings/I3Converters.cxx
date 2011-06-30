@@ -20,12 +20,17 @@
 #include <sstream>
 
 #include "clsim/converter/I3PhotonConverter.h"
+#include "clsim/converter/I3MCHitConverterWithIDs.h"
 #include "tableio/converter/pybindings.h"
 
 void register_I3Converters()
 {
     I3CONVERTER_NAMESPACE(clsim);
+
     I3CONVERTER_EXPORT_DEFAULT(I3PhotonConverter, "Dumps a single I3Photon to a table column");
     I3_MAP_CONVERTER_EXPORT_DEFAULT(I3PhotonSeriesMapConverter,"Dumps all I3Photons in a I3PhotonSeriesMap");
+
+    // this is not the default converter, the default one is in dataclasses
+    I3_MAP_CONVERTER_EXPORT(I3MCHitSeriesMapConverterWithIDs, "Dumps all I3MCHits from a I3MCHitSeriesMap");
 
 }
