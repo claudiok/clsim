@@ -1,6 +1,8 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+#include <cmath>
+
 #include "clsim/I3CLSimParticleToStepConverterPPC.h"
 
 #include "clsim/I3CLSimWlenDependentValue.h"
@@ -270,7 +272,7 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
         const double rms0=0.379;
         const double gamma=1.160;
         
-        double e=max(10.0, E);
+        double e=std::max(10.0, E);
         double F=1.-pow(e/E0, -m)*(1.-f0);
         double dF=F*rms0*pow(log10(e), -gamma);
         do {f=F+dF*randomService_->Gaus(0.,1.);} while((f<0.) || (1.<f));
@@ -344,7 +346,7 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
                   E*I3Units::GeV/I3Units::TeV, length/I3Units::m);
         
         // calculation the way it's done by PPC (I hope)
-        const double extr = 1. + max(0.0, 0.1720+0.0324*logE);
+        const double extr = 1. + std::max(0.0, 0.1720+0.0324*logE);
         const double muonFraction = 1./extr;
         
         const double meanNumPhotonsTotal = meanPhotonsPerMeter*(length/I3Units::m)*extr;

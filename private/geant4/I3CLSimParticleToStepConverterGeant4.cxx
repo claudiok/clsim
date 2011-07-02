@@ -671,7 +671,7 @@ void I3CLSimParticleToStepConverterGeant4::EnqueueParticle(const I3Particle &par
     }
     
     I3ParticleConstPtr particleCopy(new I3Particle(particle));
-    queueToGeant4_->Put(make_pair(identifier, particleCopy));
+    queueToGeant4_->Put(std::make_pair(identifier, particleCopy));
     
     LogGeant4Messages();
 }
@@ -691,7 +691,7 @@ void I3CLSimParticleToStepConverterGeant4::EnqueueBarrier()
         barrier_is_enqueued_=true;
 
         // we use a NULL pointer as the barrier
-        queueToGeant4_->Put(make_pair(0, I3ParticleConstPtr()));
+        queueToGeant4_->Put(std::make_pair(0, I3ParticleConstPtr()));
     }
     
     LogGeant4Messages();
