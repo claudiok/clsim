@@ -13,7 +13,14 @@
 
 #include "clsim/I3Photon.h"
 
-class I3PhotonConverter : public I3ConverterImplementation<I3Photon> {
+class I3PhotonConverter : public I3ConverterImplementation<I3Photon>
+{
+public:
+    typedef booked_type value_type;
+
+    void AddFields(I3TableRowDescriptionPtr, const value_type&  = value_type());
+    void FillSingleRow(const value_type&, I3TableRowPtr);
+
 private:
     I3TableRowDescriptionPtr CreateDescription(const I3Photon &photon); 
     std::size_t FillRows(const I3Photon &photon, I3TableRowPtr rows);
