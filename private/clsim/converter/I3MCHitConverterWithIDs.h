@@ -20,6 +20,7 @@
 struct I3MCHitConverterWithIDs 
 {
     typedef I3MCHit booked_type;
+    typedef booked_type value_type;
 
     void AddFields(I3TableRowDescriptionPtr desc, const booked_type& = booked_type());
     void FillSingleRow(const booked_type& dl, I3TableRowPtr row);
