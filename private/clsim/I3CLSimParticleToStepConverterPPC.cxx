@@ -226,9 +226,13 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
             numPhotons = static_cast<uint64_t>(randomService_->Poisson(meanNumPhotons));
         }
         
-        const uint64_t numSteps = numPhotons/static_cast<uint64_t>(photonsPerStep_);
-        const uint64_t numPhotonsInLastStep = numPhotons%static_cast<uint64_t>(photonsPerStep_);
+        uint64_t usePhotonsPerStep = static_cast<uint64_t>(photonsPerStep_);
+        if (static_cast<double>(numPhotons) > useHighPhotonsPerStepStartingFromNumPhotons_)
+            usePhotonsPerStep = static_cast<uint64_t>(highPhotonsPerStep_);
         
+        const uint64_t numSteps = numPhotons/usePhotonsPerStep;
+        const uint64_t numPhotonsInLastStep = numPhotons%usePhotonsPerStep;
+
         log_trace("Generating %" PRIu64 " steps for electromagetic", numSteps);
         
         for (uint64_t i=0; i<numSteps; ++i)
@@ -240,7 +244,7 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
             GenerateStep(newStep, particle,
                          identifier,
                          randomService_,
-                         photonsPerStep_,
+                         usePhotonsPerStep,
                          longitudinalPos);
         }
         

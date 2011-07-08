@@ -229,9 +229,11 @@ def GetKM3NeTDOMAcceptance(domRadius = (17./2.) * 0.0254*I3Units.m, peakQE=None,
         else:
             current_om_eff_area = pmt_collection_efficiency * \
                                   q_eff.GetValue(wavelength*I3Units.nanometer) * \
-                                  math.exp( -( glass_width / this_abs_glass ) ) * \
-                                  math.exp( -( gel_width / this_abs_gel ) ) * \
                                   coneScaler
+                                  # do not include these two (they assume a fixed photon path length through glass which
+                                  # currently is not the smallest possible length..
+                                  #math.exp( -( glass_width / this_abs_glass ) ) * \
+                                  #math.exp( -( gel_width / this_abs_gel ) )
 
         om_eff_area.append(current_om_eff_area)
     
