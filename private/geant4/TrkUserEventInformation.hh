@@ -9,7 +9,11 @@
 #include "clsim/I3CLSimQueue.h"
 #include "clsim/I3CLSimParticleToStepConverterGeant4.h"
 
+#include "dataclasses/physics/I3Particle.h"
 #include "clsim/I3CLSimParticleParameterization.h"
+
+#include <deque>
+#include <boost/tuple/tuple.hpp>
 
 #include <boost/thread.hpp>
 
@@ -24,6 +28,7 @@ class TrkUserEventInformation : public G4VUserEventInformation
 public:
     TrkUserEventInformation(uint64_t maxBunchSize_,
                             I3CLSimStepStorePtr stepStore_,
+                            shared_ptr<std::deque<boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimParticleParameterization> > > sendToParameterizationQueue_,
                             const I3CLSimParticleParameterizationSeries &parameterizationAvailable_,
                             boost::shared_ptr<I3CLSimQueue<I3CLSimParticleToStepConverterGeant4::FromGeant4Pair_t> > queueFromGeant4_,
                             boost::this_thread::disable_interruption &threadDisabledInterruptionState_,
@@ -36,7 +41,8 @@ public:
     
     const uint64_t maxBunchSize;
     I3CLSimStepStorePtr stepStore;
-    
+    shared_ptr<std::deque<boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimParticleParameterization> > > sendToParameterizationQueue;
+
     const I3CLSimParticleParameterizationSeries &parameterizationAvailable;
     
     boost::shared_ptr<I3CLSimQueue<I3CLSimParticleToStepConverterGeant4::FromGeant4Pair_t> > queueFromGeant4;

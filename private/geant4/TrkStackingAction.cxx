@@ -92,8 +92,11 @@ G4ClassificationOfNewTrack TrkStackingAction::ClassifyNewTrack(const G4Track * a
         if (parameterization.IsValidForPdgEncoding(aTrack->GetDefinition()->GetPDGEncoding(), trackEnergy*I3Units::GeV/GeV))
 #endif
         {
-            I3CLSimStepStorePtr stepStore = eventInformation->stepStore;
+            shared_ptr<std::deque<boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimParticleParameterization> > > sendToParameterizationQueue = eventInformation->sendToParameterizationQueue;
 
+            if (!sendToParameterizationQueue) 
+                log_fatal("internal error: sendToParameterizationQueue==NULL");
+            
             I3ParticlePtr particle(new I3Particle());
             
             const G4ThreeVector &trackPos = aTrack->GetPosition();
@@ -111,32 +114,9 @@ G4ClassificationOfNewTrack TrkStackingAction::ClassifyNewTrack(const G4Track * a
             particle->SetEnergy(trackEnergy*I3Units::GeV/GeV);
 
             //G4cout << "Geant4: sending a " << particle->GetTypeString() << " with id " << eventInformation->currentExternalParticleID << " and E=" << particle->GetEnergy()/I3Units::GeV << "GeV to a parameterization handler." << G4endl;
-            
-            // call the converter
-            if (!parameterization.converter) log_fatal("Internal error: parameteriation has NULL converter");
-            if (!parameterization.converter->IsInitialized()) log_fatal("Internal error: parameterization converter is not initialized.");
-            if (parameterization.converter->BarrierActive()) log_fatal("Logic error: parameterization converter has active barrier.");
-            
-            parameterization.converter->EnqueueParticle(*particle, eventInformation->currentExternalParticleID);
-            parameterization.converter->EnqueueBarrier();
-            
-            while (parameterization.converter->BarrierActive())
-            {
-                I3CLSimStepSeriesConstPtr res =
-                parameterization.converter->GetConversionResult();
-                
-                if (!res) {
-                    log_warn("NULL result from parameterization GetConversionResult(). ignoring.");
-                    continue;
-                }
-                if (res->size()==0) continue; // ignore empty vectors
-                
-                BOOST_FOREACH(const I3CLSimStep &step, *res)
-                {
-                    stepStore->insert_copy(step.GetNumPhotons(), step);
-                }
-            }
-            
+
+            sendToParameterizationQueue->push_back(boost::make_tuple(particle, eventInformation->currentExternalParticleID, parameterization));
+
             return fKill;
         }
     }

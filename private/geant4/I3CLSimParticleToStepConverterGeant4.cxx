@@ -3,8 +3,11 @@
 #include "clsim/I3CLSimQueue.h"
 
 #include <boost/thread/locks.hpp>
+#include <boost/foreach.hpp>
 
 #include <limits>
+#include <deque>
+#include <boost/tuple/tuple.hpp>
 
 // geant4 stuff
 #include "G4RunManager.hh"
@@ -77,7 +80,8 @@ maxBunchSize_(512000)
         thereCanBeOnlyOneGeant4=true;
     }
     
-    if ((randomSeed_<0) || (randomSeed_>900000000))
+    //if ((randomSeed_<0) || (randomSeed_>900000000)) // unsigned int is always >= 0
+    if (randomSeed_>900000000)
         throw I3CLSimParticleToStepConverter_exception("Invalid random seed (has to be >=0 and <=900000000).");
     
     if ((maxBetaChangePerStep_<=0.) || (maxBetaChangePerStep_>1.))
@@ -298,6 +302,11 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
     // of Cherenkov photons they generate
     I3CLSimStepStorePtr stepStore(new I3CLSimStepStore( (isnan(maxNumPhotonsPerStep_)||(maxNumPhotonsPerStep_<0.))?0:(static_cast<uint32_t>(maxNumPhotonsPerStep_*1.5)) ));
 
+    // this stores all particles that will be ent to parametrizations
+    shared_ptr<std::deque<boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimParticleParameterization> > > sendToParameterizationQueue
+    (new std::deque<boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimParticleParameterization> >());
+    
+    
     // keep this around to "catch" G4Eceptions and throw real exceptions
     UserHookForAbortState *theUserHookForAbortState = new UserHookForAbortState();
     G4StateManager *theStateManager = G4StateManager::GetStateManager();
@@ -341,6 +350,7 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
     
     TrkEventAction *theEventAction = new TrkEventAction(maxBunchSize_,
                                                         stepStore,
+                                                        sendToParameterizationQueue,
                                                         this->GetParticleParameterizationSeries(),
                                                         queueFromGeant4_,
                                                         di,
@@ -399,28 +409,29 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
             }
         }
         
-        bool interruptionOccured=false;
-        while (stepStore->size() >= maxBunchSize_)
-        {
-            I3CLSimStepSeriesPtr steps(new I3CLSimStepSeries());
-            stepStore->pop_bunch_to_vector(maxBunchSize_, *steps);
-            
-            {
-                boost::this_thread::restore_interruption ri(di);
-                try {
-                    queueFromGeant4_->Put(std::make_pair(steps, false));
-                } catch(boost::thread_interrupted &i) {
-                    G4cout << "G4 thread was interrupted. shutting down Geant4!" << G4endl;
-                    
-                    interruptionOccured = true;
-                    break;
-                }
-            }
-            
-            //G4cout << " -> flushed " << maxBunchSize_ << " steps, " << stepStore->size() << " steps left" << G4endl;
-        }            
         
-        if (interruptionOccured) break;
+        {
+            bool interruptionOccured=false;
+            while (stepStore->size() >= maxBunchSize_)
+            {
+                I3CLSimStepSeriesPtr steps(new I3CLSimStepSeries());
+                stepStore->pop_bunch_to_vector(maxBunchSize_, *steps);
+                
+                {
+                    boost::this_thread::restore_interruption ri(di);
+                    try {
+                        queueFromGeant4_->Put(std::make_pair(steps, false));
+                    } catch(boost::thread_interrupted &i) {
+                        G4cout << "G4 thread was interrupted. shutting down Geant4!" << G4endl;
+                        
+                        interruptionOccured = true;
+                        break;
+                    }
+                }
+            }            
+            if (interruptionOccured) break;
+        }
+        
         
         if (!particle) {
             //G4cout << "G4 thread got NULL! flushing " << stepStore->size() << " steps." << G4endl;
@@ -502,94 +513,139 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
             // nothing to send to Geant4, so start from the beginning
             continue;
         }
-        
-        //G4cout << "G4 thread got particle id " << particleIdentifier << ", type: " << particle->GetTypeString() << G4endl;
-        
-        //// HACK HACK HACK
-        //if ((particle->GetType()!=I3Particle::MuMinus) && (particle->GetType()!=I3Particle::MuPlus)) continue;
-        
+
         // check if there is a parameterization for this particle, so we
         // may not even have to send it to Geant4
-        {
-            bool parameterizationIsAvailable=false;
-            
-            for (I3CLSimParticleParameterizationSeries::const_iterator it=parameterizations.begin();
-                 it!=parameterizations.end(); ++it)
-            {
-                const I3CLSimParticleParameterization &parameterization = *it;
-                
-                if (parameterization.IsValidForParticle(*particle))
-                {
-                    parameterizationIsAvailable=true;
-                    
-                    //G4cout << "Geant4: sending a " << particle->GetTypeString() << " with id " << particleIdentifier << " and E=" << particle->GetEnergy()/I3Units::GeV << "GeV to a parameterization handler." << G4endl;
+        bool parameterizationIsAvailable=false;
 
-                    // call the converter
-                    if (!parameterization.converter) log_fatal("Internal error: parameteriation has NULL converter");
-                    if (!parameterization.converter->IsInitialized()) log_fatal("Internal error: parameterization converter is not initialized.");
-                    if (parameterization.converter->BarrierActive()) log_fatal("Logic error: parameterization converter has active barrier.");
-                    
-                    parameterization.converter->EnqueueParticle(*particle, particleIdentifier);
-                    parameterization.converter->EnqueueBarrier();
-                    
-                    while (parameterization.converter->BarrierActive())
-                    {
-                        I3CLSimStepSeriesConstPtr res =
-                        parameterization.converter->GetConversionResult();
-                        
-                        if (!res) {
-                            log_warn("NULL result from parameterization GetConversionResult(). ignoring.");
-                            continue;
-                        }
-                        if (res->size()==0) continue; // ignore empty vectors
-                        
-                        BOOST_FOREACH(const I3CLSimStep &step, *res)
-                        {
-                            stepStore->insert_copy(step.GetNumPhotons(), step);
-                        }
-                    }
-                    
-                    
-                    
-                    break;
+        // empty the queue        
+        sendToParameterizationQueue->clear();
+
+        for (I3CLSimParticleParameterizationSeries::const_iterator it=parameterizations.begin();
+             it!=parameterizations.end(); ++it)
+        {
+            const I3CLSimParticleParameterization &parameterization = *it;
+            
+            if (parameterization.IsValidForParticle(*particle))
+            {
+                sendToParameterizationQueue->push_back(boost::make_tuple(particle, particleIdentifier, parameterization));
+                parameterizationIsAvailable=true;
+                break;
+            }
+        }
+        
+        
+        if (!parameterizationIsAvailable) 
+        {
+            // no parameterization was found, use default Geant4
+            
+            // configure the Geant4 particle gun
+            {
+                G4ParticleGun *particleGun = thePrimaryGenerator->GetParticleGun();
+                if (!particleGun) log_fatal("Internal error: G4ParticleGun instance is NULL!");
+                
+                const bool ret = I3CLSimI3ParticleGeantConverter::SetParticleGun(particleGun, *particle);
+                
+                if (!ret) {
+                    G4cerr << "Could not configure Geant4 to shoot a " << particle->GetTypeString() << "! Ignoring." << G4endl;
+
+                    continue;
                 }
             }
             
-            if (parameterizationIsAvailable) continue;
+            // set the current particle ID
+            theEventAction->SetExternalParticleID(particleIdentifier);
 
+            log_trace("Geant4: no parameterization for %s with E=%fGeV", particle->GetTypeString().c_str(), particle->GetEnergy()/I3Units::GeV);
+            
+            G4cout << "Geant4: shooting a " << particle->GetTypeString() << " with id " << particleIdentifier << " and E=" << particle->GetEnergy()/I3Units::GeV << "GeV." << G4endl;
+
+            // we don't need the particle anymore.
+            particle.reset();
+            
+            // turn on the Geant4 beam!
+            // (this fills the stepStore with steps and our particle list with
+            // output particles for the available parameterizations..)
+            runManager->BeamOn(1);
+            
+            // check if AbortRun was requested beacause of a thread interruption.
+            if (theEventAction->AbortWasRequested()) break;
         }
-        
-        // no parameterization was found, use default Geant4
-        
-        // configure the Geant4 particle gun
+        else
         {
-            G4ParticleGun *particleGun = thePrimaryGenerator->GetParticleGun();
-            if (!particleGun) log_fatal("Internal error: G4ParticleGun instance is NULL!");
-            
-            const bool ret = I3CLSimI3ParticleGeantConverter::SetParticleGun(particleGun, *particle);
-            
-            if (!ret) {
-                G4cerr << "Could not configure Geant4 to shoot a " << particle->GetTypeString() << "! Ignoring." << G4endl;
-
-                continue;
-            }
+            // we don't need the particle anymore.
+            particle.reset();
         }
         
-        // set the current particle ID
-        theEventAction->SetExternalParticleID(particleIdentifier);
-
-        log_trace("Geant4: no parameterization for %s with E=%fGeV", particle->GetTypeString().c_str(), particle->GetEnergy()/I3Units::GeV);
         
-        G4cout << "Geant4: shooting a " << particle->GetTypeString() << " with id " << particleIdentifier << " and E=" << particle->GetEnergy()/I3Units::GeV << "GeV." << G4endl;
+        // loop over all particles that should be sent to a parameterization and send them.
+        // They were added by Geant4 (our by this code directly) to sendToParameterizationQueue
+        bool interruptionOccured=false;
+        typedef boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimParticleParameterization> particleAndIndexAndParamTuple_t;
+        BOOST_FOREACH(const particleAndIndexAndParamTuple_t &particleAndIndexPair, *sendToParameterizationQueue)
+        {
+            particle = particleAndIndexPair.get<0>();              // re-use the particle and particleIdentifier variables (the original
+            particleIdentifier = particleAndIndexPair.get<1>();    // ones are not needed anymore)
+            const I3CLSimParticleParameterization &parameterization = particleAndIndexPair.get<2>();
+            
+            if (!parameterization.IsValidForParticle(*particle))
+                log_fatal("internal error. Parameterization in queue is not valid for the particle that came with it..");
 
-        // we don't need the particle anymore.
+            // call the converter
+            if (!parameterization.converter) log_fatal("Internal error: parameteriation has NULL converter");
+            if (!parameterization.converter->IsInitialized()) log_fatal("Internal error: parameterization converter is not initialized.");
+            if (parameterization.converter->BarrierActive()) log_fatal("Logic error: parameterization converter has active barrier.");
+                    
+            parameterization.converter->EnqueueParticle(*particle, particleIdentifier);
+            parameterization.converter->EnqueueBarrier();
+            
+            while (parameterization.converter->BarrierActive())
+            {
+                I3CLSimStepSeriesConstPtr res =
+                parameterization.converter->GetConversionResult();
+                
+                if (!res) {
+                    log_warn("NULL result from parameterization GetConversionResult(). ignoring.");
+                    continue;
+                }
+                if (res->size()==0) continue; // ignore empty vectors
+                
+                // add steps from the parameterization to the step store
+                BOOST_FOREACH(const I3CLSimStep &step, *res)
+                {
+                    stepStore->insert_copy(step.GetNumPhotons(), step);
+                }
+
+                // push steps out if there are enough of them
+                while (stepStore->size() >= maxBunchSize_)
+                {
+                    I3CLSimStepSeriesPtr steps(new I3CLSimStepSeries());
+                    stepStore->pop_bunch_to_vector(maxBunchSize_, *steps);
+                    
+                    {
+                        boost::this_thread::restore_interruption ri(di);
+                        try {
+                            queueFromGeant4_->Put(std::make_pair(steps, false));
+                        } catch(boost::thread_interrupted &i) {
+                            G4cout << "G4 thread was interrupted. shutting down Geant4!" << G4endl;
+                            
+                            interruptionOccured = true;
+                            break;
+                        }
+                    }
+                }            
+                if (interruptionOccured) break;
+
+            }
+
+            if (interruptionOccured) break;
+        }
+
+        if (interruptionOccured) break;
+
+        // empty the queue and clean up  
+        sendToParameterizationQueue->clear();
         particle.reset();
-        
-        // turn on the Geant4 beam!
-        runManager->BeamOn(1);
-        
-        // check if AbortRun was requested beacause of a thread interruption.
-        if (theEventAction->AbortWasRequested()) break;
         
     }
 
