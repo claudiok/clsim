@@ -10,6 +10,9 @@
 
 #include <map>
 #include <string>
+#include <deque>
+
+#include <boost/variant.hpp>
 
 /**
  * @brief A particle-to-step converter for cascades
@@ -53,7 +56,50 @@ public:
     virtual I3CLSimStepSeriesConstPtr GetConversionResultWithBarrierInfo(bool &barrierWasReset, double timeout=NAN);
     
 private:
-    I3CLSimStepSeriesPtr currentStepSeries_;
+    ///////////////
+    // definitions used in the internal queue
+    
+    struct CascadeStepData_t {
+        I3Particle particle;
+        uint32_t particleIdentifier;
+        uint64_t photonsPerStep;
+        uint64_t numSteps;
+        uint64_t numPhotonsInLastStep;
+        
+        double pa,pb;
+    };
+    struct MuonStepData_t {
+        I3Particle particle;
+        uint32_t particleIdentifier;
+        uint64_t photonsPerStep;
+        uint64_t numSteps;
+        uint64_t numPhotonsInLastStep;
+
+        bool stepIsCascadeLike;
+        double length;
+    };
+    struct BarrierData_t {
+    };
+    typedef boost::variant<CascadeStepData_t, MuonStepData_t, BarrierData_t> StepData_t;
+    
+    std::deque<StepData_t> stepGenerationQueue_;
+    
+    I3CLSimStepSeriesConstPtr MakeSteps(bool &barrierWasReset);
+    class MakeSteps_visitor : public boost::static_visitor<std::pair<I3CLSimStepSeriesConstPtr, bool> >
+    {
+    public:
+        MakeSteps_visitor(I3RandomService &randomService, uint64_t maxNumStepsPerStepSeries);
+        template <typename T>
+        std::pair<I3CLSimStepSeriesConstPtr, bool> operator()(T &data) const;
+        
+    private:
+        void FillStep(I3CLSimParticleToStepConverterPPC::CascadeStepData_t &data, I3CLSimStep &newStep, uint64_t photonsPerStep) const;
+        void FillStep(I3CLSimParticleToStepConverterPPC::MuonStepData_t &data, I3CLSimStep &newStep, uint64_t photonsPerStep) const;
+        
+        I3RandomService &randomService_;
+        uint64_t maxNumStepsPerStepSeries_;
+    };
+    //////////////////
     
     I3RandomServicePtr randomService_;
     

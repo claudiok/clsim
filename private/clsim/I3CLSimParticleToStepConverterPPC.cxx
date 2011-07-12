@@ -27,7 +27,7 @@ I3CLSimParticleToStepConverterPPC::I3CLSimParticleToStepConverterPPC
 randomService_(randomService),
 initialized_(false),
 barrier_is_enqueued_(false),
-bunchSizeGranularity_(512),
+bunchSizeGranularity_(1),
 maxBunchSize_(512000),
 photonsPerStep_(photonsPerStep),
 highPhotonsPerStep_(highPhotonsPerStep),
@@ -43,10 +43,10 @@ useHighPhotonsPerStepStartingFromNumPhotons_(useHighPhotonsPerStepStartingFromNu
     
     if (highPhotonsPerStep_<photonsPerStep_)
         throw I3CLSimParticleToStepConverter_exception("highPhotonsPerStep may not be < photonsPerStep!");
-
+    
     if (useHighPhotonsPerStepStartingFromNumPhotons_<=0.)
         throw I3CLSimParticleToStepConverter_exception("useHighPhotonsPerStepStartingFromNumPhotons may not be <= 0!");
-        
+    
 }
 
 I3CLSimParticleToStepConverterPPC::~I3CLSimParticleToStepConverterPPC()
@@ -67,7 +67,7 @@ void I3CLSimParticleToStepConverterPPC::Initialize()
     
     if (bunchSizeGranularity_ > maxBunchSize_)
         throw I3CLSimParticleToStepConverter_exception("BunchSizeGranularity must not be greater than MaxBunchSize!");
-    
+
     if (maxBunchSize_%bunchSizeGranularity_ != 0)
         throw I3CLSimParticleToStepConverter_exception("MaxBunchSize is not a multiple of BunchSizeGranularity!");
     
@@ -112,7 +112,10 @@ void I3CLSimParticleToStepConverterPPC::SetBunchSizeGranularity(uint64_t num)
     
     if (num<=0)
         throw I3CLSimParticleToStepConverter_exception("BunchSizeGranularity of 0 is invalid!");
-    
+
+    if (num!=1)
+        throw I3CLSimParticleToStepConverter_exception("A BunchSizeGranularity != 1 is currently not supported!");
+
     bunchSizeGranularity_=num;
 }
 
@@ -151,9 +154,6 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
     if (barrier_is_enqueued_)
         throw I3CLSimParticleToStepConverter_exception("A barrier is enqueued! You must receive all steps before enqueuing a new particle.");
 
-    // allocate new step series if necessary
-    if (!currentStepSeries_) currentStepSeries_ = I3CLSimStepSeriesPtr(new I3CLSimStepSeries());
-    
     // determine current layer
     uint32_t mediumLayer =static_cast<uint32_t>(std::max(0.,(particle.GetPos().GetZ()-mediumProperties_->GetLayersZStart())/(mediumProperties_->GetLayersHeight())));
     if (mediumLayer >= mediumProperties_->GetLayersNum()) mediumLayer=mediumProperties_->GetLayersNum()-1;
@@ -235,32 +235,15 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
 
         log_trace("Generating %" PRIu64 " steps for electromagetic", numSteps);
         
-        for (uint64_t i=0; i<numSteps; ++i)
-        {
-            currentStepSeries_->push_back(I3CLSimStep());
-            I3CLSimStep &newStep = currentStepSeries_->back();
-            
-            const double longitudinalPos = pb*gammaDistributedNumber(pa, randomService_)*I3Units::m;
-            GenerateStep(newStep, particle,
-                         identifier,
-                         randomService_,
-                         usePhotonsPerStep,
-                         longitudinalPos);
-        }
-        
-        if (numPhotonsInLastStep > 0)
-        {
-            currentStepSeries_->push_back(I3CLSimStep());
-            I3CLSimStep &newStep = currentStepSeries_->back();
-            
-            const double longitudinalPos = pb*gammaDistributedNumber(pa, randomService_)*I3Units::m;
-            GenerateStep(newStep, particle,
-                         identifier,
-                         randomService_,
-                         static_cast<uint32_t>(numPhotonsInLastStep),
-                         longitudinalPos);
-        }
-        
+        CascadeStepData_t cascadeStepGenInfo;
+        cascadeStepGenInfo.particle=particle;
+        cascadeStepGenInfo.particleIdentifier=identifier;
+        cascadeStepGenInfo.photonsPerStep=usePhotonsPerStep;
+        cascadeStepGenInfo.numSteps=numSteps;
+        cascadeStepGenInfo.numPhotonsInLastStep=numPhotonsInLastStep;
+        cascadeStepGenInfo.pa=pa;
+        cascadeStepGenInfo.pb=pb;
+        stepGenerationQueue_.push_back(cascadeStepGenInfo);
         
         log_trace("Generate %u steps for E=%fGeV. (electron)", static_cast<unsigned int>(numSteps+1), E);
     } else if (isHadron) {
@@ -312,32 +295,16 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
         
         log_trace("Generating %" PRIu64 " steps for hadron", numSteps);
         
-        for (uint64_t i=0; i<numSteps; ++i)
-        {
-            currentStepSeries_->push_back(I3CLSimStep());
-            I3CLSimStep &newStep = currentStepSeries_->back();
-            
-            const double longitudinalPos = pb*gammaDistributedNumber(pa, randomService_)*I3Units::m;
-            GenerateStep(newStep, particle,
-                         identifier,
-                         randomService_,
-                         usePhotonsPerStep,
-                         longitudinalPos);
-        }
-        
-        if (numPhotonsInLastStep > 0)
-        {
-            currentStepSeries_->push_back(I3CLSimStep());
-            I3CLSimStep &newStep = currentStepSeries_->back();
-            
-            const double longitudinalPos = pb*gammaDistributedNumber(pa, randomService_)*I3Units::m;
-            GenerateStep(newStep, particle,
-                         identifier,
-                         randomService_,
-                         static_cast<uint32_t>(numPhotonsInLastStep),
-                         longitudinalPos);
-        }        
-        
+        CascadeStepData_t cascadeStepGenInfo;
+        cascadeStepGenInfo.particle=particle;
+        cascadeStepGenInfo.particleIdentifier=identifier;
+        cascadeStepGenInfo.photonsPerStep=usePhotonsPerStep;
+        cascadeStepGenInfo.numSteps=numSteps;
+        cascadeStepGenInfo.numPhotonsInLastStep=numPhotonsInLastStep;
+        cascadeStepGenInfo.pa=pa;
+        cascadeStepGenInfo.pb=pb;
+        stepGenerationQueue_.push_back(cascadeStepGenInfo);
+
         log_trace("Generate %lu steps for E=%fGeV. (hadron)", static_cast<unsigned long>(numSteps+1), E);
     } else if (isMuon) {
         const double length = isnan(particle.GetLength())?(2000.*I3Units::m):(particle.GetLength());
@@ -414,30 +381,15 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
         
         log_trace("Generating %" PRIu64 " steps for muon", numStepsFromMuon);
 
-        
-        for (uint64_t i=0; i<numStepsFromMuon; ++i)
-        {
-            currentStepSeries_->push_back(I3CLSimStep());
-            I3CLSimStep &newStep = currentStepSeries_->back();
-
-            GenerateStepForMuon(newStep,
-                                particle,
-                                identifier,
-                                usePhotonsPerStep,
-                                length);
-        }
-        
-        if (numPhotonsFromMuonInLastStep>0)
-        {
-            currentStepSeries_->push_back(I3CLSimStep());
-            I3CLSimStep &newStep = currentStepSeries_->back();
-
-            GenerateStepForMuon(newStep,
-                                particle,
-                                identifier,
-                                static_cast<uint32_t>(numPhotonsFromMuonInLastStep),
-                                length);
-        }
+        MuonStepData_t muonStepGenInfo;
+        muonStepGenInfo.particle=particle;
+        muonStepGenInfo.particleIdentifier=identifier;
+        muonStepGenInfo.photonsPerStep=usePhotonsPerStep;
+        muonStepGenInfo.numSteps=numStepsFromMuon;
+        muonStepGenInfo.numPhotonsInLastStep=numPhotonsFromMuonInLastStep;
+        muonStepGenInfo.stepIsCascadeLike=false;
+        muonStepGenInfo.length=length;
+        stepGenerationQueue_.push_back(muonStepGenInfo);
         
         log_trace("Generate %lu steps for E=%fGeV, l=%fm. (muon[muon])", static_cast<unsigned long>((numStepsFromMuon+((numPhotonsFromMuonInLastStep>0)?1:0))), E, length/I3Units::m);
         
@@ -452,31 +404,15 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
         const uint64_t numStepsFromCascades = numPhotonsFromCascades/usePhotonsPerStep;
         const uint64_t numPhotonsFromCascadesInLastStep = numStepsFromCascades%usePhotonsPerStep;
 
-        for (uint64_t i=0; i<numStepsFromCascades; ++i)
-        {
-            currentStepSeries_->push_back(I3CLSimStep());
-            I3CLSimStep &newStep = currentStepSeries_->back();
-            
-            const double longitudinalPos = randomService_->Uniform()*length;
-            GenerateStep(newStep, particle,
-                         identifier,
-                         randomService_,
-                         usePhotonsPerStep,
-                         longitudinalPos);
-        }
-        
-        if (numPhotonsFromCascadesInLastStep > 0)
-        {
-            currentStepSeries_->push_back(I3CLSimStep());
-            I3CLSimStep &newStep = currentStepSeries_->back();
-            
-            const double longitudinalPos = randomService_->Uniform()*length;
-            GenerateStep(newStep, particle,
-                         identifier,
-                         randomService_,
-                         static_cast<uint32_t>(numPhotonsFromCascadesInLastStep),
-                         longitudinalPos);
-        }        
+        //MuonStepData_t muonStepGenInfo;
+        muonStepGenInfo.particle=particle;
+        muonStepGenInfo.particleIdentifier=identifier;
+        muonStepGenInfo.photonsPerStep=usePhotonsPerStep;
+        muonStepGenInfo.numSteps=numStepsFromCascades;
+        muonStepGenInfo.numPhotonsInLastStep=numPhotonsFromCascadesInLastStep;
+        muonStepGenInfo.stepIsCascadeLike=true;
+        muonStepGenInfo.length=length;
+        stepGenerationQueue_.push_back(muonStepGenInfo);
         
         log_trace("Generate %u steps for E=%fGeV, l=%fm. (muon[cascade])", static_cast<unsigned int>((numStepsFromCascades+((numPhotonsFromCascadesInLastStep>0)?1:0))), E, length/I3Units::m);
         
@@ -494,6 +430,8 @@ void I3CLSimParticleToStepConverterPPC::EnqueueBarrier()
     if (barrier_is_enqueued_)
         throw I3CLSimParticleToStepConverter_exception("A barrier is already enqueued!");
 
+    // actually enqueue the barrier
+    stepGenerationQueue_.push_back(BarrierData_t());
     barrier_is_enqueued_=true;
 }
 
@@ -510,9 +448,131 @@ bool I3CLSimParticleToStepConverterPPC::MoreStepsAvailable() const
     if (!initialized_)
         throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC is not initialized!");
 
-    if (currentStepSeries_) return true;
+    if (stepGenerationQueue_.size() > 0) return true;
     return false;
 }
+
+I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::MakeSteps_visitor
+(I3RandomService &randomService, uint64_t maxNumStepsPerStepSeries)
+:randomService_(randomService),
+maxNumStepsPerStepSeries_(maxNumStepsPerStepSeries)
+{;}
+
+void I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::FillStep
+(I3CLSimParticleToStepConverterPPC::CascadeStepData_t &data,
+ I3CLSimStep &newStep,
+ uint64_t photonsPerStep) const
+{
+    const double longitudinalPos = data.pb*I3CLSimParticleToStepConverterUtils::gammaDistributedNumber(data.pa, randomService_)*I3Units::m;
+    I3CLSimParticleToStepConverterUtils::GenerateStep(newStep,
+                                                      data.particle,
+                                                      data.particleIdentifier,
+                                                      randomService_,
+                                                      photonsPerStep,
+                                                      longitudinalPos);
+}
+
+void I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::FillStep
+(I3CLSimParticleToStepConverterPPC::MuonStepData_t &data,
+ I3CLSimStep &newStep,
+ uint64_t photonsPerStep) const
+{
+    if (data.stepIsCascadeLike) {
+        const double longitudinalPos = randomService_.Uniform()*data.length;
+        I3CLSimParticleToStepConverterUtils::GenerateStep(newStep,
+                                                          data.particle,
+                                                          data.particleIdentifier,
+                                                          randomService_,
+                                                          photonsPerStep,
+                                                          longitudinalPos);
+    } else {
+        I3CLSimParticleToStepConverterUtils::GenerateStepForMuon(newStep,
+                                                                 data.particle,
+                                                                 data.particleIdentifier,
+                                                                 photonsPerStep,
+                                                                 data.length);
+    }
+}
+
+template <typename T>
+std::pair<I3CLSimStepSeriesConstPtr, bool>
+I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::operator()
+(T &data) const
+{
+    I3CLSimStepSeriesPtr currentStepSeries(new I3CLSimStepSeries());
+    
+    uint64_t useNumSteps = data.numSteps;
+    if (useNumSteps > maxNumStepsPerStepSeries_) useNumSteps=maxNumStepsPerStepSeries_;
+    
+    // make useNumSteps steps
+    for (uint64_t i=0; i<useNumSteps; ++i)
+    {
+        currentStepSeries->push_back(I3CLSimStep());
+        I3CLSimStep &newStep = currentStepSeries->back();
+        FillStep(data, newStep, data.photonsPerStep);
+    }
+    
+    // reduce the number of steps that have still to be processed
+    data.numSteps -= useNumSteps;
+    
+    if ((data.numSteps==0) && (useNumSteps<maxNumStepsPerStepSeries_))
+    {
+        // make the last step (with a possible different number of photons than all the others)
+        
+        if (data.numPhotonsInLastStep > 0)
+        {
+            currentStepSeries->push_back(I3CLSimStep());
+            I3CLSimStep &newStep = currentStepSeries->back();
+            FillStep(data, newStep, data.numPhotonsInLastStep);
+        }
+        
+        // we are finished with this entry, it can be removed (signal this using the return value's .second entry)
+        return std::make_pair(currentStepSeries, true);
+    }
+    else
+    {
+        // we are not finished with this entry, there are more steps to come..
+        return std::make_pair(currentStepSeries, false);
+    }
+}
+
+// specialization for BarrierData_t
+template <>
+std::pair<I3CLSimStepSeriesConstPtr, bool>
+I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::operator()
+(I3CLSimParticleToStepConverterPPC::BarrierData_t &data) const
+{
+    return make_pair(I3CLSimStepSeriesConstPtr(), true); // true=="entry can be removed from the queue"
+}
+
+
+I3CLSimStepSeriesConstPtr I3CLSimParticleToStepConverterPPC::MakeSteps(bool &barrierWasReset)
+{
+    barrierWasReset=false;
+    
+    if (stepGenerationQueue_.empty()) return I3CLSimStepSeriesConstPtr(); // queue is empty
+    
+    StepData_t &currentElement = stepGenerationQueue_.front();
+    
+    //  Let the visitor convert it into steps (the step pointer will be NULL if it is a barrier)
+    std::pair<I3CLSimStepSeriesConstPtr, bool> retval =
+    boost::apply_visitor(MakeSteps_visitor(*randomService_, maxBunchSize_), currentElement);
+    
+    I3CLSimStepSeriesConstPtr &steps = retval.first;
+    const bool entryCanBeRemoved = retval.second;
+    
+    if (entryCanBeRemoved) stepGenerationQueue_.pop_front();
+    
+    // steps==NULL means a barrier was reset. Return an empty list of 
+    if (!steps) {
+        barrierWasReset=true;
+        return I3CLSimStepSeriesConstPtr(new I3CLSimStepSeries());
+    } else {
+        return steps;
+    }
+}
+    
+    
 
 I3CLSimStepSeriesConstPtr I3CLSimParticleToStepConverterPPC::GetConversionResultWithBarrierInfo(bool &barrierWasReset, double timeout)
 {
@@ -521,19 +581,21 @@ I3CLSimStepSeriesConstPtr I3CLSimParticleToStepConverterPPC::GetConversionResult
     
     barrierWasReset=false;
     
-    if (!currentStepSeries_) {
-        if (barrier_is_enqueued_) {
-            if (barrier_is_enqueued_) barrierWasReset=true;
-            barrier_is_enqueued_=false;
-            return I3CLSimStepSeriesConstPtr();
-        }
+    if (stepGenerationQueue_.empty())
+    {
         throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC: no particle is enqueued!");
+        return I3CLSimStepSeriesConstPtr();
     }
-    if (barrier_is_enqueued_) barrierWasReset=true;
-    barrier_is_enqueued_=false;
     
-    I3CLSimStepSeriesConstPtr retVal = currentStepSeries_;
-    currentStepSeries_.reset();
+    I3CLSimStepSeriesConstPtr returnSteps = MakeSteps(barrierWasReset);
+    if (!returnSteps) log_fatal("logic error. returnSteps==NULL");
+
+    if (barrierWasReset) {
+        if (barrier_is_enqueued_)
+            log_error("logic error: barrier encountered, but enqueued flag is false.");
+        
+        barrier_is_enqueued_=false;
+    }
     
-    return retVal;
+    return returnSteps;
 }

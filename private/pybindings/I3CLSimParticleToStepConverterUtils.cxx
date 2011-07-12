@@ -34,9 +34,12 @@ namespace bp = boost::python;
 
 void register_I3CLSimParticleToStepConverterUtils()
 {
+    double (* gammaDistributedNumber_smartPtr)(double, I3RandomServicePtr)
+    = &I3CLSimParticleToStepConverterUtils::gammaDistributedNumber;
+
     // this can be used for testing purposes
     bp::def("NumberOfPhotonsPerMeter", &I3CLSimParticleToStepConverterUtils::NumberOfPhotonsPerMeter);
-    bp::def("gammaDistributedNumber", &I3CLSimParticleToStepConverterUtils::gammaDistributedNumber);
+    bp::def("gammaDistributedNumber", gammaDistributedNumber_smartPtr);
     //bp::def("scatterDirectionByAngle", &I3CLSimParticleToStepConverterUtils::scatterDirectionByAngle);
     //bp::def("GenerateStep", &I3CLSimParticleToStepConverterUtils::GenerateStep);
     //bp::def("GenerateStepForMuon", &I3CLSimParticleToStepConverterUtils::GenerateStepForMuon);

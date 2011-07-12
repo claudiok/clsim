@@ -191,6 +191,8 @@ void I3CLSimParticleToStepConverterGeant4::Initialize()
         
         parameterization.converter->SetMediumProperties(mediumProperties_);
         parameterization.converter->SetWlenBias(wlenBias_);
+        parameterization.converter->SetBunchSizeGranularity(1); // we do not send the bunches directly, the steps are integrated in the step store first, so granularity does not matter
+        parameterization.converter->SetMaxBunchSize(maxBunchSize_); // use the same bunch size for the parameterizations
         parameterization.converter->Initialize();
     }
     
@@ -599,23 +601,39 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
             parameterization.converter->EnqueueParticle(*particle, particleIdentifier);
             parameterization.converter->EnqueueBarrier();
             
-            while (parameterization.converter->BarrierActive())
+            // get steps from the parameterization until the barrier is reached
+            for (;;)
             {
-                I3CLSimStepSeriesConstPtr res =
-                parameterization.converter->GetConversionResult();
+                I3CLSimStepSeriesConstPtr res;
+                bool barrierHasBeenReached=false;
                 
-                if (!res) {
-                    log_warn("NULL result from parameterization GetConversionResult(). ignoring.");
-                    continue;
-                }
-                if (res->size()==0) continue; // ignore empty vectors
-                
-                // add steps from the parameterization to the step store
-                BOOST_FOREACH(const I3CLSimStep &step, *res)
                 {
-                    stepStore->insert_copy(step.GetNumPhotons(), step);
+                    boost::this_thread::restore_interruption ri(di);
+                    try {
+                        // this blocks if there are no steps yet and the
+                        // parameterization code is still working.
+                        res = parameterization.converter->GetConversionResultWithBarrierInfo(barrierHasBeenReached);
+                    } catch(boost::thread_interrupted &i) {
+                        G4cout << "G4 thread was interrupted. shutting down Geant4!" << G4endl;
+                        interruptionOccured = true;
+                        break;
+                    }
                 }
 
+                
+                if (!res) {
+                    log_debug("NULL result from parameterization GetConversionResult(). ignoring.");
+                } else {
+                    // add steps from the parameterization to the step store
+                    BOOST_FOREACH(const I3CLSimStep &step, *res)
+                    {
+                        stepStore->insert_copy(step.GetNumPhotons(), step);
+                    }
+                }
+                
+                // we don't need the results anymore
+                res.reset();
+                
                 // push steps out if there are enough of them
                 while (stepStore->size() >= maxBunchSize_)
                 {
@@ -625,10 +643,11 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
                     {
                         boost::this_thread::restore_interruption ri(di);
                         try {
+                            // this blocks if the queue from Geant4 to
+                            // OpenCL is full.
                             queueFromGeant4_->Put(std::make_pair(steps, false));
                         } catch(boost::thread_interrupted &i) {
                             G4cout << "G4 thread was interrupted. shutting down Geant4!" << G4endl;
-                            
                             interruptionOccured = true;
                             break;
                         }
@@ -636,6 +655,7 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
                 }            
                 if (interruptionOccured) break;
 
+                if (barrierHasBeenReached) break; // get out of the loop if the barrier has been reached
             }
 
             if (interruptionOccured) break;

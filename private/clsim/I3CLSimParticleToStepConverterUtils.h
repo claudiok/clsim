@@ -18,7 +18,7 @@ namespace I3CLSimParticleToStepConverterUtils
                                    double fromWlen, double toWlen);
     
     // stolen from PPC by D. Chirkin
-    inline double gammaDistributedNumber(double shape, I3RandomServicePtr randomService_)
+    inline double gammaDistributedNumber(double shape, I3RandomService &randomService)
     {
         double x;
         if(shape<1.){  // Weibull algorithm
@@ -27,8 +27,8 @@ namespace I3CLSimParticleToStepConverterUtils
             double z, e;
             do
             {
-                z=-std::log(randomService_->Uniform());
-                e=-std::log(randomService_->Uniform());
+                z=-std::log(randomService.Uniform());
+                e=-std::log(randomService.Uniform());
                 x=std::pow(z, c);
             } while(z+e<d+x); // or here
         }
@@ -42,8 +42,8 @@ namespace I3CLSimParticleToStepConverterUtils
             float y, z, r;
             do
             {
-                const double rx = randomService_->Uniform();
-                const double ry = randomService_->Uniform();
+                const double rx = randomService.Uniform();
+                const double ry = randomService.Uniform();
                 
                 y=log( ry/(1.-ry) ) / l;
                 x=shape*std::exp(y);
@@ -55,13 +55,19 @@ namespace I3CLSimParticleToStepConverterUtils
         return x;
     }
     
+    // smart pointer version
+    inline double gammaDistributedNumber(double shape, I3RandomServicePtr randomService)
+    {
+        return gammaDistributedNumber(shape, *randomService);
+    }
+    
     // in-place rotation
     inline void scatterDirectionByAngle(double cosa, double sina,
                                         double &x, double &y, double &z,
-                                        I3RandomServicePtr randomService_)
+                                        I3RandomService &randomService)
     {
         // randomize direction of scattering (rotation around old direction axis)
-        const double b=2.0*M_PI*randomService_->Uniform();
+        const double b=2.0*M_PI*randomService.Uniform();
         const double cosb=std::cos(b);
         const double sinb=std::sin(b);
         
@@ -95,10 +101,17 @@ namespace I3CLSimParticleToStepConverterUtils
         }
     }
     
+    inline void scatterDirectionByAngle(double cosa, double sina,
+                                        double &x, double &y, double &z,
+                                        I3RandomServicePtr randomService)
+    {
+        scatterDirectionByAngle(cosa, sina, x, y, z, *randomService);
+    }
+    
     inline void GenerateStep(I3CLSimStep &newStep,
                              const I3Particle &p,
                              uint32_t identifier,
-                             I3RandomServicePtr randomService_,
+                             I3RandomService &randomService,
                              uint32_t photonsPerStep,
                              const double &longitudinalPos)
     {
@@ -106,7 +119,7 @@ namespace I3CLSimParticleToStepConverterUtils
         const double angularDist_b=2.61;
         const double angularDist_I=1.-std::exp(-angularDist_b*std::pow(2., angularDist_a));
         
-        const double angular_cos=std::max(1.-std::pow(-std::log(1.-randomService_->Uniform()*angularDist_I)/angularDist_b, 1./angularDist_a), -1.0);
+        const double angular_cos=std::max(1.-std::pow(-std::log(1.-randomService.Uniform()*angularDist_I)/angularDist_b, 1./angularDist_a), -1.0);
         const double angular_sin=std::sqrt(1.-angular_cos*angular_cos);
         
         double step_dx = p.GetDir().GetX();
@@ -128,12 +141,23 @@ namespace I3CLSimParticleToStepConverterUtils
         // rotate in-place
         scatterDirectionByAngle(angular_cos, angular_sin,
                                 step_dx, step_dy, step_dz,
-                                randomService_);
+                                randomService);
         
         newStep.SetDir(step_dx, step_dy, step_dz);
         
         
     }
+    
+    inline void GenerateStep(I3CLSimStep &newStep,
+                             const I3Particle &p,
+                             uint32_t identifier,
+                             I3RandomServicePtr randomService,
+                             uint32_t photonsPerStep,
+                             const double &longitudinalPos)
+    {
+        GenerateStep(newStep, p, identifier, *randomService, photonsPerStep, longitudinalPos);
+    }
+
     
     inline void GenerateStepForMuon(I3CLSimStep &newStep,
                                     const I3Particle &p,
