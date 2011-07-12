@@ -243,6 +243,7 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
         cascadeStepGenInfo.numPhotonsInLastStep=numPhotonsInLastStep;
         cascadeStepGenInfo.pa=pa;
         cascadeStepGenInfo.pb=pb;
+        log_trace("== enqueue cascade (e-m)");
         stepGenerationQueue_.push_back(cascadeStepGenInfo);
         
         log_trace("Generate %u steps for E=%fGeV. (electron)", static_cast<unsigned int>(numSteps+1), E);
@@ -303,6 +304,7 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
         cascadeStepGenInfo.numPhotonsInLastStep=numPhotonsInLastStep;
         cascadeStepGenInfo.pa=pa;
         cascadeStepGenInfo.pb=pb;
+        log_trace("== enqueue cascade (hadron)");
         stepGenerationQueue_.push_back(cascadeStepGenInfo);
 
         log_trace("Generate %lu steps for E=%fGeV. (hadron)", static_cast<unsigned long>(numSteps+1), E);
@@ -389,6 +391,7 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
         muonStepGenInfo.numPhotonsInLastStep=numPhotonsFromMuonInLastStep;
         muonStepGenInfo.stepIsCascadeLike=false;
         muonStepGenInfo.length=length;
+        log_trace("== enqueue muon (muon-like)");
         stepGenerationQueue_.push_back(muonStepGenInfo);
         
         log_trace("Generate %lu steps for E=%fGeV, l=%fm. (muon[muon])", static_cast<unsigned long>((numStepsFromMuon+((numPhotonsFromMuonInLastStep>0)?1:0))), E, length/I3Units::m);
@@ -412,6 +415,7 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
         muonStepGenInfo.numPhotonsInLastStep=numPhotonsFromCascadesInLastStep;
         muonStepGenInfo.stepIsCascadeLike=true;
         muonStepGenInfo.length=length;
+        log_trace("== enqueue muon (cascade-like)");
         stepGenerationQueue_.push_back(muonStepGenInfo);
         
         log_trace("Generate %u steps for E=%fGeV, l=%fm. (muon[cascade])", static_cast<unsigned int>((numStepsFromCascades+((numPhotonsFromCascadesInLastStep>0)?1:0))), E, length/I3Units::m);
@@ -431,6 +435,7 @@ void I3CLSimParticleToStepConverterPPC::EnqueueBarrier()
         throw I3CLSimParticleToStepConverter_exception("A barrier is already enqueued!");
 
     // actually enqueue the barrier
+    log_trace("== enqueue barrier");
     stepGenerationQueue_.push_back(BarrierData_t());
     barrier_is_enqueued_=true;
 }
@@ -542,6 +547,7 @@ std::pair<I3CLSimStepSeriesConstPtr, bool>
 I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::operator()
 (I3CLSimParticleToStepConverterPPC::BarrierData_t &data) const
 {
+    log_trace("== end barrier in visitor::operator()");
     return make_pair(I3CLSimStepSeriesConstPtr(), true); // true=="entry can be removed from the queue"
 }
 
@@ -591,8 +597,8 @@ I3CLSimStepSeriesConstPtr I3CLSimParticleToStepConverterPPC::GetConversionResult
     if (!returnSteps) log_fatal("logic error. returnSteps==NULL");
 
     if (barrierWasReset) {
-        if (barrier_is_enqueued_)
-            log_error("logic error: barrier encountered, but enqueued flag is false.");
+        if (!barrier_is_enqueued_)
+            log_fatal("logic error: barrier encountered, but enqueued flag is false.");
         
         barrier_is_enqueued_=false;
     }
