@@ -408,19 +408,49 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
 {
     std::vector<cl::Device> devices(1, device);
 
-    try {
-        // prepare a device vector (containing a single device)
-        cl_context_properties properties[] = 
-        { CL_CONTEXT_PLATFORM, (cl_context_properties)(platform)(), 0};
+    // prepare a device vector (containing a single device)
+    cl_context_properties properties[] = 
+    { CL_CONTEXT_PLATFORM, (cl_context_properties)(platform)(), 0};
+
+    unsigned int createContextRetriesLeft = 20;
+    unsigned long retryDelayMilliseconds = 500;
+    bool hadToRetry=false;
+    
+    context_.reset(); // make sure the pointer is NULL
+
+    // the newer NVIDIA drivers sometimes fail to create a context
+    // with a "CL_OUT_OF_RESOURCES" error but works just fine if you
+    // try again after a short time.
+    for(;;)
+    {
+        try {
+            // create a context
+            context_ = shared_ptr<cl::Context>(new cl::Context(devices, properties));
+        } catch (cl::Error &err) {
+            if ((err.err() == CL_OUT_OF_RESOURCES) && (createContextRetriesLeft>0)) {
+                --createContextRetriesLeft;
+                
+                log_warn("OpenCL ERROR while creating conetxt: CL_OUT_OF_RESOURCES. Trying again in %fs.. (%u tries left)",
+                         static_cast<double>(retryDelayMilliseconds)/1000., createContextRetriesLeft);
+                
+                boost::this_thread::sleep(boost::posix_time::milliseconds(retryDelayMilliseconds));
+                
+                log_warn("Re-trying to create OpenCL context..");
+                hadToRetry=true;
+                context_.reset(); // make sure the pointer is NULL
+            } else {
+                // an OpenCL error here most probably means that there are no devices of the
+                // requested type. So just continue quietly.
+                log_error("OpenCL ERROR: %s (%i)", err.what(), err.err());
+                throw I3CLSimStepToPhotonConverter_exception("OpenCL error: could not set up context!");
+            }
+        }
         
-        // create a context
-        context_ = shared_ptr<cl::Context>(new cl::Context(devices, properties));
-    } catch (cl::Error &err) {
-        // an OpenCL error here most probably means that there are no devices of the
-        // requested type. So just continue quietly.
-        log_error("OpenCL ERROR: %s (%i)", err.what(), err.err());
-        throw I3CLSimStepToPhotonConverter_exception("OpenCL error: could not set up context!");
+        if (context_) break;
     }
+    
+    if (hadToRetry)
+        log_warn("OpenCL context created successfully!");
     
     {
         log_info("Running on: ");
