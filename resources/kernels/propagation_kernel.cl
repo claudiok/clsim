@@ -47,7 +47,7 @@ inline float my_exp(float a) {return exp(a);}
 inline float sqr(float a) {return a*a;}
 
 
-struct I3CLSimStep 
+struct __attribute__ ((packed)) I3CLSimStep 
 {
     float4 posAndTime;   // x,y,z,time
     float4 dirAndLengthAndBeta; // theta,phi,length,beta
@@ -55,9 +55,9 @@ struct I3CLSimStep
     float weight;
     uint identifier;
     uint dummy;
-} __attribute__ ((packed));
+};
 
-struct I3CLSimPhoton 
+struct __attribute__ ((packed)) I3CLSimPhoton 
 {
     float4 posAndTime;   // x,y,z,time
     float2 dir; // theta,phi
@@ -72,7 +72,7 @@ struct I3CLSimPhoton
     float2 startDir;
     float groupVelocity;
     uint dummy;
-} __attribute__ ((packed));
+};
 
 
 inline int findLayerForGivenZPos(float posZ)
