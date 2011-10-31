@@ -577,7 +577,7 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
     int currentPhotonLayer=0;
 
 #ifndef FUNCTION_getGroupVelocity_DOES_NOT_DEPEND_ON_LAYER
-#error This kernel only works with a constant group velocity (constant per layer)
+#error This kernel only works with a constant group velocity (constant w.r.t. layers)
 #endif
     float inv_groupvel=0.f;
 

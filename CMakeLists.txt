@@ -82,6 +82,7 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
     private/opencl/I3CLSimHelperGenerateMediumPropertiesSource.cxx
     private/opencl/I3CLSimHelperGenerateMediumPropertiesSource_Optimizers.cxx
     private/opencl/I3CLSimStepToPhotonConverterOpenCL.cxx
+    private/opencl/I3CLSimOpenCLDevice.cxx
 
     # private/test/
     private/test/I3CLSimMediumPropertiesTester.cxx

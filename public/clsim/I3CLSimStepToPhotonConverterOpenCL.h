@@ -11,6 +11,8 @@
 
 #include "clsim/I3CLSimQueue.h"
 
+#include "clsim/I3CLSimOpenCLDevice.h"
+
 #include <map>
 #include <string>
 #include <stdexcept>
@@ -33,22 +35,10 @@ struct I3CLSimStepToPhotonConverterOpenCL : public I3CLSimStepToPhotonConverter
 {
 public:
     static const bool default_useNativeMath;
-    static const bool default_cpuOnly;
-    static const bool default_gpuOnly;
     
     I3CLSimStepToPhotonConverterOpenCL(I3RandomServicePtr randomService,
-                                       bool useNativeMath=default_useNativeMath,
-                                       bool cpuOnly=default_cpuOnly,
-                                       bool gpuOnly=default_gpuOnly);
+                                       bool useNativeMath=default_useNativeMath);
     virtual ~I3CLSimStepToPhotonConverterOpenCL();
-
-    /**
-     * Gets a list of all available OpenCL devices as
-     * <platform, device> pairs.
-     *
-     * Will throw if already initialized.
-     */
-    shared_ptr<const std::vector<std::pair<std::string, std::string> > > GetDeviceList() const;
 
     /**
      * Sets the workgroup size. A value of 0 
@@ -77,22 +67,11 @@ public:
     std::size_t GetMaxNumWorkitems() const;
     
     /**
-     * Sets the device by index.
-     * The index should be chosen from the list
-     * returned by GetDeviceList().
+     * Sets the OpenCL device.
      *
      * Will throw if already initialized.
      */
-    void SetDeviceIndex(std::size_t selectedDeviceIndex);
-
-    /**
-     * Sets the device by platform/device name.
-     * The name should be chosen from the list
-     * returned by GetDeviceList().
-     *
-     * Will throw if already initialized.
-     */
-    void SetDeviceName(const std::string &platform, const std::string &device);
+    void SetDevice(const I3CLSimOpenCLDevice &device);
     
     /**
      * Returns the maximum workgroup size for the
@@ -170,6 +149,14 @@ public:
     virtual void EnqueueSteps(I3CLSimStepSeriesConstPtr steps, uint32_t identifier);
 
     /**
+     * Reports the current queue size. The queue works asynchronously,
+     * so this value will probably have changed once you use it.
+     *
+     * Will throw if not initialized.
+     */
+    virtual std::size_t QueueSize() const; 
+
+    /**
      * Returns true if more photons are available.
      * If the return value is false, the current simulation is finished
      * and a new step vector may be set.
@@ -217,13 +204,10 @@ private:
     I3CLSimMediumPropertiesConstPtr mediumProperties_;
     I3CLSimSimpleGeometryConstPtr geometry_;
     
-    shared_ptr<const std::vector<std::pair<std::string, std::string> > > deviceNameList_;
-    std::vector<std::pair<shared_ptr<cl::Platform>, shared_ptr<cl::Device> > > clPlatformDeviceList_;
-    bool cpuOnly_;
-    bool gpuOnly_;
+    I3CLSimOpenCLDevicePtr device_;
     bool useNativeMath_;
     std::size_t selectedDeviceIndex_;
-    bool deviceIndexIsSelected_;
+    bool deviceIsSelected_;
     
     // some kernel sources loaded on construction
     std::string mwcrngKernelSource_;

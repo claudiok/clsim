@@ -282,6 +282,12 @@ if options.CHOPMUONS:
 else:
     clSimMCTreeName = "I3MCTree"
 
+# this currently assumes all devices are GeForce/Tesla cards
+openCLDevices = clsim.I3CLSimOpenCLDevice.GetAllDevices()
+for device in openCLDevices:
+    device.useNativeMath=True
+    device.approximateNumberOfWorkItems=1024000
+
 tray.AddModule("I3CLSimModule", "clsim",
                MCTreeName=clSimMCTreeName,
                DOMRadius = 0.16510*I3Units.m*radiusOverSizeFactor, # 13" diameter
@@ -295,49 +301,7 @@ tray.AddModule("I3CLSimModule", "clsim",
                #ParameterizationList=parameterizationsMuon,
                MaxNumParallelEvents=options.MAXPARALLELEVENTS,
                
-               # 33.5 nanoseconds/photon
-               #OpenCLPlatformName="NVIDIA CUDA",
-               #OpenCLDeviceName="GeForce GTX 580",
-               #OpenCLUseNativeMath=True,
-               #OpenCLApproximateNumberOfWorkItems=1024000,
-               
-               # 2690 nanoseconds/photon (4 cores)    [w/ native math: 2648 nanoseconds/photon]
-               #OpenCLPlatformName="ATI Stream",
-               #OpenCLDeviceName="Intel(R) Core(TM) i5 CPU         760  @ 2.80GHz",
-               #OpenCLUseNativeMath=False,
-               #OpenCLApproximateNumberOfWorkItems=51200,
-
-               # 2470 nanoseconds/photon (4 cores)
-               #OpenCLPlatformName="Intel(R) OpenCL",
-               #OpenCLDeviceName="Intel(R) Core(TM) i5 CPU         760  @ 2.80GHz",
-               #OpenCLUseNativeMath=False,
-               #OpenCLApproximateNumberOfWorkItems=51200,
-               
-               # 750 nanoseconds/photon
-               #OpenCLPlatformName="Apple",
-               #OpenCLDeviceName="GeForce 9600M GT",
-               #OpenCLUseNativeMath=True,
-               #OpenCLApproximateNumberOfWorkItems=1024, # GPU could handle more, but system begins to freeze
-               
-               # kernel does not run (out of memory)
-               #OpenCLPlatformName="Apple",
-               #OpenCLDeviceName="GeForce 9400M",
-               #OpenCLUseNativeMath=True,
-               #OpenCLApproximateNumberOfWorkItems=512,
-               
-               # 5400 nanoseconds/photon (2 cores)    [w/ native math: 4430 nanoseconds/photon]
-               #OpenCLPlatformName="Apple",
-               ##OpenCLDeviceName="Intel(R) Core(TM)2 Duo CPU     T9600  @ 2.80GHz",
-               #OpenCLDeviceName="Intel(R) Core(TM) i7-2820QM CPU @ 2.30GHz",
-               #OpenCLUseNativeMath=False,
-               #OpenCLApproximateNumberOfWorkItems=25600,
-
-               # 5400 nanoseconds/photon (2 cores)    [w/ native math: 4430 nanoseconds/photon]
-               OpenCLPlatformName="Apple",
-               OpenCLDeviceName="ATI Radeon HD 6750M",
-               OpenCLUseNativeMath=True,
-               OpenCLApproximateNumberOfWorkItems=2560/2,
-               
+               OpenCLDeviceList=openCLDevices
                )
 
 pmtPhotonSimulator = clsim.I3CLSimPMTPhotonSimulatorIceCube(randomService=randomService, jitter=2.*I3Units.ns)

@@ -14,6 +14,8 @@
 
 #include <stdlib.h>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include "opencl/I3CLSimHelperLoadProgramSource.h"
 #include "opencl/I3CLSimHelperGenerateMediumPropertiesSource.h"
@@ -25,14 +27,10 @@
 #include "clsim/cl.hpp"
 
 const bool I3CLSimStepToPhotonConverterOpenCL::default_useNativeMath=true;
-const bool I3CLSimStepToPhotonConverterOpenCL::default_cpuOnly=false;
-const bool I3CLSimStepToPhotonConverterOpenCL::default_gpuOnly=false;
 
 
 I3CLSimStepToPhotonConverterOpenCL::I3CLSimStepToPhotonConverterOpenCL(I3RandomServicePtr randomService,
-                                                                       bool useNativeMath,
-                                                                       bool cpuOnly,
-                                                                       bool gpuOnly)
+                                                                       bool useNativeMath)
 :
 openCLStarted_(false),
 queueToOpenCL_(new I3CLSimQueue<ToOpenCLPair_t>(5)),
@@ -40,67 +38,14 @@ queueFromOpenCL_(new I3CLSimQueue<I3CLSimStepToPhotonConverter::ConversionResult
 randomService_(randomService),
 initialized_(false),
 compiled_(false),
-cpuOnly_(cpuOnly),
-gpuOnly_(gpuOnly),
 useNativeMath_(useNativeMath),
 selectedDeviceIndex_(0),
-deviceIndexIsSelected_(false),
+deviceIsSelected_(false),
 maxWorkgroupSize_(0),
 workgroupSize_(0),
 maxNumWorkitems_(10240)
 {
     if (!randomService_) log_fatal("You need to supply a I3RandomService.");
-    
-    // enumerate platforms and devices
-    shared_ptr<std::vector<std::pair<std::string, std::string> > > deviceNameList(new std::vector<std::pair<std::string, std::string> >());
-    
-    std::vector<cl::Platform> platforms;
-    
-    try {
-		// get a list of available platforms
-		cl::Platform::get(&platforms);
-	} catch (cl::Error &err) {
-		log_error("OpenCL ERROR: %s (%i)", err.what(), err.err());
-        throw I3CLSimStepToPhotonConverter_exception("OpenCL error.");
-	}
-    
-    BOOST_FOREACH(cl::Platform &platform, platforms)
-    {
-        const std::string platformName = platform.getInfo<CL_PLATFORM_NAME>();
-        
-        std::vector<cl::Device> devices;
-        
-        try {
-            if ((!cpuOnly) && (!gpuOnly))
-                platform.getDevices(CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_CPU, &devices);
-            else if (cpuOnly)
-                platform.getDevices(CL_DEVICE_TYPE_CPU, &devices);
-            else if (gpuOnly)
-                platform.getDevices(CL_DEVICE_TYPE_GPU, &devices);
-            else
-                throw I3CLSimStepToPhotonConverter_exception("Cannot set both CPUOnly and GPUOnly!.");
-        } catch (cl::Error &err) {
-            // an OpenCL error here most probably means that there are no devices of the
-            // requested type. So just continue quietly.
-            log_debug("OpenCL ERROR: %s (%i)", err.what(), err.err());
-            continue;
-        }
-        
-        BOOST_FOREACH(cl::Device &device, devices)
-        {
-            const std::string deviceName = device.getInfo<CL_DEVICE_NAME>();
-            
-            deviceNameList->push_back(std::make_pair(platformName, deviceName));
-            clPlatformDeviceList_.push_back(std::make_pair(shared_ptr<cl::Platform>(new cl::Platform(platform)), shared_ptr<cl::Device>(new cl::Device(device))));
-            
-            log_trace("PLATFORM: \"%s\" -> DEVICE: \"%s\"",
-                      platformName.c_str(),
-                      deviceName.c_str());
-        }
-    }
-    
-    deviceNameList_=deviceNameList;
-    
     
     // load program source from files
     const std::string I3_SRC(getenv("I3_SRC"));
@@ -149,15 +94,6 @@ I3CLSimStepToPhotonConverterOpenCL::~I3CLSimStepToPhotonConverterOpenCL()
     
 }
 
-shared_ptr<const std::vector<std::pair<std::string, std::string> > >
-I3CLSimStepToPhotonConverterOpenCL::GetDeviceList() const
-{
-    if (initialized_)
-        throw I3CLSimStepToPhotonConverter_exception("I3CLSimStepToPhotonConverterOpenCL already initialized!");
-
-    return deviceNameList_;
-}
-
 uint64_t I3CLSimStepToPhotonConverterOpenCL::GetMaxWorkgroupSize() const
 {
     if (initialized_)
@@ -169,38 +105,25 @@ uint64_t I3CLSimStepToPhotonConverterOpenCL::GetMaxWorkgroupSize() const
     return maxWorkgroupSize_;
 }
 
-void I3CLSimStepToPhotonConverterOpenCL::SetDeviceIndex(std::size_t selectedDeviceIndex)
+void I3CLSimStepToPhotonConverterOpenCL::SetDevice(const I3CLSimOpenCLDevice &device)
 {
     if (initialized_)
         throw I3CLSimStepToPhotonConverter_exception("I3CLSimStepToPhotonConverterOpenCL already initialized!");
     
-    if (selectedDeviceIndex_ >= clPlatformDeviceList_.size())
-        throw I3CLSimStepToPhotonConverter_exception("Invalid device index!");
-    
-    if (selectedDeviceIndex!=selectedDeviceIndex_)
+    if (device_)
     {
-        compiled_=false;
-        kernel_.reset();
-        queue_.reset();
+        if (!(*device_ == device))
+        {
+            compiled_=false;
+            kernel_.reset();
+            queue_.reset();
+            device_.reset();
+        }
     }
     
-    selectedDeviceIndex_ = selectedDeviceIndex;
-    deviceIndexIsSelected_=true;
-}
-
-void I3CLSimStepToPhotonConverterOpenCL::SetDeviceName(const std::string &platform, const std::string &device)
-{
-    if (initialized_)
-        throw I3CLSimStepToPhotonConverter_exception("I3CLSimStepToPhotonConverterOpenCL already initialized!");
-
-    for (std::size_t i=0; i<deviceNameList_->size(); ++i)
-    {
-        if (((*deviceNameList_)[i].first == platform) &&
-            ((*deviceNameList_)[i].second == device))
-            return SetDeviceIndex(i);
-    }
+    device_ = I3CLSimOpenCLDevicePtr(new I3CLSimOpenCLDevice(device)); // make a copy of the device
     
-    throw I3CLSimStepToPhotonConverter_exception("Device does not exist!");
+    deviceIsSelected_=true;
 }
 
 void I3CLSimStepToPhotonConverterOpenCL::SetWorkgroupSize(std::size_t val)
@@ -350,9 +273,6 @@ void I3CLSimStepToPhotonConverterOpenCL::Compile()
 
     if (compiled_) return; // silently
     
-    if (clPlatformDeviceList_.empty())
-        throw I3CLSimStepToPhotonConverter_exception("No OpenCL devices found!");
-
     if (!wlenGenerator_)
         throw I3CLSimStepToPhotonConverter_exception("WlenGenerator not set!");
 
@@ -365,7 +285,7 @@ void I3CLSimStepToPhotonConverterOpenCL::Compile()
     if (!geometry_)
         throw I3CLSimStepToPhotonConverter_exception("Geometry not set!");
     
-    if (!deviceIndexIsSelected_)
+    if (!deviceIsSelected_)
         throw I3CLSimStepToPhotonConverter_exception("Device not selected!");
 
     wlenGeneratorSource_ = wlenGenerator_->GetOpenCLFunction("generateWavelength", // name
@@ -383,8 +303,8 @@ void I3CLSimStepToPhotonConverterOpenCL::Compile()
                                                             stringIndexToStringIDBuffer_,
                                                             domIndexToDomIDBuffer_perStringIndex_);
     
-    SetupQueueAndKernel(*(clPlatformDeviceList_[selectedDeviceIndex_].first),
-                        *(clPlatformDeviceList_[selectedDeviceIndex_].second));
+    SetupQueueAndKernel(*(device_->GetPlatformHandle()),
+                        *(device_->GetDeviceHandle()));
     
     compiled_=true;
 }
@@ -406,7 +326,7 @@ std::string I3CLSimStepToPhotonConverterOpenCL::GetFullSource()
 void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform &platform,
                                                              const cl::Device &device)
 {
-    std::vector<cl::Device> devices(1, device);
+    VECTOR_CLASS<cl::Device> devices(1, device);
 
     // prepare a device vector (containing a single device)
     cl_context_properties properties[] = 
@@ -419,7 +339,7 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
     context_.reset(); // make sure the pointer is NULL
 
     // the newer NVIDIA drivers sometimes fail to create a context
-    // with a "CL_OUT_OF_RESOURCES" error but works just fine if you
+    // with a "CL_OUT_OF_RESOURCES" error, but work just fine if you
     // try again after a short time.
     for(;;)
     {
@@ -525,6 +445,11 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
 	// instantiate the command queue
     log_debug("Initializing..");
 	try {
+//#ifdef DUMP_STATISTICS
+//		queue_ = shared_ptr<cl::CommandQueue>(new cl::CommandQueue(*context_, device, CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
+//#else
+//		queue_ = shared_ptr<cl::CommandQueue>(new cl::CommandQueue(*context_, device, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
+//#endif
 #ifdef DUMP_STATISTICS
 		queue_ = shared_ptr<cl::CommandQueue>(new cl::CommandQueue(*context_, device, CL_QUEUE_PROFILING_ENABLE));
 #else
@@ -597,7 +522,14 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
 
     I3CLSimStepSeriesConstPtr steps;
     uint32_t stepsIdentifier=0;
-
+    
+    const uint32_t zeroCounterBufferSource=0;
+    VECTOR_CLASS<cl::Event> bufferWriteEvents(2);
+    
+#ifdef DUMP_STATISTICS
+    boost::posix_time::ptime last_timestamp(boost::posix_time::microsec_clock::universal_time());
+#endif
+    
     // start the main loop
     for (;;)
     {
@@ -632,21 +564,15 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
         {
             totalNumberOfPhotons+=step.numPhotons;
         }
-        
 #endif //DUMP_STATISTICS
         
         // copy steps to device
         try {
-            // blocking!
-            uint32_t *mapped_CurrentNumOutputPhotons = (uint32_t *)queue_->enqueueMapBuffer(*deviceBuffer_CurrentNumOutputPhotons, CL_TRUE, CL_MAP_WRITE, 0, sizeof(uint32_t));
-            I3CLSimStep *mapped_InputSteps = (I3CLSimStep *)queue_->enqueueMapBuffer(*deviceBuffer_InputSteps, CL_TRUE, CL_MAP_WRITE, 0, steps->size()*sizeof(I3CLSimStep));
-            //queue_->finish();
-
-            *mapped_CurrentNumOutputPhotons=0; // reset the photon count (== result count)
-            memcpy(mapped_InputSteps, &((*steps)[0]), steps->size()*sizeof(I3CLSimStep));
+            queue_->enqueueWriteBuffer(*deviceBuffer_CurrentNumOutputPhotons, CL_FALSE, 0, sizeof(uint32_t), &zeroCounterBufferSource, NULL, &(bufferWriteEvents[0]));
+            queue_->enqueueWriteBuffer(*deviceBuffer_InputSteps, CL_FALSE, 0, steps->size()*sizeof(I3CLSimStep), &((*steps)[0]), NULL, &(bufferWriteEvents[1]));
+            queue_->flush(); // make sure it starts executing on the device
             
-            queue_->enqueueUnmapMemObject(*deviceBuffer_InputSteps, mapped_InputSteps);
-            queue_->enqueueUnmapMemObject(*deviceBuffer_CurrentNumOutputPhotons, mapped_CurrentNumOutputPhotons);
+            cl::Event::waitForEvents(bufferWriteEvents);
         } catch (cl::Error &err) {
             log_fatal("OpenCL ERROR (memcpy to device): %s (%i)", err.what(), err.err());
         }
@@ -663,8 +589,8 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
                                          cl::NullRange,	// current implementations force this to be NULL
                                          cl::NDRange(thisNumberOfInputSteps),	// number of work items
                                          cl::NDRange(workgroupSize_),
-                                         NULL,
-                                         &kernelFinishEvent);
+                                         NULL, //&(bufferWriteEvents),  // wait for buffers to be filled
+                                         &kernelFinishEvent); // signal when finished
             queue_->flush(); // make sure it begins executing on the device
         } catch (cl::Error &err) {
             log_fatal("OpenCL ERROR (running kernel): %s (%i)", err.what(), err.err());
@@ -678,27 +604,44 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
             kernelFinishEvent.wait();
 
 #ifdef DUMP_STATISTICS
+            // calculate time since last kernel execution
+            boost::posix_time::ptime this_timestamp(boost::posix_time::microsec_clock::universal_time());
+            boost::posix_time::time_duration posix_duration = this_timestamp - last_timestamp;
+            const double host_duration_in_nanoseconds = static_cast<double>(posix_duration.total_nanoseconds());
+            // update timestamp
+            last_timestamp = this_timestamp;
+
             uint64_t timeStart, timeEnd;
             kernelFinishEvent.getProfilingInfo(CL_PROFILING_COMMAND_START, &timeStart);
             kernelFinishEvent.getProfilingInfo(CL_PROFILING_COMMAND_END, &timeEnd);
 
+            const double kernel_duration_in_nanoseconds = static_cast<double>(timeEnd-timeStart);
+            
+            const double utilization = kernel_duration_in_nanoseconds/host_duration_in_nanoseconds;
+            
 #ifdef I3_OPTIMIZE
             std::cout << "kernel statistics: " 
-                      << static_cast<double>(timeEnd-timeStart)/static_cast<double>(totalNumberOfPhotons) 
-                      << " nanoseconds/photon"
+                      << kernel_duration_in_nanoseconds/static_cast<double>(totalNumberOfPhotons) 
+                      << " nanoseconds/photon (util: " << utilization*100. << "%) "
+                      << "(" << device_->GetPlatformName() << " " << device_->GetDeviceName() << ")"
                       << std::endl;
 #else
-            log_info("kernel statistics: %g nanoseconds/photon",
-                     static_cast<double>(timeEnd-timeStart)/static_cast<double>(totalNumberOfPhotons));
+            log_info("kernel statistics: %g nanoseconds/photon (util: %.0f%%) (%s %s)",
+                     kernel_duration_in_nanoseconds/static_cast<double>(totalNumberOfPhotons),
+                     utilization*100.,
+                     device_->GetPlatformName().c_str(), device_->GetDeviceName().c_str());
 #endif
 #else
 #ifdef I3_OPTIMIZE
-            std::cout << "kernel finished. (no statistics collected)" << std::endl; 
+            std::cout << "kernel finished. (no statistics collected) " 
+                      << "(" << device_->GetPlatformName() << " " << device_->GetDeviceName() << ")" 
+                      << std::endl; 
 #else
-            log_info("kernel statistics:  (no statistics collected)");
+            log_info("kernel statistics:  (no statistics collected) (%s %s)",
+                     device_->GetPlatformName().c_str(), device_->GetDeviceName().c_str());
 #endif
 #endif
-
+            
             // wait for the queue to really finish (just to make sure)
             queue_->finish();
         } catch (cl::Error &err) {
@@ -713,14 +656,12 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
         try {
             uint32_t numberOfGeneratedPhotons;
             {
-                cl::Event mappingComplete;
-                uint32_t *mapped_CurrentNumOutputPhotons = (uint32_t *)queue_->enqueueMapBuffer(*deviceBuffer_CurrentNumOutputPhotons, CL_FALSE, CL_MAP_READ, 0, sizeof(uint32_t), NULL, &mappingComplete);
+                cl::Event copyComplete;
+                queue_->enqueueReadBuffer(*deviceBuffer_CurrentNumOutputPhotons, CL_FALSE, 0, sizeof(uint32_t), &numberOfGeneratedPhotons, NULL, &copyComplete);
                 queue_->flush(); // make sure it starts executing on the device
-                mappingComplete.wait();
-                numberOfGeneratedPhotons = *mapped_CurrentNumOutputPhotons;
-                queue_->enqueueUnmapMemObject(*deviceBuffer_CurrentNumOutputPhotons, mapped_CurrentNumOutputPhotons);
+                copyComplete.wait();
             }
-            
+
             log_trace("Num photons to copy: %" PRIu32, numberOfGeneratedPhotons);
             
             if (numberOfGeneratedPhotons > maxNumOutputPhotons_)
@@ -732,20 +673,14 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
             
             if (numberOfGeneratedPhotons>0)
             {
-                cl::Event mappingComplete;
-                I3CLSimPhoton *mapped_OutputPhotons = (I3CLSimPhoton *)queue_->enqueueMapBuffer(*deviceBuffer_OutputPhotons, CL_FALSE, CL_MAP_READ, 0, numberOfGeneratedPhotons*sizeof(I3CLSimPhoton), NULL, &mappingComplete);
-                queue_->flush(); // make sure it starts executing on the device
-                
+                cl::Event copyComplete;
+
                 // allocate the result vector while waiting for the mapping operation to complete
                 photons = I3CLSimPhotonSeriesPtr(new I3CLSimPhotonSeries(numberOfGeneratedPhotons));
-                
-                // wait for the buffer to be mapped
-                mappingComplete.wait();
-                
-                // copy it to the host
-                memcpy(&((*photons)[0]), mapped_OutputPhotons, numberOfGeneratedPhotons*sizeof(I3CLSimPhoton));
-                
-                queue_->enqueueUnmapMemObject(*deviceBuffer_OutputPhotons, mapped_OutputPhotons);
+
+                queue_->enqueueReadBuffer(*deviceBuffer_OutputPhotons, CL_FALSE, 0, numberOfGeneratedPhotons*sizeof(I3CLSimPhoton), &((*photons)[0]), NULL, &copyComplete);
+                queue_->flush(); // make sure it starts executing on the device
+                copyComplete.wait(); // wait for the buffer to be copied
             }
             else
             {
@@ -857,6 +792,15 @@ void I3CLSimStepToPhotonConverterOpenCL::EnqueueSteps(I3CLSimStepSeriesConstPtr 
     
     queueToOpenCL_->Put(make_pair(identifier, steps));
 }
+
+std::size_t I3CLSimStepToPhotonConverterOpenCL::QueueSize() const
+{
+    if (!initialized_)
+        throw I3CLSimStepToPhotonConverter_exception("I3CLSimStepToPhotonConverterOpenCL is not initialized!");
+   
+    return queueToOpenCL_->size();
+}
+
 
 bool I3CLSimStepToPhotonConverterOpenCL::MorePhotonsAvailable() const
 {

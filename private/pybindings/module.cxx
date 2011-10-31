@@ -48,7 +48,7 @@ namespace bp = boost::python;
     (I3CLSimParticleToStepConverterUtils)           \
     (I3CLSimEventStatistics)                        \
     (I3CLSimPMTPhotonSimulator)                     \
-    (I3Converters)
+    (I3Converters)(I3CLSimOpenCLDevice)
 
 #define I3_REGISTRATION_FN_DECL(r, data, t) void BOOST_PP_CAT(register_,t)();
 #define I3_REGISTER(r, data, t) BOOST_PP_CAT(register_,t)();

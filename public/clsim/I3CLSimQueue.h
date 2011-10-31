@@ -100,21 +100,29 @@ public:
         return msg;
     }
 
-    bool empty()
+    bool empty() const
     {
         // lock the mutex to ensure exclusive access to the queue
         boost::unique_lock<boost::mutex> guard(mutex_);
         
         return queue_.empty();
     }
-    
+
+    std::size_t size() const
+    {
+        // lock the mutex to ensure exclusive access to the queue
+        boost::unique_lock<boost::mutex> guard(mutex_);
+        
+        return queue_.size();
+    }
+
     inline std::size_t max_size() const
     {
         return max_size_;
     }
 
 private:
-    boost::mutex mutex_;
+    mutable boost::mutex mutex_;
     boost::condition_variable_any cond_;
     std::queue<T> queue_;
     std::size_t max_size_;

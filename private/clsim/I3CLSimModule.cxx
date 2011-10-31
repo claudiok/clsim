@@ -32,6 +32,7 @@
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/variant/get.hpp>
+#include <boost/math/common_factor_rt.hpp>
 
 #include "dataclasses/physics/I3MCTree.h"
 #include "dataclasses/physics/I3MCTreeUtils.h"
@@ -107,31 +108,10 @@ geometryIsConfigured_(false)
                  "If set to True, muons will not be propagated.",
                  ignoreMuons_);
 
-    openCLPlatformName_="";
-    AddParameter("OpenCLPlatformName",
-                 "Name of the OpenCL platform. Leave empty for auto-selection.",
-                 openCLPlatformName_);
-
-    openCLDeviceName_="";
-    AddParameter("OpenCLDeviceName",
-                 "Name of the OpenCL device. Leave empty for auto-selection.",
-                 openCLDeviceName_);
-
-    openCLUseNativeMath_=false;
-    AddParameter("OpenCLUseNativeMath",
-                 "Use native math instructions in the OpenCL kernel. Has proven not to work\n"
-                 "correctly with kernels running on Intel CPUs. Seems to work correctly on\n"
-                 "Nvidia GPUs (may speed up things, but make sure it does not change your\n"
-                 "results).",
-                 openCLUseNativeMath_);
-
-    openCLApproximateNumberOfWorkItems_=1024;
-    AddParameter("OpenCLApproximateNumberOfWorkItems",
-                 "The approximate number of work items per block. Larger numbers (e.g. 512000)\n"
-                 "are ok for dedicated GPGPU cards, but try to keep the number lower if you also\n"
-                 "use your GPU for display. Your display may freeze if you use the card interactively\n"
-                 "and this number is too high.",
-                 openCLApproximateNumberOfWorkItems_);
+    openCLDeviceList_.reset();
+    AddParameter("OpenCLDeviceList",
+                 "A vector of I3CLSimOpenCLDevice objects, describing the devices to be used for simulation.",
+                 openCLDeviceList_);
 
     DOMRadius_=0.16510*I3Units::m; // 13 inch diameter
     AddParameter("DOMRadius",
@@ -275,10 +255,7 @@ void I3CLSimModule::Configure()
     GetParameter("IgnoreMuons", ignoreMuons_);
     GetParameter("ParameterizationList", parameterizationList_);
 
-    GetParameter("OpenCLPlatformName", openCLPlatformName_);
-    GetParameter("OpenCLDeviceName", openCLDeviceName_);
-    GetParameter("OpenCLUseNativeMath", openCLUseNativeMath_);
-    GetParameter("OpenCLApproximateNumberOfWorkItems", openCLApproximateNumberOfWorkItems_);
+    GetParameter("OpenCLDeviceList", openCLDeviceList_);
 
     GetParameter("DOMRadius", DOMRadius_);
     GetParameter("IgnoreNonIceCubeOMNumbers", ignoreNonIceCubeOMNumbers_);
@@ -304,6 +281,9 @@ void I3CLSimModule::Configure()
     if (!mediumProperties_) log_fatal("You have to specify the \"MediumProperties\" parameter!");
     if (maxNumParallelEvents_ <= 0) log_fatal("Values <= 0 are invalid for the \"MaxNumParallelEvents\" parameter!");
 
+    if (!openCLDeviceList_) log_fatal("You have to provide at least one OpenCL device using the \"OpenCLDeviceList\" parameter.");
+    if (openCLDeviceList_->empty()) log_fatal("You have to provide at least one OpenCL device using the \"OpenCLDeviceList\" parameter.");
+    
     // fill wavelengthGenerator_
     wavelengthGenerator_ =
     I3CLSimModuleHelper::makeWavelengthGenerator
@@ -347,7 +327,7 @@ void I3CLSimModule::Configure()
 bool I3CLSimModule::Thread(boost::this_thread::disable_interruption &di)
 {
     // do some setup while the main thread waits..
-    numBunchesSentToOpenCL_=0;
+    numBunchesSentToOpenCL_.assign(openCLStepsToPhotonsConverters_.size(), 0);
     
     // notify the main thread that everything is set up
     {
@@ -407,17 +387,32 @@ bool I3CLSimModule::Thread(boost::this_thread::disable_interruption &di)
                 }
             }
 
+            // determine which OpenCL device to use
+            std::size_t deviceIndexToUse=0;
+            std::size_t minimumFillLevel = openCLStepsToPhotonsConverters_[0]->QueueSize();
+            for (std::size_t i=1;i<openCLStepsToPhotonsConverters_.size();++i)
+            {
+                const std::size_t newFillLevel = openCLStepsToPhotonsConverters_[i]->QueueSize();
+                
+                if (newFillLevel < minimumFillLevel)
+                {
+                    minimumFillLevel=newFillLevel;
+                    deviceIndexToUse=i;
+                }
+            }
+            
+            
             // send to OpenCL
             {
                 boost::this_thread::restore_interruption ri(di);
                 try {
-                    openCLStepsToPhotonsConverter_->EnqueueSteps(steps, counter);
+                    openCLStepsToPhotonsConverters_[deviceIndexToUse]->EnqueueSteps(steps, counter);
                 } catch(boost::thread_interrupted &i) {
                     return false;
                 }
             }
             
-            ++numBunchesSentToOpenCL_;
+            ++numBunchesSentToOpenCL_[deviceIndexToUse];
             ++counter; // this may overflow, but it is not used for anything important/unique
         }
         
@@ -500,17 +495,71 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
     }
     
     log_info("Initializing CLSim..");
-    // initialize OpenCL
-    openCLStepsToPhotonsConverter_ =
-    I3CLSimModuleHelper::initializeOpenCL(openCLPlatformName_,
-                                          openCLDeviceName_,
-                                          randomService_,
-                                          geometry_,
-                                          mediumProperties_,
-                                          wavelengthGenerationBias_,
-                                          wavelengthGenerator_,
-                                          openCLApproximateNumberOfWorkItems_,
-                                          openCLUseNativeMath_);
+    // initialize OpenCL converters
+    openCLStepsToPhotonsConverters_.clear();
+    
+    uint64_t granularity=0;
+    uint64_t maxBunchSize=0;
+    
+    BOOST_FOREACH(const I3CLSimOpenCLDevice &openCLdevice, *openCLDeviceList_)
+    {
+        log_warn(" -> platform: %s device: %s",
+                 openCLdevice.GetPlatformName().c_str(), openCLdevice.GetDeviceName().c_str());
+        
+        I3CLSimStepToPhotonConverterOpenCLPtr openCLStepsToPhotonsConverter =
+        I3CLSimModuleHelper::initializeOpenCL(openCLdevice,
+                                              randomService_,
+                                              geometry_,
+                                              mediumProperties_,
+                                              wavelengthGenerationBias_,
+                                              wavelengthGenerator_);
+        if (!openCLStepsToPhotonsConverter)
+            log_fatal("Could not initialize OpenCL!");
+        
+        if (openCLStepsToPhotonsConverter->GetWorkgroupSize()==0)
+            log_fatal("Internal error: converter.GetWorkgroupSize()==0.");
+        if (openCLStepsToPhotonsConverter->GetMaxNumWorkitems()==0)
+            log_fatal("Internal error: converter.GetMaxNumWorkitems()==0.");
+        
+        openCLStepsToPhotonsConverters_.push_back(openCLStepsToPhotonsConverter);
+        
+        if (granularity==0) {
+            granularity = openCLStepsToPhotonsConverter->GetWorkgroupSize();
+        } else {
+            // least common multiple
+            const uint64_t currentGranularity = openCLStepsToPhotonsConverter->GetWorkgroupSize();
+            const uint64_t newGranularity = boost::math::lcm(currentGranularity, granularity);
+            
+            if (newGranularity != granularity) {
+                log_warn("new OpenCL device work group size is not compatible (%" PRIu64 "), changing granularity from %" PRIu64 " to %" PRIu64,
+                         currentGranularity, granularity, newGranularity);
+            }
+            
+            granularity=newGranularity;
+        }
+
+        if (maxBunchSize==0) {
+            maxBunchSize = openCLStepsToPhotonsConverter->GetMaxNumWorkitems();
+        } else {
+            const uint64_t currentMaxBunchSize = openCLStepsToPhotonsConverter->GetMaxNumWorkitems();
+            const uint64_t newMaxBunchSize = std::min(maxBunchSize, currentMaxBunchSize);
+            const uint64_t newMaxBunchSizeWithGranularity = newMaxBunchSize - newMaxBunchSize%granularity;
+
+            if (newMaxBunchSizeWithGranularity != maxBunchSize)
+            {
+                log_warn("maximum bunch size decreased from %" PRIu64 " to %" PRIu64 " because of new devices maximum request of %" PRIu64 " and a granularity of %" PRIu64,
+                         maxBunchSize, newMaxBunchSizeWithGranularity, currentMaxBunchSize, granularity);
+                
+            }
+
+            if (newMaxBunchSizeWithGranularity==0)
+                log_fatal("maximum bunch sizes are incompatible with kernel work group sizes.");
+            
+            maxBunchSize = newMaxBunchSizeWithGranularity;
+        }
+        
+    }
+    
     
     log_info("Initializing Geant4..");
     // initialize Geant4 (will set bunch sizes according to the OpenCL settings)
@@ -518,7 +567,8 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
     I3CLSimModuleHelper::initializeGeant4(randomService_,
                                           mediumProperties_,
                                           wavelengthGenerationBias_,
-                                          openCLStepsToPhotonsConverter_,
+                                          granularity,
+                                          maxBunchSize,
                                           parameterizationList_,
                                           geant4PhysicsListName_,
                                           geant4MaxBetaChangePerStep_,
@@ -643,24 +693,26 @@ void I3CLSimModule::FlushFrameCache()
     log_debug("thread finished.");
 
     
-    log_debug("Geant4 finished, retrieving results from GPU..");
-
     std::size_t totalNumOutPhotons=0;
     
     photonNumAtOMPerParticle_.clear();
     photonWeightSumAtOMPerParticle_.clear();
     
-    for (uint64_t i=0;i<numBunchesSentToOpenCL_;++i)
+    for (std::size_t deviceIndex=0;deviceIndex<numBunchesSentToOpenCL_.size();++deviceIndex)
     {
-        //typedef std::pair<uint32_t, I3CLSimPhotonSeriesPtr> ConversionResult_t;
-        I3CLSimStepToPhotonConverter::ConversionResult_t res =
-        openCLStepsToPhotonsConverter_->GetConversionResult();
-        if (!res.second) log_fatal("Internal error: received NULL photon series from OpenCL.");
+        log_debug("Geant4 finished, retrieving results from GPU %zu..", deviceIndex);
 
-        // convert to I3Photons and add to their respective frames
-        AddPhotonsToFrames(*(res.second));
-        
-        totalNumOutPhotons += res.second->size();
+        for (uint64_t i=0;i<numBunchesSentToOpenCL_[deviceIndex];++i)
+        {
+            I3CLSimStepToPhotonConverter::ConversionResult_t res =
+            openCLStepsToPhotonsConverters_[deviceIndex]->GetConversionResult();
+            if (!res.second) log_fatal("Internal error: received NULL photon series from OpenCL.");
+
+            // convert to I3Photons and add to their respective frames
+            AddPhotonsToFrames(*(res.second));
+            
+            totalNumOutPhotons += res.second->size();
+        }
     }
     
     log_debug("results fetched from OpenCL.");

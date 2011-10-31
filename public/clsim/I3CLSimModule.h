@@ -32,6 +32,8 @@
 
 #include "phys-services/I3RandomService.h"
 
+#include "clsim/I3CLSimOpenCLDevice.h"
+
 #include "clsim/I3CLSimRandomValue.h"
 #include "clsim/I3CLSimWlenDependentValue.h"
 
@@ -128,23 +130,8 @@ private:
     /// Parameter: Maximum number of events that will be processed by the GPU in parallel.
     unsigned int maxNumParallelEvents_;
 
-    /// Parameter: Name of the OpenCL platform. Leave empty for auto-selection.
-    std::string openCLPlatformName_;
-
-    /// Parameter: Name of the OpenCL device. Leave empty for auto-selection.
-    std::string openCLDeviceName_;
-
-    /// Parameter: Use native math instructions in the OpenCL kernel. Has proven not
-    /// to work correctly with kernels running on Intel CPUs. Seems to work correctly
-    /// on Nvidia GPUs (may speed up things, but make sure it does not change your
-    /// results).
-    bool openCLUseNativeMath_;
-
-    /// Parameter: The approximate number of work items per block. Larger numbers
-    /// (e.g. 512000) are ok for dedicated GPGPU cards, but try to keep the number
-    /// lower if you also use your GPU for display. Your display may freeze if you
-    /// use the card interactively and this number is too high.
-    uint32_t openCLApproximateNumberOfWorkItems_;
+    /// Parameter: A vector of I3CLSimOpenCLDevice objects, describing the devices to be used for simulation.
+    I3CLSimOpenCLDeviceSeriesPtr openCLDeviceList_;
 
     /// Parameter: The DOM radius used during photon tracking.
     double DOMRadius_;
@@ -206,7 +193,7 @@ private:
     boost::mutex threadStarted_mutex_;
     bool threadStarted_;
     bool threadFinishedOK_;
-    uint64_t numBunchesSentToOpenCL_;
+    std::vector<uint64_t> numBunchesSentToOpenCL_;
 
     
     // helper functions
@@ -232,7 +219,7 @@ private:
     I3CLSimRandomValueConstPtr wavelengthGenerator_;
 
     I3CLSimSimpleGeometryFromI3GeometryPtr geometry_;
-    I3CLSimStepToPhotonConverterOpenCLPtr openCLStepsToPhotonsConverter_;
+    std::vector<I3CLSimStepToPhotonConverterOpenCLPtr> openCLStepsToPhotonsConverters_;
     I3CLSimParticleToStepConverterGeant4Ptr geant4ParticleToStepsConverter_;
     
     // list of all currently held frames, in order

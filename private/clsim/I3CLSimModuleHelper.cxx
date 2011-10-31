@@ -188,98 +188,16 @@ namespace I3CLSimModuleHelper {
     }
 
     
-    I3CLSimStepToPhotonConverterOpenCLPtr initializeOpenCL(const std::string &platformName,
-                                                           const std::string &deviceName,
+    I3CLSimStepToPhotonConverterOpenCLPtr initializeOpenCL(const I3CLSimOpenCLDevice &device,
                                                            I3RandomServicePtr rng,
                                                            I3CLSimSimpleGeometryFromI3GeometryPtr geometry,
                                                            I3CLSimMediumPropertiesPtr medium,
                                                            I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
-                                                           I3CLSimRandomValueConstPtr wavelengthGenerator,
-                                                           uint32_t approximateNumberOfWorkItems,
-                                                           bool useNativeMath)
+                                                           I3CLSimRandomValueConstPtr wavelengthGenerator)
     {
-        I3CLSimStepToPhotonConverterOpenCLPtr conv(new I3CLSimStepToPhotonConverterOpenCL(rng, useNativeMath));
+        I3CLSimStepToPhotonConverterOpenCLPtr conv(new I3CLSimStepToPhotonConverterOpenCL(rng, device.GetUseNativeMath()));
 
-        shared_ptr<const std::vector<std::pair<std::string, std::string> > >
-        deviceList = conv->GetDeviceList();
-        if (!deviceList) log_fatal("Internal error. GetDeviceList() returned NULL.");
-        if (deviceList->size() <= 0) log_fatal("No OpenCL devices available!");
-
-        // do a semi-smart device selection
-        typedef std::pair<std::string, std::string> stringPair_t;
-        stringPair_t deviceToUse;
-
-        if ((platformName != "") || (deviceName != ""))
-        {
-            // no auto-selection
-            bool found=false;
-            BOOST_FOREACH(const stringPair_t &device, *deviceList)
-            {
-                if ((device.first == platformName) && 
-                    (device.second == deviceName))
-                {
-                    found=true;
-                    deviceToUse = device;
-                    break;
-                }
-            }
-            
-            if (!found)
-            {
-                log_error("The selected OpenCL device was not found! [platform=\"%s\", device=\"%s\"]",
-                          platformName.c_str(), deviceName.c_str());
-                log_error("Here is a list of available devices:");
-                BOOST_FOREACH(const stringPair_t &device, *deviceList)
-                {
-                    log_error("platform: \"%s\", device: \"%s\"",
-                              device.first.c_str(), device.second.c_str());
-                    
-                }
-                log_fatal("Could not find selected OpenCL device.");
-            }
-        }
-        else
-        {
-            // auto-selection
-            log_info("Auto-selecting OpenCL device (preference to Nvidia Geforce devices)..");
-
-            // look for a "GeForce" device first
-            std::vector<std::pair<std::string, std::string> > geForceDevices;
-            BOOST_FOREACH(const stringPair_t &device, *deviceList)
-            {
-                std::string deviceNameLowercase = boost::to_lower_copy(device.second);
-                
-                if ( deviceNameLowercase.find("geforce") != deviceNameLowercase.npos )
-                    geForceDevices.push_back(device);
-            }
-            
-            if (geForceDevices.size() > 0)
-            {
-                if (geForceDevices.size()>1)
-                {
-                    deviceToUse=geForceDevices[0];
-                    log_info("You seem to have more than one GeForce GPU. Using the first one. (\"%s\")", 
-                             deviceToUse.second.c_str());
-                } else {
-                    deviceToUse=geForceDevices[0];
-                    log_info("You seem to have a GeForce GPU. (\"%s\")",
-                             deviceToUse.second.c_str());
-                }
-            }
-            else
-            {
-                log_info("No GeForce device found. Just using the first available one.");
-                deviceToUse=(*deviceList)[0];
-            }
-            
-            log_info(" -> using OpenCL device \"%s\" on platform \"%s\".",
-                     deviceToUse.second.c_str(), deviceToUse.first.c_str());
-            
-        }
-        
-
-
-        conv->SetDeviceName(deviceToUse.first, deviceToUse.second);
+        conv->SetDevice(device);
 
         conv->SetWlenGenerator(wavelengthGenerator);
         conv->SetWlenBias(wavelengthGenerationBias);
@@ -296,17 +214,17 @@ namespace I3CLSimModuleHelper {
         const std::size_t workgroupSize = conv->GetWorkgroupSize();
         
         // use approximately the given number of work items, convert to a multiple of the workgroup size
-        std::size_t maxNumWorkitems = (static_cast<std::size_t>(approximateNumberOfWorkItems)/workgroupSize)*workgroupSize;
+        std::size_t maxNumWorkitems = (static_cast<std::size_t>(device.GetApproximateNumberOfWorkItems())/workgroupSize)*workgroupSize;
         if (maxNumWorkitems==0) maxNumWorkitems=workgroupSize;
         
         conv->SetMaxNumWorkitems(maxNumWorkitems);
 
         log_info("maximum workgroup size is %zu", maxWorkgroupSize);
         log_info("configured workgroup size is %zu", workgroupSize);
-        if (maxNumWorkitems != approximateNumberOfWorkItems) {
-            log_warn("maximum number of work items is %zu (user configured was %" PRIu32 ")", maxNumWorkitems, approximateNumberOfWorkItems);
+        if (maxNumWorkitems != device.GetApproximateNumberOfWorkItems()) {
+            log_warn("maximum number of work items is %zu (user configured was %" PRIu32 ")", maxNumWorkitems, device.GetApproximateNumberOfWorkItems());
         } else {
-            log_info("maximum number of work items is %zu (user configured was %" PRIu32 ")", maxNumWorkitems, approximateNumberOfWorkItems);
+            log_info("maximum number of work items is %zu (user configured was %" PRIu32 ")", maxNumWorkitems, device.GetApproximateNumberOfWorkItems());
         }
 
         conv->Initialize();
@@ -317,7 +235,8 @@ namespace I3CLSimModuleHelper {
     I3CLSimParticleToStepConverterGeant4Ptr initializeGeant4(I3RandomServicePtr rng,
                                                              I3CLSimMediumPropertiesPtr medium,
                                                              I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
-                                                             I3CLSimStepToPhotonConverterOpenCLPtr openCLconverter,
+                                                             uint64_t bunchSizeGranularity,
+                                                             uint64_t maxBunchSize,
                                                              const I3CLSimParticleParameterizationSeries &parameterizationList,
                                                              const std::string &physicsListName,
                                                              double maxBetaChangePerStep,
@@ -337,8 +256,8 @@ namespace I3CLSimModuleHelper {
         
         conv->SetWlenBias(wavelengthGenerationBias);
         conv->SetMediumProperties(medium);
-        conv->SetMaxBunchSize(openCLconverter->GetMaxNumWorkitems());
-        conv->SetBunchSizeGranularity(openCLconverter->GetWorkgroupSize());
+        conv->SetMaxBunchSize(maxBunchSize);
+        conv->SetBunchSizeGranularity(bunchSizeGranularity);
         
         conv->SetParticleParameterizationSeries(parameterizationList);
         

@@ -41,25 +41,25 @@
 
 #include "clsim/I3CLSimParticleParameterization.h"
 
+#include "clsim/I3CLSimOpenCLDevice.h"
+
 #include <string>
 
 namespace I3CLSimModuleHelper {
     I3CLSimStepToPhotonConverterOpenCLPtr
-    initializeOpenCL(const std::string &platformName,
-                     const std::string &deviceName,
+    initializeOpenCL(const I3CLSimOpenCLDevice &device,
                      I3RandomServicePtr rng,
                      I3CLSimSimpleGeometryFromI3GeometryPtr geometry,
                      I3CLSimMediumPropertiesPtr medium,
                      I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
-                     I3CLSimRandomValueConstPtr wavelengthGenerator,
-                     uint32_t approximateNumberOfWorkItems,
-                     bool useNativeMath);
+                     I3CLSimRandomValueConstPtr wavelengthGenerator);
     
     I3CLSimParticleToStepConverterGeant4Ptr
     initializeGeant4(I3RandomServicePtr rng,
                      I3CLSimMediumPropertiesPtr medium,
                      I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
-                     I3CLSimStepToPhotonConverterOpenCLPtr openCLconverter,
+                     uint64_t bunchSizeGranularity,
+                     uint64_t maxBunchSize,
                      const I3CLSimParticleParameterizationSeries &parameterizationList,
                      const std::string &physicsListName,
                      double maxBetaChangePerStep,

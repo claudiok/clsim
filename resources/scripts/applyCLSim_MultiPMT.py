@@ -122,6 +122,15 @@ if options.REMOVEPHOTONDATA:
 else:
     print "storing I3Photons"
 
+if options.SEED is None:
+    # this is not the best possible option, but at least it's not a fixed seed
+    theSeed = hash(options.INFILE)
+    if theSeed < 0: theSeed = -theSeed
+    theSeed = theSeed % 100000
+    print "using auto-seed generated from input filename:", theSeed
+else:
+    theSeed = options.SEED
+
 
 from I3Tray import *
 from os.path import expandvars
@@ -134,7 +143,7 @@ from icecube import clsim
 if options.APPLYMMC:
     load("libc2j-icetray")
     load("libmmc-icetray")
-    MMCseed=options.SEED
+    MMCseed=theSeed
 
 tray = I3Tray()
 
@@ -144,7 +153,7 @@ if options.APPLYMMC:
 
 # a random number generator
 randomService = phys_services.I3SPRNGRandomService(
-    seed = options.SEED,
+    seed = theSeed,
     nstreams = 10000,
     streamnum = options.RUNNUMBER)
 
@@ -264,7 +273,7 @@ def counter1(frame):
     if (count1%10==0):
         print "%d frames in"%count1
     count1 +=1
-tray.AddModule(counter1,'counter1')
+#tray.AddModule(counter1,'counter1')
 
 
 if options.APPLYMMC:
@@ -288,6 +297,12 @@ if options.CHOPMUONS:
 else:
     clSimMCTreeName = "I3MCTree"
 
+# this currently assumes all devices are GeForce/Tesla cards
+openCLDevices = clsim.I3CLSimOpenCLDevice.GetAllDevices()
+for device in openCLDevices:
+    device.useNativeMath=True
+    device.approximateNumberOfWorkItems=1024000
+
 tray.AddModule("I3CLSimModule", "clsim",
                MCTreeName=clSimMCTreeName,
                DOMRadius = (17./2.) * 0.0254*I3Units.m, # 17" diameter
@@ -302,42 +317,7 @@ tray.AddModule("I3CLSimModule", "clsim",
                #ParameterizationList=parameterizationsMuon,
                MaxNumParallelEvents=options.MAXPARALLELEVENTS,
                
-               # 33.5 nanoseconds/photon
-               OpenCLPlatformName="NVIDIA CUDA",
-               OpenCLDeviceName="GeForce GTX 580",
-               OpenCLUseNativeMath=True,
-               OpenCLApproximateNumberOfWorkItems=1024000,
-               
-               # 2690 nanoseconds/photon (4 cores)    [w/ native math: 2648 nanoseconds/photon]
-               #OpenCLPlatformName="ATI Stream",
-               #OpenCLDeviceName="Intel(R) Core(TM) i5 CPU         760  @ 2.80GHz",
-               #OpenCLUseNativeMath=False,
-               #OpenCLApproximateNumberOfWorkItems=51200,
-
-               # 2470 nanoseconds/photon (4 cores)
-               #OpenCLPlatformName="Intel(R) OpenCL",
-               #OpenCLDeviceName="Intel(R) Core(TM) i5 CPU         760  @ 2.80GHz",
-               #OpenCLUseNativeMath=False,
-               #OpenCLApproximateNumberOfWorkItems=51200,
-               
-               # 750 nanoseconds/photon
-               #OpenCLPlatformName="Apple",
-               #OpenCLDeviceName="GeForce 9600M GT",
-               #OpenCLUseNativeMath=True,
-               #OpenCLApproximateNumberOfWorkItems=1024, # GPU could handle more, but system begins to freeze
-               
-               # kernel does not run (out of memory)
-               #OpenCLPlatformName="Apple",
-               #OpenCLDeviceName="GeForce 9400M",
-               #OpenCLUseNativeMath=True,
-               #OpenCLApproximateNumberOfWorkItems=512,
-               
-               # 5400 nanoseconds/photon (2 cores)    [w/ native math: 4430 nanoseconds/photon]
-               #OpenCLPlatformName="Apple",
-               #OpenCLDeviceName="Intel(R) Core(TM)2 Duo CPU     T9600  @ 2.80GHz",
-               #OpenCLUseNativeMath=False,
-               #OpenCLApproximateNumberOfWorkItems=25600,
-               
+               OpenCLDeviceList=openCLDevices
                )
 
 tray.AddModule("I3PhotonToMCHitConverterForMultiPMT", "make_hits_multiPMT",
@@ -356,7 +336,7 @@ def counter2(frame):
     if (count2%10==0):
         print "%d frames out"%(count2)
     count2 +=1
-tray.AddModule(counter2,'counter2')
+#tray.AddModule(counter2,'counter2')
 
 tray.AddModule("I3Writer","writer",
     Filename = outdir+outfile)

@@ -54,7 +54,7 @@ inline int init_MWC_RNG(uint64_t *x, uint32_t *a,
 	
 	if(fp == NULL)
 	{
-		log_error("Could not find the file of safeprimes (%s)! Terminating!", safeprimes_file.c_str());
+		log_error("Could not find the safeprimes file (%s)! Terminating!", safeprimes_file.c_str());
 		return 1;
 	}
 	

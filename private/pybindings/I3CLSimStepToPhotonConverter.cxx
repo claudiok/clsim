@@ -49,6 +49,7 @@ struct I3CLSimStepToPhotonConverterWrapper : I3CLSimStepToPhotonConverter, bp::w
     virtual bool IsInitialized() const {return this->get_override("IsInitialized")();}
 
     virtual void EnqueueSteps(I3CLSimStepSeriesConstPtr steps, uint32_t identifier) {this->get_override("EnqueueSteps")(steps, identifier);}
+    virtual std::size_t QueueSize() const {return this->get_override("QueueSize")();}
     virtual bool MorePhotonsAvailable() const {return this->get_override("MorePhotonsAvailable")();}
     virtual I3CLSimStepToPhotonConverter::ConversionResult_t GetConversionResult() {return this->get_override("GetConversionResult")();}
 };
@@ -78,23 +79,6 @@ namespace I3CLSimStepToPhotonConverter_utils
 
 using namespace I3CLSimStepToPhotonConverter_utils;
 
-bp::object I3CLSimStepToPhotonConverterOpenCL_GetDeviceList_python(I3CLSimStepToPhotonConverterOpenCL &ref)
-{
-    shared_ptr<const std::vector<std::pair<std::string, std::string> > > ret = ref.GetDeviceList();
-    if (!ret) return bp::object();
-
-    const std::vector<std::pair<std::string, std::string> > &vect = *ret;
-    
-    bp::list retList = bp::list();
-
-    for (std::size_t i = 0; i < vect.size(); ++i)
-    {
-        retList.append(bp::make_tuple(vect[i].first, vect[i].second));
-    }
-    
-    return retList;
-}
-
 void register_I3CLSimStepToPhotonConverter()
 {
     {
@@ -108,6 +92,7 @@ void register_I3CLSimStepToPhotonConverter()
         .def("Initialize", bp::pure_virtual(&I3CLSimStepToPhotonConverter::Initialize))
         .def("IsInitialized", bp::pure_virtual(&I3CLSimStepToPhotonConverter::IsInitialized))
         .def("EnqueueSteps", bp::pure_virtual(&I3CLSimStepToPhotonConverter::EnqueueSteps))
+        .def("QueueSize", bp::pure_virtual(&I3CLSimStepToPhotonConverter::QueueSize))
         .def("MorePhotonsAvailable", bp::pure_virtual(&I3CLSimStepToPhotonConverter::MorePhotonsAvailable))
         .def("GetConversionResult", bp::pure_virtual(&I3CLSimStepToPhotonConverter::GetConversionResult))
         ;
@@ -129,22 +114,18 @@ void register_I3CLSimStepToPhotonConverter()
         (
          "I3CLSimStepToPhotonConverterOpenCL",
          bp::init<
-         I3RandomServicePtr,bool,bool,bool
+         I3RandomServicePtr,bool
          >(
            (
             bp::arg("RandomService"),
-            bp::arg("UseNativeMath")=I3CLSimStepToPhotonConverterOpenCL::default_useNativeMath,
-            bp::arg("CPUOnly")=I3CLSimStepToPhotonConverterOpenCL::default_cpuOnly,
-            bp::arg("GPUOnly")=I3CLSimStepToPhotonConverterOpenCL::default_gpuOnly
+            bp::arg("UseNativeMath")=I3CLSimStepToPhotonConverterOpenCL::default_useNativeMath
            )
           )
         )
         .def("Compile", &I3CLSimStepToPhotonConverterOpenCL::Compile)
         .def("GetFullSource", &I3CLSimStepToPhotonConverterOpenCL::GetFullSource)
         
-        .def("GetDeviceList", &I3CLSimStepToPhotonConverterOpenCL_GetDeviceList_python)
-        .def("SetDeviceIndex", &I3CLSimStepToPhotonConverterOpenCL::SetDeviceIndex)
-        .def("SetDeviceName", &I3CLSimStepToPhotonConverterOpenCL::SetDeviceName)
+        .def("SetDevice", &I3CLSimStepToPhotonConverterOpenCL::SetDevice)
         .def("GetMaxWorkgroupSize", &I3CLSimStepToPhotonConverterOpenCL::GetMaxWorkgroupSize)
         .add_property("maxWorkgroupSize", &I3CLSimStepToPhotonConverterOpenCL::GetMaxWorkgroupSize)
 

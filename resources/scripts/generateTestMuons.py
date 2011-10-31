@@ -36,14 +36,19 @@ from I3Tray import *
 import os
 import sys
 
-from icecube import icetray, dataclasses, dataio, phys_services, sim_services
+from icecube import icetray, dataclasses, dataio, phys_services
+
+load("libsim-services")
 
 from icecube import simple_injector
 from icecube.simple_injector.simple_muon import I3SimpleMuon
 
 # simple (maybe too simple?) runtime check to see
 # if we should support Q-frames
-isQified = "QConverter" in icetray.modules("dataio")
+try:
+    isQified = "QConverter" in icetray.modules("dataio")
+except AttributeError:
+    isQified = False
 
 if isQified:
     print "using fully Qified modules"
@@ -74,7 +79,7 @@ if isQified:
 
     tray.AddModule("I3MCEventHeaderGenerator","gen_header",
                    Year=2009,
-                   DAQTime=179500000000000000,
+                   DAQTime=158100000000000000,
                    RunNumber=1,
                    EventID=1,
                    IncrementEventID=True)
@@ -88,8 +93,8 @@ else:
         OmitEvent=True)
 
     tray.AddService("I3MCTimeGeneratorServiceFactory", "gen_header",
-        Year=2009,
-        DAQTime=179500000000000000,
+        Year=2010,
+        DAQTime=158100000000000000,
         RunNumber=1,
         EventID=1,
         IncrementEventID=True)

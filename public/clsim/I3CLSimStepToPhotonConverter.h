@@ -93,6 +93,14 @@ public:
     virtual void EnqueueSteps(I3CLSimStepSeriesConstPtr steps, uint32_t identifier) = 0;
 
     /**
+     * Reports the current queue size. The queue works asynchronously,
+     * so this value will probably have changed once you use it.
+     *
+     * Will throw if not initialized.
+     */
+    virtual std::size_t QueueSize() const = 0; 
+    
+    /**
      * Returns true if more photons are available.
      * If the return value is false, the current simulation is finished
      * and a new step vector may be set.
