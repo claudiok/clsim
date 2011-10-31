@@ -141,20 +141,26 @@ void I3CLSimTesterBase::DoSetup(const std::pair<std::string, std::string> &platf
                                 bool useNativeMath,
                                 uint64_t workgroupSize_,
                                 uint64_t workItemsPerIteration_,
-                                const std::vector<std::string> &source)
+                                const std::vector<std::string> &source,
+                                const std::string compilerOptions)
 {
+    log_debug("I3CLSimTesterBase::DoSetup()");
+    
     workgroupSize=workgroupSize_;
     workItemsPerIteration=workItemsPerIteration_;
 
     if (workgroupSize==0) {
+        log_error("workgroupSize must not be 0!");
         throw std::runtime_error("workgroupSize must not be 0!");
     }
     
     if (workItemsPerIteration==0) {
+        log_error("workItemsPerIteration must not be 0!");
         throw std::runtime_error("workItemsPerIteration must not be 0!");
     }
 
     if (workItemsPerIteration%workgroupSize != 0) {
+        log_error("workItemsPerIteration is not a multiple of workgroupSize.");
         throw std::runtime_error("workItemsPerIteration is not a multiple of workgroupSize.");
     }
     
@@ -186,6 +192,7 @@ void I3CLSimTesterBase::DoSetup(const std::pair<std::string, std::string> &platf
         // create a context
         context = shared_ptr<cl::Context>(new cl::Context(*devices, properties));
     } catch (cl::Error &err) {
+        log_error("OpenCL error: could not set up context!");
         throw std::runtime_error("OpenCL error: could not set up context!");
     }
     
@@ -223,6 +230,8 @@ void I3CLSimTesterBase::DoSetup(const std::pair<std::string, std::string> &platf
     //BuildOptions += "-cl-nv-maxrregcount=60 ";  // Passed on to ptxas as --maxrregcount <N>
     //BuildOptions += "-cl-nv-opt-level=3 ";     // Passed on to ptxas as --opt-level <N>
     if (useNativeMath) {BuildOptions += "-DUSE_NATIVE_MATH ";}
+    
+    BuildOptions += compilerOptions;
     
     try {
         program = shared_ptr<cl::Program>(new cl::Program(*context, source_));
@@ -272,6 +281,8 @@ void I3CLSimTesterBase::DoSetup(const std::pair<std::string, std::string> &platf
 
     if (workgroupSize > maxWorkgroupSize)
     {
+        log_error("Requested workgroup size is too large, maximum is %" PRIu64,
+                  maxWorkgroupSize);
         std::string message("Requested workgroup size is too large, maximum is " + boost::lexical_cast<std::string>(maxWorkgroupSize));
         throw std::runtime_error(message.c_str());
     }

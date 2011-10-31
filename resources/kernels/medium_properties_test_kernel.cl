@@ -31,8 +31,10 @@ __kernel void testKernel(__global ulong* MWC_RNG_x,
     // evaluate the function
     if (mode==0) {
         yValues[i] = getPhaseRefIndex(layer, xValues[i]);
+#ifndef NO_DISPERSION
     } else if (mode==1) {
         yValues[i] = getDispersion(layer, xValues[i]);
+#endif
     } else if (mode==2) {
         yValues[i] = getGroupVelocity(layer, xValues[i]);
     } else if (mode==3) {

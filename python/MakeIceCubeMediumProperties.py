@@ -13,12 +13,13 @@ import numpy, math
 from os.path import expandvars
 
 
-def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m):
+def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m,
+                                iceDataDirectory=expandvars("$I3_SRC/clsim/resources/ice/spice_mie")):
     ### read ice information from PPC-compatible tables
     
-    icemodel_dat = numpy.loadtxt(expandvars("$I3_SRC/clsim/resources/ice/spice_mie/icemodel.dat"), unpack=True)
-    icemodel_par = numpy.loadtxt(expandvars("$I3_SRC/clsim/resources/ice/spice_mie/icemodel.par"))
-    icemodel_cfg = numpy.loadtxt(expandvars("$I3_SRC/clsim/resources/ice/spice_mie/cfg.txt"))
+    icemodel_dat = numpy.loadtxt(iceDataDirectory+"/icemodel.dat", unpack=True)
+    icemodel_par = numpy.loadtxt(iceDataDirectory+"/icemodel.par")
+    icemodel_cfg = numpy.loadtxt(iceDataDirectory+"/cfg.txt")
     
     alpha = icemodel_par[0][0]
     kappa = icemodel_par[1][0]

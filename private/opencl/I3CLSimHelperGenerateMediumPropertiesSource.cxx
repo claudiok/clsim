@@ -198,11 +198,19 @@ namespace I3CLSimHelper
         code << "\n";
 
         // phase refractive index
-        code << GenerateLayeredWlenDependentFunctions(mediumProperties.GetPhaseRefractiveIndices(),
-                                                      "phase refractive index",
-                                                      "getPhaseRefIndex",
-                                                      "getDispersion");
-
+        if (mediumProperties.GetPhaseRefractiveIndices()[0]->HasDerivative())
+        {
+            code << GenerateLayeredWlenDependentFunctions(mediumProperties.GetPhaseRefractiveIndices(),
+                                                          "phase refractive index",
+                                                          "getPhaseRefIndex",
+                                                          "getDispersion");
+        } else {
+            code << GenerateLayeredWlenDependentFunctions(mediumProperties.GetPhaseRefractiveIndices(),
+                                                          "phase refractive index",
+                                                          "getPhaseRefIndex",
+                                                          "");
+        }
+        
         if (mediumProperties.GetGroupRefractiveIndexOverride(0))
         {
             // seems there is an override parameterization for the group refractive index.

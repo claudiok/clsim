@@ -296,10 +296,10 @@ tray.AddModule("I3CLSimModule", "clsim",
                MaxNumParallelEvents=options.MAXPARALLELEVENTS,
                
                # 33.5 nanoseconds/photon
-               OpenCLPlatformName="NVIDIA CUDA",
-               OpenCLDeviceName="GeForce GTX 580",
-               OpenCLUseNativeMath=True,
-               OpenCLApproximateNumberOfWorkItems=1024000,
+               #OpenCLPlatformName="NVIDIA CUDA",
+               #OpenCLDeviceName="GeForce GTX 580",
+               #OpenCLUseNativeMath=True,
+               #OpenCLApproximateNumberOfWorkItems=1024000,
                
                # 2690 nanoseconds/photon (4 cores)    [w/ native math: 2648 nanoseconds/photon]
                #OpenCLPlatformName="ATI Stream",
@@ -327,9 +327,16 @@ tray.AddModule("I3CLSimModule", "clsim",
                
                # 5400 nanoseconds/photon (2 cores)    [w/ native math: 4430 nanoseconds/photon]
                #OpenCLPlatformName="Apple",
-               #OpenCLDeviceName="Intel(R) Core(TM)2 Duo CPU     T9600  @ 2.80GHz",
+               ##OpenCLDeviceName="Intel(R) Core(TM)2 Duo CPU     T9600  @ 2.80GHz",
+               #OpenCLDeviceName="Intel(R) Core(TM) i7-2820QM CPU @ 2.30GHz",
                #OpenCLUseNativeMath=False,
                #OpenCLApproximateNumberOfWorkItems=25600,
+
+               # 5400 nanoseconds/photon (2 cores)    [w/ native math: 4430 nanoseconds/photon]
+               OpenCLPlatformName="Apple",
+               OpenCLDeviceName="ATI Radeon HD 6750M",
+               OpenCLUseNativeMath=True,
+               OpenCLApproximateNumberOfWorkItems=2560/2,
                
                )
 

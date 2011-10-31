@@ -56,7 +56,7 @@ def genMCHistogramsOpenCL(distribution, iterations=100, numBins=1000):
     
     platformAndDeviceName = clsim.I3CLSimRandomDistributionTester.GetDeviceNameList()[0]
     
-    workgroupSize = 512
+    workgroupSize = 1
     workItemsPerIteration = 102400
     
     print "           using platform:", platformAndDeviceName[0]

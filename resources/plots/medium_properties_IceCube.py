@@ -95,7 +95,7 @@ from I3Tray import I3Units
 
 platformAndDeviceName = clsim.I3CLSimTesterBase.GetDeviceNameList()[0]
 useNativeMath=False
-workgroupSize = 512
+workgroupSize = 1
 workItemsPerIteration = 10240
 print "           using platform:", platformAndDeviceName[0]
 print "             using device:", platformAndDeviceName[1]
@@ -105,7 +105,7 @@ print "    workItemsPerIteration:", workItemsPerIteration
 
 
 def applyOpenCLWlenDependentFunction(xValues, functionOpenCL, getDerivative=False, useReferenceFunction=False):
-    #print "         number of values:", len(xValues)
+    print "         number of values:", len(xValues)
     
     tester = clsim.I3CLSimWlenDependentValueTester(platformAndDeviceName=platformAndDeviceName,
                                                    workgroupSize=workgroupSize,
@@ -113,7 +113,7 @@ def applyOpenCLWlenDependentFunction(xValues, functionOpenCL, getDerivative=Fals
                                                    useNativeMath=useNativeMath,
                                                    wlenDependentValue=functionOpenCL)
     
-    #print "maxWorkgroupSizeForKernel:", tester.maxWorkgroupSize
+    print "maxWorkgroupSizeForKernel:", tester.maxWorkgroupSize
     
     # the function currently only accepts I3VectorFloat as its input type
     vector = dataclasses.I3VectorFloat(numpy.array(xValues)*I3Units.nanometer)
@@ -165,6 +165,7 @@ phaseRefIndex = mediumProps.GetPhaseRefractiveIndex(currentLayer)
 
 ####
 
+print "a"
 
 fig = pylab.figure(3)
 fig.subplots_adjust(left=0.09, bottom=0.05, top=0.95, right=0.98)
@@ -182,6 +183,8 @@ l.set_dashes([5,5])
 l, = ax.plot(wlens, getGroupRefIndex_derivative(wlens), linewidth=3., color='0.5', label=r"$n_\mathrm{g}$ (calculated from $n_\mathrm{p}$)")
 l.set_dashes([10,10])
 
+print "b"
+
 
 nphase_reference = applyOpenCLWlenDependentFunction(wlens, mediumProps.GetPhaseRefractiveIndex(currentLayer), useReferenceFunction=True)
 if mediumProps.GetGroupRefractiveIndexOverride(currentLayer) is None:
@@ -189,12 +192,15 @@ if mediumProps.GetGroupRefractiveIndexOverride(currentLayer) is None:
 else:
     ngroup_reference = applyOpenCLWlenDependentFunction(wlens, mediumProps.GetGroupRefractiveIndexOverride(currentLayer), useReferenceFunction=True)
 
+print "c"
+
 ax.plot(wlens, nphase_reference, linewidth=3., color='k', linestyle='solid', label=r"$n_\mathrm{p}$ (C++)")
 if ngroup_reference is not None:
     l, = ax.plot(wlens, ngroup_reference, linewidth=3., color='k', label=r"$n_\mathrm{g}$ (C++)")
     l.set_dashes([5,5])
 
 
+print "d"
 
 
 nphase = applyOpenCLMediumPropertyFunction(wlens, currentLayer, mediumProps, mode="phaseRefIndex")

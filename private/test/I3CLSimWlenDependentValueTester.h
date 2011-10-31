@@ -66,6 +66,8 @@ private:
     shared_ptr<cl::Buffer> deviceBuffer_inputs;
 
     I3CLSimWlenDependentValueConstPtr wlenDependentValue_;
+    
+    SET_LOGGER("I3CLSimWlenDependentValueTester");
 };
 
 

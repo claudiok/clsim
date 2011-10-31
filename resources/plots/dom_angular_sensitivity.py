@@ -41,7 +41,7 @@ from I3Tray import I3Units
 
 platformAndDeviceName = clsim.I3CLSimTesterBase.GetDeviceNameList()[0]
 useNativeMath=False
-workgroupSize = 512
+workgroupSize = 1
 workItemsPerIteration = 10240
 print "           using platform:", platformAndDeviceName[0]
 print "             using device:", platformAndDeviceName[1]

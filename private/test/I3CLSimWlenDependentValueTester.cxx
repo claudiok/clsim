@@ -37,16 +37,23 @@ I3CLSimWlenDependentValueTester::I3CLSimWlenDependentValueTester
 I3CLSimTesterBase(),
 wlenDependentValue_(wlenDependentValue)
 {
+    log_info("I3CLSimWlenDependentValueTester()");
+   
+    log_info("I3CLSimWlenDependentValueTester::FillSource()");
     std::vector<std::string> source;
     FillSource(source, wlenDependentValue);
     
+    log_info("I3CLSimWlenDependentValueTester::DoSetup()");
     DoSetup(platformAndDeviceName,
             useNativeMath,
             workgroupSize_,
             workItemsPerIteration_,
             source);
     
+    log_info("I3CLSimWlenDependentValueTester::InitBuffers()");
     InitBuffers();
+
+    log_info("I3CLSimWlenDependentValueTester() done.");
 }
 
 I3CLSimWlenDependentValueTester::I3CLSimWlenDependentValueTester
@@ -58,21 +65,28 @@ I3CLSimWlenDependentValueTester::I3CLSimWlenDependentValueTester
 I3CLSimTesterBase(),
 wlenDependentValue_(wlenDependentValue)
 {
+    log_info("I3CLSimWlenDependentValueTester()");
+    
     std::string platformName = boost::python::extract<std::string>(platformAndDeviceName[0]);
     std::string deviceName = boost::python::extract<std::string>(platformAndDeviceName[1]);
     
     std::pair<std::string, std::string> argument(platformName, deviceName);
     
+    log_info("I3CLSimWlenDependentValueTester::FillSource()");
     std::vector<std::string> source;
     FillSource(source, wlenDependentValue);
 
+    log_info("I3CLSimWlenDependentValueTester::DoSetup()");
     DoSetup(argument,
             useNativeMath,
             workgroupSize_,
             workItemsPerIteration_,
             source);
     
+    log_info("I3CLSimWlenDependentValueTester::InitBuffers()");
     InitBuffers();
+    
+    log_info("I3CLSimWlenDependentValueTester() done.");
 }
 
 void I3CLSimWlenDependentValueTester::FillSource(std::vector<std::string> &source,
@@ -103,18 +117,18 @@ void I3CLSimWlenDependentValueTester::FillSource(std::vector<std::string> &sourc
 
 void I3CLSimWlenDependentValueTester::InitBuffers()
 {
-    log_debug("Setting up device buffers.");
+    log_info("Setting up device buffers.");
     // allocate empty buffers on the device
     deviceBuffer_results = shared_ptr<cl::Buffer>(new cl::Buffer(*context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, workItemsPerIteration*sizeof(float), NULL));
     deviceBuffer_inputs = shared_ptr<cl::Buffer>(new cl::Buffer(*context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, workItemsPerIteration*sizeof(float), NULL));
-    log_debug("Device buffers are set up.");
+    log_info("Device buffers are set up.");
     
-    log_debug("Configuring kernel.");
+    log_info("Configuring kernel.");
     {
         kernel->setArg(0, *deviceBuffer_inputs);          // input data
         kernel->setArg(1, *deviceBuffer_results);          // output data
     }
-    log_debug("Kernel configured.");
+    log_info("Kernel configured.");
 }
 
 
@@ -200,11 +214,11 @@ I3VectorFloatPtr I3CLSimWlenDependentValueTester::EvaluateIt(I3VectorFloatConstP
     std::size_t inputVecPos=0;
     
     
-    log_debug("Starting iterations..");
+    log_info("Starting iterations..");
     
     for (uint64_t i=0;i<iterations;++i)
     {
-        log_debug("Filling input buffer..");
+        log_info("Filling input buffer..");
         
         {
             // mapped the buffer and wait for completion
@@ -215,7 +229,7 @@ I3VectorFloatPtr I3CLSimWlenDependentValueTester::EvaluateIt(I3VectorFloatConstP
             // add the values to the input buffer
             if (i==iterations-1)
             {
-                log_debug("(in)  iteration=%" PRIu64 " (last iteration)", i);
+                log_info("(in)  iteration=%" PRIu64 " (last iteration)", i);
                 // last iteration
                 for (uint64_t j=0;j<numEntriesInLastIteration;++j)
                 {
@@ -230,7 +244,7 @@ I3VectorFloatPtr I3CLSimWlenDependentValueTester::EvaluateIt(I3VectorFloatConstP
             } 
             else
             {
-                log_debug("(in)  iteration=%" PRIu64, i);
+                log_info("(in)  iteration=%" PRIu64, i);
                 // any other iteration
                 for (uint64_t j=0;j<workItemsPerIteration;++j)
                 {
@@ -242,9 +256,9 @@ I3VectorFloatPtr I3CLSimWlenDependentValueTester::EvaluateIt(I3VectorFloatConstP
             queue->enqueueUnmapMemObject(*deviceBuffer_inputs, mapped_input);
         }
         
-        log_debug("Input buffer filled.");
+        log_info("Input buffer filled.");
 
-        log_debug("Starting kernel..");
+        log_info("Starting kernel..");
         
         // run the kernel
         try {
@@ -265,9 +279,9 @@ I3VectorFloatPtr I3CLSimWlenDependentValueTester::EvaluateIt(I3VectorFloatConstP
             log_fatal("OpenCL ERROR (running kernel): %s (%i)", err.what(), err.err());
         }
         
-        log_debug("kernel finished!");
+        log_info("kernel finished!");
         
-        log_debug("Reading output buffer..");
+        log_info("Reading output buffer..");
         {
             // mapped the buffer and wait for completion
             cl::Event mappingComplete;
@@ -291,11 +305,11 @@ I3VectorFloatPtr I3CLSimWlenDependentValueTester::EvaluateIt(I3VectorFloatConstP
 
             queue->enqueueUnmapMemObject(*deviceBuffer_results, mapped_results);
         }
-        log_debug("Output buffer read.");
+        log_info("Output buffer read.");
 
     }
     
-    log_debug("iterations complete.");
+    log_info("iterations complete.");
     
     return results;
 }

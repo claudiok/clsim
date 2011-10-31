@@ -45,12 +45,15 @@ randomService_(randomService)
     std::vector<std::string> source;
     FillSource(source, mediumProperties);
     
+    const bool hasDispersion = mediumProperties->GetPhaseRefractiveIndices()[0]->HasDerivative();
+
     DoSetup(platformAndDeviceName,
             useNativeMath,
             workgroupSize_,
             workItemsPerIteration_,
-            source);
-    
+            source,
+            (!hasDispersion)?"-DNO_DISPERSION ":"");
+
     InitBuffers(randomService);
 }
 
@@ -74,11 +77,14 @@ randomService_(randomService)
     std::vector<std::string> source;
     FillSource(source, mediumProperties);
 
+    const bool hasDispersion = mediumProperties->GetPhaseRefractiveIndices()[0]->HasDerivative();
+    
     DoSetup(argument,
             useNativeMath,
             workgroupSize_,
             workItemsPerIteration_,
-            source);
+            source,
+            (!hasDispersion)?"-DNO_DISPERSION ":"");
     
     InitBuffers(randomService);
 }

@@ -47,7 +47,8 @@ protected:
                  bool useNativeMath,
                  uint64_t workgroupSize_,
                  uint64_t workItemsPerIteration_,
-                 const std::vector<std::string> &source);
+                 const std::vector<std::string> &source,
+                 const std::string compilerOptions="");
     std::pair<cl::Platform, cl::Device> GetPlatformDeviceFromNames(const std::string &platformName, const std::string &deviceName) const;
 
     
@@ -66,6 +67,9 @@ protected:
 private:
     uint64_t maxWorkgroupSize;
     
+public:    
+    SET_LOGGER("I3CLSimTesterBase");
+   
 };
 
 

@@ -119,7 +119,7 @@ rng = phys_services.I3SPRNGRandomService(seed=3244, nstreams=2, streamnum=0)
 
 platformAndDeviceName = clsim.I3CLSimTesterBase.GetDeviceNameList()[0]
 useNativeMath=False
-workgroupSize = 512
+workgroupSize = 1
 workItemsPerIteration = 10240
 print "           using platform:", platformAndDeviceName[0]
 print "             using device:", platformAndDeviceName[1]
