@@ -108,7 +108,6 @@ geometryIsConfigured_(false)
                  "If set to True, muons will not be propagated.",
                  ignoreMuons_);
 
-    openCLDeviceList_.reset();
     AddParameter("OpenCLDeviceList",
                  "A vector of I3CLSimOpenCLDevice objects, describing the devices to be used for simulation.",
                  openCLDeviceList_);
@@ -281,8 +280,7 @@ void I3CLSimModule::Configure()
     if (!mediumProperties_) log_fatal("You have to specify the \"MediumProperties\" parameter!");
     if (maxNumParallelEvents_ <= 0) log_fatal("Values <= 0 are invalid for the \"MaxNumParallelEvents\" parameter!");
 
-    if (!openCLDeviceList_) log_fatal("You have to provide at least one OpenCL device using the \"OpenCLDeviceList\" parameter.");
-    if (openCLDeviceList_->empty()) log_fatal("You have to provide at least one OpenCL device using the \"OpenCLDeviceList\" parameter.");
+    if (openCLDeviceList_.empty()) log_fatal("You have to provide at least one OpenCL device using the \"OpenCLDeviceList\" parameter.");
     
     // fill wavelengthGenerator_
     wavelengthGenerator_ =
@@ -501,7 +499,7 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
     uint64_t granularity=0;
     uint64_t maxBunchSize=0;
     
-    BOOST_FOREACH(const I3CLSimOpenCLDevice &openCLdevice, *openCLDeviceList_)
+    BOOST_FOREACH(const I3CLSimOpenCLDevice &openCLdevice, openCLDeviceList_)
     {
         log_warn(" -> platform: %s device: %s",
                  openCLdevice.GetPlatformName().c_str(), openCLdevice.GetDeviceName().c_str());

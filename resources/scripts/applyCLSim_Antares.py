@@ -200,56 +200,56 @@ parameterizationsOther = [
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.Hadrons,
                                        fromEnergy=0.0*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+                                       toEnergy=1000.*I3Units.PeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.Pi0,
                                        fromEnergy=0.0*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+                                       toEnergy=1000.*I3Units.PeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.PiPlus,
                                        fromEnergy=0.0*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+                                       toEnergy=1000.*I3Units.PeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.PiMinus,
                                        fromEnergy=0.0*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+                                       toEnergy=1000.*I3Units.PeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.K0_Long,
                                        fromEnergy=0.0*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+                                       toEnergy=1000.*I3Units.PeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.KPlus,
                                        fromEnergy=0.0*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+                                       toEnergy=1000.*I3Units.PeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.KMinus,
                                        fromEnergy=0.0*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+                                       toEnergy=1000.*I3Units.PeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.PPlus,
                                        fromEnergy=0.0*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+                                       toEnergy=1000.*I3Units.PeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.PMinus,
                                        fromEnergy=0.0*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+                                       toEnergy=1000.*I3Units.PeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.K0_Short,
                                        fromEnergy=0.0*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+                                       toEnergy=1000.*I3Units.PeV),
 
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.EMinus,
-                                       fromEnergy=0.5*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+                                       fromEnergy=0.0*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.PeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.EPlus,
-                                       fromEnergy=0.5*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+                                       fromEnergy=0.0*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.PeV),
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.Gamma,
-                                       fromEnergy=0.5*I3Units.GeV,
-                                       toEnergy=1000.*I3Units.GeV),
+                                       fromEnergy=0.0*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.PeV),
 
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.Brems,
@@ -294,11 +294,14 @@ if options.CHOPMUONS:
 else:
     clSimMCTreeName = "I3MCTree"
 
-# this currently assumes all devices are GeForce/Tesla cards
-openCLDevices = clsim.I3CLSimOpenCLDevice.GetAllDevices()
+openCLDevices = [device for device in clsim.I3CLSimOpenCLDevice.GetAllDevices() if device.gpu]
 for device in openCLDevices:
-    device.useNativeMath=True
-    device.approximateNumberOfWorkItems=1024000
+    if string.count(device.device, 'Tesla') > 0 or string.count(device.device, 'GTX') > 0:
+        device.useNativeMath=True
+        device.approximateNumberOfWorkItems=1024000
+    else:
+        device.useNativeMath=False
+        device.approximateNumberOfWorkItems=10240
 
 tray.AddModule("I3CLSimModule", "clsim",
                MCTreeName=clSimMCTreeName,

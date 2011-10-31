@@ -131,7 +131,7 @@ private:
     unsigned int maxNumParallelEvents_;
 
     /// Parameter: A vector of I3CLSimOpenCLDevice objects, describing the devices to be used for simulation.
-    I3CLSimOpenCLDeviceSeriesPtr openCLDeviceList_;
+    I3CLSimOpenCLDeviceSeries openCLDeviceList_;
 
     /// Parameter: The DOM radius used during photon tracking.
     double DOMRadius_;
