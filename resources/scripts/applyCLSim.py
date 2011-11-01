@@ -283,7 +283,7 @@ if options.CHOPMUONS:
 else:
     clSimMCTreeName = "I3MCTree"
 
-openCLDevices = [device for device in clsim.I3CLSimOpenCLDevice.GetAllDevices() if device.cpu]
+openCLDevices = [device for device in clsim.I3CLSimOpenCLDevice.GetAllDevices() if device.gpu]
 for device in openCLDevices:
     if string.count(device.device, 'Tesla') > 0 or string.count(device.device, 'GTX') > 0:
         device.useNativeMath=True
