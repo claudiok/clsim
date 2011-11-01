@@ -337,6 +337,7 @@ bool I3CLSimModule::Thread(boost::this_thread::disable_interruption &di)
     // the main thread is running again
     
     uint32_t counter=0;
+    std::size_t lastDeviceIndexToUse=0;
     
     for (;;)
     {
@@ -386,19 +387,27 @@ bool I3CLSimModule::Thread(boost::this_thread::disable_interruption &di)
             }
 
             // determine which OpenCL device to use
-            std::size_t deviceIndexToUse=0;
-            std::size_t minimumFillLevel = openCLStepsToPhotonsConverters_[0]->QueueSize();
+            std::vector<std::size_t> fillLevels(openCLStepsToPhotonsConverters_.size());
+            for (std::size_t i=0;i<openCLStepsToPhotonsConverters_.size();++i)
+            {
+                fillLevels[i]=openCLStepsToPhotonsConverters_[i]->QueueSize();
+            }
+            
+            std::size_t minimumFillLevel = fillLevels[0];
             for (std::size_t i=1;i<openCLStepsToPhotonsConverters_.size();++i)
             {
-                const std::size_t newFillLevel = openCLStepsToPhotonsConverters_[i]->QueueSize();
-                
-                if (newFillLevel < minimumFillLevel)
+                if (fillLevels[i] < minimumFillLevel)
                 {
-                    minimumFillLevel=newFillLevel;
-                    deviceIndexToUse=i;
+                    minimumFillLevel=fillLevels[i];
                 }
             }
             
+            std::size_t deviceIndexToUse=lastDeviceIndexToUse;
+            do {
+                ++deviceIndexToUse;
+                if (deviceIndexToUse>=fillLevels.size()) deviceIndexToUse=0;
+            } while (fillLevels[deviceIndexToUse] != minimumFillLevel);
+            lastDeviceIndexToUse=deviceIndexToUse;
             
             // send to OpenCL
             {
