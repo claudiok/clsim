@@ -47,6 +47,7 @@ useHighPhotonsPerStepStartingFromNumPhotons_(useHighPhotonsPerStepStartingFromNu
     if (useHighPhotonsPerStepStartingFromNumPhotons_<=0.)
         throw I3CLSimParticleToStepConverter_exception("useHighPhotonsPerStepStartingFromNumPhotons may not be <= 0!");
     
+    preCalc_ = shared_ptr<GenerateStepPreCalculator>(new GenerateStepPreCalculator(randomService, /*a=*/0.39, /*b=*/2.61));
 }
 
 I3CLSimParticleToStepConverterPPC::~I3CLSimParticleToStepConverterPPC()
@@ -458,9 +459,12 @@ bool I3CLSimParticleToStepConverterPPC::MoreStepsAvailable() const
 }
 
 I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::MakeSteps_visitor
-(I3RandomService &randomService, uint64_t maxNumStepsPerStepSeries)
+(I3RandomService &randomService,
+ uint64_t maxNumStepsPerStepSeries,
+ I3CLSimParticleToStepConverterUtils::GenerateStepPreCalculator &preCalc)
 :randomService_(randomService),
-maxNumStepsPerStepSeries_(maxNumStepsPerStepSeries)
+maxNumStepsPerStepSeries_(maxNumStepsPerStepSeries),
+preCalc_(preCalc)
 {;}
 
 void I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::FillStep
@@ -474,7 +478,8 @@ void I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::FillStep
                                                       data.particleIdentifier,
                                                       randomService_,
                                                       photonsPerStep,
-                                                      longitudinalPos);
+                                                      longitudinalPos,
+                                                      preCalc_);
 }
 
 void I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::FillStep
@@ -489,7 +494,8 @@ void I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::FillStep
                                                           data.particleIdentifier,
                                                           randomService_,
                                                           photonsPerStep,
-                                                          longitudinalPos);
+                                                          longitudinalPos,
+                                                          preCalc_);
     } else {
         I3CLSimParticleToStepConverterUtils::GenerateStepForMuon(newStep,
                                                                  data.particle,
@@ -562,7 +568,7 @@ I3CLSimStepSeriesConstPtr I3CLSimParticleToStepConverterPPC::MakeSteps(bool &bar
     
     //  Let the visitor convert it into steps (the step pointer will be NULL if it is a barrier)
     std::pair<I3CLSimStepSeriesConstPtr, bool> retval =
-    boost::apply_visitor(MakeSteps_visitor(*randomService_, maxBunchSize_), currentElement);
+    boost::apply_visitor(MakeSteps_visitor(*randomService_, maxBunchSize_, *preCalc_), currentElement);
     
     I3CLSimStepSeriesConstPtr &steps = retval.first;
     const bool entryCanBeRemoved = retval.second;

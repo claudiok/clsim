@@ -93,6 +93,10 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
 SET(LIB_${PROJECT_NAME}_PROJECTS icetray dataio dataclasses phys-services tableio simclasses)
 SET(LIB_${PROJECT_NAME}_TOOLS python boost log4cplus gsl clhep geant4 opencl)
 
+# Use the Accelerate framework on APPLE
+IF(APPLE)
+    LIST(APPEND LIB_${PROJECT_NAME}_TOOLS accelerate)
+ENDIF(APPLE)
 
 # check for Q-Frame support
 if(EXISTS ${CMAKE_SOURCE_DIR}/dataio/private/dataio/QConverter.cxx)

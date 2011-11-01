@@ -108,19 +108,69 @@ namespace I3CLSimParticleToStepConverterUtils
         scatterDirectionByAngle(cosa, sina, x, y, z, *randomService);
     }
     
+    
+    class GenerateStepPreCalculator
+    {
+    public:
+        GenerateStepPreCalculator(I3RandomServicePtr randomService,
+                                  float angularDist_a=0.39,
+                                  float angularDist_b=2.61,
+                                  std::size_t numberOfValues=102400);
+        ~GenerateStepPreCalculator();
+        
+        inline void GetAngularCosSinValue(float &angular_cos, float &angular_sin)
+        {
+            if (index_ >= numberOfValues_) RegenerateValues();
+            
+            angular_cos = angular_cos_cache_[index_];
+            angular_sin = angular_sin_cache_[index_];
+            
+            ++index_;
+        }
+        
+    private:
+        I3RandomServicePtr randomService_;
+        
+        float angularDist_a_;
+        std::vector<float> one_over_angularDist_a_;
+        float angularDist_b_;
+        float angularDist_I_;
+        
+        std::vector<float> angular_sin_cache_;
+        std::vector<float> angular_cos_cache_;
+        
+        std::vector<float> randomNumber_workspace_;
+        
+        std::vector<float> scratch_space1_;
+        std::vector<float> scratch_space2_;
+
+        std::size_t numberOfValues_;
+        std::size_t index_;
+        
+        void RegenerateValues();
+    };
+    
+    
     inline void GenerateStep(I3CLSimStep &newStep,
                              const I3Particle &p,
                              uint32_t identifier,
                              I3RandomService &randomService,
                              uint32_t photonsPerStep,
-                             const double &longitudinalPos)
+                             const double &longitudinalPos,
+                             GenerateStepPreCalculator &preCalc)
     {
+        /*
         const double angularDist_a=0.39;
         const double angularDist_b=2.61;
         const double angularDist_I=1.-std::exp(-angularDist_b*std::pow(2., angularDist_a));
         
-        const double angular_cos=std::max(1.-std::pow(-std::log(1.-randomService.Uniform()*angularDist_I)/angularDist_b, 1./angularDist_a), -1.0);
+        const double rndVal = randomService.Uniform();
+        const double angular_cos=std::max(1.-std::pow(-std::log(1.-rndVal*angularDist_I)/angularDist_b, 1./angularDist_a), -1.0);
         const double angular_sin=std::sqrt(1.-angular_cos*angular_cos);
+        */
+        
+        float angular_cos, angular_sin;
+        preCalc.GetAngularCosSinValue(angular_cos, angular_sin);
         
         double step_dx = p.GetDir().GetX();
         double step_dy = p.GetDir().GetY();
@@ -153,9 +203,10 @@ namespace I3CLSimParticleToStepConverterUtils
                              uint32_t identifier,
                              I3RandomServicePtr randomService,
                              uint32_t photonsPerStep,
-                             const double &longitudinalPos)
+                             const double &longitudinalPos,
+                             GenerateStepPreCalculator &preCalc)
     {
-        GenerateStep(newStep, p, identifier, *randomService, photonsPerStep, longitudinalPos);
+        GenerateStep(newStep, p, identifier, *randomService, photonsPerStep, longitudinalPos, preCalc);
     }
 
     

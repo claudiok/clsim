@@ -505,7 +505,7 @@ inline bool checkForCollision(const float4 photonPosAndTime,
 
 
 __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOutputPhotons
-    const uint maxHitIndex2,    // maxNumOutputPhotons_
+    const uint maxHitIndex,    // maxNumOutputPhotons_
     __read_only __global unsigned short *geoLayerToOMNumIndexPerStringSet,
 
     __read_only __global struct I3CLSimStep *inputSteps, // deviceBuffer_InputSteps
@@ -537,8 +537,6 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
     uint real_rnd_a = MWC_RNG_a[i];
     ulong *rnd_x = &real_rnd_x;
     uint *rnd_a = &real_rnd_a;
-
-    const uint maxHitIndex = get_global_size(0);
 
     // download the step
     struct I3CLSimStep step = inputSteps[i];

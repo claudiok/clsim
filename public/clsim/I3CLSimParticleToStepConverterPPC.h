@@ -14,6 +14,11 @@
 
 #include <boost/variant.hpp>
 
+// forward decl
+namespace I3CLSimParticleToStepConverterUtils {
+    class GenerateStepPreCalculator;
+}
+
 /**
  * @brief A particle-to-step converter for cascades
  * using pre-defined parameterizations.
@@ -88,7 +93,9 @@ private:
     class MakeSteps_visitor : public boost::static_visitor<std::pair<I3CLSimStepSeriesConstPtr, bool> >
     {
     public:
-        MakeSteps_visitor(I3RandomService &randomService, uint64_t maxNumStepsPerStepSeries);
+        MakeSteps_visitor(I3RandomService &randomService,
+                          uint64_t maxNumStepsPerStepSeries,
+                          I3CLSimParticleToStepConverterUtils::GenerateStepPreCalculator &preCalc);
         template <typename T>
         std::pair<I3CLSimStepSeriesConstPtr, bool> operator()(T &data) const;
         
@@ -98,6 +105,7 @@ private:
         
         I3RandomService &randomService_;
         uint64_t maxNumStepsPerStepSeries_;
+        I3CLSimParticleToStepConverterUtils::GenerateStepPreCalculator &preCalc_;
     };
     //////////////////
     
@@ -115,6 +123,8 @@ private:
     I3CLSimMediumPropertiesConstPtr mediumProperties_;
     
     std::vector<double> meanPhotonsPerMeterInLayer_;
+    
+    shared_ptr<I3CLSimParticleToStepConverterUtils::GenerateStepPreCalculator> preCalc_;
 };
 
 I3_POINTER_TYPEDEFS(I3CLSimParticleToStepConverterPPC);
