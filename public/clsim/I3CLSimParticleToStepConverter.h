@@ -4,6 +4,8 @@
 #include "icetray/I3TrayHeaders.h"
 #include "dataclasses/physics/I3Particle.h"
 
+#include "phys-services/I3RandomService.h"
+
 #include "clsim/I3CLSimStep.h"
 #include "clsim/I3CLSimMediumProperties.h"
 #include "clsim/I3CLSimParticleParameterization.h"
@@ -48,6 +50,13 @@ public:
      * Will throw if used after the call to Initialize().
      */
     virtual void SetMaxBunchSize(uint64_t num) = 0;
+
+    /**
+     * Sets the random number generator service.
+     * This should be an instance of I3RandomService.
+     * Will throw if used after the call to Initialize().
+     */
+    virtual void SetRandomService(I3RandomServicePtr random) = 0;
 
     /**
      * Sets the wavelength bias. Set this to a constant value

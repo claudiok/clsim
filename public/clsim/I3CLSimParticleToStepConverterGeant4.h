@@ -31,8 +31,7 @@ public:
     static const uint32_t default_maxNumPhotonsPerStep;
     static const uint32_t default_maxQueueItems;
     
-    I3CLSimParticleToStepConverterGeant4(uint32_t randomSeed,
-                                         std::string physicsListName=default_physicsListName,
+    I3CLSimParticleToStepConverterGeant4(std::string physicsListName=default_physicsListName,
                                          double maxBetaChangePerStep=default_maxBetaChangePerStep,
                                          uint32_t maxNumPhotonsPerStep=default_maxNumPhotonsPerStep,
                                          uint32_t maxQueueItems=default_maxQueueItems
@@ -54,6 +53,8 @@ public:
      * Will throw if used after the call to Initialize().
      */
     virtual void SetMaxBunchSize(uint64_t num);
+
+    virtual void SetRandomService(I3RandomServicePtr random);
 
     /**
      * Sets the wavelength bias. Set this to a constant value
@@ -160,6 +161,7 @@ private:
     boost::shared_ptr<I3CLSimQueue<FromGeant4Pair_t> > queueFromGeant4_;
     mutable boost::shared_ptr<I3CLSimQueue<boost::shared_ptr<std::pair<const std::string, bool> > > > queueFromGeant4Messages_;
     
+    I3RandomServicePtr randomService_;
     uint32_t randomSeed_;
     std::string physicsListName_;
     double maxBetaChangePerStep_;

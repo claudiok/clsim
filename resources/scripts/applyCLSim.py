@@ -163,7 +163,7 @@ domAngularSensitivity = clsim.GetIceCubeDOMAngularSensitivity(holeIce=True)
 
 # parameterizations for fast simulation (bypassing Geant4)
 # converters first:
-cascadeConverter = clsim.I3CLSimParticleToStepConverterPPC(randomService=randomService, photonsPerStep=200)
+cascadeConverter = clsim.I3CLSimParticleToStepConverterPPC(photonsPerStep=200)
 
 # now set up a list of converters with particle types and valid energy ranges
 parameterizationsMuon = [

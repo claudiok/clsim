@@ -19,12 +19,10 @@ const double I3CLSimParticleToStepConverterPPC::default_useHighPhotonsPerStepSta
 
 
 I3CLSimParticleToStepConverterPPC::I3CLSimParticleToStepConverterPPC
-(I3RandomServicePtr randomService,
- uint32_t photonsPerStep,
+(uint32_t photonsPerStep,
  uint32_t highPhotonsPerStep,
  double useHighPhotonsPerStepStartingFromNumPhotons)
 :
-randomService_(randomService),
 initialized_(false),
 barrier_is_enqueued_(false),
 bunchSizeGranularity_(1),
@@ -33,9 +31,6 @@ photonsPerStep_(photonsPerStep),
 highPhotonsPerStep_(highPhotonsPerStep),
 useHighPhotonsPerStepStartingFromNumPhotons_(useHighPhotonsPerStepStartingFromNumPhotons)
 {
-    if (!randomService_)
-        throw I3CLSimParticleToStepConverter_exception("No random services was provided!");
-    
     if (photonsPerStep_<=0)
         throw I3CLSimParticleToStepConverter_exception("photonsPerStep may not be <= 0!");
     
@@ -46,8 +41,6 @@ useHighPhotonsPerStepStartingFromNumPhotons_(useHighPhotonsPerStepStartingFromNu
     
     if (useHighPhotonsPerStepStartingFromNumPhotons_<=0.)
         throw I3CLSimParticleToStepConverter_exception("useHighPhotonsPerStepStartingFromNumPhotons may not be <= 0!");
-    
-    preCalc_ = shared_ptr<GenerateStepPreCalculator>(new GenerateStepPreCalculator(randomService, /*a=*/0.39, /*b=*/2.61));
 }
 
 I3CLSimParticleToStepConverterPPC::~I3CLSimParticleToStepConverterPPC()
@@ -59,6 +52,9 @@ void I3CLSimParticleToStepConverterPPC::Initialize()
 {
     if (initialized_)
         throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC already initialized!");
+
+    if (!randomService_)
+        throw I3CLSimParticleToStepConverter_exception("RandomService not set!");
 
     if (!wlenBias_)
         throw I3CLSimParticleToStepConverter_exception("WlenBias not set!");
@@ -72,6 +68,10 @@ void I3CLSimParticleToStepConverterPPC::Initialize()
     if (maxBunchSize_%bunchSizeGranularity_ != 0)
         throw I3CLSimParticleToStepConverter_exception("MaxBunchSize is not a multiple of BunchSizeGranularity!");
     
+
+    // initialize the pre-calculator threads
+    preCalc_ = shared_ptr<GenerateStepPreCalculator>(new GenerateStepPreCalculator(randomService_, /*a=*/0.39, /*b=*/2.61));
+
     // make a copy of the medium properties
     {
         I3CLSimMediumPropertiesConstPtr copiedMediumProperties(new I3CLSimMediumProperties(*mediumProperties_));
@@ -137,6 +137,14 @@ void I3CLSimParticleToStepConverterPPC::SetWlenBias(I3CLSimWlenDependentValueCon
         throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC already initialized!");
     
     wlenBias_=wlenBias;
+}
+
+void I3CLSimParticleToStepConverterPPC::SetRandomService(I3RandomServicePtr random)
+{
+    if (initialized_)
+        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC already initialized!");
+    
+    randomService_=random;
 }
 
 void I3CLSimParticleToStepConverterPPC::SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties)

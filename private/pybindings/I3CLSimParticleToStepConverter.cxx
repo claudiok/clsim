@@ -39,6 +39,7 @@ struct I3CLSimParticleToStepConverterWrapper : I3CLSimParticleToStepConverter, b
     // pure virtual
     virtual void SetBunchSizeGranularity(uint64_t num) {this->get_override("SetBunchSizeGranularity")(num);}
     virtual void SetMaxBunchSize(uint64_t num) {this->get_override("SetMaxBunchSize")(num);}
+    virtual void SetRandomService(I3RandomServicePtr random) {this->get_override("SetRandomService")(random);}
     virtual void SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias) {this->get_override("SetWlenBias")(wlenBias);}
     virtual void SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties) {this->get_override("SetMediumProperties")(mediumProperties);}
     virtual void Initialize() {this->get_override("Initialize")();}
@@ -138,6 +139,7 @@ void register_I3CLSimParticleToStepConverter()
         bp::class_<I3CLSimParticleToStepConverterWrapper, boost::shared_ptr<I3CLSimParticleToStepConverterWrapper>, boost::noncopyable>("I3CLSimParticleToStepConverter", bp::no_init)
         .def("SetBunchSizeGranularity", bp::pure_virtual(&I3CLSimParticleToStepConverter::SetBunchSizeGranularity))
         .def("SetMaxBunchSize", bp::pure_virtual(&I3CLSimParticleToStepConverter::SetMaxBunchSize))
+        .def("SetRandomService", bp::pure_virtual(&I3CLSimParticleToStepConverter::SetRandomService))
         .def("SetWlenBias", bp::pure_virtual(&I3CLSimParticleToStepConverter::SetWlenBias))
         .def("SetMediumProperties", bp::pure_virtual(&I3CLSimParticleToStepConverter::SetMediumProperties))
         .def("Initialize", bp::pure_virtual(&I3CLSimParticleToStepConverter::Initialize))
@@ -180,14 +182,12 @@ void register_I3CLSimParticleToStepConverter()
         (
          "I3CLSimParticleToStepConverterGeant4",
          bp::init<
-         uint32_t,
          std::string,
          double,
          uint32_t,
          uint32_t
          >(
            (
-            bp::arg("randomSeed"),
             bp::arg("physicsListName") = I3CLSimParticleToStepConverterGeant4::default_physicsListName,
             bp::arg("maxBetaChangePerStep") = I3CLSimParticleToStepConverterGeant4::default_maxBetaChangePerStep,
             bp::arg("maxNumPhotonsPerStep") = I3CLSimParticleToStepConverterGeant4::default_maxNumPhotonsPerStep,
@@ -214,11 +214,9 @@ void register_I3CLSimParticleToStepConverter()
         (
          "I3CLSimParticleToStepConverterPPC",
          bp::init<
-         I3RandomServicePtr,
          uint32_t, uint32_t, double
          >(
            (
-            bp::arg("randomService"),
             bp::arg("photonsPerStep") = I3CLSimParticleToStepConverterPPC::default_photonsPerStep,
             bp::arg("highPhotonsPerStep") = I3CLSimParticleToStepConverterPPC::default_highPhotonsPerStep,
             bp::arg("useHighPhotonsPerStepStartingFromNumPhotons") = I3CLSimParticleToStepConverterPPC::default_useHighPhotonsPerStepStartingFromNumPhotons

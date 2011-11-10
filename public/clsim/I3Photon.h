@@ -31,7 +31,7 @@
 
 #include "dataclasses/I3Vector.h"
 #include "dataclasses/I3Map.h"
-#include "dataclasses/OMKey.h"
+#include "icetray/OMKey.h"
 #include "dataclasses/I3Direction.h"
 #include "dataclasses/I3Position.h"
 #include "dataclasses/physics/I3Particle.h"

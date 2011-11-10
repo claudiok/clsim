@@ -247,13 +247,13 @@ namespace I3CLSimModuleHelper {
         (
          new I3CLSimParticleToStepConverterGeant4
          (
-          rng->Integer(900000000), // TODO: eventually Geant4 should use the IceTray rng!!
           physicsListName,
           maxBetaChangePerStep,
           maxNumPhotonsPerStep
          )
         );
         
+        conv->SetRandomService(rng);
         conv->SetWlenBias(wavelengthGenerationBias);
         conv->SetMediumProperties(medium);
         conv->SetMaxBunchSize(maxBunchSize);

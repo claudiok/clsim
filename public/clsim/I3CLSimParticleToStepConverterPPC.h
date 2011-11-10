@@ -4,8 +4,6 @@
 #include "clsim/I3CLSimParticleToStepConverter.h"
 #include "dataclasses/physics/I3Particle.h"
 
-#include "phys-services/I3RandomService.h"
-
 #include "clsim/I3CLSimQueue.h"
 
 #include <map>
@@ -30,8 +28,7 @@ public:
     static const uint32_t default_highPhotonsPerStep;
     static const double default_useHighPhotonsPerStepStartingFromNumPhotons;
 
-    I3CLSimParticleToStepConverterPPC(I3RandomServicePtr randomService,
-                                      uint32_t photonsPerStep=default_photonsPerStep,
+    I3CLSimParticleToStepConverterPPC(uint32_t photonsPerStep=default_photonsPerStep,
                                       uint32_t highPhotonsPerStep=default_highPhotonsPerStep,
                                       double useHighPhotonsPerStepStartingFromNumPhotons=default_useHighPhotonsPerStepStartingFromNumPhotons);
     virtual ~I3CLSimParticleToStepConverterPPC();
@@ -41,6 +38,8 @@ public:
     virtual void SetBunchSizeGranularity(uint64_t num);
 
     virtual void SetMaxBunchSize(uint64_t num);
+
+    virtual void SetRandomService(I3RandomServicePtr random);
 
     virtual void SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias);
 

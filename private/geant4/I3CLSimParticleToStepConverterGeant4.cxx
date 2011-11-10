@@ -49,8 +49,7 @@ const double I3CLSimParticleToStepConverterGeant4::default_maxBetaChangePerStep=
 const uint32_t I3CLSimParticleToStepConverterGeant4::default_maxNumPhotonsPerStep=200;
 
 
-I3CLSimParticleToStepConverterGeant4::I3CLSimParticleToStepConverterGeant4(uint32_t randomSeed,
-                                                                           std::string physicsListName,
+I3CLSimParticleToStepConverterGeant4::I3CLSimParticleToStepConverterGeant4(std::string physicsListName,
                                                                            double maxBetaChangePerStep,
                                                                            uint32_t maxNumPhotonsPerStep,
                                                                            uint32_t maxQueueItems)
@@ -58,7 +57,6 @@ I3CLSimParticleToStepConverterGeant4::I3CLSimParticleToStepConverterGeant4(uint3
 queueToGeant4_(new I3CLSimQueue<ToGeant4Pair_t>(0)),
 queueFromGeant4_(new I3CLSimQueue<FromGeant4Pair_t>(maxQueueItems)),
 queueFromGeant4Messages_(new I3CLSimQueue<boost::shared_ptr<std::pair<const std::string, bool> > >(0)), // no maximum size
-randomSeed_(randomSeed),
 physicsListName_(physicsListName),
 maxBetaChangePerStep_(maxBetaChangePerStep),
 maxNumPhotonsPerStep_(maxNumPhotonsPerStep),
@@ -79,10 +77,6 @@ maxBunchSize_(512000)
         
         thereCanBeOnlyOneGeant4=true;
     }
-    
-    //if ((randomSeed_<0) || (randomSeed_>900000000)) // unsigned int is always >= 0
-    if (randomSeed_>900000000)
-        throw I3CLSimParticleToStepConverter_exception("Invalid random seed (has to be >=0 and <=900000000).");
     
     if ((maxBetaChangePerStep_<=0.) || (maxBetaChangePerStep_>1.))
         throw I3CLSimParticleToStepConverter_exception("Invalid maxBetaChangePerStep.");
@@ -156,6 +150,9 @@ void I3CLSimParticleToStepConverterGeant4::Initialize()
     if (initialized_)
         throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterGeant4 already initialized!");
 
+    if (!randomService_)
+        throw I3CLSimParticleToStepConverter_exception("RandomService not set!");
+
     if (!wlenBias_)
         throw I3CLSimParticleToStepConverter_exception("WlenBias not set!");
 
@@ -189,6 +186,7 @@ void I3CLSimParticleToStepConverterGeant4::Initialize()
         const I3CLSimParticleParameterization &parameterization = *it;
         if (parameterization.converter->IsInitialized()) continue; // skip initialized converters
         
+        parameterization.converter->SetRandomService(randomService_);
         parameterization.converter->SetMediumProperties(mediumProperties_);
         parameterization.converter->SetWlenBias(wlenBias_);
         parameterization.converter->SetBunchSizeGranularity(1); // we do not send the bunches directly, the steps are integrated in the step store first, so granularity does not matter
@@ -711,6 +709,17 @@ void I3CLSimParticleToStepConverterGeant4::SetMaxBunchSize(uint64_t num)
         throw I3CLSimParticleToStepConverter_exception("MaxBunchSize of 0 is invalid!");
 
     maxBunchSize_=num;
+}
+
+void I3CLSimParticleToStepConverterGeant4::SetRandomService(I3RandomServicePtr random)
+{
+    if (initialized_)
+        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterGeant4 already initialized!");
+    
+    randomService_=random;
+    
+    // TODO: eventually Geant4 should use the IceTray rng!!
+    randomSeed_ = randomService_->Integer(900000000);
 }
 
 void I3CLSimParticleToStepConverterGeant4::SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias)
