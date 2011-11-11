@@ -173,6 +173,9 @@ void I3PhotonToMCHitConverter::Configure()
     if (!randomService_)
         log_fatal("No random service provided using the \"RandomService\" parameter (and there is none installed on the context).");
     
+    if (pmtPhotonSimulator_)
+        pmtPhotonSimulator_->SetRandomService(randomService_);
+
 }
 
 void I3PhotonToMCHitConverter::DetectorStatus(I3FramePtr frame)

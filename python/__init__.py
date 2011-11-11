@@ -25,9 +25,9 @@ from GetAntaresOMAngularSensitivity import GetAntaresOMAngularSensitivity
 
 from GetKM3NeTDOMAcceptance import GetKM3NeTDOMAcceptance
 
+# import tray segments (if available)
 if hasattr(icetray, "traysegment"):
-    # import tray segments (if available)
-    from traysegments import *
+    from traysegments import I3CLSimMakeHits, genDefaultParameterizationList
 
 # clean up the clsim namespace
 del augmentClassWithPicklingSupport

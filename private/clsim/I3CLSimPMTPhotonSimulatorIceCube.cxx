@@ -11,21 +11,17 @@ const double I3CLSimPMTPhotonSimulatorIceCube::DEFAULT_late_pulse_probability=0.
 const double I3CLSimPMTPhotonSimulatorIceCube::DEFAULT_after_pulse_probability=0.0593;
 
 
-I3CLSimPMTPhotonSimulatorIceCube::I3CLSimPMTPhotonSimulatorIceCube(I3RandomServicePtr randomService,
-                                                                   double jitter,
+I3CLSimPMTPhotonSimulatorIceCube::I3CLSimPMTPhotonSimulatorIceCube(double jitter,
                                                                    double pre_pulse_probability,
                                                                    double late_pulse_probability,
                                                                    double after_pulse_probability)
 :
-randomService_(randomService),
+//randomService_(randomService),
 jitter_(jitter),
 pre_pulse_probability_(pre_pulse_probability),
 late_pulse_probability_(late_pulse_probability),
 after_pulse_probability_(after_pulse_probability)
 { 
-    afterPulseGenerator_ = AfterPulseGeneratorPtr(new AfterPulseGenerator(randomService));;
-    latePulseGenerator_ = LatePulseGeneratorPtr(new LatePulseGenerator(randomService));;
-
     log_trace("pre_pulse_probability=%g, late_pulse_probability=%g, after_pulse_probability=%g",
               pre_pulse_probability_, late_pulse_probability_, after_pulse_probability_);
 
@@ -44,6 +40,11 @@ void I3CLSimPMTPhotonSimulatorIceCube::SetCalibration(I3CalibrationConstPtr cali
 void I3CLSimPMTPhotonSimulatorIceCube::SetDetectorStatus(I3DetectorStatusConstPtr status)
 {
     status_=status;
+}
+
+void I3CLSimPMTPhotonSimulatorIceCube::SetRandomService(I3RandomServicePtr random)
+{
+    randomService_=random;
 }
 
 double I3CLSimPMTPhotonSimulatorIceCube::GenerateJitter() const
@@ -72,6 +73,7 @@ ApplyAfterPulseLatePulseAndJitterSim(const OMKey &key,
 {
     if (!calibration_) log_fatal("no calibration has been set");
     if (!status_) log_fatal("no detector status has been set");
+    if (!randomService_) log_fatal("no random number generator service has been set");
 
     if (isnan(input_hit.GetTime())) { // do nothing for 
         log_debug("Hit with NaN time. Adding it unchanged.");
@@ -82,6 +84,14 @@ ApplyAfterPulseLatePulseAndJitterSim(const OMKey &key,
     bool jitterOnly = ((pre_pulse_probability_<=0.) &&
                        (late_pulse_probability_<=0.) &&
                        (after_pulse_probability_<=0.));
+
+    if (!jitterOnly)
+    {
+        if (!afterPulseGenerator_)
+            afterPulseGenerator_ = AfterPulseGeneratorPtr(new AfterPulseGenerator(randomService_));
+        if (!latePulseGenerator_)
+            latePulseGenerator_ = LatePulseGeneratorPtr(new LatePulseGenerator(randomService_));
+    }
 
     double pmtHV=NAN;
     

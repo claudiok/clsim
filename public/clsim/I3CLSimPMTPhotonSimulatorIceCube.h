@@ -23,8 +23,7 @@ public:
     static const double DEFAULT_late_pulse_probability;
     static const double DEFAULT_after_pulse_probability;
     
-    I3CLSimPMTPhotonSimulatorIceCube(I3RandomServicePtr randomService,
-                                     double jitter=DEFAULT_jitter,
+    I3CLSimPMTPhotonSimulatorIceCube(double jitter=DEFAULT_jitter,
                                      double pre_pulse_probability=DEFAULT_pre_pulse_probability,
                                      double late_pulse_probability=DEFAULT_late_pulse_probability,
                                      double after_pulse_probability=DEFAULT_after_pulse_probability);
@@ -39,6 +38,12 @@ public:
      * Set the current status
      */
     virtual void SetDetectorStatus(I3DetectorStatusConstPtr status);
+
+    /**
+     * Sets the random number generator service.
+     * This should be an instance of I3RandomService.
+     */
+    virtual void SetRandomService(I3RandomServicePtr random);
 
     /**
      * This function does not clear the vector before filling it. New hits are added to it.
@@ -56,8 +61,8 @@ private:
     double late_pulse_probability_;
     double after_pulse_probability_;
     
-    shared_ptr<AfterPulseGenerator> afterPulseGenerator_;
-    shared_ptr<LatePulseGenerator> latePulseGenerator_;
+    mutable shared_ptr<AfterPulseGenerator> afterPulseGenerator_;
+    mutable shared_ptr<LatePulseGenerator> latePulseGenerator_;
 
     I3CalibrationConstPtr calibration_;
     I3DetectorStatusConstPtr status_;

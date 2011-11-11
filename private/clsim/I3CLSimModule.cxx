@@ -243,7 +243,13 @@ void I3CLSimModule::Configure()
     workOnTheseStops_set_ = std::set<I3Frame::Stream>(workOnTheseStops_.begin(), workOnTheseStops_.end());
     
     GetParameter("RandomService", randomService_);
-
+    if (!randomService_) {
+        log_info("Getting the default random service from the context..");
+        randomService_ = context_.Get<I3RandomServicePtr>();
+        if (!randomService_) 
+            log_fatal("You have to specify the \"RandomService\" parameter or add a I3RandomServiceFactor using tray.AddService()!");
+    }
+    
     GetParameter("GenerateCherenkovPhotonsWithoutDispersion", generateCherenkovPhotonsWithoutDispersion_);
     GetParameter("WavelengthGenerationBias", wavelengthGenerationBias_);
 
@@ -276,7 +282,6 @@ void I3CLSimModule::Configure()
         wavelengthGenerationBias_ = I3CLSimWlenDependentValueConstantConstPtr(new I3CLSimWlenDependentValueConstant(1.));
     }
 
-    if (!randomService_) log_fatal("You have to specify the \"RandomService\" parameter!");
     if (!mediumProperties_) log_fatal("You have to specify the \"MediumProperties\" parameter!");
     if (maxNumParallelEvents_ <= 0) log_fatal("Values <= 0 are invalid for the \"MaxNumParallelEvents\" parameter!");
 

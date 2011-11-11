@@ -53,6 +53,12 @@ struct I3CLSimPMTPhotonSimulatorWrapper : I3CLSimPMTPhotonSimulator, bp::wrapper
         this->get_override("SetDetectorStatus")(status);
     }
 
+    virtual void SetRandomService(I3RandomServicePtr random)
+    {
+        this->get_override("SetRandomService")(random);
+    }
+
+
 };
 
 void register_I3CLSimPMTPhotonSimulator()
@@ -63,6 +69,7 @@ void register_I3CLSimPMTPhotonSimulator()
         .def("ApplyAfterPulseLatePulseAndJitterSim", bp::pure_virtual(&I3CLSimPMTPhotonSimulator::ApplyAfterPulseLatePulseAndJitterSim))
         .def("SetCalibration", bp::pure_virtual(&I3CLSimPMTPhotonSimulator::SetCalibration))
         .def("SetDetectorStatus", bp::pure_virtual(&I3CLSimPMTPhotonSimulator::SetDetectorStatus))
+        .def("SetRandomService", bp::pure_virtual(&I3CLSimPMTPhotonSimulator::SetRandomService))
         ;
     }
     
@@ -83,14 +90,12 @@ void register_I3CLSimPMTPhotonSimulator()
         (
          "I3CLSimPMTPhotonSimulatorIceCube",
          bp::init<
-         I3RandomServicePtr,
          double,
          double,
          double,
          double
          >(
            (
-            bp::arg("randomService"),
             bp::arg("jitter")=I3CLSimPMTPhotonSimulatorIceCube::DEFAULT_jitter,
             bp::arg("pre_pulse_probability")=I3CLSimPMTPhotonSimulatorIceCube::DEFAULT_pre_pulse_probability,
             bp::arg("late_pulse_probability")=I3CLSimPMTPhotonSimulatorIceCube::DEFAULT_late_pulse_probability,

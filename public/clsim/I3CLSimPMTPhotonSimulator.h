@@ -7,6 +7,8 @@
 #include "dataclasses/calibration/I3Calibration.h"
 #include "dataclasses/status/I3DetectorStatus.h"
 
+#include "phys-services/I3RandomService.h"
+
 #include <vector>
 
 /**
@@ -34,6 +36,12 @@ public:
      * Set the current status
      */
     virtual void SetDetectorStatus(I3DetectorStatusConstPtr status) = 0;
+
+    /**
+     * Sets the random number generator service.
+     * This should be an instance of I3RandomService.
+     */
+    virtual void SetRandomService(I3RandomServicePtr random) = 0;
 
     /**
      * This function does not clear the vector before filling it. New hits are added to it.
