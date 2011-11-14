@@ -173,6 +173,8 @@ private:
     
     I3CLSimWlenDependentValueConstPtr wlenBias_;
     I3CLSimMediumPropertiesConstPtr mediumProperties_;
+    
+    SET_LOGGER("I3CLSimParticleToStepConverterGeant4");
 };
 
 I3_POINTER_TYPEDEFS(I3CLSimParticleToStepConverterGeant4);

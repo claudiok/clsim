@@ -66,8 +66,8 @@ maxBunchSize_(512000)
 {
     // Geant4 keeps LOTS of global state and is inherently non-thread-safe.
     // To prevent users from using more than one instance of Geant4 within the
-    // same process, we throw an exception if there is already another instance
-    // of this class.
+    // same process, we throw an exception in case another instance
+    // of this class already exists.
     
     {
         boost::unique_lock<boost::mutex> guard(thereCanBeOnlyOneGeant4_mutex);
@@ -290,7 +290,7 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread()
         log_warn("Geant4 thread died unexpectedly..");
         LogGeant4Messages(true); // this is maybe the last chance to log..
         
-        throw;
+        //throw; // don't bother cleaning up, we can't continue and the process is going to die anyway
     }
 }
 

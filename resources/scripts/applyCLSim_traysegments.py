@@ -132,7 +132,7 @@ tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
     ParallelEvents = options.MAXPARALLELEVENTS,
     RandomService = randomService,
     UseGPUs=True,
-    UseCPUs=True,
+    UseCPUs=False, 
     IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"))
 
 tray.AddModule("I3Writer","writer",

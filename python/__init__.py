@@ -2,7 +2,7 @@ from icecube.load_pybindings import load_pybindings
 from icecube import icetray, dataclasses # be nice and pull in our dependencies
 load_pybindings(__name__,__path__)
 
-# this is all a hugh hack so I do not have to change the dataclasses
+# this is all a huge hack so I do not have to change the dataclasses
 def augmentClassWithPicklingSupport(theClass, setstateFunc, getstateFunc):
     theClass.__setstate__ = setstateFunc
     theClass.__getstate__ = getstateFunc
