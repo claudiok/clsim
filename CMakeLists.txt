@@ -94,9 +94,17 @@ SET(LIB_${PROJECT_NAME}_PROJECTS icetray dataio dataclasses phys-services tablei
 SET(LIB_${PROJECT_NAME}_TOOLS python boost log4cplus gsl clhep geant4 opencl)
 
 # Use the Accelerate framework on APPLE
-IF(APPLE)
+IF(ACCELERATE_FOUND)
+    colormsg(GREEN "+-- Accelerate.framework support")
     LIST(APPEND LIB_${PROJECT_NAME}_TOOLS accelerate)
-ENDIF(APPLE)
+    ADD_DEFINITIONS(-DHAS_ACCELERATE_FRAMEWORK)
+ELSE(ACCELERATE_FOUND)
+    IF(APPLE)
+        colormsg(RED  "+-- no Accelerate.framework support (support is expected on Mac OS X!!)")
+    ELSE(APPLE)
+        colormsg(CYAN "+-- no Accelerate.framework support (not on Mac OS X)")
+    ENDIF(APPLE)
+ENDIF(ACCELERATE_FOUND)
 
 # check for Q-Frame support
 if(EXISTS ${CMAKE_SOURCE_DIR}/dataio/private/dataio/QConverter.cxx)

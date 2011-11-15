@@ -6,7 +6,7 @@
 
 #include <gsl/gsl_integration.h>
 
-#ifdef __APPLE__
+#ifdef HAS_ACCELERATE_FRAMEWORK
 #include <Accelerate/Accelerate.h>
 #endif
 
@@ -117,7 +117,7 @@ namespace I3CLSimParticleToStepConverterUtils {
         }
         
         // calculate values
-#ifdef __APPLE__
+#ifdef HAS_ACCELERATE_FRAMEWORK
         const int numVals = numberOfValues_;
         
         for (int i=0;i<numVals;++i)
