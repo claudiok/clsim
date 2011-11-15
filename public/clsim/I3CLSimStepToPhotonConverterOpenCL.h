@@ -25,6 +25,7 @@ namespace cl {
     class Context;
     class Kernel;
     class Buffer;
+    class Event;
 };
 
 /**
@@ -187,6 +188,23 @@ private:
     
     void OpenCLThread();
     void OpenCLThread_impl(boost::this_thread::disable_interruption &di);
+    bool OpenCLThread_impl_uploadSteps(boost::this_thread::disable_interruption &di,
+                                       bool &shouldBreak,
+                                       unsigned int bufferIndex,
+                                       uint32_t &out_stepsIdentifier,
+                                       uint64_t &out_totalNumberOfPhotons,
+                                       std::size_t &out_numberOfInputSteps,
+                                       bool blocking=true
+                                       );
+    void OpenCLThread_impl_downloadPhotons(boost::this_thread::disable_interruption &di,
+                                           bool &shouldBreak,
+                                           unsigned int bufferIndex,
+                                           uint32_t stepsIdentifier);
+    void OpenCLThread_impl_runKernel(unsigned int bufferIndex,
+                                     cl::Event &kernelFinishEvent,
+                                     std::size_t numberOfInputSteps);
+
+    
     boost::shared_ptr<boost::thread> openCLThreadObj_;
     boost::condition_variable_any openCLStarted_cond_;
     boost::mutex openCLStarted_mutex_;
@@ -227,8 +245,8 @@ private:
     std::vector<std::vector<unsigned int> > domIndexToDomIDBuffer_perStringIndex_;
     
     // OpenCL command queue and kernel
-    shared_ptr<cl::CommandQueue> queue_;
-    shared_ptr<cl::Kernel> kernel_;
+    std::vector<shared_ptr<cl::CommandQueue> > queue_;
+    std::vector<shared_ptr<cl::Kernel> > kernel_;
     shared_ptr<cl::Context> context_;
     
     // maximum workgroup size for current kernel
@@ -245,9 +263,11 @@ private:
     shared_ptr<cl::Buffer> deviceBuffer_MWC_RNG_a;
     
     // Memory buffers on the device
-    shared_ptr<cl::Buffer> deviceBuffer_InputSteps;
-    shared_ptr<cl::Buffer> deviceBuffer_OutputPhotons;
-    shared_ptr<cl::Buffer> deviceBuffer_CurrentNumOutputPhotons;
+    std::vector<shared_ptr<cl::Buffer> > deviceBuffer_InputSteps;
+    std::vector<shared_ptr<cl::Buffer> > deviceBuffer_OutputPhotons;
+    std::vector<shared_ptr<cl::Buffer> > deviceBuffer_CurrentNumOutputPhotons;
+    
+    // this one is constant, so we only need one
     shared_ptr<cl::Buffer> deviceBuffer_GeoLayerToOMNumIndexPerStringSet;
     
     // Size of output photon storage (maximum amount of photons per step bunch)

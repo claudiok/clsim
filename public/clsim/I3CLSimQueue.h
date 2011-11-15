@@ -71,6 +71,26 @@ public:
         return msg;
     }
 
+    bool GetNonBlocking(T &value)
+    {
+        // lock the mutex to ensure exclusive access to the queue
+        boost::unique_lock<boost::mutex> guard(mutex_);
+        
+        if (queue_.empty())
+            return false;
+        
+        // the queue is not empty anymore, read the value
+        value = queue_.front();
+        
+        // remove the current message from the queue
+        queue_.pop();
+        
+        // notify the producer that there is space on the queue now
+        cond_.notify_one();
+        
+        return true;
+    }
+
     T Get(double timeout, T returnOnTimeout) // timeout in seconds
     {
         // lock the mutex to ensure exclusive access to the queue
