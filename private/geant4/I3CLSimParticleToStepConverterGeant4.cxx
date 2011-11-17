@@ -514,6 +514,12 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
             continue;
         }
 
+	if (particle->GetType() == I3Particle::unknown)
+	{
+	    G4cerr << "Ignoring a particle with type \"unknown\"." << std::endl;
+	    continue;
+	}
+
         // check if there is a parameterization for this particle, so we
         // may not even have to send it to Geant4
         bool parameterizationIsAvailable=false;
@@ -538,6 +544,7 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
         if (!parameterizationIsAvailable) 
         {
             // no parameterization was found, use default Geant4
+
             
             // configure the Geant4 particle gun
             {
