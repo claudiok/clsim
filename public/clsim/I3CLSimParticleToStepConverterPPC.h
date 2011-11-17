@@ -8,9 +8,15 @@
 
 #include <map>
 #include <string>
+#include <vector>
 #include <deque>
 
 #include <boost/variant.hpp>
+
+#include <boost/thread.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/locks.hpp>
+
 
 // forward decl
 namespace I3CLSimParticleToStepConverterUtils {
@@ -88,13 +94,17 @@ private:
     
     std::deque<StepData_t> stepGenerationQueue_;
     
+    // forward declaration
+    class GenerateStepPreCalculator;
+
+    
     I3CLSimStepSeriesConstPtr MakeSteps(bool &barrierWasReset);
     class MakeSteps_visitor : public boost::static_visitor<std::pair<I3CLSimStepSeriesConstPtr, bool> >
     {
     public:
-        MakeSteps_visitor(I3RandomService &randomService,
+        MakeSteps_visitor(uint64_t &rngState, uint32_t rngA,
                           uint64_t maxNumStepsPerStepSeries,
-                          I3CLSimParticleToStepConverterUtils::GenerateStepPreCalculator &preCalc);
+                          GenerateStepPreCalculator &preCalc);
         template <typename T>
         std::pair<I3CLSimStepSeriesConstPtr, bool> operator()(T &data) const;
         
@@ -102,13 +112,17 @@ private:
         void FillStep(I3CLSimParticleToStepConverterPPC::CascadeStepData_t &data, I3CLSimStep &newStep, uint64_t photonsPerStep) const;
         void FillStep(I3CLSimParticleToStepConverterPPC::MuonStepData_t &data, I3CLSimStep &newStep, uint64_t photonsPerStep) const;
         
-        I3RandomService &randomService_;
+        uint64_t &rngState_;
+        uint32_t rngA_;
+        //I3RandomService &randomService_;
         uint64_t maxNumStepsPerStepSeries_;
-        I3CLSimParticleToStepConverterUtils::GenerateStepPreCalculator &preCalc_;
+        GenerateStepPreCalculator &preCalc_;
     };
     //////////////////
     
     I3RandomServicePtr randomService_;
+    uint64_t rngState_;
+    uint32_t rngA_;
     
     bool initialized_;
     bool barrier_is_enqueued_;
@@ -123,7 +137,69 @@ private:
     
     std::vector<double> meanPhotonsPerMeterInLayer_;
     
-    shared_ptr<I3CLSimParticleToStepConverterUtils::GenerateStepPreCalculator> preCalc_;
+    shared_ptr<GenerateStepPreCalculator> preCalc_;
+    
+    
+    
+    ////////////////////
+    // HELPERS
+    ////////////////////
+    
+    class GenerateStepPreCalculator
+    {
+    public:
+        GenerateStepPreCalculator(I3RandomServicePtr randomService,
+                                  double angularDist_a=0.39,
+                                  double angularDist_b=2.61,
+                                  std::size_t numberOfValues=102400);
+        ~GenerateStepPreCalculator();
+        
+        inline void GetAngularCosSinValue(double &angular_cos, double &angular_sin, double &random_value)
+        {
+            if (index_ >= numberOfValues_) RegenerateValues();
+            
+            const std::pair<std::pair<double, double>, double> &currentPair = (*currentVector_)[index_];
+            
+            angular_sin = currentPair.first.first;
+            angular_cos = currentPair.first.second;
+            random_value = currentPair.second;
+            
+            ++index_;
+        }
+        
+    private:
+        double angularDist_a_;
+        double one_over_angularDist_a_;
+        double angularDist_b_;
+        double angularDist_I_;
+        
+        std::size_t numberOfValues_;
+        std::size_t index_;
+
+        typedef std::vector<std::pair<std::pair<double, double>, double> > queueVector_t;
+        shared_ptr<queueVector_t> currentVector_;
+        
+        I3CLSimQueue<shared_ptr<queueVector_t> > queueFromFeederThreads_;
+        std::vector<shared_ptr<boost::thread> > feederThreads_;
+        
+        void FeederThread(unsigned int threadId, uint64_t initialRngState, uint32_t rngA);
+        void RegenerateValues();
+    };
+
+    
+    static void GenerateStep(I3CLSimStep &newStep,
+                             const I3Particle &p,
+                             uint32_t identifier,
+                             uint32_t photonsPerStep,
+                             const double &longitudinalPos,
+                             GenerateStepPreCalculator &preCalc);
+
+    static void GenerateStepForMuon(I3CLSimStep &newStep,
+                                    const I3Particle &p,
+                                    uint32_t identifier,
+                                    uint32_t photonsPerStep,
+                                    double length);
+
 };
 
 I3_POINTER_TYPEDEFS(I3CLSimParticleToStepConverterPPC);

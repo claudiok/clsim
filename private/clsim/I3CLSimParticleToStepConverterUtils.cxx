@@ -6,10 +6,6 @@
 
 #include <gsl/gsl_integration.h>
 
-#ifdef HAS_ACCELERATE_FRAMEWORK
-#include <Accelerate/Accelerate.h>
-#endif
-
 namespace I3CLSimParticleToStepConverterUtils {
 #define H_TIMES_C 1.
     
@@ -82,76 +78,6 @@ namespace I3CLSimParticleToStepConverterUtils {
     }
 #undef H_TIMES_C    
     
-
-    GenerateStepPreCalculator::GenerateStepPreCalculator(I3RandomServicePtr randomService,
-                                                         float angularDist_a,
-                                                         float angularDist_b,
-                                                         std::size_t numberOfValues)
-    :
-    randomService_(randomService),
-    angularDist_a_(angularDist_a),
-    one_over_angularDist_a_(numberOfValues, static_cast<float>(1./angularDist_a)),
-    angularDist_b_(angularDist_b),
-    angularDist_I_(static_cast<float>( 1.-std::exp(-static_cast<double>(angularDist_b)*std::pow(2., static_cast<double>(angularDist_a))) ) ),
-    angular_sin_cache_(numberOfValues, NAN),
-    angular_cos_cache_(numberOfValues, NAN),
-    randomNumber_workspace_(numberOfValues, NAN),
-    scratch_space1_(numberOfValues, NAN),
-    scratch_space2_(numberOfValues, NAN),
-    numberOfValues_(numberOfValues),
-    index_(numberOfValues)
-    {
-        
-    }
-    
-    GenerateStepPreCalculator::~GenerateStepPreCalculator()
-    {
-    }
-
-    void GenerateStepPreCalculator::RegenerateValues()
-    {
-        // fill random number array
-        for (std::size_t i=0;i<numberOfValues_;++i)
-        {
-            randomNumber_workspace_[i] = randomService_->Uniform();
-        }
-        
-        // calculate values
-#ifdef HAS_ACCELERATE_FRAMEWORK
-        const int numVals = numberOfValues_;
-        
-        for (int i=0;i<numVals;++i)
-        {
-            scratch_space1_[i] = 1.f-randomNumber_workspace_[i]*angularDist_I_;
-        }
-        
-        vvlogf(&(scratch_space2_[0]), &(scratch_space1_[0]), &numVals);
-        
-        for (int i=0;i<numVals;++i)
-        {
-            scratch_space1_[i] = -scratch_space2_[i]/angularDist_b_;
-        }
-        
-        vvpowf(&(scratch_space2_[0]), &(one_over_angularDist_a_[0]), &(scratch_space1_[0]), &numVals);
-        
-        for (int i=0;i<numVals;++i)
-        {
-            angular_cos_cache_[i] = std::max(1.f-scratch_space2_[i], -1.0f);
-            scratch_space1_[i] = 1.f-angular_cos_cache_[i]*angular_cos_cache_[i];
-        }
-        
-        vvsqrtf(&(angular_sin_cache_[0]), &(scratch_space1_[0]), &numVals);
-        
-#else
-        for (std::size_t i=0;i<numberOfValues_;++i)
-        {
-            angular_cos_cache_[i]=std::max(1.f-std::pow(-std::log(1.f-randomNumber_workspace_[i]*angularDist_I_)/angularDist_b_, one_over_angularDist_a_[i]), -1.0f);
-            angular_sin_cache_[i]=std::sqrt(1.f-angular_cos_cache_[i]*angular_cos_cache_[i]);
-        }
-#endif
-        
-        index_=0;
-    }
 
 
 }

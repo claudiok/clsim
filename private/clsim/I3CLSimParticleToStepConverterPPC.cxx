@@ -7,7 +7,6 @@
 
 #include "clsim/I3CLSimWlenDependentValue.h"
 
-
 #include "clsim/I3CLSimParticleToStepConverterUtils.h"
 using namespace I3CLSimParticleToStepConverterUtils;
 
@@ -68,7 +67,10 @@ void I3CLSimParticleToStepConverterPPC::Initialize()
     if (maxBunchSize_%bunchSizeGranularity_ != 0)
         throw I3CLSimParticleToStepConverter_exception("MaxBunchSize is not a multiple of BunchSizeGranularity!");
     
-
+    // initialize a fast rng
+    rngA_ = 1640531364; // magic number from numerical recipies
+    rngState_ = mwcRngInitState(randomService_, rngA_);
+    
     // initialize the pre-calculator threads
     preCalc_ = shared_ptr<GenerateStepPreCalculator>(new GenerateStepPreCalculator(randomService_, /*a=*/0.39, /*b=*/2.61));
 
@@ -199,6 +201,34 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
     (particle.GetType()==I3Particle::PPlus) ||
     (particle.GetType()==I3Particle::PMinus) ||
     (particle.GetType()==I3Particle::K0_Short) ||
+#ifdef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
+    (particle.GetType()==I3Particle::Eta) ||
+    (particle.GetType()==I3Particle::Lambda) ||
+    (particle.GetType()==I3Particle::SigmaPlus) ||
+    (particle.GetType()==I3Particle::Sigma0) ||
+    (particle.GetType()==I3Particle::SigmaMinus) ||
+    (particle.GetType()==I3Particle::Xi0) ||
+    (particle.GetType()==I3Particle::XiMinus) ||
+    (particle.GetType()==I3Particle::OmegaMinus) ||
+    (particle.GetType()==I3Particle::NeutronBar) ||
+    (particle.GetType()==I3Particle::LambdaBar) ||
+    (particle.GetType()==I3Particle::SigmaMinusBar) ||
+    (particle.GetType()==I3Particle::Sigma0Bar) ||
+    (particle.GetType()==I3Particle::SigmaPlusBar) ||
+    (particle.GetType()==I3Particle::Xi0Bar) ||
+    (particle.GetType()==I3Particle::XiPlusBar) ||
+    (particle.GetType()==I3Particle::OmegaPlusBar) ||
+    (particle.GetType()==I3Particle::DPlus) ||
+    (particle.GetType()==I3Particle::DMinus) ||
+    (particle.GetType()==I3Particle::D0) ||
+    (particle.GetType()==I3Particle::D0Bar) ||
+    (particle.GetType()==I3Particle::DsPlus) ||
+    (particle.GetType()==I3Particle::DsMinusBar) ||
+    (particle.GetType()==I3Particle::LambdacPlus) ||
+    (particle.GetType()==I3Particle::WPlus) ||
+    (particle.GetType()==I3Particle::WMinus) ||
+    (particle.GetType()==I3Particle::Z0) ||
+#endif
     (particle.GetType()==I3Particle::NuclInt);
 
     const bool isMuon =
@@ -430,8 +460,13 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
         log_trace("Generate %u steps for E=%fGeV, l=%fm. (muon[cascade])", static_cast<unsigned int>((numStepsFromCascades+((numPhotonsFromCascadesInLastStep>0)?1:0))), E, length/I3Units::m);
         
     } else {
+#ifdef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
+        log_fatal("I3CLSimParticleToStepConverterPPC cannot handle a %s. (pdg %u)",
+                  particle.GetTypeString().c_str(), particle.GetPdgEncoding());
+#else
         log_fatal("I3CLSimParticleToStepConverterPPC cannot handle a %s.",
                   particle.GetTypeString().c_str());
+#endif
     }
 }
 
@@ -467,10 +502,10 @@ bool I3CLSimParticleToStepConverterPPC::MoreStepsAvailable() const
 }
 
 I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::MakeSteps_visitor
-(I3RandomService &randomService,
+(uint64_t &rngState, uint32_t rngA,
  uint64_t maxNumStepsPerStepSeries,
- I3CLSimParticleToStepConverterUtils::GenerateStepPreCalculator &preCalc)
-:randomService_(randomService),
+ GenerateStepPreCalculator &preCalc)
+:rngState_(rngState), rngA_(rngA),
 maxNumStepsPerStepSeries_(maxNumStepsPerStepSeries),
 preCalc_(preCalc)
 {;}
@@ -480,14 +515,13 @@ void I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::FillStep
  I3CLSimStep &newStep,
  uint64_t photonsPerStep) const
 {
-    const double longitudinalPos = data.pb*I3CLSimParticleToStepConverterUtils::gammaDistributedNumber(data.pa, randomService_)*I3Units::m;
-    I3CLSimParticleToStepConverterUtils::GenerateStep(newStep,
-                                                      data.particle,
-                                                      data.particleIdentifier,
-                                                      randomService_,
-                                                      photonsPerStep,
-                                                      longitudinalPos,
-                                                      preCalc_);
+    const double longitudinalPos = data.pb*I3CLSimParticleToStepConverterUtils::gammaDistributedNumber(data.pa, rngState_, rngA_)*I3Units::m;
+    GenerateStep(newStep,
+                 data.particle,
+                 data.particleIdentifier,
+                 photonsPerStep,
+                 longitudinalPos,
+                 preCalc_);
 }
 
 void I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::FillStep
@@ -496,20 +530,19 @@ void I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::FillStep
  uint64_t photonsPerStep) const
 {
     if (data.stepIsCascadeLike) {
-        const double longitudinalPos = randomService_.Uniform()*data.length;
-        I3CLSimParticleToStepConverterUtils::GenerateStep(newStep,
-                                                          data.particle,
-                                                          data.particleIdentifier,
-                                                          randomService_,
-                                                          photonsPerStep,
-                                                          longitudinalPos,
-                                                          preCalc_);
+        const double longitudinalPos = mwcRngRandomNumber_co(rngState_, rngA_)*data.length;
+        GenerateStep(newStep,
+                     data.particle,
+                     data.particleIdentifier,
+                     photonsPerStep,
+                     longitudinalPos,
+                     preCalc_);
     } else {
-        I3CLSimParticleToStepConverterUtils::GenerateStepForMuon(newStep,
-                                                                 data.particle,
-                                                                 data.particleIdentifier,
-                                                                 photonsPerStep,
-                                                                 data.length);
+        GenerateStepForMuon(newStep,
+                            data.particle,
+                            data.particleIdentifier,
+                            photonsPerStep,
+                            data.length);
     }
 }
 
@@ -576,7 +609,7 @@ I3CLSimStepSeriesConstPtr I3CLSimParticleToStepConverterPPC::MakeSteps(bool &bar
     
     //  Let the visitor convert it into steps (the step pointer will be NULL if it is a barrier)
     std::pair<I3CLSimStepSeriesConstPtr, bool> retval =
-    boost::apply_visitor(MakeSteps_visitor(*randomService_, maxBunchSize_, *preCalc_), currentElement);
+    boost::apply_visitor(MakeSteps_visitor(rngState_, rngA_, maxBunchSize_, *preCalc_), currentElement);
     
     I3CLSimStepSeriesConstPtr &steps = retval.first;
     const bool entryCanBeRemoved = retval.second;
@@ -619,3 +652,175 @@ I3CLSimStepSeriesConstPtr I3CLSimParticleToStepConverterPPC::GetConversionResult
     
     return returnSteps;
 }
+
+
+
+
+/////// HELPERS
+
+I3CLSimParticleToStepConverterPPC::GenerateStepPreCalculator::GenerateStepPreCalculator(I3RandomServicePtr randomService,
+                                                     double angularDist_a,
+                                                     double angularDist_b,
+                                                     std::size_t numberOfValues)
+:
+angularDist_a_(angularDist_a),
+one_over_angularDist_a_(1./angularDist_a),
+angularDist_b_(angularDist_b),
+angularDist_I_(1.-std::exp(-angularDist_b*std::pow(2., angularDist_a)) ),
+numberOfValues_(numberOfValues),
+index_(numberOfValues),
+queueFromFeederThreads_(10)  // size 10 for 5 threads
+{
+    const unsigned int numFeederThreads = 4;
+    const uint32_t rngAs[8] = { // numbers taken from Numerical Recipies
+        3874257210,
+        2936881968,
+        2811536238,
+        2654432763,
+        4294957665,
+        4294963023,
+        4162943475,
+        3947008974,
+    };
+    
+    // start threads
+    for (unsigned int i=0;i<numFeederThreads;++i)
+    {
+        const uint64_t rngState = mwcRngInitState(randomService, rngAs[i]);
+        shared_ptr<boost::thread> newThread(new boost::thread(boost::bind(&I3CLSimParticleToStepConverterPPC::GenerateStepPreCalculator::FeederThread, this, i, rngState, rngAs[i])));
+        feederThreads_.push_back(newThread);
+    }
+
+}
+
+I3CLSimParticleToStepConverterPPC::GenerateStepPreCalculator::~GenerateStepPreCalculator()
+{
+    // terminate threads
+    
+    for (std::size_t i=0;i<feederThreads_.size();++i)
+    {
+        if (!feederThreads_[i]) continue;
+        if (!feederThreads_[i]->joinable()) continue;
+
+        log_debug("Stopping the worker thread #%zu", i);
+        feederThreads_[i]->interrupt();
+        feederThreads_[i]->join(); // wait for it indefinitely
+        log_debug("Worker thread #%zu stopped.", i);
+    }
+
+    feederThreads_.clear();
+}
+
+void I3CLSimParticleToStepConverterPPC::GenerateStepPreCalculator::FeederThread(unsigned int threadId,
+                                                                                uint64_t initialRngState,
+                                                                                uint32_t rngA)
+{
+    // set up storage
+    uint64_t rngState = initialRngState;
+    
+    for (;;)
+    {
+        // make a bunch of steps
+        shared_ptr<queueVector_t> outputVector(new queueVector_t());
+        outputVector->reserve(numberOfValues_);
+        
+        // calculate values
+        for (std::size_t i=0;i<numberOfValues_;++i)
+        {
+            const double cos_val=std::max(1.-std::pow(-std::log(1.-mwcRngRandomNumber_co(rngState, rngA)*angularDist_I_)/angularDist_b_, one_over_angularDist_a_), -1.);
+            const double sin_val=std::sqrt(1.-cos_val*cos_val);
+            const double random_value = mwcRngRandomNumber_co(rngState, rngA);
+            
+            outputVector->push_back(std::make_pair(std::make_pair(sin_val, cos_val), random_value));
+        }
+
+        try 
+        {
+            // this blocks in case the queue is full
+            queueFromFeederThreads_.Put(outputVector);
+            log_debug("thread %u just refilled the queue", threadId);
+        }
+        catch(boost::thread_interrupted &i)
+        {
+            break;
+        }
+    }
+}
+
+void I3CLSimParticleToStepConverterPPC::GenerateStepPreCalculator::RegenerateValues()
+{
+    currentVector_ = queueFromFeederThreads_.Get();
+    log_trace("queueSize=%zu", queueFromFeederThreads_.size());
+    index_=0;
+}
+
+
+
+
+void I3CLSimParticleToStepConverterPPC::GenerateStep(I3CLSimStep &newStep,
+                         const I3Particle &p,
+                         uint32_t identifier,
+                         uint32_t photonsPerStep,
+                         const double &longitudinalPos,
+                         GenerateStepPreCalculator &preCalc)
+{
+    /*
+     const double angularDist_a=0.39;
+     const double angularDist_b=2.61;
+     const double angularDist_I=1.-std::exp(-angularDist_b*std::pow(2., angularDist_a));
+     
+     const double rndVal = randomService.Uniform();
+     const double angular_cos=std::max(1.-std::pow(-std::log(1.-rndVal*angularDist_I)/angularDist_b, 1./angularDist_a), -1.0);
+     const double angular_sin=std::sqrt(1.-angular_cos*angular_cos);
+     */
+    
+    double angular_cos, angular_sin, random_value;
+    preCalc.GetAngularCosSinValue(angular_cos, angular_sin, random_value);
+    
+    double step_dx = p.GetDir().GetX();
+    double step_dy = p.GetDir().GetY();
+    double step_dz = p.GetDir().GetZ();
+    
+    // set all values
+    newStep.SetPosX(p.GetX() + longitudinalPos*step_dx);
+    newStep.SetPosY(p.GetY() + longitudinalPos*step_dy);
+    newStep.SetPosZ(p.GetZ() + longitudinalPos*step_dz);
+    newStep.SetTime(p.GetTime() + longitudinalPos/I3Constants::c);
+    
+    newStep.SetLength(1.*I3Units::mm);
+    newStep.SetNumPhotons(photonsPerStep);
+    newStep.SetWeight(1.);
+    newStep.SetBeta(1.);
+    newStep.SetID(identifier);
+    
+    // rotate in-place
+    scatterDirectionByAngle(angular_cos, angular_sin,
+                            step_dx, step_dy, step_dz,
+                            random_value);
+    
+    newStep.SetDir(step_dx, step_dy, step_dz);
+    
+    
+}
+
+void I3CLSimParticleToStepConverterPPC::GenerateStepForMuon(I3CLSimStep &newStep,
+                                const I3Particle &p,
+                                uint32_t identifier,
+                                uint32_t photonsPerStep,
+                                double length)
+{
+    // set all values
+    newStep.SetPosX(p.GetX());
+    newStep.SetPosY(p.GetY());
+    newStep.SetPosZ(p.GetZ());
+    newStep.SetDir(p.GetDir().GetX(), p.GetDir().GetY(), p.GetDir().GetZ());
+    newStep.SetTime(p.GetTime());
+    
+    newStep.SetLength(length);
+    newStep.SetNumPhotons(photonsPerStep);
+    newStep.SetWeight(1.);
+    newStep.SetBeta(1.);
+    newStep.SetID(identifier);
+}
+
+

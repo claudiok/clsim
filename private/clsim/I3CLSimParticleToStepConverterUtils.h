@@ -17,6 +17,72 @@ namespace I3CLSimParticleToStepConverterUtils
                                    const I3CLSimWlenDependentValue &wavelengthGenerationBias,
                                    double fromWlen, double toWlen);
     
+    
+    inline uint64_t mwcRngInitState(I3RandomServicePtr randomService, uint32_t a)
+    {
+        uint64_t x=0;
+        while( (x==0) | (((uint32_t)(x>>32))>=(a-1)) | (((uint32_t)x)>=0xfffffffful))
+        {
+            // generate random numbers for x and c (both are stored in "x")
+            x = static_cast<uint32_t>(randomService->Integer(0xffffffff));
+            x=x<<32;
+            x += static_cast<uint32_t>(randomService->Integer(0xffffffff));
+        }
+        return x;
+    }
+    
+    inline double mwcRngRandomNumber_co(uint64_t &state, uint32_t a)
+    {
+        state=(state&0xfffffffful)*a+(state>>32);
+        return static_cast<double>(((uint32_t)(state&0xfffffffful)))/(double)0x100000000;
+    }
+
+    inline double mwcRngRandomNumber_oc(uint64_t &state, uint32_t a)
+    {
+        return 1.0-mwcRngRandomNumber_co(state,a);
+    } 
+
+    
+    
+    
+    // stolen from PPC by D. Chirkin
+    inline double gammaDistributedNumber(double shape, uint64_t &rngState, uint32_t rngA)
+    {
+        double x;
+        if(shape<1.){  // Weibull algorithm
+            double c=1./shape;
+            double d=(1.-shape)*std::pow(shape, shape / (1.-shape) );
+            double z, e;
+            do
+            {
+                z=-std::log(mwcRngRandomNumber_oc(rngState, rngA));
+                e=-std::log(mwcRngRandomNumber_oc(rngState, rngA));
+                x=std::pow(z, c);
+            } while(z+e<d+x); // or here
+        }
+        else  // Cheng's algorithm
+        {
+            double b=shape-std::log(4.0);
+            double l=std::sqrt(2.*shape-1.0);
+            const double cheng=1.0+std::log(4.5);
+            
+            //float u, v;
+            float y, z, r;
+            do
+            {
+                const double rx = mwcRngRandomNumber_oc(rngState, rngA);
+                const double ry = mwcRngRandomNumber_oc(rngState, rngA);
+                
+                y=log( ry/(1.-ry) ) / l;
+                x=shape*std::exp(y);
+                z=rx*ry*ry;
+                r=b+(shape+l)*y-x;
+            } while(r<4.5*z-cheng && r<std::log(z));
+        }
+        
+        return x;
+    }
+
     // stolen from PPC by D. Chirkin
     inline double gammaDistributedNumber(double shape, I3RandomService &randomService)
     {
@@ -64,10 +130,10 @@ namespace I3CLSimParticleToStepConverterUtils
     // in-place rotation
     inline void scatterDirectionByAngle(double cosa, double sina,
                                         double &x, double &y, double &z,
-                                        I3RandomService &randomService)
+                                        double randomValue)
     {
         // randomize direction of scattering (rotation around old direction axis)
-        const double b=2.0*M_PI*randomService.Uniform();
+        const double b=2.0*M_PI*randomValue;
         const double cosb=std::cos(b);
         const double sinb=std::sin(b);
         
@@ -101,136 +167,7 @@ namespace I3CLSimParticleToStepConverterUtils
         }
     }
     
-    inline void scatterDirectionByAngle(double cosa, double sina,
-                                        double &x, double &y, double &z,
-                                        I3RandomServicePtr randomService)
-    {
-        scatterDirectionByAngle(cosa, sina, x, y, z, *randomService);
-    }
     
-    
-    class GenerateStepPreCalculator
-    {
-    public:
-        GenerateStepPreCalculator(I3RandomServicePtr randomService,
-                                  float angularDist_a=0.39,
-                                  float angularDist_b=2.61,
-                                  std::size_t numberOfValues=102400);
-        ~GenerateStepPreCalculator();
-        
-        inline void GetAngularCosSinValue(float &angular_cos, float &angular_sin)
-        {
-            if (index_ >= numberOfValues_) RegenerateValues();
-            
-            angular_cos = angular_cos_cache_[index_];
-            angular_sin = angular_sin_cache_[index_];
-            
-            ++index_;
-        }
-        
-    private:
-        I3RandomServicePtr randomService_;
-        
-        float angularDist_a_;
-        std::vector<float> one_over_angularDist_a_;
-        float angularDist_b_;
-        float angularDist_I_;
-        
-        std::vector<float> angular_sin_cache_;
-        std::vector<float> angular_cos_cache_;
-        
-        std::vector<float> randomNumber_workspace_;
-        
-        std::vector<float> scratch_space1_;
-        std::vector<float> scratch_space2_;
-
-        std::size_t numberOfValues_;
-        std::size_t index_;
-        
-        void RegenerateValues();
-    };
-    
-    
-    inline void GenerateStep(I3CLSimStep &newStep,
-                             const I3Particle &p,
-                             uint32_t identifier,
-                             I3RandomService &randomService,
-                             uint32_t photonsPerStep,
-                             const double &longitudinalPos,
-                             GenerateStepPreCalculator &preCalc)
-    {
-        /*
-        const double angularDist_a=0.39;
-        const double angularDist_b=2.61;
-        const double angularDist_I=1.-std::exp(-angularDist_b*std::pow(2., angularDist_a));
-        
-        const double rndVal = randomService.Uniform();
-        const double angular_cos=std::max(1.-std::pow(-std::log(1.-rndVal*angularDist_I)/angularDist_b, 1./angularDist_a), -1.0);
-        const double angular_sin=std::sqrt(1.-angular_cos*angular_cos);
-        */
-        
-        float angular_cos, angular_sin;
-        preCalc.GetAngularCosSinValue(angular_cos, angular_sin);
-        
-        double step_dx = p.GetDir().GetX();
-        double step_dy = p.GetDir().GetY();
-        double step_dz = p.GetDir().GetZ();
-        
-        // set all values
-        newStep.SetPosX(p.GetX() + longitudinalPos*step_dx);
-        newStep.SetPosY(p.GetY() + longitudinalPos*step_dy);
-        newStep.SetPosZ(p.GetZ() + longitudinalPos*step_dz);
-        newStep.SetTime(p.GetTime() + longitudinalPos/I3Constants::c);
-        
-        newStep.SetLength(1.*I3Units::mm);
-        newStep.SetNumPhotons(photonsPerStep);
-        newStep.SetWeight(1.);
-        newStep.SetBeta(1.);
-        newStep.SetID(identifier);
-
-        // rotate in-place
-        scatterDirectionByAngle(angular_cos, angular_sin,
-                                step_dx, step_dy, step_dz,
-                                randomService);
-        
-        newStep.SetDir(step_dx, step_dy, step_dz);
-        
-        
-    }
-    
-    inline void GenerateStep(I3CLSimStep &newStep,
-                             const I3Particle &p,
-                             uint32_t identifier,
-                             I3RandomServicePtr randomService,
-                             uint32_t photonsPerStep,
-                             const double &longitudinalPos,
-                             GenerateStepPreCalculator &preCalc)
-    {
-        GenerateStep(newStep, p, identifier, *randomService, photonsPerStep, longitudinalPos, preCalc);
-    }
-
-    
-    inline void GenerateStepForMuon(I3CLSimStep &newStep,
-                                    const I3Particle &p,
-                                    uint32_t identifier,
-                                    uint32_t photonsPerStep,
-                                    double length)
-    {
-        // set all values
-        newStep.SetPosX(p.GetX());
-        newStep.SetPosY(p.GetY());
-        newStep.SetPosZ(p.GetZ());
-        newStep.SetDir(p.GetDir().GetX(), p.GetDir().GetY(), p.GetDir().GetZ());
-        newStep.SetTime(p.GetTime());
-        
-        newStep.SetLength(length);
-        newStep.SetNumPhotons(photonsPerStep);
-        newStep.SetWeight(1.);
-        newStep.SetBeta(1.);
-        newStep.SetID(identifier);
-    }
-    
-
 }
 
 
