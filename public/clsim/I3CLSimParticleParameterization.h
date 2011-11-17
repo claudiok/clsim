@@ -52,6 +52,13 @@ public:
                                     double fromEnergy_, double toEnergy_,
                                     bool needsLength_=false);
 
+    struct AllParticles_t {};
+    static const AllParticles_t AllParticles;
+    I3CLSimParticleParameterization(I3CLSimParticleToStepConverterPtr converter_,
+                                    const AllParticles_t &,
+                                    double fromEnergy_, double toEnergy_,
+                                    bool needsLength_=false);
+
     
     I3CLSimParticleToStepConverterPtr converter;
 #ifndef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
@@ -61,6 +68,7 @@ public:
 #endif
     double fromEnergy, toEnergy;
     bool needsLength;
+    bool catchAll;
     
     bool IsValidForParticle(const I3Particle &particle) const;
     bool IsValid(I3Particle::ParticleType type, double energy, double length=NAN) const;

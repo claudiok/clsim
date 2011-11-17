@@ -58,6 +58,17 @@ void register_I3CLSimParticleParameterization()
               )
              )
             ) 
+        .def(init<I3CLSimParticleToStepConverterPtr, const I3CLSimParticleParameterization::AllParticles_t &, double, double, bool>
+             (
+              (
+               bp::arg("converter"),
+               bp::arg("forParticleType"),
+               bp::arg("fromEnergy"),
+               bp::arg("toEnergy"),
+               bp::arg("needsLength")=false
+              )
+             )
+            ) 
         .def(init<>()) // the class also has a default constructor
         .def(copy_suite<I3CLSimParticleParameterization>())
         .def_readwrite("converter", &I3CLSimParticleParameterization::converter)
@@ -75,8 +86,9 @@ void register_I3CLSimParticleParameterization()
         .def("IsValidForPdgEncoding", &I3CLSimParticleParameterization::IsValidForPdgEncoding, bp::arg("encoding"), bp::arg("energy"), bp::arg("length")=NAN)
 #endif
         ;
+
+        bp::class_<I3CLSimParticleParameterization::AllParticles_t>("AllParticles_t");
     }
-    
 
     class_<I3CLSimParticleParameterizationSeries, I3CLSimParticleParameterizationSeriesPtr>("I3CLSimParticleParameterizationSeries")
     .def(std_vector_indexing_suite<I3CLSimParticleParameterizationSeries>())
