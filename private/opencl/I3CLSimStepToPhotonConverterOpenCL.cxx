@@ -182,7 +182,7 @@ void I3CLSimStepToPhotonConverterOpenCL::Initialize()
     
     // start with a maximum number of output photons of the same size as the number of
     // input steps. Should be plenty..
-    maxNumOutputPhotons_ = static_cast<uint32_t>(std::min(maxNumWorkitems_, static_cast<std::size_t>(std::numeric_limits<uint32_t>::max())));
+    maxNumOutputPhotons_ = static_cast<uint32_t>(std::min(maxNumWorkitems_*10, static_cast<std::size_t>(std::numeric_limits<uint32_t>::max())));
     
     // set up rng
     log_debug("Setting up RNG for %zu workitems.", maxNumWorkitems_);
@@ -509,6 +509,53 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread()
     }
 }
 
+namespace {
+#define YIELD_TIME_MICROSECONDS 1000
+    
+    inline void waitForOpenCLEventsYield(std::vector<cl::Event> &events)
+    {
+        for (;;)
+        {
+            bool allDone=true;
+            BOOST_FOREACH(cl::Event &event, events)
+            {
+                if (event.getInfo<CL_EVENT_COMMAND_EXECUTION_STATUS>() != CL_COMPLETE)
+                {
+                    allDone=false;
+                    break;
+                }
+            }
+
+            if (allDone) break;
+            
+            // yield
+            boost::this_thread::sleep(boost::posix_time::microseconds(YIELD_TIME_MICROSECONDS));
+        }
+        
+        // to be sure, wait for all of them (-> this is a proper synchronization point)
+        cl::Event::waitForEvents(events);
+    }
+
+    inline void waitForOpenCLEventYield(cl::Event &event)
+    {
+        for (;;)
+        {
+            if (event.getInfo<CL_EVENT_COMMAND_EXECUTION_STATUS>() == CL_COMPLETE)
+            {
+                break;
+            }
+
+            // yield
+            boost::this_thread::sleep(boost::posix_time::microseconds(YIELD_TIME_MICROSECONDS));
+        }
+        
+        // to be sure, wait for the event again (-> this is a proper synchronization point)
+        event.wait();
+    }
+
+#undef YIELD_TIME_MILLISECONDS
+}
+
 bool I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl_uploadSteps(boost::this_thread::disable_interruption &di,
                                                                        bool &shouldBreak,
                                                                        unsigned int bufferIndex,
@@ -587,7 +634,7 @@ bool I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl_uploadSteps(boost::th
         queue_[bufferIndex]->flush(); // make sure it starts executing on the device
         
         log_trace("[%u] waiting for copy to finish", bufferIndex);
-        cl::Event::waitForEvents(bufferWriteEvents);
+        waitForOpenCLEventsYield(bufferWriteEvents);
     } catch (cl::Error &err) {
         log_fatal("[%u] OpenCL ERROR (memcpy to device): %s (%i)", bufferIndex, err.what(), err.err());
     }
@@ -636,7 +683,7 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl_downloadPhotons(boost
             cl::Event copyComplete;
             queue_[bufferIndex]->enqueueReadBuffer(*deviceBuffer_CurrentNumOutputPhotons[bufferIndex], CL_FALSE, 0, sizeof(uint32_t), &numberOfGeneratedPhotons, NULL, &copyComplete);
             queue_[bufferIndex]->flush(); // make sure it starts executing on the device
-            copyComplete.wait();
+            waitForOpenCLEventYield(copyComplete);
         }
         
         log_trace("Num photons to copy: %" PRIu32, numberOfGeneratedPhotons);
@@ -657,7 +704,7 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl_downloadPhotons(boost
             
             queue_[bufferIndex]->enqueueReadBuffer(*deviceBuffer_OutputPhotons[bufferIndex], CL_FALSE, 0, numberOfGeneratedPhotons*sizeof(I3CLSimPhoton), &((*photons)[0]), NULL, &copyComplete);
             queue_[bufferIndex]->flush(); // make sure it starts executing on the device
-            copyComplete.wait(); // wait for the buffer to be copied
+            waitForOpenCLEventYield(copyComplete); // wait for the buffer to be copied
         }
         else
         {
@@ -691,6 +738,7 @@ namespace {
     inline boost::posix_time::ptime DumpStatistics(const cl::Event &kernelFinishEvent,
                                                    const boost::posix_time::ptime &last_timestamp,
                                                    uint64_t totalNumberOfPhotons,
+                                                   bool starving,
                                                    const std::string &platformName,
                                                    const std::string &deviceName)
     {
@@ -711,13 +759,15 @@ namespace {
         std::cout << "kernel statistics: " 
         << kernel_duration_in_nanoseconds/static_cast<double>(totalNumberOfPhotons) 
         << " nanoseconds/photon (util: " << utilization*100. << "%) "
-        << "(" << platformName << " " << deviceName << ")"
-        << std::endl;
+        << "(" << platformName << " " << deviceName << ")";
+        if (starving) std::cout << " [starving]";
+        std::cout << std::endl;
 #else
-        log_info("kernel statistics: %g nanoseconds/photon (util: %.0f%%) (%s %s)",
+        log_info("kernel statistics: %g nanoseconds/photon (util: %.0f%%) (%s %s) %s",
                  kernel_duration_in_nanoseconds/static_cast<double>(totalNumberOfPhotons),
                  utilization*100.,
-                 platformName.c_str(), deviceName.c_str());
+                 platformName.c_str(), deviceName.c_str(),
+                 (starving?"[starving]":""));
 #endif
         
         return this_timestamp;
@@ -785,7 +835,9 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
         
         log_trace("buffers indices now: this==%u, other==%u", thisBuffer, otherBuffer);
         
+        bool starving=false;
         if (!otherBufferHasBeenCopied) {
+            starving=true;
             log_trace("[%u] starting \"this\" buffer copy (need to block)..", thisBuffer);
             {
                 bool shouldBreak=false; // shouldBreak is true if this thread has been signalled to terminate
@@ -828,7 +880,7 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
 
         try {
             // wait for the kernel to finish
-            kernelFinishEvent.wait();
+            waitForOpenCLEventYield(kernelFinishEvent);
         } catch (cl::Error &err) {
             log_fatal("[%u] OpenCL ERROR (running kernel): %s (%i)", thisBuffer, err.what(), err.err());
         }
@@ -841,6 +893,7 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
         last_timestamp = DumpStatistics(kernelFinishEvent,
                                         last_timestamp,
                                         totalNumberOfPhotons[thisBuffer],
+                                        starving,
                                         device_->GetPlatformName(),
                                         device_->GetDeviceName());
 #endif
