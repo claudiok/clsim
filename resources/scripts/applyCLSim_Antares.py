@@ -174,7 +174,7 @@ domAngularSensitivity = clsim.GetAntaresOMAngularSensitivity(name='Spring09')
 
 # parameterizations for fast simulation (bypassing Geant4)
 # converters first:
-cascadeConverter = clsim.I3CLSimParticleToStepConverterPPC(photonsPerStep=200)
+cascadeConverter = clsim.I3CLSimParticleToStepConverterPPC(photonsPerStep=200, highPhotonsPerStep=2000, useHighPhotonsPerStepStartingFromNumPhotons=1e8)
 
 # now set up a list of converters with particle types and valid energy ranges
 parameterizationsMuon = [
@@ -192,15 +192,11 @@ parameterizationsMuon = [
 
 parameterizationsOther = [
  ## do we need some special handling for neutrons?
- #clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
- #                                      forParticleType=dataclasses.I3Particle.Neutron,
- #                                      fromEnergy=0.0*I3Units.GeV,
- #                                      toEnergy=1000.*I3Units.GeV),
-
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
-                                       forParticleType=dataclasses.I3Particle.Hadrons,
+                                       forParticleType=dataclasses.I3Particle.Neutron,
                                        fromEnergy=0.0*I3Units.GeV,
                                        toEnergy=1000.*I3Units.PeV),
+
  clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
                                        forParticleType=dataclasses.I3Particle.Pi0,
                                        fromEnergy=0.0*I3Units.GeV,
@@ -267,6 +263,16 @@ parameterizationsOther = [
                                        forParticleType=dataclasses.I3Particle.NuclInt,
                                        fromEnergy=0.0*I3Units.GeV,
                                        toEnergy=1000.*I3Units.PeV),
+ clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+                                       forParticleType=dataclasses.I3Particle.Hadrons,
+                                       fromEnergy=0.0*I3Units.GeV,
+                                       toEnergy=1000.*I3Units.PeV),
+
+ # catch all. nothing should go to Geant4
+ clsim.I3CLSimParticleParameterization(converter=cascadeConverter,
+                                       forParticleType=clsim.I3CLSimParticleParameterization.AllParticles_t(),
+                                       fromEnergy=0.,
+                                       toEnergy=float('inf'))
                                         
 ]
 
