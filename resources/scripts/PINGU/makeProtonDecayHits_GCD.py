@@ -50,7 +50,7 @@ tray.AddModule("I3InfiniteSource","streams",
 tray.AddModule("I3MCEventHeaderGenerator","gen_header",
                Year=2009,
                DAQTime=158100000000000000,
-               RunNumber=1,
+               RunNumber=options.RUNNUMBER,
                EventID=1,
                IncrementEventID=True)
 tray.AddModule("Delete", "cleanup", Keys=["MCTimeIncEventID"])
