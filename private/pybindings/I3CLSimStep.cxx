@@ -36,7 +36,7 @@ i3clsimstep_prettyprint(const I3CLSimStep& s)
 {
     I3DirectionPtr dir = s.GetDir();
     if (!dir) dir=I3DirectionPtr(new I3Direction());
-    
+
     std::ostringstream oss;
     oss << "[ I3CLSimStep id : " << s.GetID() << std::endl
         << "     pos (x,y,z) : [" << s.GetPosX()/I3Units::m << ", " << s.GetPosY()/I3Units::m << ", " << s.GetPosZ()/I3Units::m << "]m" << std::endl
@@ -50,20 +50,29 @@ i3clsimstep_prettyprint(const I3CLSimStep& s)
         << "            beta : " << s.GetBeta() << std::endl
         << "           dummy : " << s.GetDummy() << std::endl
         << "]" ;
-    
+
     return oss.str();
 }
 
+
+template <typename T>
+struct ConstPtr_to_python
+{
+    static PyObject *convert(const shared_ptr<const T>& val)
+    {
+        return boost::python::incref( bp::object(boost::const_pointer_cast<T>(val)) .ptr()); 
+    }
+};
 
 void register_I3CLSimStep()
 {
     bp::def("I3Particle___getstate__", &boost_serializable_pickle_suite<I3Particle>::getstate);
     bp::def("I3Particle___setstate__", &boost_serializable_pickle_suite<I3Particle>::setstate);
-    
+
     {
         void (I3CLSimStep::* SetDir_oneary)(const I3Direction&) = &I3CLSimStep::SetDir; 
         void (I3CLSimStep::* SetDir_threeary)(const double &x, const double &y, const double &z) = &I3CLSimStep::SetDir;
-        
+
         bp::scope clsimstep_scope = 
         bp::class_<I3CLSimStep, boost::shared_ptr<I3CLSimStep> >("I3CLSimStep")
         .add_property("x", &I3CLSimStep::GetPosX, &I3CLSimStep::SetPosX)
@@ -83,21 +92,26 @@ void register_I3CLSimStep()
 
         .add_property("pos", &I3CLSimStep::GetPos, &I3CLSimStep::SetPos)
         .add_property("dir", &I3CLSimStep::GetDir, SetDir_oneary)
-        
+
         .def("SetDirXYZ", SetDir_threeary)
-        
+
         .def("__str__", i3clsimstep_prettyprint)
         ;
     }
-    
+
+
     bp::class_<I3CLSimStepSeries, bp::bases<I3FrameObject>, I3CLSimStepSeriesPtr>("I3CLSimStepSeries")
     .def(bp::std_vector_indexing_suite<I3CLSimStepSeries>())
     .def_pickle(boost_serializable_pickle_suite<I3CLSimStepSeries>())
     ;
-    
+
     // does not base on I3FrameObject, so register only the shared_ptr<T>-to-shared_ptr<const T> conversion
     //register_pointer_conversions<I3CLSimStep>();
     bp::implicitly_convertible<shared_ptr<I3CLSimStep>, shared_ptr<const I3CLSimStep> >();
-    
+
     register_pointer_conversions<I3CLSimStepSeries>();
+    
+    // make python accept shared_ptr<const blah>.. this is slightly evil bacause it uses const_cast:
+    bp::to_python_converter<I3CLSimStepSeriesConstPtr, ConstPtr_to_python<I3CLSimStepSeries> >();
+
 }
