@@ -567,7 +567,7 @@ bool I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl_uploadSteps(boost::th
 {
     shouldBreak=false;
     
-    uint32_t stepsIdentifier;
+    uint32_t stepsIdentifier=0;
     I3CLSimStepSeriesConstPtr steps;
     
     const uint32_t zeroCounterBufferSource=0;
