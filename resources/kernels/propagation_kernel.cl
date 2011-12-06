@@ -514,8 +514,11 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
     __global ulong* MWC_RNG_x,
     __global uint* MWC_RNG_a)
 {
+    unsigned int i = get_global_id(0);
+    unsigned int global_size = get_global_size(0);
+
 #ifdef PRINTF_ENABLED
-    dbg_printf("Start kernel... (work item %u of %u)\n", get_global_id(0), get_global_size(0));
+    dbg_printf("Start kernel... (work item %u of %u)\n", i, global_size);
 #endif
 
     __local unsigned short geoLayerToOMNumIndexPerStringSetLocal[GEO_geoLayerToOMNumIndexPerStringSet_BUFFER_SIZE];
@@ -529,8 +532,6 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
     wait_group_events(1, &copyFinishedEvent);
     //barrier(CLK_LOCAL_MEM_FENCE);
 
-    unsigned int i = get_global_id(0);
-    unsigned int global_size = get_global_size(0);
 
     //download MWC RNG state
     ulong real_rnd_x = MWC_RNG_x[i];
@@ -539,7 +540,14 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
     uint *rnd_a = &real_rnd_a;
 
     // download the step
-    struct I3CLSimStep step = inputSteps[i];
+    struct I3CLSimStep step;
+    step.posAndTime = inputSteps[i].posAndTime;
+    step.dirAndLengthAndBeta = inputSteps[i].dirAndLengthAndBeta;
+    step.numPhotons = inputSteps[i].numPhotons;
+    step.weight = inputSteps[i].weight;
+    step.identifier = inputSteps[i].identifier;
+    step.dummy = inputSteps[i].dummy;
+    //step = inputSteps[i]; // Intel OpenCL does not like this
 
     float4 stepDir;
     {
