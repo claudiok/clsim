@@ -93,6 +93,11 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
 SET(LIB_${PROJECT_NAME}_PROJECTS icetray dataio dataclasses phys-services tableio simclasses)
 SET(LIB_${PROJECT_NAME}_TOOLS python boost log4cplus gsl clhep geant4 opencl)
 
+# The icecube master header file I3.h seems to include inttypes.h without setting
+# __STDC_FORMAT_MACROS. clsim makes use of the PRI* preprocessor definitions,
+# so it needs those macros. Add the definition right here to work around this.
+ADD_DEFINITIONS(-D__STDC_FORMAT_MACROS)
+
 # Use the Accelerate framework on APPLE
 IF(ACCELERATE_FOUND)
     colormsg(GREEN "+-- Accelerate.framework support")

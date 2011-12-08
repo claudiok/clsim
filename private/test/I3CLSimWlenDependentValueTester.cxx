@@ -19,7 +19,9 @@
 //   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#define __STDC_FORMAT_MACROS 
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
 #include <inttypes.h>
 
 #include "test/I3CLSimWlenDependentValueTester.h"
