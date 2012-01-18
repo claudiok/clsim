@@ -40,6 +40,7 @@ if(BUILD_PYBINDINGS)
     I3CLSimPMTPhotonSimulator.cxx
     I3CLSimOpenCLDevice.cxx
     I3Converters.cxx
+    I3HoleIceSimulator.cxx
     module.cxx
     USE_TOOLS boost python log4cplus
     USE_PROJECTS icetray dataclasses clsim
