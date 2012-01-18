@@ -35,23 +35,6 @@ using namespace boost::python;
 namespace bp = boost::python;
 
 
-namespace {
-    bp::list python_GetDeviceNameList()
-    {
-        typedef std::pair<std::string, std::string> pair_type;
-        const std::vector<pair_type> ret = I3CLSimTesterBase::GetDeviceNameList();
-        
-        bp::list retList;
-        
-        BOOST_FOREACH(const pair_type &val, ret)
-        {
-            retList.append(bp::make_tuple(bp::str(val.first), bp::str(val.second)));
-        }
-        
-        return retList;
-    }
-}
-
 struct I3CLSimTesterBaseWrapper : I3CLSimTesterBase, bp::wrapper<I3CLSimTesterBase>
 {
 
@@ -66,9 +49,6 @@ void register_I3CLSimTester()
 
         .def("GetMaxWorkgroupSize", &I3CLSimTesterBase::GetMaxWorkgroupSize)
         .add_property("maxWorkgroupSize", &I3CLSimTesterBase::GetMaxWorkgroupSize)
-
-        .def("GetDeviceNameList", &python_GetDeviceNameList)
-        .staticmethod("GetDeviceNameList")
         ;
     }
     bp::implicitly_convertible<shared_ptr<I3CLSimTesterBaseWrapper>, shared_ptr<const I3CLSimTesterBase> >();
@@ -83,31 +63,17 @@ void register_I3CLSimTester()
                    bases<I3CLSimTesterBase>,
                    boost::noncopyable>
         ("I3CLSimRandomDistributionTester",
-         bp::init<const std::pair<std::string, std::string> &, uint64_t, uint64_t, bool, I3RandomServicePtr, I3CLSimRandomValueConstPtr>
+         bp::init<const I3CLSimOpenCLDevice &, uint64_t, uint64_t, I3RandomServicePtr, I3CLSimRandomValueConstPtr>
          (
           (
-           bp::arg("platformAndDeviceName"),
+           bp::arg("device"),
            bp::arg("workgroupSize"),
            bp::arg("workItemsPerIteration"),
-           bp::arg("useNativeMath"),
            bp::arg("randomService"),
            bp::arg("randomDistribution")
           )
          )
         )
-        .def(init<boost::python::tuple, uint64_t, uint64_t, bool, I3RandomServicePtr, I3CLSimRandomValueConstPtr>
-             (
-              (
-               bp::arg("platformAndDeviceName"),
-               bp::arg("workgroupSize"),
-               bp::arg("workItemsPerIteration"),
-               bp::arg("useNativeMath"),
-               bp::arg("randomService"),
-               bp::arg("randomDistribution")
-              )
-             )
-            )
-
         .def("GenerateRandomNumbers", &I3CLSimRandomDistributionTester::GenerateRandomNumbers, bp::arg("iterations"))
         ;
     }
@@ -124,29 +90,16 @@ void register_I3CLSimTester()
         bases<I3CLSimTesterBase>,
         boost::noncopyable>
         ("I3CLSimWlenDependentValueTester",
-         bp::init<const std::pair<std::string, std::string> &, uint64_t, uint64_t, bool, I3CLSimWlenDependentValueConstPtr>
+         bp::init<const I3CLSimOpenCLDevice &, uint64_t, uint64_t, I3CLSimWlenDependentValueConstPtr>
          (
           (
-           bp::arg("platformAndDeviceName"),
+           bp::arg("device"),
            bp::arg("workgroupSize"),
            bp::arg("workItemsPerIteration"),
-           bp::arg("useNativeMath"),
            bp::arg("wlenDependentValue")
            )
           )
          )
-        .def(init<boost::python::tuple, uint64_t, uint64_t, bool, I3CLSimWlenDependentValueConstPtr>
-             (
-              (
-               bp::arg("platformAndDeviceName"),
-               bp::arg("workgroupSize"),
-               bp::arg("workItemsPerIteration"),
-               bp::arg("useNativeMath"),
-               bp::arg("wlenDependentValue")
-               )
-              )
-             )
-        
         .def("EvaluateFunction", &I3CLSimWlenDependentValueTester::EvaluateFunction, bp::arg("xValues"))
         .def("EvaluateDerivative", &I3CLSimWlenDependentValueTester::EvaluateDerivative, bp::arg("xValues"))
 
@@ -167,31 +120,17 @@ void register_I3CLSimTester()
         bases<I3CLSimTesterBase>,
         boost::noncopyable>
         ("I3CLSimMediumPropertiesTester",
-         bp::init<const std::pair<std::string, std::string> &, uint64_t, uint64_t, bool, I3CLSimMediumPropertiesConstPtr, I3RandomServicePtr>
+         bp::init<const I3CLSimOpenCLDevice &, uint64_t, uint64_t, I3CLSimMediumPropertiesConstPtr, I3RandomServicePtr>
          (
           (
            bp::arg("platformAndDeviceName"),
            bp::arg("workgroupSize"),
            bp::arg("workItemsPerIteration"),
-           bp::arg("useNativeMath"),
            bp::arg("mediumProperties"),
            bp::arg("randomService") = I3RandomServicePtr()
            )
           )
          )
-        .def(init<boost::python::tuple, uint64_t, uint64_t, bool, I3CLSimMediumPropertiesConstPtr, I3RandomServicePtr>
-             (
-              (
-               bp::arg("platformAndDeviceName"),
-               bp::arg("workgroupSize"),
-               bp::arg("workItemsPerIteration"),
-               bp::arg("useNativeMath"),
-               bp::arg("mediumProperties"),
-               bp::arg("randomService") = I3RandomServicePtr()
-               )
-              )
-             )
-        
         .def("EvaluatePhaseRefIndex", &I3CLSimMediumPropertiesTester::EvaluatePhaseRefIndex, bp::arg("xValues"), bp::arg("layer"))
         .def("EvaluateDispersion", &I3CLSimMediumPropertiesTester::EvaluateDispersion, bp::arg("xValues"), bp::arg("layer"))
         .def("EvaluateGroupVelocity", &I3CLSimMediumPropertiesTester::EvaluateGroupVelocity, bp::arg("xValues"), bp::arg("layer"))

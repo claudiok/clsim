@@ -32,19 +32,9 @@
 class I3CLSimRandomDistributionTester : public I3CLSimTesterBase
 {
 public:
-    // version to be called from c++
-    I3CLSimRandomDistributionTester(const std::pair<std::string, std::string> &platformAndDeviceName,
+    I3CLSimRandomDistributionTester(const I3CLSimOpenCLDevice &device,
                                     uint64_t workgroupSize_,
                                     uint64_t workItemsPerIteration_,
-                                    bool useNativeMath,
-                                    I3RandomServicePtr randomService,
-                                    I3CLSimRandomValueConstPtr randomDistribution);
-
-    // version to be called from boost::python
-    I3CLSimRandomDistributionTester(boost::python::tuple platformAndDeviceName,
-                                    uint64_t workgroupSize_,
-                                    uint64_t workItemsPerIteration_,
-                                    bool useNativeMath,
                                     I3RandomServicePtr randomService,
                                     I3CLSimRandomValueConstPtr randomDistribution);
 

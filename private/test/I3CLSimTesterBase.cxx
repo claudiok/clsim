@@ -45,102 +45,8 @@ I3CLSimTesterBase::I3CLSimTesterBase()
     ;
 }
 
-std::vector<std::pair<std::string, std::string> > I3CLSimTesterBase::GetDeviceNameList()
-{
-    std::vector<std::pair<std::string, std::string> > deviceNameList;
-    
-    // enumerate platforms and devices
-    std::vector<cl::Platform> platforms;
-    
-    try {
-        // get a list of available platforms
-        cl::Platform::get(&platforms);
-    } catch (cl::Error &err) {
-        log_error("OpenCL ERROR: %s (%i)", err.what(), err.err());
-        throw std::runtime_error("OpenCL error.");
-    }
-    
-    BOOST_FOREACH(cl::Platform &platform, platforms)
-    {
-        const std::string platformName = platform.getInfo<CL_PLATFORM_NAME>();
-        
-        std::vector<cl::Device> devices;
-        
-        try {
-            platform.getDevices(CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_CPU, &devices);
-        } catch (cl::Error &err) {
-            // an OpenCL error here most probably means that there are no devices of the
-            // requested type. So just continue quietly.
-            log_debug("OpenCL ERROR: %s (%i)", err.what(), err.err());
-            continue;
-        }
-        
-        BOOST_FOREACH(cl::Device &device, devices)
-        {
-            const std::string deviceName = device.getInfo<CL_DEVICE_NAME>();
-            
-            deviceNameList.push_back(std::make_pair(platformName, deviceName));
-            
-            log_trace("PLATFORM: \"%s\" -> DEVICE: \"%s\"",
-                      platformName.c_str(),
-                      deviceName.c_str());
-        }
-    }
-    
-    return deviceNameList;
-}
 
-
-std::pair<cl::Platform, cl::Device> I3CLSimTesterBase::GetPlatformDeviceFromNames(const std::string &platformName, const std::string &deviceName) const
-{
-    // enumerate platforms and devices
-    std::vector<cl::Platform> platforms;
-    
-    try {
-        // get a list of available platforms
-        cl::Platform::get(&platforms);
-    } catch (cl::Error &err) {
-        log_error("OpenCL ERROR: %s (%i)", err.what(), err.err());
-        throw std::runtime_error("OpenCL error.");
-    }
-    
-    BOOST_FOREACH(cl::Platform &platform, platforms)
-    {
-        const std::string thisPlatformName = platform.getInfo<CL_PLATFORM_NAME>();
-        
-        if (thisPlatformName!=platformName) continue;
-        
-        std::vector<cl::Device> devices;
-        
-        try {
-            platform.getDevices(CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_CPU, &devices);
-        } catch (cl::Error &err) {
-            // an OpenCL error here most probably means that there are no devices of the
-            // requested type. So just continue quietly.
-            log_debug("OpenCL ERROR: %s (%i)", err.what(), err.err());
-            continue;
-        }
-        
-        BOOST_FOREACH(cl::Device &device, devices)
-        {
-            const std::string thisDeviceName = device.getInfo<CL_DEVICE_NAME>();
-            
-            if (thisDeviceName != deviceName) continue;
-            
-            // found it!
-            return std::make_pair(platform, device);
-        }
-    }
-    
-    log_error("Platform \"%s\"/Device \"%s\" not found!",
-              platformName.c_str(), deviceName.c_str());
-    
-    return std::make_pair(cl::Platform(), cl::Device());
-}
-
-
-void I3CLSimTesterBase::DoSetup(const std::pair<std::string, std::string> &platformAndDeviceName,
-                                bool useNativeMath,
+void I3CLSimTesterBase::DoSetup(const I3CLSimOpenCLDevice &device,
                                 uint64_t workgroupSize_,
                                 uint64_t workItemsPerIteration_,
                                 const std::vector<std::string> &source,
@@ -179,17 +85,16 @@ void I3CLSimTesterBase::DoSetup(const std::pair<std::string, std::string> &platf
     }
     
     // get the device object
-    std::pair<cl::Platform, cl::Device> platformAndDevice = GetPlatformDeviceFromNames(platformAndDeviceName.first, platformAndDeviceName.second);
-    cl::Platform &platform = platformAndDevice.first;
-    cl::Device &device = platformAndDevice.second;
+    shared_ptr<cl::Platform> platformHandle = device.GetPlatformHandle();
+    shared_ptr<cl::Device> deviceHandle = device.GetDeviceHandle();
     
     // initialize things
-    devices = shared_ptr<std::vector<cl::Device> >(new std::vector<cl::Device>(1, device));
+    shared_ptr<std::vector<cl::Device> > devices(new std::vector<cl::Device>(1, *deviceHandle));
     
     try {
         // prepare a device vector (containing a single device)
         cl_context_properties properties[] = 
-        { CL_CONTEXT_PLATFORM, (cl_context_properties)(platform)(), 0};
+        { CL_CONTEXT_PLATFORM, (cl_context_properties)(*platformHandle)(), 0};
         
         // create a context
         context = shared_ptr<cl::Context>(new cl::Context(*devices, properties));
@@ -197,29 +102,7 @@ void I3CLSimTesterBase::DoSetup(const std::pair<std::string, std::string> &platf
         log_error("OpenCL error: could not set up context!");
         throw std::runtime_error("OpenCL error: could not set up context!");
     }
-    
-    {
-        log_debug("Running on: ");
-        std::string deviceName = device.getInfo<CL_DEVICE_NAME>();
-        log_debug("  * \"%s\"", deviceName.c_str());
-        log_debug("      ->                      CL_DEVICE_TYPE: %s", boost::lexical_cast<std::string>(device.getInfo<CL_DEVICE_TYPE>()).c_str());
-        log_debug("      ->         CL_DEVICE_MAX_COMPUTE_UNITS: %s", boost::lexical_cast<std::string>(device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>()).c_str());
-        log_debug("      ->    CL_DEVICE_MAX_WORK_ITEM_SIZES[0]: %s", boost::lexical_cast<std::string>(device.getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[0]).c_str());
-        log_debug("      ->       CL_DEVICE_MAX_WORK_GROUP_SIZE: %s", boost::lexical_cast<std::string>(device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>()).c_str());
-        log_debug("      ->       CL_DEVICE_MAX_CLOCK_FREQUENCY: %sMHz", boost::lexical_cast<std::string>(device.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>()).c_str());
-        log_debug("      ->           CL_DEVICE_GLOBAL_MEM_SIZE: %sMiB", boost::lexical_cast<std::string>(static_cast<double>(device.getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>())/1024./1024.).c_str());
-        log_debug("      ->  CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE: %sKiB", boost::lexical_cast<std::string>(static_cast<double>(device.getInfo<CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE>())/1024.).c_str());
-        log_debug("      ->            CL_DEVICE_LOCAL_MEM_TYPE: %s", boost::lexical_cast<std::string>(device.getInfo<CL_DEVICE_LOCAL_MEM_TYPE>()).c_str());
-        log_debug("      ->            CL_DEVICE_LOCAL_MEM_SIZE: %sKiB", boost::lexical_cast<std::string>(static_cast<double>(device.getInfo<CL_DEVICE_LOCAL_MEM_SIZE>())/1024.).c_str());
-        log_debug("      ->  CL_DEVICE_ERROR_CORRECTION_SUPPORT: %s", boost::lexical_cast<std::string>(device.getInfo<CL_DEVICE_ERROR_CORRECTION_SUPPORT>()).c_str());
-        log_debug("      ->             CL_DEVICE_ENDIAN_LITTLE: %s", boost::lexical_cast<std::string>(device.getInfo<CL_DEVICE_ENDIAN_LITTLE>()).c_str());
-        log_debug("      ->                 CL_DEVICE_AVAILABLE: %s", boost::lexical_cast<std::string>(device.getInfo<CL_DEVICE_AVAILABLE>()).c_str());
-        log_debug("      ->                    CL_DEVICE_VENDOR: %s", boost::lexical_cast<std::string>(device.getInfo<CL_DEVICE_VENDOR>()).c_str());
-        log_debug("      ->                   CL_DEVICE_VERSION: %s", boost::lexical_cast<std::string>(device.getInfo<CL_DEVICE_VERSION>()).c_str());
-        log_debug("      ->                CL_DEVICE_EXTENSIONS: %s", boost::lexical_cast<std::string>(device.getInfo<CL_DEVICE_EXTENSIONS>()).c_str());
-    }    
 
-    
     log_debug("Compiling..");
     // accumulate the build options
     std::string BuildOptions;
@@ -231,7 +114,7 @@ void I3CLSimTesterBase::DoSetup(const std::pair<std::string, std::string> &platf
     //BuildOptions += "-cl-nv-verbose ";          // Passed on to ptxas as --verbose
     //BuildOptions += "-cl-nv-maxrregcount=60 ";  // Passed on to ptxas as --maxrregcount <N>
     //BuildOptions += "-cl-nv-opt-level=3 ";     // Passed on to ptxas as --opt-level <N>
-    if (useNativeMath) {BuildOptions += "-DUSE_NATIVE_MATH ";}
+    if (device.GetUseNativeMath()) {BuildOptions += "-DUSE_NATIVE_MATH ";}
     
     BuildOptions += compilerOptions;
     
@@ -243,12 +126,12 @@ void I3CLSimTesterBase::DoSetup(const std::pair<std::string, std::string> &platf
     } catch (cl::Error &err) {
         log_error("OpenCL ERROR (compile): %s (%i)", err.what(), err.err());
         
-        std::string deviceName = device.getInfo<CL_DEVICE_NAME>();
+        std::string deviceName = deviceHandle->getInfo<CL_DEVICE_NAME>();
         log_error("  * build status on %s\"", deviceName.c_str());
         log_error("==============================");
-        log_error("Build Status: %s", boost::lexical_cast<std::string>(program->getBuildInfo<CL_PROGRAM_BUILD_STATUS>(device)).c_str());
-        log_error("Build Options: %s", boost::lexical_cast<std::string>(program->getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(device)).c_str());
-        log_error("Build Log: %s", boost::lexical_cast<std::string>(program->getBuildInfo<CL_PROGRAM_BUILD_LOG>(device)).c_str());
+        log_error("Build Status: %s", boost::lexical_cast<std::string>(program->getBuildInfo<CL_PROGRAM_BUILD_STATUS>(*deviceHandle)).c_str());
+        log_error("Build Options: %s", boost::lexical_cast<std::string>(program->getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(*deviceHandle)).c_str());
+        log_error("Build Log: %s", boost::lexical_cast<std::string>(program->getBuildInfo<CL_PROGRAM_BUILD_LOG>(*deviceHandle)).c_str());
         log_error("==============================");
         
         throw std::runtime_error("OpenCL error: could build the OpenCL program!");;
@@ -258,8 +141,8 @@ void I3CLSimTesterBase::DoSetup(const std::pair<std::string, std::string> &platf
     // instantiate the command queue
     log_debug("Initializing..");
     try {
-        //queue_ = shared_ptr<cl::CommandQueue>(new cl::CommandQueue(*context_, device, CL_QUEUE_PROFILING_ENABLE));
-        queue = shared_ptr<cl::CommandQueue>(new cl::CommandQueue(*context, device, 0));
+        //queue_ = shared_ptr<cl::CommandQueue>(new cl::CommandQueue(*context_, device.GetDeviceHandle(), CL_QUEUE_PROFILING_ENABLE));
+        queue = shared_ptr<cl::CommandQueue>(new cl::CommandQueue(*context, *deviceHandle, 0));
     } catch (cl::Error err) {
         log_error("OpenCL ERROR: %s (%i)", err.what(), err.err());
         throw std::runtime_error("OpenCL error: could not set up command queue!");
@@ -272,7 +155,7 @@ void I3CLSimTesterBase::DoSetup(const std::pair<std::string, std::string> &platf
     try {
         // instantiate the kernel object
         kernel = shared_ptr<cl::Kernel>(new cl::Kernel(*program, "testKernel"));
-        maxWorkgroupSize = kernel->getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device);
+        maxWorkgroupSize = kernel->getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(*deviceHandle);
         
         log_debug("Maximum workgroup sizes for the kernel is %" PRIu64, maxWorkgroupSize);
     } catch (cl::Error err) {

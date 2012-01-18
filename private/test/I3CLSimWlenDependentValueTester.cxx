@@ -31,10 +31,9 @@
 #include "opencl/I3CLSimHelperLoadProgramSource.h"
 
 I3CLSimWlenDependentValueTester::I3CLSimWlenDependentValueTester
-(const std::pair<std::string, std::string> &platformAndDeviceName,
+(const I3CLSimOpenCLDevice &device,
  uint64_t workgroupSize_,
  uint64_t workItemsPerIteration_,
- bool useNativeMath,
  I3CLSimWlenDependentValueConstPtr wlenDependentValue):
 I3CLSimTesterBase(),
 wlenDependentValue_(wlenDependentValue)
@@ -42,34 +41,7 @@ wlenDependentValue_(wlenDependentValue)
     std::vector<std::string> source;
     FillSource(source, wlenDependentValue);
     
-    DoSetup(platformAndDeviceName,
-            useNativeMath,
-            workgroupSize_,
-            workItemsPerIteration_,
-            source);
-    
-    InitBuffers();
-}
-
-I3CLSimWlenDependentValueTester::I3CLSimWlenDependentValueTester
-(boost::python::tuple platformAndDeviceName,
- uint64_t workgroupSize_,
- uint64_t workItemsPerIteration_,
- bool useNativeMath,
- I3CLSimWlenDependentValueConstPtr wlenDependentValue):
-I3CLSimTesterBase(),
-wlenDependentValue_(wlenDependentValue)
-{
-    std::string platformName = boost::python::extract<std::string>(platformAndDeviceName[0]);
-    std::string deviceName = boost::python::extract<std::string>(platformAndDeviceName[1]);
-    
-    std::pair<std::string, std::string> argument(platformName, deviceName);
-    
-    std::vector<std::string> source;
-    FillSource(source, wlenDependentValue);
-
-    DoSetup(argument,
-            useNativeMath,
+    DoSetup(device,
             workgroupSize_,
             workItemsPerIteration_,
             source);

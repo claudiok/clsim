@@ -33,10 +33,9 @@
 #include "opencl/mwcrng_init.h"
 
 I3CLSimMediumPropertiesTester::I3CLSimMediumPropertiesTester
-(const std::pair<std::string, std::string> &platformAndDeviceName,
+(const I3CLSimOpenCLDevice &device,
  uint64_t workgroupSize_,
  uint64_t workItemsPerIteration_,
- bool useNativeMath,
  I3CLSimMediumPropertiesConstPtr mediumProperties,
  I3RandomServicePtr randomService)
 :
@@ -49,45 +48,12 @@ randomService_(randomService)
     
     const bool hasDispersion = mediumProperties->GetPhaseRefractiveIndices()[0]->HasDerivative();
 
-    DoSetup(platformAndDeviceName,
-            useNativeMath,
+    DoSetup(device,
             workgroupSize_,
             workItemsPerIteration_,
             source,
             (!hasDispersion)?"-DNO_DISPERSION ":"");
 
-    InitBuffers(randomService);
-}
-
-I3CLSimMediumPropertiesTester::I3CLSimMediumPropertiesTester
-(boost::python::tuple platformAndDeviceName,
- uint64_t workgroupSize_,
- uint64_t workItemsPerIteration_,
- bool useNativeMath,
- I3CLSimMediumPropertiesConstPtr mediumProperties,
- I3RandomServicePtr randomService)
-:
-I3CLSimTesterBase(),
-mediumProperties_(mediumProperties),
-randomService_(randomService)
-{
-    std::string platformName = boost::python::extract<std::string>(platformAndDeviceName[0]);
-    std::string deviceName = boost::python::extract<std::string>(platformAndDeviceName[1]);
-    
-    std::pair<std::string, std::string> argument(platformName, deviceName);
-    
-    std::vector<std::string> source;
-    FillSource(source, mediumProperties);
-
-    const bool hasDispersion = mediumProperties->GetPhaseRefractiveIndices()[0]->HasDerivative();
-    
-    DoSetup(argument,
-            useNativeMath,
-            workgroupSize_,
-            workItemsPerIteration_,
-            source,
-            (!hasDispersion)?"-DNO_DISPERSION ":"");
-    
     InitBuffers(randomService);
 }
 

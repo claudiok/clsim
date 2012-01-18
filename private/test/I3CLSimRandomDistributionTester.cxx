@@ -32,10 +32,9 @@
 #include "opencl/mwcrng_init.h"
 
 I3CLSimRandomDistributionTester::I3CLSimRandomDistributionTester
-(const std::pair<std::string, std::string> &platformAndDeviceName,
+(const I3CLSimOpenCLDevice &device,
  uint64_t workgroupSize_,
  uint64_t workItemsPerIteration_,
- bool useNativeMath,
  I3RandomServicePtr randomService,
  I3CLSimRandomValueConstPtr randomDistribution):
 I3CLSimTesterBase()
@@ -43,34 +42,7 @@ I3CLSimTesterBase()
     std::vector<std::string> source;
     FillSource(source, randomDistribution);
     
-    DoSetup(platformAndDeviceName,
-            useNativeMath,
-            workgroupSize_,
-            workItemsPerIteration_,
-            source);
-    
-    InitBuffers(randomService);
-}
-
-I3CLSimRandomDistributionTester::I3CLSimRandomDistributionTester
-(boost::python::tuple platformAndDeviceName,
- uint64_t workgroupSize_,
- uint64_t workItemsPerIteration_,
- bool useNativeMath,
- I3RandomServicePtr randomService,
- I3CLSimRandomValueConstPtr randomDistribution):
-I3CLSimTesterBase()
-{
-    std::string platformName = boost::python::extract<std::string>(platformAndDeviceName[0]);
-    std::string deviceName = boost::python::extract<std::string>(platformAndDeviceName[1]);
-    
-    std::pair<std::string, std::string> argument(platformName, deviceName);
-    
-    std::vector<std::string> source;
-    FillSource(source, randomDistribution);
-
-    DoSetup(argument,
-            useNativeMath,
+    DoSetup(device,
             workgroupSize_,
             workItemsPerIteration_,
             source);

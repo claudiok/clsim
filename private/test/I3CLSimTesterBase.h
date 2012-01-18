@@ -25,6 +25,8 @@
 #include "dataclasses/I3Vector.h"
 #include "clsim/I3CLSimRandomValue.h"
 
+#include "clsim/I3CLSimOpenCLDevice.h"
+
 #include "boost/python/tuple.hpp"
 #include "boost/python/extract.hpp"
 
@@ -37,24 +39,19 @@
 class I3CLSimTesterBase
 {
 public:
-    static std::vector<std::pair<std::string, std::string> > GetDeviceNameList();
     I3CLSimTesterBase();
     
     inline uint64_t GetMaxWorkgroupSize() const {return maxWorkgroupSize;}
     
 protected:
-    void DoSetup(const std::pair<std::string, std::string> &platformAndDeviceName,
-                 bool useNativeMath,
+    void DoSetup(const I3CLSimOpenCLDevice &device,
                  uint64_t workgroupSize_,
                  uint64_t workItemsPerIteration_,
                  const std::vector<std::string> &source,
                  const std::string compilerOptions="");
-    std::pair<cl::Platform, cl::Device> GetPlatformDeviceFromNames(const std::string &platformName, const std::string &deviceName) const;
-
     
     std::vector<std::string> sourceStrings_;
     
-    shared_ptr<std::vector<cl::Device> > devices;
     shared_ptr<cl::Context> context;
     shared_ptr<cl::Program> program;
     

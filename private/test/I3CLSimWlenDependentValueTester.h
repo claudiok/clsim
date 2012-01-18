@@ -30,18 +30,9 @@
 class I3CLSimWlenDependentValueTester : public I3CLSimTesterBase
 {
 public:
-    // version to be called from c++
-    I3CLSimWlenDependentValueTester(const std::pair<std::string, std::string> &platformAndDeviceName,
+    I3CLSimWlenDependentValueTester(const I3CLSimOpenCLDevice &device,
                                     uint64_t workgroupSize_,
                                     uint64_t workItemsPerIteration_,
-                                    bool useNativeMath,
-                                    I3CLSimWlenDependentValueConstPtr wlenDependentValue);
-
-    // version to be called from boost::python
-    I3CLSimWlenDependentValueTester(boost::python::tuple platformAndDeviceName,
-                                    uint64_t workgroupSize_,
-                                    uint64_t workItemsPerIteration_,
-                                    bool useNativeMath,
                                     I3CLSimWlenDependentValueConstPtr wlenDependentValue);
 
     // evaluates the function using an OpenCL kernel

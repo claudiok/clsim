@@ -32,19 +32,9 @@
 class I3CLSimMediumPropertiesTester : public I3CLSimTesterBase
 {
 public:
-    // version to be called from c++
-    I3CLSimMediumPropertiesTester(const std::pair<std::string, std::string> &platformAndDeviceName,
+    I3CLSimMediumPropertiesTester(const I3CLSimOpenCLDevice &device,
                                   uint64_t workgroupSize_,
                                   uint64_t workItemsPerIteration_,
-                                  bool useNativeMath,
-                                  I3CLSimMediumPropertiesConstPtr mediumProperties,
-                                  I3RandomServicePtr randomService = I3RandomServicePtr());
-
-    // version to be called from boost::python
-    I3CLSimMediumPropertiesTester(boost::python::tuple platformAndDeviceName,
-                                  uint64_t workgroupSize_,
-                                  uint64_t workItemsPerIteration_,
-                                  bool useNativeMath,
                                   I3CLSimMediumPropertiesConstPtr mediumProperties,
                                   I3RandomServicePtr randomService = I3RandomServicePtr());
 
