@@ -46,7 +46,7 @@ i3photon_prettyprint(const I3Photon& s)
         << "         startTime : " << s.GetStartTime()/I3Units::ns << "ns" << std::endl
     
         << "        wavelength : " << s.GetWavelength()/I3Units::nanometer << "nm" << std::endl
-        << "    group velocity : " << s.GetGroupVelocity()/I3Units::nanometer << "nm" << std::endl
+        << "    group velocity : " << s.GetGroupVelocity()/(I3Units::meter/I3Units::nanosecond) << "m/ns" << std::endl
         << "      numScattered : " << s.GetNumScattered() << std::endl
         << "            weight : " << s.GetWeight() << std::endl
         << "     cherenkovDist : " << s.GetCherenkovDist()/I3Units::m << "m" << std::endl
