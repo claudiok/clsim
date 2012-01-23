@@ -592,8 +592,10 @@ namespace I3CLSimHelper
             double xPrecision = geoDomPosMaxAbsX_inTemplate/32767.;
             double yPrecision = geoDomPosMaxAbsY_inTemplate/32767.;
             
-            log_warn("using 2 bytes for deltaX storage vs. string mean X. => precision=%fmm", xPrecision/I3Units::mm);
-            log_warn("using 2 bytes for deltaY storage vs. string mean Y. => precision=%fmm", yPrecision/I3Units::mm);
+            log_info(" -> using 2 bytes for deltaX storage vs. string mean X. => precision=%fmm", xPrecision/I3Units::mm);
+            log_info(" -> using 2 bytes for deltaY storage vs. string mean Y. => precision=%fmm", yPrecision/I3Units::mm);
+        } else {
+            log_info(" -> using 4 byte floats for deltaX and deltaY vs. string mean (x,y)-pos");
         }
 
         const std::string typeString = useShortsInsteadOfFloats?"short":"float";

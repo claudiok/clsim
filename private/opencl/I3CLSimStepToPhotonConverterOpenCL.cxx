@@ -742,7 +742,8 @@ namespace {
                                                    uint64_t totalNumberOfPhotons,
                                                    bool starving,
                                                    const std::string &platformName,
-                                                   const std::string &deviceName)
+                                                   const std::string &deviceName,
+                                                   uint64_t deviceProfilingResolution)
     {
         // calculate time since last kernel execution
         boost::posix_time::ptime this_timestamp(boost::posix_time::microsec_clock::universal_time());
@@ -753,13 +754,14 @@ namespace {
         kernelFinishEvent.getProfilingInfo(CL_PROFILING_COMMAND_START, &timeStart);
         kernelFinishEvent.getProfilingInfo(CL_PROFILING_COMMAND_END, &timeEnd);
         
-        const double kernel_duration_in_nanoseconds = static_cast<double>(timeEnd-timeStart);
+        const double kernel_duration_in_nanoseconds = (timeStart==timeEnd)?static_cast<double>(deviceProfilingResolution):static_cast<double>(timeEnd-timeStart);
         
         const double utilization = kernel_duration_in_nanoseconds/host_duration_in_nanoseconds;
         
 #ifdef I3_OPTIMIZE
-        std::cout << "kernel statistics: " 
-        << kernel_duration_in_nanoseconds/static_cast<double>(totalNumberOfPhotons) 
+        std::cout << "kernel statistics: " ;
+        if (timeStart==timeEnd) std::cout << "<=";
+        std::cout << kernel_duration_in_nanoseconds/static_cast<double>(totalNumberOfPhotons) 
         << " nanoseconds/photon (util: " << utilization*100. << "%) "
         << "(" << platformName << " " << deviceName << ")";
         if (starving) std::cout << " [starving]";
@@ -897,7 +899,8 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
                                         totalNumberOfPhotons[thisBuffer],
                                         starving,
                                         device_->GetPlatformName(),
-                                        device_->GetDeviceName());
+                                        device_->GetDeviceName(),
+                                        (device_->GetDeviceHandle())->getInfo<CL_DEVICE_PROFILING_TIMER_RESOLUTION>() );
 #endif
 
         log_trace("[%u] waiting for queue..", thisBuffer);
