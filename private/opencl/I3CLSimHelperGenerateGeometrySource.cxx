@@ -585,8 +585,8 @@ namespace I3CLSimHelper
         output.precision(std::numeric_limits<float>::digits10+4); // maximum precision for a float
 
         if (useShortsInsteadOfFloats) {
-            output << "#define GEO_DOM_POS_MAX_ABS_X_IN_TEMPLATE " << geoDomPosMaxAbsX_inTemplate << "f" << std::endl;
-            output << "#define GEO_DOM_POS_MAX_ABS_Y_IN_TEMPLATE " << geoDomPosMaxAbsY_inTemplate << "f" << std::endl;
+            output << "#define GEO_DOM_POS_MAX_ABS_X_MULTIPLIER_IN_TEMPLATE " << geoDomPosMaxAbsX_inTemplate/32767. << "f" << std::endl;
+            output << "#define GEO_DOM_POS_MAX_ABS_Y_MULTIPLIER_IN_TEMPLATE " << geoDomPosMaxAbsY_inTemplate/32767. << "f" << std::endl;
             output << std::endl;
             
             double xPrecision = geoDomPosMaxAbsX_inTemplate/32767.;
@@ -602,7 +602,7 @@ namespace I3CLSimHelper
         output << "__constant " << typeString << " geoDomPosTemplatePositionsX_flat[GEO_DOM_POS_NUM_FLAT_LIST_ENTRIES] = {" << std::endl;
         for (std::size_t i=0;i<templatePositionsX_flat.size();++i){
             if (useShortsInsteadOfFloats) {
-                const short value = static_cast<short>((templatePositionsX_flat[i]/geoDomPosMaxAbsX_inTemplate)*32767.);
+                const short value = static_cast<short>(templatePositionsX_flat[i]/(geoDomPosMaxAbsX_inTemplate/32767.));
                 output << "  " << value << "," << std::endl;
             } else {
                 output << "  " << templatePositionsX_flat[i] << "f," << std::endl;
@@ -612,7 +612,7 @@ namespace I3CLSimHelper
         output << "__constant " << typeString << " geoDomPosTemplatePositionsY_flat[GEO_DOM_POS_NUM_FLAT_LIST_ENTRIES] = {" << std::endl;
         for (std::size_t i=0;i<templatePositionsY_flat.size();++i){     
             if (useShortsInsteadOfFloats) {
-                const short value = static_cast<short>((templatePositionsY_flat[i]/geoDomPosMaxAbsY_inTemplate)*32767.);
+                const short value = static_cast<short>(templatePositionsY_flat[i]/(geoDomPosMaxAbsY_inTemplate/32767.));
                 output << "  " << value << "," << std::endl;
             } else {
                 output << "  " << templatePositionsY_flat[i] << "f," << std::endl;
@@ -649,18 +649,15 @@ namespace I3CLSimHelper
         output << "inline void geometryGetDomPosition(unsigned short stringNum, unsigned short domNum, float *domPosX, float *domPosY, float *domPosZ)" << std::endl;
         output << "{" << std::endl;
         
-        output << "    const float stringMeanPosX = geoDomPosStringMeanPosX[stringNum];" << std::endl;
-        output << "    const float stringMeanPosY = geoDomPosStringMeanPosY[stringNum];" << std::endl;
-        
         output << "    const unsigned int index = geoDomPosStringStartIndexInTemplateDomList[stringNum]+convert_uint(domNum);" << std::endl;
 
         if (useShortsInsteadOfFloats) {
-            output << "    *domPosX = convert_float(geoDomPosTemplatePositionsX_flat[index])*(GEO_DOM_POS_MAX_ABS_X_IN_TEMPLATE/32767.f) + stringMeanPosX;" << std::endl;
-            output << "    *domPosY = convert_float(geoDomPosTemplatePositionsY_flat[index])*(GEO_DOM_POS_MAX_ABS_Y_IN_TEMPLATE/32767.f) + stringMeanPosY;" << std::endl;
+            output << "    *domPosX = convert_float(geoDomPosTemplatePositionsX_flat[index])*GEO_DOM_POS_MAX_ABS_X_MULTIPLIER_IN_TEMPLATE + geoDomPosStringMeanPosX[stringNum];" << std::endl;
+            output << "    *domPosY = convert_float(geoDomPosTemplatePositionsY_flat[index])*GEO_DOM_POS_MAX_ABS_Y_MULTIPLIER_IN_TEMPLATE + geoDomPosStringMeanPosY[stringNum];" << std::endl;
             output << "    *domPosZ = geoDomPosTemplatePositionsZ_flat[index];" << std::endl;
         } else {
-            output << "    *domPosX = geoDomPosTemplatePositionsX_flat[index] + stringMeanPosX;" << std::endl;
-            output << "    *domPosY = geoDomPosTemplatePositionsY_flat[index] + stringMeanPosY;" << std::endl;
+            output << "    *domPosX = geoDomPosTemplatePositionsX_flat[index] + geoDomPosStringMeanPosX[stringNum];" << std::endl;
+            output << "    *domPosY = geoDomPosTemplatePositionsY_flat[index] + geoDomPosStringMeanPosY[stringNum];" << std::endl;
             output << "    *domPosZ = geoDomPosTemplatePositionsZ_flat[index];" << std::endl;
         }
         output << "}" << std::endl;
