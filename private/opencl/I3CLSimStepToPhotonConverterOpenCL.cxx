@@ -767,7 +767,8 @@ namespace {
         if (starving) std::cout << " [starving]";
         std::cout << std::endl;
 #else
-        log_info("kernel statistics: %g nanoseconds/photon (util: %.0f%%) (%s %s) %s",
+        log_info("kernel statistics: %s%g nanoseconds/photon (util: %.0f%%) (%s %s) %s",
+                 (timeStart==timeEnd)?"<=":"",
                  kernel_duration_in_nanoseconds/static_cast<double>(totalNumberOfPhotons),
                  utilization*100.,
                  platformName.c_str(), deviceName.c_str(),
