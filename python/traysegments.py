@@ -260,7 +260,7 @@ def I3CLSimMakeHits(tray, name,
                    ParameterizationList=particleParameterizations,
                    MaxNumParallelEvents=ParallelEvents,
                    OpenCLDeviceList=openCLDevices,
-                   UseHardcodedDeepCoreSubdetector=True
+                   UseHardcodedDeepCoreSubdetector=False # setting this to true saves GPU constant memory but will reduce performance
                    )
 
     tray.AddModule("I3PhotonToMCHitConverter", name + "_clsim_make_hits",

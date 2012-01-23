@@ -299,7 +299,7 @@ tray.AddModule("I3CLSimModule", "clsim",
                MediumProperties=mediumProperties,
                IgnoreSubdetectors = ["IceTop"],
                IgnoreNonIceCubeOMNumbers=False, # ignore AMANDA and IceTop OMKeys (do NOT use for any other detector!)
-               UseHardcodedDeepCoreSubdetector=True,
+               UseHardcodedDeepCoreSubdetector=False, # setting this to true saves GPU constant memory but will reduce performance
                GenerateCherenkovPhotonsWithoutDispersion=False,
                WavelengthGenerationBias=domAcceptance,
                ParameterizationList=parameterizationsMuon+parameterizationsOther,
