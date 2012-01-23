@@ -23,6 +23,7 @@ public:
     static const uint32_t default_ignoreDomIDsSmallerThan;
     static const uint32_t default_ignoreDomIDsLargerThan;
     static const bool default_splitIntoPartsAccordingToPosition;
+    static const bool default_useHardcodedDeepCoreSubdetector;
 
     I3CLSimSimpleGeometryFromI3Geometry(double OMRadius, 
                                         const I3GeometryConstPtr &geometry,
@@ -33,7 +34,8 @@ public:
                                         int32_t ignoreStringIDsLargerThan=default_ignoreStringIDsLargerThan,
                                         uint32_t ignoreDomIDsSmallerThan=default_ignoreDomIDsSmallerThan,
                                         uint32_t ignoreDomIDsLargerThan=default_ignoreDomIDsLargerThan,
-                                        bool splitIntoPartsAccordingToPosition=default_splitIntoPartsAccordingToPosition);
+                                        bool splitIntoPartsAccordingToPosition=default_splitIntoPartsAccordingToPosition,
+                                        bool useHardcodedDeepCoreSubdetector=default_useHardcodedDeepCoreSubdetector);
     ~I3CLSimSimpleGeometryFromI3Geometry();
 
     virtual std::size_t size() const {return numOMs_;}
@@ -75,6 +77,8 @@ private:
     uint32_t ignoreDomIDsSmallerThan_;
     uint32_t ignoreDomIDsLargerThan_;
 
+    bool useHardcodedDeepCoreSubdetector_;
+    
 };
 
 I3_POINTER_TYPEDEFS(I3CLSimSimpleGeometryFromI3Geometry);

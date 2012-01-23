@@ -98,6 +98,7 @@ namespace I3CLSimHelper
         double meanX;
         double meanY;
         double maxZ, minZ;
+        double meandZ;
         double maxR;
         std::vector<domStruct> doms;
         unsigned short subdetectorNum;
@@ -257,6 +258,8 @@ namespace I3CLSimHelper
             log_fatal("Internal error: layerToOMNumIndex.size() != layerNum");
         }
         
+        std::size_t domsAssigned=0;
+        
         for (unsigned int i=0;i<layerNum;++i)
         {
             const double layerZMin = layerStartZ+static_cast<double>(i)*layerHeight;
@@ -288,6 +291,7 @@ namespace I3CLSimHelper
                         return false; // two different doms from the same string per layer -> fail!
                     } else {
                         layerShouldContainDom = thisDom;
+                        ++domsAssigned;
                     }
                 }
                 
@@ -300,25 +304,44 @@ namespace I3CLSimHelper
             
         } // for (i)
         
+        if (domsAssigned != currentString.doms.size())
+        {
+            //std::cout << "Not all doms assigned to layers. expected " << currentString.doms.size() << ", but got " << domsAssigned << std::endl;
+            return false; // not all DOMs in layers
+        }
+        
         return true; // everything is compatible
     }
     
     void findOverallStringMinMaxZ(const std::vector<stringStruct> &strings,
                                   const double domRadius,
                                   double &minZ,
-                                  double &maxZ)
+                                  double &maxZ,
+                                  bool includeDomRadius)
     {
         minZ=maxZ=NAN;
-        
-        BOOST_FOREACH(const stringStruct& currentString, strings)
-        {
-            if ((currentString.minZ-domRadius < minZ) || isnan(minZ)) {
-                minZ = currentString.minZ-domRadius;
-            }
-            if ((currentString.maxZ+domRadius > maxZ) || isnan(maxZ)) {
-                maxZ = currentString.maxZ+domRadius;
-            }
-        }	
+
+        if (includeDomRadius) {
+            BOOST_FOREACH(const stringStruct& currentString, strings)
+            {
+                if ((currentString.minZ-domRadius < minZ) || isnan(minZ)) {
+                    minZ = currentString.minZ-domRadius;
+                }
+                if ((currentString.maxZ+domRadius > maxZ) || isnan(maxZ)) {
+                    maxZ = currentString.maxZ+domRadius;
+                }
+            }	
+        } else {
+            BOOST_FOREACH(const stringStruct& currentString, strings)
+            {
+                if ((currentString.minZ < minZ) || isnan(minZ)) {
+                    minZ = currentString.minZ;
+                }
+                if ((currentString.maxZ > maxZ) || isnan(maxZ)) {
+                    maxZ = currentString.maxZ;
+                }
+            }	
+        }
     }
     
     bool divideIntoLayers(const stringStruct &currentString,
@@ -379,6 +402,8 @@ namespace I3CLSimHelper
                 if (layerContainsDom)
                 {
                     if (layerToOMNumIndex[i]!=0xFFFF) {
+                        //std::cout << "Layer " << i << " should be empty when inserting DOM" << thisDom << ", but contains " << layerToOMNumIndex[i] << std::endl;
+
                         return false; // two different doms from the same string per layer -> fail!
                     } else {
                         layerToOMNumIndex[i] = thisDom;
@@ -880,6 +905,10 @@ namespace I3CLSimHelper
             
             // loop over all doms. only use them if they are on the current string
             unsigned long numDoms=0;
+            double lastZ=NAN;
+            double lastdZ=NAN;
+            unsigned int numdZ = 0;
+            double meandZ = 0.;
             for (unsigned long i=0;i<numEntries;++i)
             {
                 if (stringIDs[i] != stringID) continue;
@@ -894,6 +923,26 @@ namespace I3CLSimHelper
                 if ((posZ[i] < currentStringStruct.minZ) || isnan(currentStringStruct.minZ))
                     currentStringStruct.minZ = posZ[i];
                 
+                if (isnan(lastZ)) {
+                    lastZ = posZ[i];
+                } else {
+                    double dZ = std::abs(lastZ-posZ[i]);
+                    lastZ = posZ[i];
+                    if (!isnan(lastdZ)) {
+                        if (dZ < 1.75*meandZ/static_cast<double>(numdZ)) {
+                            // consider spacings greater than 75% of the current mean as invalid (missing DOM on string)
+                            meandZ += dZ;
+                            numdZ++;
+                            
+                            lastdZ = dZ;
+                        }
+                    } else {
+                        lastdZ = dZ;
+                        meandZ += dZ;
+                        numdZ++;
+                    }
+                }
+                
                 // insert this dom
                 currentStringStruct.doms.push_back(domStruct());
                 domStruct &currentDomStruct = currentStringStruct.doms.back();
@@ -907,10 +956,12 @@ namespace I3CLSimHelper
             }
             currentStringStruct.meanX /= static_cast<double>(numDoms);
             currentStringStruct.meanY /= static_cast<double>(numDoms);
+            meandZ /= static_cast<double>(numdZ);
+            currentStringStruct.meandZ = meandZ;
             
-            log_trace("String %u has minZ=%f, maxZ=%f, numDoms=%lu",
+            log_trace("String %u has minZ=%f, maxZ=%f, numDoms=%lu, meandZ=%f",
                       stringIndex, currentStringStruct.minZ, currentStringStruct.maxZ,
-                      numDoms);
+                      numDoms, currentStringStruct.meandZ);
 
             // calculate the string radius (will be the OM radius for a straight string)
             for (unsigned long i=0;i<numEntries;++i)
@@ -1021,10 +1072,10 @@ namespace I3CLSimHelper
         std::vector<unsigned char> stringInStringSet(strings.size()); 
         
         double minZHint, maxZHint;
-        findOverallStringMinMaxZ(strings, omRadius, minZHint, maxZHint);
+        findOverallStringMinMaxZ(strings, omRadius, minZHint, maxZHint, false);
         
         log_trace("overall minZ=%fm, maxZ=%fm", minZHint, maxZHint);
-        
+
         unsigned int maxLayerNum=0;
         for (unsigned int stringNum=0;stringNum<strings.size();++stringNum)
         {
@@ -1046,7 +1097,7 @@ namespace I3CLSimHelper
             }
             if (matchFound)
             {
-                //std::cout << "  YES!" << std::endl;
+                //std::cout << "  YES! matches layering " << existingStringSetNum << std::endl;
                 
                 // not much work to be done here
                 stringInStringSet[stringNum] = existingStringSetNum;
@@ -1066,35 +1117,71 @@ namespace I3CLSimHelper
                 layerHeight.push_back(NAN);
                 geoLayerNum.push_back(1);
                 layerToOMNumIndexPerStringSet.push_back(std::vector<unsigned short>());
-                
-                for(;;)
+
+                geoLayerNum.back() = static_cast<unsigned int>((strings[stringNum].maxZ-strings[stringNum].minZ+strings[stringNum].meandZ)/strings[stringNum].meandZ);
+                bool divisionIsPossible = divideIntoLayers(strings[stringNum],
+                                                           layerStartZ.back(),
+                                                           layerHeight.back(),
+                                                           geoLayerNum.back(),
+                                                           omRadius,
+                                                           strings[stringNum].minZ-strings[stringNum].meandZ/2.,
+                                                           strings[stringNum].maxZ+strings[stringNum].meandZ/2.,
+                                                           layerToOMNumIndexPerStringSet.back());
+
+                if (!divisionIsPossible)
                 {
-                    bool divisionIsPossible = divideIntoLayers(strings[stringNum],
-                                                               layerStartZ.back(),
-                                                               layerHeight.back(),
-                                                               geoLayerNum.back(),
-                                                               omRadius,
-                                                               minZHint, maxZHint,
-                                                               layerToOMNumIndexPerStringSet.back());
-                    if (divisionIsPossible) break;
-                    ++geoLayerNum.back();
+                    log_debug("simple division is not possible for string %u. tried %u layers", stringNum, geoLayerNum.back());
+
+                    geoLayerNum.back() = static_cast<unsigned int>((strings[stringNum].maxZ-strings[stringNum].minZ+strings[stringNum].meandZ)/strings[stringNum].meandZ)+1;
+                    divisionIsPossible = divideIntoLayers(strings[stringNum],
+                                                          layerStartZ.back(),
+                                                          layerHeight.back(),
+                                                          geoLayerNum.back(),
+                                                          omRadius,
+                                                          strings[stringNum].minZ-strings[stringNum].meandZ/2.,
+                                                          strings[stringNum].maxZ+strings[stringNum].meandZ/2.,
+                                                          layerToOMNumIndexPerStringSet.back());
                     
-                    if (geoLayerNum.back() >= 1000) {
+                    if (divisionIsPossible)
+                        log_debug(" -> but it is possible with %u layers!", geoLayerNum.back());
                         
-                        std::size_t counter=0;
-                        BOOST_FOREACH(const domStruct &currentDomStruct, strings[stringNum].doms)
-                        {
-                            log_error("DOM #%zu (id %u) @ pos=(%f,%f,%f)",
-                                      counter,
-                                      currentDomStruct.domID, 
-                                      currentDomStruct.posX,
-                                      currentDomStruct.posY,
-                                      currentDomStruct.posZ);
-                            ++counter;
+                }
+                
+                if (!divisionIsPossible)
+                {
+                    log_debug("simple division is not possible for string %u. tried %u layers", stringNum, geoLayerNum.back());
+
+                    geoLayerNum.back()=1;
+                    for(;;)
+                    {
+                        divisionIsPossible = divideIntoLayers(strings[stringNum],
+                                                              layerStartZ.back(),
+                                                              layerHeight.back(),
+                                                              geoLayerNum.back(),
+                                                              omRadius,
+                                                              strings[stringNum].minZ-strings[stringNum].meandZ/2.,
+                                                              strings[stringNum].maxZ+strings[stringNum].meandZ/2.,
+                                                              layerToOMNumIndexPerStringSet.back());
+                        if (divisionIsPossible) break;
+                        ++geoLayerNum.back();
+                        
+                        if (geoLayerNum.back() >= 1000) {
+                            
+                            std::size_t counter=0;
+                            BOOST_FOREACH(const domStruct &currentDomStruct, strings[stringNum].doms)
+                            {
+                                log_error("DOM #%zu (id %u) @ pos=(%f,%f,%f)",
+                                          counter,
+                                          currentDomStruct.domID, 
+                                          currentDomStruct.posX,
+                                          currentDomStruct.posY,
+                                          currentDomStruct.posZ);
+                                ++counter;
+                            }
+                            
+                            log_fatal("There does not seem to be a possible layer division for your string %i on subdetector %i (\"%s\").",
+                                      stringNum, strings[stringNum].subdetectorNum, subdetectorNameList[strings[stringNum].subdetectorNum].c_str());
                         }
-                        
-                        log_fatal("There does not seem to be a possible layer division for your string %i on subdetector %i (\"%s\").",
-                                  stringNum, strings[stringNum].subdetectorNum, subdetectorNameList[strings[stringNum].subdetectorNum].c_str());
                     }
                 }
                 

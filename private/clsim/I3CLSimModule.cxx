@@ -165,6 +165,14 @@ geometryIsConfigured_(false)
                  "This may be necessary for \"tower\" geometries.",
                  splitGeometryIntoPartsAcordingToPosition_);
 
+    useHardcodedDeepCoreSubdetector_=false;
+    AddParameter("UseHardcodedDeepCoreSubdetector",
+                 "Split off DeepCore as its own two subdetectors (upper and lower part).\n"
+                 "This may save constant memory on your GPU.\n"
+                 "Assumes that strings [79..86] are DeepCore strings with an upper part at z>-30m\n"
+                 "and a lower part at z<-30m.",
+                 useHardcodedDeepCoreSubdetector_);
+
     
     // add an outbox
     AddOutBox("OutBox");
@@ -279,6 +287,8 @@ void I3CLSimModule::Configure()
     GetParameter("IgnoreSubdetectors", ignoreSubdetectors_);
 
     GetParameter("SplitGeometryIntoPartsAcordingToPosition", splitGeometryIntoPartsAcordingToPosition_);
+
+    GetParameter("UseHardcodedDeepCoreSubdetector", useHardcodedDeepCoreSubdetector_);
 
     if (!wavelengthGenerationBias_) {
         wavelengthGenerationBias_ = I3CLSimWlenDependentValueConstantConstPtr(new I3CLSimWlenDependentValueConstant(1.));
@@ -489,7 +499,8 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
                                                  std::numeric_limits<int32_t>::max(),   // ignoreStringIDsLargerThan
                                                  1,                                     // ignoreDomIDsSmallerThan
                                                  60,                                    // ignoreDomIDsLargerThan
-                                                 splitGeometryIntoPartsAcordingToPosition_)
+                                                 splitGeometryIntoPartsAcordingToPosition_,
+                                                 useHardcodedDeepCoreSubdetector_)
         );
     }
     else
@@ -504,7 +515,8 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
                                                  std::numeric_limits<int32_t>::max(),   // ignoreStringIDsLargerThan
                                                  std::numeric_limits<uint32_t>::min(),  // ignoreDomIDsSmallerThan
                                                  std::numeric_limits<uint32_t>::max(),  // ignoreDomIDsLargerThan
-                                                 splitGeometryIntoPartsAcordingToPosition_)
+                                                 splitGeometryIntoPartsAcordingToPosition_,
+                                                 useHardcodedDeepCoreSubdetector_)
         );
     }
     

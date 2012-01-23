@@ -177,6 +177,12 @@ private:
     ///   This may be necessary for "tower" geometries.
     bool splitGeometryIntoPartsAcordingToPosition_;
 
+    /// Parameter: Split off DeepCore as its own two subdetectors (upper and lower part).
+    ///  This may save constant memory on your GPU.
+    ///  Assumes that strings [79..86] are DeepCore strings with an upper part at z>-30m
+    ///  and a lower part at z<-30m.
+    bool useHardcodedDeepCoreSubdetector_;
+
 private:
     // default, assignment, and copy constructor declared private
     I3CLSimModule();

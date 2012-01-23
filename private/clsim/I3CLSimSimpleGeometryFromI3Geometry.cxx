@@ -3,6 +3,7 @@
 #endif
 #include <inttypes.h>
 
+#include <icetray/I3Units.h>
 #include "clsim/I3CLSimSimpleGeometryFromI3Geometry.h"
 
 #include <stdexcept>
@@ -20,6 +21,7 @@ const int32_t I3CLSimSimpleGeometryFromI3Geometry::default_ignoreStringIDsLarger
 const uint32_t I3CLSimSimpleGeometryFromI3Geometry::default_ignoreDomIDsSmallerThan = 1;
 const uint32_t I3CLSimSimpleGeometryFromI3Geometry::default_ignoreDomIDsLargerThan = 60;
 const bool I3CLSimSimpleGeometryFromI3Geometry::default_splitIntoPartsAccordingToPosition=false;
+const bool I3CLSimSimpleGeometryFromI3Geometry::default_useHardcodedDeepCoreSubdetector=false;
 
 // some helpers
 namespace {
@@ -38,7 +40,8 @@ I3CLSimSimpleGeometryFromI3Geometry(double OMRadius,
                                     int32_t ignoreStringIDsLargerThan,
                                     uint32_t ignoreDomIDsSmallerThan,
                                     uint32_t ignoreDomIDsLargerThan,
-                                    bool splitIntoPartsAccordingToPosition)
+                                    bool splitIntoPartsAccordingToPosition,
+                                    bool useHardcodedDeepCoreSubdetector)
 :
 OMRadius_(OMRadius),
 splitIntoPartsAccordingToPosition_(splitIntoPartsAccordingToPosition),
@@ -48,7 +51,8 @@ ignoreSubdetectors_(ignoreSubdetectors),
 ignoreStringIDsSmallerThan_(ignoreStringIDsSmallerThan),
 ignoreStringIDsLargerThan_(ignoreStringIDsLargerThan),
 ignoreDomIDsSmallerThan_(ignoreDomIDsSmallerThan),
-ignoreDomIDsLargerThan_(ignoreDomIDsLargerThan)
+ignoreDomIDsLargerThan_(ignoreDomIDsLargerThan),
+useHardcodedDeepCoreSubdetector_(useHardcodedDeepCoreSubdetector)
 {
     if (!geometry) throw std::runtime_error("Received NULL geometry pointer!");
     
@@ -157,6 +161,20 @@ ignoreDomIDsLargerThan_(ignoreDomIDsLargerThan)
             default: subdetectorName = "(unknown)"; break;
         }
 #endif
+        
+        if (useHardcodedDeepCoreSubdetector_) {
+            // special hack for DeepCore
+            if (subdetectorName=="IceCube")
+            {
+                if ((string>=79) && (string<=86)) // these are the DeepCore strings
+                {
+                    if (geo.position.GetZ()>-30.*I3Units::m) // z=30m is about halfway between the upper and lower parts of DeepCore
+                        subdetectorName="DeepCoreUpper";
+                    else
+                        subdetectorName="DeepCoreLower";
+                }
+            }
+        }
         
         if ((string < ignoreStringIDsSmallerThan_) ||
             (string > ignoreStringIDsLargerThan_) ||

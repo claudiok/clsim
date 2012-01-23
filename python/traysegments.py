@@ -259,7 +259,8 @@ def I3CLSimMakeHits(tray, name,
                    WavelengthGenerationBias=wavelengthGenerationBias,
                    ParameterizationList=particleParameterizations,
                    MaxNumParallelEvents=ParallelEvents,
-                   OpenCLDeviceList=openCLDevices
+                   OpenCLDeviceList=openCLDevices,
+                   UseHardcodedDeepCoreSubdetector=True
                    )
 
     tray.AddModule("I3PhotonToMCHitConverter", name + "_clsim_make_hits",
