@@ -72,7 +72,8 @@ def I3CLSimMakeHits(tray, name,
                     IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
                     UnWeightedPhotons=False,
                     UseGeant4=False,
-                    DoNotParallelize=False
+                    DoNotParallelize=False,
+                    OversizeDOM=True
                     ):
     """Do standard clsim processing, compatible to hit-maker/PPC.
     Reads its particles from an I3MCTree and writes an I3MCHitSeriesMap.
@@ -151,13 +152,20 @@ def I3CLSimMakeHits(tray, name,
         Try only using a single work item in parallel when running the
         OpenCL simulation. This might be useful if you want to run jobs
         in parallel on a batch system.
+    :param OversizeDOM:
+        Set this to false to prevent DOM oversizing independently from the UnWeightedPhotons
+        (which also turns oversizing off).
+        Added for effective volume studies at low energies. -briedel
     """
 
     from icecube import icetray, dataclasses, clsim
 
     # some constants
     if not UnWeightedPhotons:
-        RadiusOverSizeFactor = 5.
+        if OversizeDOM:
+            RadiusOverSizeFactor = 5.
+        else:
+            RadiusOverSizeFactor = 1.
     else:
         RadiusOverSizeFactor = 1.
     DOMRadius = 0.16510*icetray.I3Units.m # 13" diameter
