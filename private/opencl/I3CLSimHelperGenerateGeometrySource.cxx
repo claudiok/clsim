@@ -441,6 +441,7 @@ namespace I3CLSimHelper
 
                 if (string.doms.size() != templateXPositions.size()) continue; // cannot match
                 
+                bool match=true;
                 for (std::size_t j=0;j<string.doms.size();++j)
                 {
                     const domStruct &currentDomStruct = string.doms[j];
@@ -449,14 +450,17 @@ namespace I3CLSimHelper
                     const double diffY = std::abs(templateYPositions[j]-(currentDomStruct.posY-offsetY));
                     const double diffZ = std::abs(templateZPositions[j]-(currentDomStruct.posZ));
                     
-                    if (diffX>epsilon) break; // does not match
-                    if (diffY>epsilon) break; // does not match
-                    if (diffZ>epsilon) break; // does not match
-                    
-                    // match!
+                    if (diffX>epsilon) {match=false; break;} // does not match
+                    if (diffY>epsilon) {match=false; break;} // does not match
+                    if (diffZ>epsilon) {match=false; break;} // does not match
+                }
+                
+                if (match) {
+                    // all doms on string match!
                     templateNumber=i;
                     return true;
                 }
+                
             }
 
             return false; // no match found

@@ -374,21 +374,35 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
             const double distFromDOMCenter = std::sqrt(pr2);
             if (std::abs(distFromDOMCenter - DOMOversizeFactor_*DOMRadiusWithoutOversize_) > 3.*I3Units::cm) {
                 if (onlyWarnAboutInvalidPhotonPositions_) {
-                    log_warn("distance not %f*%f=%fmm.. it is %fmm (diff=%gmm) (OMKey=(%i,%u)",
+                    log_warn("distance not %f*%f=%fmm.. it is %fmm (diff=%gmm) (OMKey=(%i,%u) (photon @ pos=(%g,%g,%g)m) (DOM @ pos=(%g,%g,%g)m)",
                              DOMOversizeFactor_,
                              DOMRadiusWithoutOversize_/I3Units::mm,
                              DOMOversizeFactor_*DOMRadiusWithoutOversize_/I3Units::mm,
                              distFromDOMCenter/I3Units::mm,
                              (distFromDOMCenter-DOMOversizeFactor_*DOMRadiusWithoutOversize_)/I3Units::mm,
-                             key.GetString(), key.GetOM());
+                             key.GetString(), key.GetOM(),
+                             photon.GetPos().GetX()/I3Units::m,
+                             photon.GetPos().GetY()/I3Units::m,
+                             photon.GetPos().GetZ()/I3Units::m,
+                             om.position.GetX()/I3Units::m,
+                             om.position.GetY()/I3Units::m,
+                             om.position.GetZ()/I3Units::m
+                             );
                 } else {
-                    log_fatal("distance not %f*%f=%fmm.. it is %fmm (diff=%gmm) (OMKey=(%i,%u)",
+                    log_fatal("distance not %f*%f=%fmm.. it is %fmm (diff=%gmm) (OMKey=(%i,%u) (photon @ pos=(%g,%g,%g)m) (DOM @ pos=(%g,%g,%g)m)",
                               DOMOversizeFactor_,
                               DOMRadiusWithoutOversize_/I3Units::mm,
                               DOMOversizeFactor_*DOMRadiusWithoutOversize_/I3Units::mm,
                               distFromDOMCenter/I3Units::mm,
                               (distFromDOMCenter-DOMOversizeFactor_*DOMRadiusWithoutOversize_)/I3Units::mm,
-                              key.GetString(), key.GetOM());
+                              key.GetString(), key.GetOM(),
+                              photon.GetPos().GetX()/I3Units::m,
+                              photon.GetPos().GetY()/I3Units::m,
+                              photon.GetPos().GetZ()/I3Units::m,
+                              om.position.GetX()/I3Units::m,
+                              om.position.GetY()/I3Units::m,
+                              om.position.GetZ()/I3Units::m
+                              );
                 }
             }
             
