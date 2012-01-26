@@ -51,6 +51,8 @@
 #include "dataclasses/I3Direction.h"
 #include "dataclasses/I3Position.h"
 
+#include <boost/archive/portable_binary_iarchive.hpp>
+#include <boost/archive/portable_binary_oarchive.hpp>
 
 
 /**
@@ -202,6 +204,9 @@ private:
     BOOST_SERIALIZATION_SPLIT_MEMBER();
 } __attribute__ ((packed)) ;
 
+template<> void I3CLSimPhoton::save(boost::archive::portable_binary_oarchive &ar, unsigned version) const;
+template<> void I3CLSimPhoton::load(boost::archive::portable_binary_iarchive &ar, unsigned version);
+
 
 inline bool operator==(const I3CLSimPhoton &a, const I3CLSimPhoton &b)
 {
@@ -217,5 +222,8 @@ typedef I3Map<OMKey, I3CLSimPhotonSeries> I3CLSimPhotonSeriesMap;
 I3_POINTER_TYPEDEFS(I3CLSimPhoton);
 I3_POINTER_TYPEDEFS(I3CLSimPhotonSeries);
 I3_POINTER_TYPEDEFS(I3CLSimPhotonSeriesMap);
+
+template<> template<> void I3Vector<I3CLSimPhoton>::serialize(boost::archive::portable_binary_iarchive &ar, unsigned version);
+template<> template<> void I3Vector<I3CLSimPhoton>::serialize(boost::archive::portable_binary_oarchive &ar, unsigned version);
 
 #endif //I3CLSIMPHOTON_H_INCLUDED

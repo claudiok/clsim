@@ -51,6 +51,8 @@
 #include "dataclasses/I3Direction.h"
 #include "dataclasses/I3Position.h"
 
+#include <boost/archive/portable_binary_iarchive.hpp>
+#include <boost/archive/portable_binary_oarchive.hpp>
 
 
 /**
@@ -141,6 +143,8 @@ private:
     BOOST_SERIALIZATION_SPLIT_MEMBER();
 } __attribute__ ((packed)) ;
 
+template<> void I3CLSimStep::save(boost::archive::portable_binary_oarchive &ar, unsigned version) const;
+template<> void I3CLSimStep::load(boost::archive::portable_binary_iarchive &ar, unsigned version);
 
 inline bool operator==(const I3CLSimStep &a, const I3CLSimStep &b)
 {
@@ -154,5 +158,8 @@ typedef I3Vector<I3CLSimStep> I3CLSimStepSeries;
 
 I3_POINTER_TYPEDEFS(I3CLSimStep);
 I3_POINTER_TYPEDEFS(I3CLSimStepSeries);
+
+template<> template<> void I3Vector<I3CLSimStep>::serialize(boost::archive::portable_binary_iarchive &ar, unsigned version);
+template<> template<> void I3Vector<I3CLSimStep>::serialize(boost::archive::portable_binary_oarchive &ar, unsigned version);
 
 #endif //I3CLSIMSTEP_H_INCLUDED

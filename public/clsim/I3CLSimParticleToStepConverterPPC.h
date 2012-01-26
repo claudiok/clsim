@@ -202,6 +202,12 @@ private:
 
 };
 
+// forward-declare template specialization
+template <>
+std::pair<I3CLSimStepSeriesConstPtr, bool>
+I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::operator()
+(I3CLSimParticleToStepConverterPPC::BarrierData_t &data) const;
+
 I3_POINTER_TYPEDEFS(I3CLSimParticleToStepConverterPPC);
 
 #endif //I3CLSimParticleToStepConverterPPC_H_INCLUDED

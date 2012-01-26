@@ -30,9 +30,6 @@
 #include <boost/static_assert.hpp>
 #include <boost/serialization/binary_object.hpp>
 
-#include <boost/archive/portable_binary_iarchive.hpp>
-#include <boost/archive/portable_binary_oarchive.hpp>
-
 using namespace boost::archive;
 
 namespace {
