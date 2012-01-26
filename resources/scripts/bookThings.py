@@ -42,6 +42,8 @@ tray = I3Tray()
 
 tray.AddModule('I3Reader','reader',filename=infile)
 
+tray.AddModule('I3NullSplitter', 'nullsplit')
+
 count = 0
 def counter(frame):
     global count
@@ -56,18 +58,18 @@ def extractMCTreeParticles(frame):
     mctree = frame["I3MCTree"]
     
     # get tracks in ice/water
-    mctracksinice = mctree.GetInIce()
+    mctracksinice = mctree.in_ice
     mcmuontrack = None
     highestEnergy=-1.
     for track in mctracksinice:
-        if (track.GetType() == dataclasses.I3Particle.ParticleType.MuPlus) or (track.GetType() == dataclasses.I3Particle.ParticleType.MuMinus):
-            if track.GetEnergy() > highestEnergy:
-                highestEnergy = track.GetEnergy()
+        if (track.type == dataclasses.I3Particle.ParticleType.MuPlus) or (track.type == dataclasses.I3Particle.ParticleType.MuMinus):
+            if track.energy > highestEnergy:
+                highestEnergy = track.energy
                 mcmuontrack = track
 
     if mcmuontrack is None:
         mcmuontrack = dataclasses.I3Particle()
-    primary = mctree.GetMostEnergeticPrimary()
+    primary = mctree.most_energetic_primary
     
     if primary is None:
         primary = dataclasses.I3Particle()
@@ -84,7 +86,8 @@ tray.AddModule(tableio.I3TableWriter,'writer1',
           dict(key="MCHitSeriesMap", converter=clsim.converters.I3MCHitSeriesMapConverterWithIDs(True), name="MCHitSeriesMap"),
           dict(key="MCHitSeriesMap_clsim", converter=clsim.converters.I3MCHitSeriesMapConverterWithIDs(True), name="MCHitSeriesMap_clsim"),
           dict(key="PropagatedPhotons", name="PropagatedPhotons"),
-         ])
+         ],
+    SubEventStreams=['nullsplit',])
 
 #tray.AddModule(tableio.I3TableWriter,'writer2',
 #    tableservice = tabler, types=[dataclasses.I3Particle])
