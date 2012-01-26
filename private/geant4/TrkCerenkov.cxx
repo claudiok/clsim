@@ -174,19 +174,17 @@ TrkCerenkov::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
 
     G4int NumPhotons = (G4int) G4Poisson(MeanNumberOfPhotons);
 
-    
-    
-    const double canHeight = 1000.*m;
-    const double canRadius = 750.*m;
-    if (fabs(x0.z()) > canHeight/2.) {
-        // we are above or below the can
-        NumPhotons=0;
-    } else {
-        G4double posRadius = std::sqrt(x0.x()*x0.x() + x0.y()*x0.y());
-        if (posRadius > canRadius) {
-            NumPhotons=0;
-        }
-    }
+//    const double canHeight = 1000.*m;
+//    const double canRadius = 750.*m;
+//    if (fabs(x0.z()) > canHeight/2.) {
+//        // we are above or below the can
+//        NumPhotons=0;
+//    } else {
+//        G4double posRadius = std::sqrt(x0.x()*x0.x() + x0.y()*x0.y());
+//        if (posRadius > canRadius) {
+//            NumPhotons=0;
+//        }
+//    }
     
     
     if (NumPhotons <= 0) 
