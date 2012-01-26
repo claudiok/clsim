@@ -688,7 +688,7 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl_downloadPhotons(boost
             waitForOpenCLEventYield(copyComplete);
         }
         
-        log_trace("Num photons to copy: %" PRIu32, numberOfGeneratedPhotons);
+        log_warn("Num photons to copy (buffer %u): %" PRIu32, bufferIndex, numberOfGeneratedPhotons);
         
         if (numberOfGeneratedPhotons > maxNumOutputPhotons_)
         {
@@ -828,21 +828,30 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
     boost::posix_time::ptime last_timestamp(boost::posix_time::microsec_clock::universal_time());
 #endif
     
-    unsigned int thisBuffer=1;
-    unsigned int otherBuffer=0;
+    unsigned int thisBuffer=0;
+    unsigned int otherBuffer=1;
     bool otherBufferHasBeenCopied=false;
+    
+    bool disableDoubleBuffering=true;
+    
+    if (!disableDoubleBuffering) {
+        // swap buffers once to swap them back just a few lines later
+        std::swap(thisBuffer, otherBuffer);
+    }
     
     // start the main loop
     for (;;)
     {
-        // swap buffers
-        std::swap(thisBuffer, otherBuffer);
+        if (!disableDoubleBuffering) {
+            // swap buffers
+            std::swap(thisBuffer, otherBuffer);
+        }
         
         log_trace("buffers indices now: this==%u, other==%u", thisBuffer, otherBuffer);
         
         bool starving=false;
-        if (!otherBufferHasBeenCopied) {
-            starving=true;
+        if ((!otherBufferHasBeenCopied) || (disableDoubleBuffering)) {
+            if (!disableDoubleBuffering) starving=true;
             log_trace("[%u] starting \"this\" buffer copy (need to block)..", thisBuffer);
             {
                 bool shouldBreak=false; // shouldBreak is true if this thread has been signalled to terminate
@@ -863,9 +872,11 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
         cl::Event kernelFinishEvent;
         OpenCLThread_impl_runKernel(thisBuffer, kernelFinishEvent, numberOfSteps[thisBuffer]);
 
-        // if there already is a new buffer available, copy it now, while the kernel is running
-        log_trace("[%u] Starting copy (other buffer)..", otherBuffer);
+        if (!disableDoubleBuffering)
         {
+            // if there already is a new buffer available, copy it now, while the kernel is running
+            log_trace("[%u] Starting copy (other buffer)..", otherBuffer);
+
             bool shouldBreak=false; // shouldBreak is true if this thread has been signalled to terminate
             bool gotSomething = OpenCLThread_impl_uploadSteps(di, shouldBreak, otherBuffer, stepsIdentifier[otherBuffer], totalNumberOfPhotons[otherBuffer], numberOfSteps[otherBuffer], false);
             if (shouldBreak) break;
