@@ -134,8 +134,12 @@ void register_I3CLSimStepToPhotonConverter()
         .def("GetMaxNumWorkitems", &I3CLSimStepToPhotonConverterOpenCL::GetMaxNumWorkitems)
         .def("SetMaxNumWorkitems", &I3CLSimStepToPhotonConverterOpenCL::SetMaxNumWorkitems)
 
+        .def("SetDisableDoubleBuffering", &I3CLSimStepToPhotonConverterOpenCL::SetDisableDoubleBuffering)
+        .def("GetDisableDoubleBuffering", &I3CLSimStepToPhotonConverterOpenCL::GetDisableDoubleBuffering)
+
         .add_property("workgroupSize", &I3CLSimStepToPhotonConverterOpenCL::GetWorkgroupSize, &I3CLSimStepToPhotonConverterOpenCL::SetWorkgroupSize)
         .add_property("maxNumWorkitems", &I3CLSimStepToPhotonConverterOpenCL::GetMaxNumWorkitems, &I3CLSimStepToPhotonConverterOpenCL::SetMaxNumWorkitems)
+        .add_property("disableDoubleBuffering", &I3CLSimStepToPhotonConverterOpenCL::GetDisableDoubleBuffering, &I3CLSimStepToPhotonConverterOpenCL::SetDisableDoubleBuffering)
         ;
     }
     

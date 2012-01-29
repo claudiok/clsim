@@ -43,6 +43,7 @@ compiled_(false),
 useNativeMath_(useNativeMath),
 selectedDeviceIndex_(0),
 deviceIsSelected_(false),
+disableDoubleBuffering_(true),
 maxWorkgroupSize_(0),
 workgroupSize_(0),
 maxNumWorkitems_(10240)
@@ -220,8 +221,10 @@ void I3CLSimStepToPhotonConverterOpenCL::Initialize()
     (new cl::Buffer(*context_, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, geoLayerToOMNumIndexPerStringSetInfo_.size() * sizeof(unsigned short), &(geoLayerToOMNumIndexPerStringSetInfo_[0])));
     
     
+    const unsigned int numBuffers = disableDoubleBuffering_?1:2;
+    
     // allocate empty buffers on the device
-    for (unsigned int i=0;i<2;++i)
+    for (unsigned int i=0;i<numBuffers;++i)
     {
         deviceBuffer_InputSteps.push_back(shared_ptr<cl::Buffer>
         (new cl::Buffer(*context_, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, maxNumWorkitems_*sizeof(I3CLSimStep), NULL)));
@@ -236,7 +239,7 @@ void I3CLSimStepToPhotonConverterOpenCL::Initialize()
     log_debug("Device buffers are set up.");
     
     log_debug("Configuring kernel.");
-    for (unsigned int i=0;i<2;++i)
+    for (unsigned int i=0;i<numBuffers;++i)
     {
         kernel_[i]->setArg(0, *(deviceBuffer_CurrentNumOutputPhotons[i]));     // hit counter
         kernel_[i]->setArg(1, maxNumOutputPhotons_);                           // maximum number of possible hits
@@ -450,10 +453,12 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
     }
     log_debug("code compiled.");
     
+    const unsigned int numBuffers = disableDoubleBuffering_?1:2;
+
     // instantiate the command queue
     log_debug("Initializing..");
     try {
-        for (unsigned int i=0;i<2;++i)
+        for (unsigned int i=0;i<numBuffers;++i)
         {
 #ifdef DUMP_STATISTICS
             queue_.push_back(shared_ptr<cl::CommandQueue>(new cl::CommandQueue(*context_, device, CL_QUEUE_PROFILING_ENABLE)));
@@ -472,14 +477,17 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
     log_debug("Creating kernel..");
     try {
         // instantiate the kernel object
-        for (unsigned int i=0;i<2;++i)
+        for (unsigned int i=0;i<numBuffers;++i)
         {
             kernel_.push_back(shared_ptr<cl::Kernel>(new cl::Kernel(program, "propKernel")));
         }
 
         maxWorkgroupSize_ = kernel_[0]->getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device);
-        if (kernel_[0]->getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device) != maxWorkgroupSize_) {
-            log_fatal("created two identical kernels and got different maximum work group sizes.");
+        
+        if (!disableDoubleBuffering_) {
+            if (kernel_[1]->getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device) != maxWorkgroupSize_) {
+                log_fatal("created two identical kernels and got different maximum work group sizes.");
+            }
         }
         
         log_debug("Maximum workgroup sizes for the kernel is %" PRIu64, maxWorkgroupSize_);
@@ -785,8 +793,10 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
     // set things up here
     if (!context_) log_fatal("Internal error: context is (null)");
 
-    if (queue_.size() != 2) log_fatal("Internal error: queue_.size() != 2!");
-    if (kernel_.size() != 2) log_fatal("Internal error: kernel_.size() != 2!");
+    const std::size_t numBuffers = disableDoubleBuffering_?1:2;
+    
+    if (queue_.size() != numBuffers) log_fatal("Internal error: queue_.size() != 2!");
+    if (kernel_.size() != numBuffers) log_fatal("Internal error: kernel_.size() != 2!");
 
     BOOST_FOREACH(shared_ptr<cl::CommandQueue> &ptr, queue_) {
         if (!ptr) log_fatal("Internal error: queue_[] is (null)");
@@ -795,9 +805,9 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
         if (!ptr) log_fatal("Internal error: kernel_[] is (null)");
     }
 
-    if (deviceBuffer_InputSteps.size() != 2) log_fatal("Internal error: deviceBuffer_InputSteps.size() != 2!");
-    if (deviceBuffer_OutputPhotons.size() != 2) log_fatal("Internal error: deviceBuffer_OutputPhotons.size() != 2!");
-    if (deviceBuffer_CurrentNumOutputPhotons.size() != 2) log_fatal("Internal error: deviceBuffer_CurrentNumOutputPhotons.size() != 2!");
+    if (deviceBuffer_InputSteps.size() != numBuffers) log_fatal("Internal error: deviceBuffer_InputSteps.size() != 2!");
+    if (deviceBuffer_OutputPhotons.size() != numBuffers) log_fatal("Internal error: deviceBuffer_OutputPhotons.size() != 2!");
+    if (deviceBuffer_CurrentNumOutputPhotons.size() != numBuffers) log_fatal("Internal error: deviceBuffer_CurrentNumOutputPhotons.size() != 2!");
     
     BOOST_FOREACH(shared_ptr<cl::Buffer> &ptr, deviceBuffer_InputSteps) {
         if (!ptr) log_fatal("Internal error: deviceBuffer_InputSteps[] is (null)");
@@ -820,9 +830,9 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
     }
     openCLStarted_cond_.notify_all();
     
-    std::vector<uint32_t> stepsIdentifier(2, 0);
-    std::vector<uint64_t> totalNumberOfPhotons(2, 0);
-    std::vector<std::size_t> numberOfSteps(2, 0);
+    std::vector<uint32_t> stepsIdentifier(numBuffers, 0);
+    std::vector<uint64_t> totalNumberOfPhotons(numBuffers, 0);
+    std::vector<std::size_t> numberOfSteps(numBuffers, 0);
     
 #ifdef DUMP_STATISTICS
     boost::posix_time::ptime last_timestamp(boost::posix_time::microsec_clock::universal_time());
@@ -832,9 +842,7 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
     unsigned int otherBuffer=1;
     bool otherBufferHasBeenCopied=false;
     
-    bool disableDoubleBuffering=true;
-    
-    if (!disableDoubleBuffering) {
+    if (!disableDoubleBuffering_) {
         // swap buffers once to swap them back just a few lines later
         std::swap(thisBuffer, otherBuffer);
     }
@@ -842,7 +850,7 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
     // start the main loop
     for (;;)
     {
-        if (!disableDoubleBuffering) {
+        if (!disableDoubleBuffering_) {
             // swap buffers
             std::swap(thisBuffer, otherBuffer);
         }
@@ -850,8 +858,8 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
         log_trace("buffers indices now: this==%u, other==%u", thisBuffer, otherBuffer);
         
         bool starving=false;
-        if ((!otherBufferHasBeenCopied) || (disableDoubleBuffering)) {
-            if (!disableDoubleBuffering) starving=true;
+        if ((!otherBufferHasBeenCopied) || (disableDoubleBuffering_)) {
+            if (!disableDoubleBuffering_) starving=true;
             log_trace("[%u] starting \"this\" buffer copy (need to block)..", thisBuffer);
             {
                 bool shouldBreak=false; // shouldBreak is true if this thread has been signalled to terminate
@@ -872,7 +880,7 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
         cl::Event kernelFinishEvent;
         OpenCLThread_impl_runKernel(thisBuffer, kernelFinishEvent, numberOfSteps[thisBuffer]);
 
-        if (!disableDoubleBuffering)
+        if (!disableDoubleBuffering_)
         {
             // if there already is a new buffer available, copy it now, while the kernel is running
             log_trace("[%u] Starting copy (other buffer)..", otherBuffer);
@@ -947,6 +955,23 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
 bool I3CLSimStepToPhotonConverterOpenCL::IsInitialized() const
 {
     return initialized_;
+}
+
+void I3CLSimStepToPhotonConverterOpenCL::SetDisableDoubleBuffering(bool value)
+{
+    if (initialized_)
+        throw I3CLSimStepToPhotonConverter_exception("I3CLSimStepToPhotonConverterOpenCL already initialized!");
+
+    compiled_=false;
+    kernel_.clear();
+    queue_.clear();
+    
+    disableDoubleBuffering_=value;
+}
+
+bool I3CLSimStepToPhotonConverterOpenCL::GetDisableDoubleBuffering() const
+{
+    return disableDoubleBuffering_;
 }
 
 void I3CLSimStepToPhotonConverterOpenCL::SetWlenGenerator(I3CLSimRandomValueConstPtr wlenGenerator)

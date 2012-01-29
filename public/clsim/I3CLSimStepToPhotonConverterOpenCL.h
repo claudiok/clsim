@@ -84,6 +84,33 @@ public:
     uint64_t GetMaxWorkgroupSize() const;
 
     /**
+     * Disables or enables double-buffered
+     * GPU usage. Double buffering will use
+     * two command queues and two sets of input
+     * and output buffers in order to transfer
+     * data to the GPU while a kernel is executing
+     * on the other buffer.
+     *
+     * This has been observed to yield empty results
+     * results on older drivers for the nVidia
+     * architecture, so it is disabled by default.
+     *
+     * Before enabling this for a certain driver/hardware
+     * combination, make sure that both correct results
+     * are returned. Most of the time the second buffer
+     * results are always empty, so this error should be
+     * easy to observe.
+     *
+     * Will throw if already initialized.
+     */
+    void SetDisableDoubleBuffering(bool value);
+
+    /**
+     * Returns true if double buffering is disabled.
+     */
+    bool GetDisableDoubleBuffering() const;
+
+    /**
      * Sets the wavelength generator. By default it should
      * return wavelengths according to a Cherenkov spectrum.
      * Will throw if used after the call to Initialize().
@@ -226,6 +253,8 @@ private:
     bool useNativeMath_;
     std::size_t selectedDeviceIndex_;
     bool deviceIsSelected_;
+    
+    bool disableDoubleBuffering_;
     
     // some kernel sources loaded on construction
     std::string mwcrngKernelSource_;
