@@ -1,11 +1,11 @@
 #include <icetray/serialization.h>
-#include <clsim/I3CLSimParticleParameterization.h>
+#include <clsim/I3CLSimLightSourceParameterization.h>
 
 #include <limits>
 
-const I3CLSimParticleParameterization::AllParticles_t I3CLSimParticleParameterization::AllParticles = I3CLSimParticleParameterization::AllParticles_t();
+const I3CLSimLightSourceParameterization::AllParticles_t I3CLSimLightSourceParameterization::AllParticles = I3CLSimLightSourceParameterization::AllParticles_t();
 
-I3CLSimParticleParameterization::I3CLSimParticleParameterization()
+I3CLSimLightSourceParameterization::I3CLSimLightSourceParameterization()
 :
 #ifdef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
 forPdgEncoding(0),
@@ -20,13 +20,13 @@ catchAll(false)
     
 }
 
-I3CLSimParticleParameterization::~I3CLSimParticleParameterization() 
+I3CLSimLightSourceParameterization::~I3CLSimLightSourceParameterization() 
 { 
 
 }
 
-I3CLSimParticleParameterization::I3CLSimParticleParameterization
-(I3CLSimParticleToStepConverterPtr converter_,
+I3CLSimLightSourceParameterization::I3CLSimLightSourceParameterization
+(I3CLSimLightSourceToStepConverterPtr converter_,
  I3Particle::ParticleType forParticleType_,
  double fromEnergy_, double toEnergy_,
  bool needsLength_
@@ -46,8 +46,8 @@ catchAll(false)
     
 }
 
-I3CLSimParticleParameterization::I3CLSimParticleParameterization
-(I3CLSimParticleToStepConverterPtr converter_,
+I3CLSimLightSourceParameterization::I3CLSimLightSourceParameterization
+(I3CLSimLightSourceToStepConverterPtr converter_,
  const I3Particle &forParticleType_,
  double fromEnergy_, double toEnergy_,
  bool needsLength_
@@ -67,9 +67,9 @@ catchAll(false)
     
 }
 
-I3CLSimParticleParameterization::I3CLSimParticleParameterization
-(I3CLSimParticleToStepConverterPtr converter_,
- const I3CLSimParticleParameterization::AllParticles_t &dummy,
+I3CLSimLightSourceParameterization::I3CLSimLightSourceParameterization
+(I3CLSimLightSourceToStepConverterPtr converter_,
+ const I3CLSimLightSourceParameterization::AllParticles_t &dummy,
  double fromEnergy_, double toEnergy_,
  bool needsLength_
  )
@@ -88,17 +88,17 @@ catchAll(true)
     
 }
 
-bool I3CLSimParticleParameterization::IsValidForParticle(const I3Particle &particle) const
+bool I3CLSimLightSourceParameterization::IsValidForParticle(const I3Particle &particle) const
 {
     if (isnan(particle.GetEnergy())) {
-        log_warn("I3CLSimParticleParameterization::IsValid() called with particle with NaN energy. Parameterization is NOT valid.");
+        log_warn("I3CLSimLightSourceParameterization::IsValid() called with particle with NaN energy. Parameterization is NOT valid.");
         return false;
     }
 
     return IsValid(particle.GetType(), particle.GetEnergy(), particle.GetLength());
 }
 
-bool I3CLSimParticleParameterization::IsValid(I3Particle::ParticleType type, double energy, double length) const
+bool I3CLSimLightSourceParameterization::IsValid(I3Particle::ParticleType type, double energy, double length) const
 {
     if (isnan(energy)) return false;
     if (!catchAll) {
@@ -117,7 +117,7 @@ bool I3CLSimParticleParameterization::IsValid(I3Particle::ParticleType type, dou
 }
 
 #ifdef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
-bool I3CLSimParticleParameterization::IsValidForPdgEncoding(int32_t encoding, double energy, double length) const
+bool I3CLSimLightSourceParameterization::IsValidForPdgEncoding(int32_t encoding, double energy, double length) const
 {
     if (isnan(energy)) return false;
     if (!catchAll) {

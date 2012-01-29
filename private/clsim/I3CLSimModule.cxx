@@ -41,7 +41,7 @@
 
 #include "clsim/I3CLSimWlenDependentValueConstant.h"
 
-#include "clsim/I3CLSimParticleToStepConverterGeant4.h"
+#include "clsim/I3CLSimLightSourceToStepConverterGeant4.h"
 
 #include "clsim/I3CLSimModuleHelper.h"
 
@@ -87,7 +87,7 @@ geometryIsConfigured_(false)
                  mediumProperties_);
 
     AddParameter("ParameterizationList",
-                 "An instance I3CLSimParticleParameterizationSeries specifying the fast simulation parameterizations to be used.",
+                 "An instance I3CLSimLightSourceParameterizationSeries specifying the fast simulation parameterizations to be used.",
                  parameterizationList_);
 
     maxNumParallelEvents_=1000;
@@ -129,12 +129,12 @@ geometryIsConfigured_(false)
                  "Geant4 physics list name. Examples are \"QGSP_BERT_EMV\" and \"QGSP_BERT\"",
                  geant4PhysicsListName_);
 
-    geant4MaxBetaChangePerStep_=I3CLSimParticleToStepConverterGeant4::default_maxBetaChangePerStep;
+    geant4MaxBetaChangePerStep_=I3CLSimLightSourceToStepConverterGeant4::default_maxBetaChangePerStep;
     AddParameter("Geant4MaxBetaChangePerStep",
                  "Maximum change of beta=v/c per Geant4 step.",
                  geant4MaxBetaChangePerStep_);
 
-    geant4MaxNumPhotonsPerStep_=I3CLSimParticleToStepConverterGeant4::default_maxNumPhotonsPerStep;
+    geant4MaxNumPhotonsPerStep_=I3CLSimLightSourceToStepConverterGeant4::default_maxNumPhotonsPerStep;
     AddParameter("Geant4MaxNumPhotonsPerStep",
                  "Approximate maximum number of Cherenkov photons generated per step by Geant4.",
                  geant4MaxNumPhotonsPerStep_);
@@ -314,7 +314,7 @@ void I3CLSimModule::Configure()
     if (parameterizationList_.size() > 0) {
         log_info("Using the following parameterizations:");
         
-        BOOST_FOREACH(const I3CLSimParticleParameterization &parameterization, parameterizationList_)
+        BOOST_FOREACH(const I3CLSimLightSourceParameterization &parameterization, parameterizationList_)
         {
             I3Particle tmpParticle;
 #ifndef I3PARTICLE_SUPPORTS_PDG_ENCODINGS

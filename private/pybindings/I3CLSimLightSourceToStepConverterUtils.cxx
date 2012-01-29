@@ -21,7 +21,7 @@
 
 #include <sstream>
 
-#include <clsim/I3CLSimParticleToStepConverterUtils.h>
+#include <clsim/I3CLSimLightSourceToStepConverterUtils.h>
 
 #include <boost/preprocessor/seq.hpp>
 #include <icetray/python/std_vector_indexing_suite.hpp>
@@ -32,17 +32,17 @@ using namespace boost::python;
 namespace bp = boost::python;
 
 
-void register_I3CLSimParticleToStepConverterUtils()
+void register_I3CLSimLightSourceToStepConverterUtils()
 {
     double (* gammaDistributedNumber_smartPtr)(double, I3RandomServicePtr)
-    = &I3CLSimParticleToStepConverterUtils::gammaDistributedNumber;
+    = &I3CLSimLightSourceToStepConverterUtils::gammaDistributedNumber;
 
     // this can be used for testing purposes
-    bp::def("NumberOfPhotonsPerMeter", &I3CLSimParticleToStepConverterUtils::NumberOfPhotonsPerMeter);
+    bp::def("NumberOfPhotonsPerMeter", &I3CLSimLightSourceToStepConverterUtils::NumberOfPhotonsPerMeter);
     bp::def("gammaDistributedNumber", gammaDistributedNumber_smartPtr);
-    //bp::def("scatterDirectionByAngle", &I3CLSimParticleToStepConverterUtils::scatterDirectionByAngle);
-    //bp::def("GenerateStep", &I3CLSimParticleToStepConverterUtils::GenerateStep);
-    //bp::def("GenerateStepForMuon", &I3CLSimParticleToStepConverterUtils::GenerateStepForMuon);
+    //bp::def("scatterDirectionByAngle", &I3CLSimLightSourceToStepConverterUtils::scatterDirectionByAngle);
+    //bp::def("GenerateStep", &I3CLSimLightSourceToStepConverterUtils::GenerateStep);
+    //bp::def("GenerateStepForMuon", &I3CLSimLightSourceToStepConverterUtils::GenerateStepForMuon);
     
     
 }

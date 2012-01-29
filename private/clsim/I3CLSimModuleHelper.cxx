@@ -234,20 +234,20 @@ namespace I3CLSimModuleHelper {
         return conv;
     }
 
-    I3CLSimParticleToStepConverterGeant4Ptr initializeGeant4(I3RandomServicePtr rng,
+    I3CLSimLightSourceToStepConverterGeant4Ptr initializeGeant4(I3RandomServicePtr rng,
                                                              I3CLSimMediumPropertiesPtr medium,
                                                              I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
                                                              uint64_t bunchSizeGranularity,
                                                              uint64_t maxBunchSize,
-                                                             const I3CLSimParticleParameterizationSeries &parameterizationList,
+                                                             const I3CLSimLightSourceParameterizationSeries &parameterizationList,
                                                              const std::string &physicsListName,
                                                              double maxBetaChangePerStep,
                                                              uint32_t maxNumPhotonsPerStep,
                                                              bool multiprocessor)
     {
-        I3CLSimParticleToStepConverterGeant4Ptr conv
+        I3CLSimLightSourceToStepConverterGeant4Ptr conv
         (
-         new I3CLSimParticleToStepConverterGeant4
+         new I3CLSimLightSourceToStepConverterGeant4
          (
           physicsListName,
           maxBetaChangePerStep,

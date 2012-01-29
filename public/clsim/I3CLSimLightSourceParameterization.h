@@ -19,8 +19,8 @@
 //   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef I3CLSIMPARTICLEPARAMETERIZATION_H_INCLUDED
-#define I3CLSIMPARTICLEPARAMETERIZATION_H_INCLUDED
+#ifndef I3CLSIMLIGHTSOURCEPARAMETERIZATION_H_INCLUDED
+#define I3CLSIMLIGHTSOURCEPARAMETERIZATION_H_INCLUDED
 
 #include "icetray/I3TrayHeaders.h"
 
@@ -29,38 +29,38 @@
 #include <vector>
 
 // forward declarations
-struct I3CLSimParticleToStepConverter;
-I3_POINTER_TYPEDEFS(I3CLSimParticleToStepConverter);
+struct I3CLSimLightSourceToStepConverter;
+I3_POINTER_TYPEDEFS(I3CLSimLightSourceToStepConverter);
 
 /**
  * @brief Defines a particle parameterization for fast simulation,
  * bypassing Geant4
  */
-struct I3CLSimParticleParameterization 
+struct I3CLSimLightSourceParameterization 
 {
 public:
-    I3CLSimParticleParameterization();
-    ~I3CLSimParticleParameterization();
+    I3CLSimLightSourceParameterization();
+    ~I3CLSimLightSourceParameterization();
 
-    I3CLSimParticleParameterization(I3CLSimParticleToStepConverterPtr converter_,
+    I3CLSimLightSourceParameterization(I3CLSimLightSourceToStepConverterPtr converter_,
                                     I3Particle::ParticleType forParticleType_,
                                     double fromEnergy_, double toEnergy_,
                                     bool needsLength_=false);
 
-    I3CLSimParticleParameterization(I3CLSimParticleToStepConverterPtr converter_,
+    I3CLSimLightSourceParameterization(I3CLSimLightSourceToStepConverterPtr converter_,
                                     const I3Particle &forParticleType_,
                                     double fromEnergy_, double toEnergy_,
                                     bool needsLength_=false);
 
     struct AllParticles_t {};
     static const AllParticles_t AllParticles;
-    I3CLSimParticleParameterization(I3CLSimParticleToStepConverterPtr converter_,
+    I3CLSimLightSourceParameterization(I3CLSimLightSourceToStepConverterPtr converter_,
                                     const AllParticles_t &,
                                     double fromEnergy_, double toEnergy_,
                                     bool needsLength_=false);
 
     
-    I3CLSimParticleToStepConverterPtr converter;
+    I3CLSimLightSourceToStepConverterPtr converter;
 #ifndef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
     I3Particle::ParticleType forParticleType;
 #else
@@ -79,7 +79,7 @@ public:
 private:
 };
 
-inline bool operator==(const I3CLSimParticleParameterization &a, const I3CLSimParticleParameterization &b)
+inline bool operator==(const I3CLSimLightSourceParameterization &a, const I3CLSimLightSourceParameterization &b)
 {
     if (a.fromEnergy != b.fromEnergy) return false;
     if (a.toEnergy != b.toEnergy) return false;
@@ -93,9 +93,9 @@ inline bool operator==(const I3CLSimParticleParameterization &a, const I3CLSimPa
     return true;
 }
 
-typedef std::vector<I3CLSimParticleParameterization> I3CLSimParticleParameterizationSeries;
+typedef std::vector<I3CLSimLightSourceParameterization> I3CLSimLightSourceParameterizationSeries;
 
-I3_POINTER_TYPEDEFS(I3CLSimParticleParameterization);
-I3_POINTER_TYPEDEFS(I3CLSimParticleParameterizationSeries);
+I3_POINTER_TYPEDEFS(I3CLSimLightSourceParameterization);
+I3_POINTER_TYPEDEFS(I3CLSimLightSourceParameterizationSeries);
 
-#endif //I3CLSIMPARTICLEPARAMETERIZATION_H_INCLUDED
+#endif //I3CLSIMLIGHTSOURCEPARAMETERIZATION_H_INCLUDED

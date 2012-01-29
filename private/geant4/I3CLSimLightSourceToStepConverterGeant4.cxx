@@ -1,4 +1,4 @@
-#include "clsim/I3CLSimParticleToStepConverterGeant4.h"
+#include "clsim/I3CLSimLightSourceToStepConverterGeant4.h"
 
 #include "clsim/I3CLSimQueue.h"
 
@@ -40,16 +40,16 @@
 
 // static definitions
 
-boost::mutex I3CLSimParticleToStepConverterGeant4::thereCanBeOnlyOneGeant4_mutex;
-bool I3CLSimParticleToStepConverterGeant4::thereCanBeOnlyOneGeant4=false;
+boost::mutex I3CLSimLightSourceToStepConverterGeant4::thereCanBeOnlyOneGeant4_mutex;
+bool I3CLSimLightSourceToStepConverterGeant4::thereCanBeOnlyOneGeant4=false;
 
-const uint32_t I3CLSimParticleToStepConverterGeant4::default_maxQueueItems=5;
-const std::string I3CLSimParticleToStepConverterGeant4::default_physicsListName="QGSP_BERT_EMV";
-const double I3CLSimParticleToStepConverterGeant4::default_maxBetaChangePerStep=10.*perCent;
-const uint32_t I3CLSimParticleToStepConverterGeant4::default_maxNumPhotonsPerStep=200;
+const uint32_t I3CLSimLightSourceToStepConverterGeant4::default_maxQueueItems=5;
+const std::string I3CLSimLightSourceToStepConverterGeant4::default_physicsListName="QGSP_BERT_EMV";
+const double I3CLSimLightSourceToStepConverterGeant4::default_maxBetaChangePerStep=10.*perCent;
+const uint32_t I3CLSimLightSourceToStepConverterGeant4::default_maxNumPhotonsPerStep=200;
 
 
-I3CLSimParticleToStepConverterGeant4::I3CLSimParticleToStepConverterGeant4(std::string physicsListName,
+I3CLSimLightSourceToStepConverterGeant4::I3CLSimLightSourceToStepConverterGeant4(std::string physicsListName,
                                                                            double maxBetaChangePerStep,
                                                                            uint32_t maxNumPhotonsPerStep,
                                                                            uint32_t maxQueueItems)
@@ -73,16 +73,16 @@ maxBunchSize_(512000)
         boost::unique_lock<boost::mutex> guard(thereCanBeOnlyOneGeant4_mutex);
         
         if (thereCanBeOnlyOneGeant4) 
-            throw I3CLSimParticleToStepConverter_exception("There can be only one! ...instance of I3CLSimParticleToStepConverterGeant4.");
+            throw I3CLSimLightSourceToStepConverter_exception("There can be only one! ...instance of I3CLSimLightSourceToStepConverterGeant4.");
         
         thereCanBeOnlyOneGeant4=true;
     }
     
     if ((maxBetaChangePerStep_<=0.) || (maxBetaChangePerStep_>1.))
-        throw I3CLSimParticleToStepConverter_exception("Invalid maxBetaChangePerStep.");
+        throw I3CLSimLightSourceToStepConverter_exception("Invalid maxBetaChangePerStep.");
 
     if ((maxNumPhotonsPerStep_<=0.))
-        throw I3CLSimParticleToStepConverter_exception("Invalid maxNumPhotonsPerStep.");
+        throw I3CLSimLightSourceToStepConverter_exception("Invalid maxNumPhotonsPerStep.");
 
     // set up stupid environment variables
     char *dummy = getenv("I3_PORTS");
@@ -107,13 +107,13 @@ maxBunchSize_(512000)
         G4VModularPhysicsList *physics = factory->GetReferencePhysList(physicsListName_.c_str());
         delete factory;
         if (!physics)
-            throw I3CLSimParticleToStepConverter_exception("Invalid Physics List name.");
+            throw I3CLSimLightSourceToStepConverter_exception("Invalid Physics List name.");
         delete physics;
     } 
      */
 }
 
-I3CLSimParticleToStepConverterGeant4::~I3CLSimParticleToStepConverterGeant4()
+I3CLSimLightSourceToStepConverterGeant4::~I3CLSimLightSourceToStepConverterGeant4()
 {
     LogGeant4Messages();
 
@@ -143,34 +143,34 @@ I3CLSimParticleToStepConverterGeant4::~I3CLSimParticleToStepConverterGeant4()
     LogGeant4Messages();
 }
 
-void I3CLSimParticleToStepConverterGeant4::Initialize()
+void I3CLSimLightSourceToStepConverterGeant4::Initialize()
 {
     LogGeant4Messages();
 
     if (initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterGeant4 already initialized!");
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterGeant4 already initialized!");
 
     if (!randomService_)
-        throw I3CLSimParticleToStepConverter_exception("RandomService not set!");
+        throw I3CLSimLightSourceToStepConverter_exception("RandomService not set!");
 
     if (!wlenBias_)
-        throw I3CLSimParticleToStepConverter_exception("WlenBias not set!");
+        throw I3CLSimLightSourceToStepConverter_exception("WlenBias not set!");
 
     if (!mediumProperties_)
-        throw I3CLSimParticleToStepConverter_exception("MediumProperties not set!");
+        throw I3CLSimLightSourceToStepConverter_exception("MediumProperties not set!");
     
     if (bunchSizeGranularity_ > maxBunchSize_)
-        throw I3CLSimParticleToStepConverter_exception("BunchSizeGranularity must not be greater than MaxBunchSize!");
+        throw I3CLSimLightSourceToStepConverter_exception("BunchSizeGranularity must not be greater than MaxBunchSize!");
     
     if (maxBunchSize_%bunchSizeGranularity_ != 0)
-        throw I3CLSimParticleToStepConverter_exception("MaxBunchSize is not a multiple of BunchSizeGranularity!");
+        throw I3CLSimLightSourceToStepConverter_exception("MaxBunchSize is not a multiple of BunchSizeGranularity!");
     
     // make sure none of the parameterizations are initialized
-    const I3CLSimParticleParameterizationSeries &parameterizations = this->GetParticleParameterizationSeries();
-    for (I3CLSimParticleParameterizationSeries::const_iterator it=parameterizations.begin();
+    const I3CLSimLightSourceParameterizationSeries &parameterizations = this->GetParticleParameterizationSeries();
+    for (I3CLSimLightSourceParameterizationSeries::const_iterator it=parameterizations.begin();
          it!=parameterizations.end(); ++it)
     {
-        const I3CLSimParticleParameterization &parameterization = *it;
+        const I3CLSimLightSourceParameterization &parameterization = *it;
         if (!parameterization.converter) log_fatal("Internal error: parameteriation has NULL converter");
         
         // all parameterizations could have the same converter,
@@ -180,10 +180,10 @@ void I3CLSimParticleToStepConverterGeant4::Initialize()
     }
 
     // now initialize them and set the medium properties and bias factors
-    for (I3CLSimParticleParameterizationSeries::const_iterator it=parameterizations.begin();
+    for (I3CLSimLightSourceParameterizationSeries::const_iterator it=parameterizations.begin();
          it!=parameterizations.end(); ++it)
     {
-        const I3CLSimParticleParameterization &parameterization = *it;
+        const I3CLSimLightSourceParameterization &parameterization = *it;
         if (parameterization.converter->IsInitialized()) continue; // skip initialized converters
         
         parameterization.converter->SetRandomService(randomService_);
@@ -206,7 +206,7 @@ void I3CLSimParticleToStepConverterGeant4::Initialize()
     geant4Started_=false;
     barrier_is_enqueued_=false;
 
-    geant4ThreadObj_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&I3CLSimParticleToStepConverterGeant4::Geant4Thread, this)));
+    geant4ThreadObj_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&I3CLSimLightSourceToStepConverterGeant4::Geant4Thread, this)));
 
     // wait for startup
     {
@@ -279,7 +279,7 @@ public:
 
 
 
-void I3CLSimParticleToStepConverterGeant4::Geant4Thread()
+void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread()
 {
     // do not interrupt this thread by default
     boost::this_thread::disable_interruption di;
@@ -294,7 +294,7 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread()
     }
 }
 
-void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread::disable_interruption &di)
+void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thread::disable_interruption &di)
 {
     // set up geant4
     
@@ -303,8 +303,8 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
     I3CLSimStepStorePtr stepStore(new I3CLSimStepStore( (isnan(maxNumPhotonsPerStep_)||(maxNumPhotonsPerStep_<0.))?0:(static_cast<uint32_t>(maxNumPhotonsPerStep_*1.5)) ));
 
     // this stores all particles that will be ent to parametrizations
-    shared_ptr<std::deque<boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimParticleParameterization> > > sendToParameterizationQueue
-    (new std::deque<boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimParticleParameterization> >());
+    shared_ptr<std::deque<boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimLightSourceParameterization> > > sendToParameterizationQueue
+    (new std::deque<boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimLightSourceParameterization> >());
     
     
     // keep this around to "catch" G4Eceptions and throw real exceptions
@@ -387,7 +387,7 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
     NoOpStepTemplate.SetBeta(1.);
     
     // make a copy of the list of available parameterizations
-    const I3CLSimParticleParameterizationSeries parameterizations = this->GetParticleParameterizationSeries();
+    const I3CLSimLightSourceParameterizationSeries parameterizations = this->GetParticleParameterizationSeries();
 
     // start the main loop
     for (;;)
@@ -527,10 +527,10 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
         // empty the queue        
         sendToParameterizationQueue->clear();
 
-        for (I3CLSimParticleParameterizationSeries::const_iterator it=parameterizations.begin();
+        for (I3CLSimLightSourceParameterizationSeries::const_iterator it=parameterizations.begin();
              it!=parameterizations.end(); ++it)
         {
-            const I3CLSimParticleParameterization &parameterization = *it;
+            const I3CLSimLightSourceParameterization &parameterization = *it;
             
             if (parameterization.IsValidForParticle(*particle))
             {
@@ -588,12 +588,12 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
         // loop over all particles that should be sent to a parameterization and send them.
         // They were added by Geant4 (our by this code directly) to sendToParameterizationQueue
         bool interruptionOccured=false;
-        typedef boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimParticleParameterization> particleAndIndexAndParamTuple_t;
+        typedef boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimLightSourceParameterization> particleAndIndexAndParamTuple_t;
         BOOST_FOREACH(const particleAndIndexAndParamTuple_t &particleAndIndexPair, *sendToParameterizationQueue)
         {
             particle = particleAndIndexPair.get<0>();              // re-use the particle and particleIdentifier variables (the original
             particleIdentifier = particleAndIndexPair.get<1>();    // ones are not needed anymore)
-            const I3CLSimParticleParameterization &parameterization = particleAndIndexPair.get<2>();
+            const I3CLSimLightSourceParameterization &parameterization = particleAndIndexPair.get<2>();
             
             if (!parameterization.IsValidForParticle(*particle))
                 log_fatal("internal error. Parameterization in queue is not valid for the particle that came with it..");
@@ -685,43 +685,43 @@ void I3CLSimParticleToStepConverterGeant4::Geant4Thread_impl(boost::this_thread:
     log_debug("G4 thread terminated.");
 }
 
-bool I3CLSimParticleToStepConverterGeant4::IsInitialized() const
+bool I3CLSimLightSourceToStepConverterGeant4::IsInitialized() const
 {
     LogGeant4Messages();
 
     return initialized_;
 }
 
-void I3CLSimParticleToStepConverterGeant4::SetBunchSizeGranularity(uint64_t num)
+void I3CLSimLightSourceToStepConverterGeant4::SetBunchSizeGranularity(uint64_t num)
 {
     LogGeant4Messages();
 
     if (initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterGeant4 already initialized!");
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterGeant4 already initialized!");
     
     if (num<=0)
-        throw I3CLSimParticleToStepConverter_exception("BunchSizeGranularity of 0 is invalid!");
+        throw I3CLSimLightSourceToStepConverter_exception("BunchSizeGranularity of 0 is invalid!");
     
     bunchSizeGranularity_=num;
 }
 
-void I3CLSimParticleToStepConverterGeant4::SetMaxBunchSize(uint64_t num)
+void I3CLSimLightSourceToStepConverterGeant4::SetMaxBunchSize(uint64_t num)
 {
     LogGeant4Messages();
 
     if (initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterGeant4 already initialized!");
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterGeant4 already initialized!");
 
     if (num<=0)
-        throw I3CLSimParticleToStepConverter_exception("MaxBunchSize of 0 is invalid!");
+        throw I3CLSimLightSourceToStepConverter_exception("MaxBunchSize of 0 is invalid!");
 
     maxBunchSize_=num;
 }
 
-void I3CLSimParticleToStepConverterGeant4::SetRandomService(I3RandomServicePtr random)
+void I3CLSimLightSourceToStepConverterGeant4::SetRandomService(I3RandomServicePtr random)
 {
     if (initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterGeant4 already initialized!");
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterGeant4 already initialized!");
     
     randomService_=random;
     
@@ -729,37 +729,37 @@ void I3CLSimParticleToStepConverterGeant4::SetRandomService(I3RandomServicePtr r
     randomSeed_ = randomService_->Integer(900000000);
 }
 
-void I3CLSimParticleToStepConverterGeant4::SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias)
+void I3CLSimLightSourceToStepConverterGeant4::SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias)
 {
     LogGeant4Messages();
     
     if (initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterGeant4 already initialized!");
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterGeant4 already initialized!");
     
     wlenBias_=wlenBias;
 }
 
-void I3CLSimParticleToStepConverterGeant4::SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties)
+void I3CLSimLightSourceToStepConverterGeant4::SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties)
 {
     LogGeant4Messages();
 
     if (initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterGeant4 already initialized!");
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterGeant4 already initialized!");
 
     mediumProperties_=mediumProperties;
 }
 
-void I3CLSimParticleToStepConverterGeant4::EnqueueParticle(const I3Particle &particle, uint32_t identifier)
+void I3CLSimLightSourceToStepConverterGeant4::EnqueueParticle(const I3Particle &particle, uint32_t identifier)
 {
     LogGeant4Messages();
 
     if (!initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterGeant4 is not initialized!");
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterGeant4 is not initialized!");
 
     {
         boost::unique_lock<boost::mutex> guard(barrier_is_enqueued_mutex_);
         if (barrier_is_enqueued_)
-            throw I3CLSimParticleToStepConverter_exception("A barrier is enqueued! You must receive all steps before enqueuing a new particle.");
+            throw I3CLSimLightSourceToStepConverter_exception("A barrier is enqueued! You must receive all steps before enqueuing a new particle.");
     }
     
     I3ParticleConstPtr particleCopy(new I3Particle(particle));
@@ -768,17 +768,17 @@ void I3CLSimParticleToStepConverterGeant4::EnqueueParticle(const I3Particle &par
     LogGeant4Messages();
 }
 
-void I3CLSimParticleToStepConverterGeant4::EnqueueBarrier()
+void I3CLSimLightSourceToStepConverterGeant4::EnqueueBarrier()
 {
     LogGeant4Messages();
 
     if (!initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterGeant4 is not initialized!");
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterGeant4 is not initialized!");
 
     {
         boost::unique_lock<boost::mutex> guard(barrier_is_enqueued_mutex_);
         if (barrier_is_enqueued_)
-            throw I3CLSimParticleToStepConverter_exception("A barrier is already enqueued!");
+            throw I3CLSimLightSourceToStepConverter_exception("A barrier is already enqueued!");
         
         barrier_is_enqueued_=true;
 
@@ -789,12 +789,12 @@ void I3CLSimParticleToStepConverterGeant4::EnqueueBarrier()
     LogGeant4Messages();
 }
 
-bool I3CLSimParticleToStepConverterGeant4::BarrierActive() const
+bool I3CLSimLightSourceToStepConverterGeant4::BarrierActive() const
 {
     LogGeant4Messages();
 
     if (!initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterGeant4 is not initialized!");
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterGeant4 is not initialized!");
 
     {
         boost::unique_lock<boost::mutex> guard(barrier_is_enqueued_mutex_);
@@ -803,22 +803,22 @@ bool I3CLSimParticleToStepConverterGeant4::BarrierActive() const
     }
 }
 
-bool I3CLSimParticleToStepConverterGeant4::MoreStepsAvailable() const
+bool I3CLSimLightSourceToStepConverterGeant4::MoreStepsAvailable() const
 {
     LogGeant4Messages();
 
     if (!initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterGeant4 is not initialized!");
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterGeant4 is not initialized!");
 
     return (!queueFromGeant4_->empty());
 }
 
-I3CLSimStepSeriesConstPtr I3CLSimParticleToStepConverterGeant4::GetConversionResultWithBarrierInfo(bool &barrierWasReset, double timeout)
+I3CLSimStepSeriesConstPtr I3CLSimLightSourceToStepConverterGeant4::GetConversionResultWithBarrierInfo(bool &barrierWasReset, double timeout)
 {
     LogGeant4Messages();
 
     if (!initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterGeant4 is not initialized!");
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterGeant4 is not initialized!");
 
     barrierWasReset=false;
     
@@ -844,7 +844,7 @@ I3CLSimStepSeriesConstPtr I3CLSimParticleToStepConverterGeant4::GetConversionRes
     return ret.first;
 }
 
-void I3CLSimParticleToStepConverterGeant4::LogGeant4Messages(bool allAsWarn) const
+void I3CLSimLightSourceToStepConverterGeant4::LogGeant4Messages(bool allAsWarn) const
 {
     if (!queueFromGeant4Messages_) return;
     

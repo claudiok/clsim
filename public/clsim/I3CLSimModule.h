@@ -41,9 +41,9 @@
 #include "clsim/I3CLSimSimpleGeometryFromI3Geometry.h"
 
 #include "clsim/I3CLSimStepToPhotonConverterOpenCL.h"
-#include "clsim/I3CLSimParticleToStepConverterGeant4.h"
+#include "clsim/I3CLSimLightSourceToStepConverterGeant4.h"
 
-#include "clsim/I3CLSimParticleParameterization.h"
+#include "clsim/I3CLSimLightSourceParameterization.h"
 
 #include "clsim/I3Photon.h"
 #include "clsim/I3CLSimEventStatistics.h"
@@ -109,8 +109,8 @@ private:
     std::vector<I3Frame::Stream> workOnTheseStops_;
     std::set<I3Frame::Stream> workOnTheseStops_set_; // will be converted to a set internally
     
-    /// Parameter: An instance I3CLSimParticleParameterizationSeries specifying the fast simulation parameterizations to be used.
-    I3CLSimParticleParameterizationSeries parameterizationList_;
+    /// Parameter: An instance I3CLSimLightSourceParameterizationSeries specifying the fast simulation parameterizations to be used.
+    I3CLSimLightSourceParameterizationSeries parameterizationList_;
     
     /// Parameter: A random number generating service (derived from I3RandomService).
     I3RandomServicePtr randomService_;
@@ -226,7 +226,7 @@ private:
 
     I3CLSimSimpleGeometryFromI3GeometryPtr geometry_;
     std::vector<I3CLSimStepToPhotonConverterOpenCLPtr> openCLStepsToPhotonsConverters_;
-    I3CLSimParticleToStepConverterGeant4Ptr geant4ParticleToStepsConverter_;
+    I3CLSimLightSourceToStepConverterGeant4Ptr geant4ParticleToStepsConverter_;
     
     // list of all currently held frames, in order
     unsigned int frameListPhysicsFrameCounter_;

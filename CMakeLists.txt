@@ -29,10 +29,10 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
     private/clsim/I3CLSimMediumProperties.cxx
     private/clsim/I3CLSimModule.cxx
     private/clsim/I3CLSimModuleHelper.cxx
-    private/clsim/I3CLSimParticleParameterization.cxx
-    private/clsim/I3CLSimParticleToStepConverterPPC.cxx
-    private/clsim/I3CLSimParticleToStepConverter.cxx
-    private/clsim/I3CLSimParticleToStepConverterUtils.cxx
+    private/clsim/I3CLSimLightSourceParameterization.cxx
+    private/clsim/I3CLSimLightSourceToStepConverterPPC.cxx
+    private/clsim/I3CLSimLightSourceToStepConverter.cxx
+    private/clsim/I3CLSimLightSourceToStepConverterUtils.cxx
     private/clsim/I3CLSimPhoton.cxx
     private/clsim/I3CLSimPMTPhotonSimulator.cxx
     private/clsim/I3CLSimRandomValueApplyFunction.cxx
@@ -68,7 +68,7 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
     private/clsim/converter/I3MCHitConverterWithIDs.cxx
     
     # private/geant4
-    private/geant4/I3CLSimParticleToStepConverterGeant4.cxx
+    private/geant4/I3CLSimLightSourceToStepConverterGeant4.cxx
     private/geant4/TrkCerenkov.cxx
     private/geant4/TrkDetectorConstruction.cxx
     private/geant4/TrkEMPhysicsUHE.cxx

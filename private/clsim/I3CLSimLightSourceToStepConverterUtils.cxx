@@ -1,4 +1,4 @@
-#include "clsim/I3CLSimParticleToStepConverterUtils.h"
+#include "clsim/I3CLSimLightSourceToStepConverterUtils.h"
 
 #include "clsim/I3CLSimWlenDependentValue.h"
 #include "icetray/I3Units.h"
@@ -6,7 +6,7 @@
 
 #include <gsl/gsl_integration.h>
 
-namespace I3CLSimParticleToStepConverterUtils {
+namespace I3CLSimLightSourceToStepConverterUtils {
 #define H_TIMES_C 1.
     
     struct f_params_t {

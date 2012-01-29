@@ -64,7 +64,7 @@ G4ClassificationOfNewTrack TrkStackingAction::ClassifyNewTrack(const G4Track * a
     */
 
     // see if there are eny parameterizations available for this particle
-    const I3CLSimParticleParameterizationSeries &parameterizations = eventInformation->parameterizationAvailable;
+    const I3CLSimLightSourceParameterizationSeries &parameterizations = eventInformation->parameterizationAvailable;
 
 #ifndef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
     const I3Particle::ParticleType trackI3ParticleType =
@@ -81,10 +81,10 @@ G4ClassificationOfNewTrack TrkStackingAction::ClassifyNewTrack(const G4Track * a
     }
 #endif
     
-    for (I3CLSimParticleParameterizationSeries::const_iterator it=parameterizations.begin();
+    for (I3CLSimLightSourceParameterizationSeries::const_iterator it=parameterizations.begin();
          it!=parameterizations.end(); ++it)
     {
-        const I3CLSimParticleParameterization &parameterization = *it;
+        const I3CLSimLightSourceParameterization &parameterization = *it;
         
 #ifndef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
         if (parameterization.IsValid(trackI3ParticleType, trackEnergy*I3Units::GeV/GeV))
@@ -92,7 +92,7 @@ G4ClassificationOfNewTrack TrkStackingAction::ClassifyNewTrack(const G4Track * a
         if (parameterization.IsValidForPdgEncoding(aTrack->GetDefinition()->GetPDGEncoding(), trackEnergy*I3Units::GeV/GeV))
 #endif
         {
-            shared_ptr<std::deque<boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimParticleParameterization> > > sendToParameterizationQueue = eventInformation->sendToParameterizationQueue;
+            shared_ptr<std::deque<boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimLightSourceParameterization> > > sendToParameterizationQueue = eventInformation->sendToParameterizationQueue;
 
             if (!sendToParameterizationQueue) 
                 log_fatal("internal error: sendToParameterizationQueue==NULL");

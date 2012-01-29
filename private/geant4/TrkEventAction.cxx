@@ -17,9 +17,9 @@
 
 TrkEventAction::TrkEventAction(uint64_t maxBunchSize,
                                I3CLSimStepStorePtr stepStore,
-                               shared_ptr<std::deque<boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimParticleParameterization> > > sendToParameterizationQueue,
-                               const I3CLSimParticleParameterizationSeries &parameterizationAvailable,
-                               boost::shared_ptr<I3CLSimQueue<I3CLSimParticleToStepConverterGeant4::FromGeant4Pair_t> > queueFromGeant4,
+                               shared_ptr<std::deque<boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimLightSourceParameterization> > > sendToParameterizationQueue,
+                               const I3CLSimLightSourceParameterizationSeries &parameterizationAvailable,
+                               boost::shared_ptr<I3CLSimQueue<I3CLSimLightSourceToStepConverterGeant4::FromGeant4Pair_t> > queueFromGeant4,
                                boost::this_thread::disable_interruption &threadDisabledInterruptionState,
                                double maxRefractiveIndex)
 :

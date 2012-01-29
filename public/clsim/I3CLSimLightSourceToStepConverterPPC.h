@@ -1,7 +1,7 @@
-#ifndef I3CLSimParticleToStepConverterPPC_H_INCLUDED
-#define I3CLSimParticleToStepConverterPPC_H_INCLUDED
+#ifndef I3CLSIMLIGHTSOURCETOSTEPCONVERTERPPC_H_INCLUDED
+#define I3CLSIMLIGHTSOURCETOSTEPCONVERTERPPC_H_INCLUDED
 
-#include "clsim/I3CLSimParticleToStepConverter.h"
+#include "clsim/I3CLSimLightSourceToStepConverter.h"
 #include "dataclasses/physics/I3Particle.h"
 
 #include "clsim/I3CLSimQueue.h"
@@ -19,7 +19,7 @@
 
 
 // forward decl
-namespace I3CLSimParticleToStepConverterUtils {
+namespace I3CLSimLightSourceToStepConverterUtils {
     class GenerateStepPreCalculator;
 }
 
@@ -27,17 +27,17 @@ namespace I3CLSimParticleToStepConverterUtils {
  * @brief A particle-to-step converter for cascades
  * using pre-defined parameterizations.
  */
-struct I3CLSimParticleToStepConverterPPC : public I3CLSimParticleToStepConverter
+struct I3CLSimLightSourceToStepConverterPPC : public I3CLSimLightSourceToStepConverter
 {
 public:
     static const uint32_t default_photonsPerStep;
     static const uint32_t default_highPhotonsPerStep;
     static const double default_useHighPhotonsPerStepStartingFromNumPhotons;
 
-    I3CLSimParticleToStepConverterPPC(uint32_t photonsPerStep=default_photonsPerStep,
+    I3CLSimLightSourceToStepConverterPPC(uint32_t photonsPerStep=default_photonsPerStep,
                                       uint32_t highPhotonsPerStep=default_highPhotonsPerStep,
                                       double useHighPhotonsPerStepStartingFromNumPhotons=default_useHighPhotonsPerStepStartingFromNumPhotons);
-    virtual ~I3CLSimParticleToStepConverterPPC();
+    virtual ~I3CLSimLightSourceToStepConverterPPC();
 
     // inherited:
     
@@ -109,8 +109,8 @@ private:
         std::pair<I3CLSimStepSeriesConstPtr, bool> operator()(T &data) const;
         
     private:
-        void FillStep(I3CLSimParticleToStepConverterPPC::CascadeStepData_t &data, I3CLSimStep &newStep, uint64_t photonsPerStep) const;
-        void FillStep(I3CLSimParticleToStepConverterPPC::MuonStepData_t &data, I3CLSimStep &newStep, uint64_t photonsPerStep) const;
+        void FillStep(I3CLSimLightSourceToStepConverterPPC::CascadeStepData_t &data, I3CLSimStep &newStep, uint64_t photonsPerStep) const;
+        void FillStep(I3CLSimLightSourceToStepConverterPPC::MuonStepData_t &data, I3CLSimStep &newStep, uint64_t photonsPerStep) const;
         
         uint64_t &rngState_;
         uint32_t rngA_;
@@ -205,9 +205,9 @@ private:
 // forward-declare template specialization
 template <>
 std::pair<I3CLSimStepSeriesConstPtr, bool>
-I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::operator()
-(I3CLSimParticleToStepConverterPPC::BarrierData_t &data) const;
+I3CLSimLightSourceToStepConverterPPC::MakeSteps_visitor::operator()
+(I3CLSimLightSourceToStepConverterPPC::BarrierData_t &data) const;
 
-I3_POINTER_TYPEDEFS(I3CLSimParticleToStepConverterPPC);
+I3_POINTER_TYPEDEFS(I3CLSimLightSourceToStepConverterPPC);
 
-#endif //I3CLSimParticleToStepConverterPPC_H_INCLUDED
+#endif //I3CLSIMLIGHTSOURCETOSTEPCONVERTERPPC_H_INCLUDED

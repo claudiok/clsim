@@ -28,13 +28,13 @@ if(BUILD_PYBINDINGS)
     I3CLSimWlenDependentValue.cxx
     I3CLSimRandomValue.cxx
     I3CLSimMediumProperties.cxx
-    I3CLSimParticleToStepConverter.cxx
+    I3CLSimLightSourceToStepConverter.cxx
     I3CLSimStepToPhotonConverter.cxx
     I3CLSimSimpleGeometry.cxx
-    I3CLSimParticleParameterization.cxx
+    I3CLSimLightSourceParameterization.cxx
     I3CLSimTester.cxx
     I3CLSimModuleHelper.cxx
-    I3CLSimParticleToStepConverterUtils.cxx
+    I3CLSimLightSourceToStepConverterUtils.cxx
     I3Photon.cxx
     I3CLSimEventStatistics.cxx
     I3CLSimPMTPhotonSimulator.cxx

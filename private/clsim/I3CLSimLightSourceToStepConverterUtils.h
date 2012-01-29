@@ -1,5 +1,5 @@
-#ifndef I3CLSIMPARTICLETOSTEPCONVERTERUTILS_H_INCLUDED
-#define I3CLSIMPARTICLETOSTEPCONVERTERUTILS_H_INCLUDED
+#ifndef I3CLSIMLIGHTSOURCETOSTEPCONVERTERUTILS_H_INCLUDED
+#define I3CLSIMLIGHTSOURCETOSTEPCONVERTERUTILS_H_INCLUDED
 
 #include "dataclasses/physics/I3Particle.h"
 #include "phys-services/I3RandomService.h"
@@ -10,7 +10,7 @@
 
 #include <cmath>
 
-namespace I3CLSimParticleToStepConverterUtils 
+namespace I3CLSimLightSourceToStepConverterUtils 
 {
     
     double NumberOfPhotonsPerMeter(const I3CLSimWlenDependentValue &phaseRefIndex,
@@ -171,4 +171,4 @@ namespace I3CLSimParticleToStepConverterUtils
 }
 
 
-#endif //I3CLSIMPARTICLETOSTEPCONVERTERUTILS_H_INCLUDED
+#endif //I3CLSIMLIGHTSOURCETOSTEPCONVERTERUTILS_H_INCLUDED

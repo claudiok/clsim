@@ -39,13 +39,13 @@ namespace bp = boost::python;
 	(I3CLSimStep)(I3CLSimPhoton)                    \
     (I3CLSimWlenDependentValue)                     \
     (I3CLSimMediumProperties)(I3CLSimRandomValue)   \
-    (I3CLSimParticleToStepConverter)                \
+    (I3CLSimLightSourceToStepConverter)                \
     (I3CLSimStepToPhotonConverter)                  \
     (I3CLSimSimpleGeometry)                         \
     (augmentDataclassesWithPicklingSupport)         \
-    (I3Photon)(I3CLSimParticleParameterization)     \
+    (I3Photon)(I3CLSimLightSourceParameterization)     \
     (I3CLSimTester)(I3ModuleHelper)                 \
-    (I3CLSimParticleToStepConverterUtils)           \
+    (I3CLSimLightSourceToStepConverterUtils)           \
     (I3CLSimEventStatistics)                        \
     (I3CLSimPMTPhotonSimulator)                     \
     (I3Converters)(I3CLSimOpenCLDevice)             \

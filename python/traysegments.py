@@ -2,7 +2,7 @@ import string
 from os.path import expandvars, exists, isdir, isfile
 
 from .. import icetray, dataclasses
-from . import I3CLSimParticleParameterization
+from . import I3CLSimLightSourceParameterization
 
 
 def genDefaultParameterizationList(theConverter, muonOnly=False):
@@ -34,7 +34,7 @@ def genDefaultParameterizationList(theConverter, muonOnly=False):
     parameterizationsMuon = []
     for type in muons:
         converter = \
-          I3CLSimParticleParameterization(
+          I3CLSimLightSourceParameterization(
             converter=theConverter,
             forParticleType=type,
             fromEnergy=fromEnergy,
@@ -48,7 +48,7 @@ def genDefaultParameterizationList(theConverter, muonOnly=False):
     parameterizationsOther = []
     for type in cascades:
         converter = \
-          I3CLSimParticleParameterization(
+          I3CLSimLightSourceParameterization(
             converter=theConverter,
             forParticleType=type,
             fromEnergy=fromEnergy,
@@ -218,7 +218,7 @@ def I3CLSimMakeHits(tray, name,
         wavelengthGenerationBias = None
 
     # muon&cascade parameterizations
-    cascadeConverter = clsim.I3CLSimParticleToStepConverterPPC(photonsPerStep=200)
+    cascadeConverter = clsim.I3CLSimLightSourceToStepConverterPPC(photonsPerStep=200)
     if not UseGeant4:
         particleParameterizations = clsim.genDefaultParameterizationList(cascadeConverter, muonOnly=False)
     else:

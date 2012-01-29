@@ -5,21 +5,21 @@
 
 #include <cmath>
 
-#include "clsim/I3CLSimParticleToStepConverterPPC.h"
+#include "clsim/I3CLSimLightSourceToStepConverterPPC.h"
 
 #include "clsim/I3CLSimWlenDependentValue.h"
 
-#include "clsim/I3CLSimParticleToStepConverterUtils.h"
-using namespace I3CLSimParticleToStepConverterUtils;
+#include "clsim/I3CLSimLightSourceToStepConverterUtils.h"
+using namespace I3CLSimLightSourceToStepConverterUtils;
 
 
-const uint32_t I3CLSimParticleToStepConverterPPC::default_photonsPerStep=200;
-const uint32_t I3CLSimParticleToStepConverterPPC::default_highPhotonsPerStep=0;
-const double I3CLSimParticleToStepConverterPPC::default_useHighPhotonsPerStepStartingFromNumPhotons=1.0e9;
+const uint32_t I3CLSimLightSourceToStepConverterPPC::default_photonsPerStep=200;
+const uint32_t I3CLSimLightSourceToStepConverterPPC::default_highPhotonsPerStep=0;
+const double I3CLSimLightSourceToStepConverterPPC::default_useHighPhotonsPerStepStartingFromNumPhotons=1.0e9;
 
 
 
-I3CLSimParticleToStepConverterPPC::I3CLSimParticleToStepConverterPPC
+I3CLSimLightSourceToStepConverterPPC::I3CLSimLightSourceToStepConverterPPC
 (uint32_t photonsPerStep,
  uint32_t highPhotonsPerStep,
  double useHighPhotonsPerStepStartingFromNumPhotons)
@@ -33,41 +33,41 @@ highPhotonsPerStep_(highPhotonsPerStep),
 useHighPhotonsPerStepStartingFromNumPhotons_(useHighPhotonsPerStepStartingFromNumPhotons)
 {
     if (photonsPerStep_<=0)
-        throw I3CLSimParticleToStepConverter_exception("photonsPerStep may not be <= 0!");
+        throw I3CLSimLightSourceToStepConverter_exception("photonsPerStep may not be <= 0!");
     
     if (highPhotonsPerStep_==0) highPhotonsPerStep_=photonsPerStep_;
     
     if (highPhotonsPerStep_<photonsPerStep_)
-        throw I3CLSimParticleToStepConverter_exception("highPhotonsPerStep may not be < photonsPerStep!");
+        throw I3CLSimLightSourceToStepConverter_exception("highPhotonsPerStep may not be < photonsPerStep!");
     
     if (useHighPhotonsPerStepStartingFromNumPhotons_<=0.)
-        throw I3CLSimParticleToStepConverter_exception("useHighPhotonsPerStepStartingFromNumPhotons may not be <= 0!");
+        throw I3CLSimLightSourceToStepConverter_exception("useHighPhotonsPerStepStartingFromNumPhotons may not be <= 0!");
 }
 
-I3CLSimParticleToStepConverterPPC::~I3CLSimParticleToStepConverterPPC()
+I3CLSimLightSourceToStepConverterPPC::~I3CLSimLightSourceToStepConverterPPC()
 {
 
 }
 
-void I3CLSimParticleToStepConverterPPC::Initialize()
+void I3CLSimLightSourceToStepConverterPPC::Initialize()
 {
     if (initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC already initialized!");
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterPPC already initialized!");
 
     if (!randomService_)
-        throw I3CLSimParticleToStepConverter_exception("RandomService not set!");
+        throw I3CLSimLightSourceToStepConverter_exception("RandomService not set!");
 
     if (!wlenBias_)
-        throw I3CLSimParticleToStepConverter_exception("WlenBias not set!");
+        throw I3CLSimLightSourceToStepConverter_exception("WlenBias not set!");
 
     if (!mediumProperties_)
-        throw I3CLSimParticleToStepConverter_exception("MediumProperties not set!");
+        throw I3CLSimLightSourceToStepConverter_exception("MediumProperties not set!");
     
     if (bunchSizeGranularity_ > maxBunchSize_)
-        throw I3CLSimParticleToStepConverter_exception("BunchSizeGranularity must not be greater than MaxBunchSize!");
+        throw I3CLSimLightSourceToStepConverter_exception("BunchSizeGranularity must not be greater than MaxBunchSize!");
 
     if (maxBunchSize_%bunchSizeGranularity_ != 0)
-        throw I3CLSimParticleToStepConverter_exception("MaxBunchSize is not a multiple of BunchSizeGranularity!");
+        throw I3CLSimLightSourceToStepConverter_exception("MaxBunchSize is not a multiple of BunchSizeGranularity!");
     
     // initialize a fast rng
     rngA_ = 1640531364; // magic number from numerical recipies
@@ -105,67 +105,67 @@ void I3CLSimParticleToStepConverterPPC::Initialize()
 }
 
 
-bool I3CLSimParticleToStepConverterPPC::IsInitialized() const
+bool I3CLSimLightSourceToStepConverterPPC::IsInitialized() const
 {
     return initialized_;
 }
 
-void I3CLSimParticleToStepConverterPPC::SetBunchSizeGranularity(uint64_t num)
+void I3CLSimLightSourceToStepConverterPPC::SetBunchSizeGranularity(uint64_t num)
 {
     if (initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC already initialized!");
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterPPC already initialized!");
     
     if (num<=0)
-        throw I3CLSimParticleToStepConverter_exception("BunchSizeGranularity of 0 is invalid!");
+        throw I3CLSimLightSourceToStepConverter_exception("BunchSizeGranularity of 0 is invalid!");
 
     if (num!=1)
-        throw I3CLSimParticleToStepConverter_exception("A BunchSizeGranularity != 1 is currently not supported!");
+        throw I3CLSimLightSourceToStepConverter_exception("A BunchSizeGranularity != 1 is currently not supported!");
 
     bunchSizeGranularity_=num;
 }
 
-void I3CLSimParticleToStepConverterPPC::SetMaxBunchSize(uint64_t num)
+void I3CLSimLightSourceToStepConverterPPC::SetMaxBunchSize(uint64_t num)
 {
     if (initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC already initialized!");
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterPPC already initialized!");
 
     if (num<=0)
-        throw I3CLSimParticleToStepConverter_exception("MaxBunchSize of 0 is invalid!");
+        throw I3CLSimLightSourceToStepConverter_exception("MaxBunchSize of 0 is invalid!");
 
     maxBunchSize_=num;
 }
 
-void I3CLSimParticleToStepConverterPPC::SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias)
+void I3CLSimLightSourceToStepConverterPPC::SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias)
 {
     if (initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC already initialized!");
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterPPC already initialized!");
     
     wlenBias_=wlenBias;
 }
 
-void I3CLSimParticleToStepConverterPPC::SetRandomService(I3RandomServicePtr random)
+void I3CLSimLightSourceToStepConverterPPC::SetRandomService(I3RandomServicePtr random)
 {
     if (initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC already initialized!");
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterPPC already initialized!");
     
     randomService_=random;
 }
 
-void I3CLSimParticleToStepConverterPPC::SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties)
+void I3CLSimLightSourceToStepConverterPPC::SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties)
 {
     if (initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC already initialized!");
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterPPC already initialized!");
 
     mediumProperties_=mediumProperties;
 }
 
-void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &particle, uint32_t identifier)
+void I3CLSimLightSourceToStepConverterPPC::EnqueueParticle(const I3Particle &particle, uint32_t identifier)
 {
     if (!initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC is not initialized!");
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterPPC is not initialized!");
 
     if (barrier_is_enqueued_)
-        throw I3CLSimParticleToStepConverter_exception("A barrier is enqueued! You must receive all steps before enqueuing a new particle.");
+        throw I3CLSimLightSourceToStepConverter_exception("A barrier is enqueued! You must receive all steps before enqueuing a new particle.");
 
     // determine current layer
     uint32_t mediumLayer =static_cast<uint32_t>(std::max(0.,(particle.GetPos().GetZ()-mediumProperties_->GetLayersZStart())/(mediumProperties_->GetLayersHeight())));
@@ -463,22 +463,22 @@ void I3CLSimParticleToStepConverterPPC::EnqueueParticle(const I3Particle &partic
         
     } else {
 #ifdef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
-        log_fatal("I3CLSimParticleToStepConverterPPC cannot handle a %s. (pdg %u)",
+        log_fatal("I3CLSimLightSourceToStepConverterPPC cannot handle a %s. (pdg %u)",
                   particle.GetTypeString().c_str(), particle.GetPdgEncoding());
 #else
-        log_fatal("I3CLSimParticleToStepConverterPPC cannot handle a %s.",
+        log_fatal("I3CLSimLightSourceToStepConverterPPC cannot handle a %s.",
                   particle.GetTypeString().c_str());
 #endif
     }
 }
 
-void I3CLSimParticleToStepConverterPPC::EnqueueBarrier()
+void I3CLSimLightSourceToStepConverterPPC::EnqueueBarrier()
 {
     if (!initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC is not initialized!");
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterPPC is not initialized!");
 
     if (barrier_is_enqueued_)
-        throw I3CLSimParticleToStepConverter_exception("A barrier is already enqueued!");
+        throw I3CLSimLightSourceToStepConverter_exception("A barrier is already enqueued!");
 
     // actually enqueue the barrier
     log_trace("== enqueue barrier");
@@ -486,24 +486,24 @@ void I3CLSimParticleToStepConverterPPC::EnqueueBarrier()
     barrier_is_enqueued_=true;
 }
 
-bool I3CLSimParticleToStepConverterPPC::BarrierActive() const
+bool I3CLSimLightSourceToStepConverterPPC::BarrierActive() const
 {
     if (!initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC is not initialized!");
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterPPC is not initialized!");
 
     return barrier_is_enqueued_;
 }
 
-bool I3CLSimParticleToStepConverterPPC::MoreStepsAvailable() const
+bool I3CLSimLightSourceToStepConverterPPC::MoreStepsAvailable() const
 {
     if (!initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC is not initialized!");
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterPPC is not initialized!");
 
     if (stepGenerationQueue_.size() > 0) return true;
     return false;
 }
 
-I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::MakeSteps_visitor
+I3CLSimLightSourceToStepConverterPPC::MakeSteps_visitor::MakeSteps_visitor
 (uint64_t &rngState, uint32_t rngA,
  uint64_t maxNumStepsPerStepSeries,
  GenerateStepPreCalculator &preCalc)
@@ -512,12 +512,12 @@ maxNumStepsPerStepSeries_(maxNumStepsPerStepSeries),
 preCalc_(preCalc)
 {;}
 
-void I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::FillStep
-(I3CLSimParticleToStepConverterPPC::CascadeStepData_t &data,
+void I3CLSimLightSourceToStepConverterPPC::MakeSteps_visitor::FillStep
+(I3CLSimLightSourceToStepConverterPPC::CascadeStepData_t &data,
  I3CLSimStep &newStep,
  uint64_t photonsPerStep) const
 {
-    const double longitudinalPos = data.pb*I3CLSimParticleToStepConverterUtils::gammaDistributedNumber(data.pa, rngState_, rngA_)*I3Units::m;
+    const double longitudinalPos = data.pb*I3CLSimLightSourceToStepConverterUtils::gammaDistributedNumber(data.pa, rngState_, rngA_)*I3Units::m;
     GenerateStep(newStep,
                  data.particle,
                  data.particleIdentifier,
@@ -526,8 +526,8 @@ void I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::FillStep
                  preCalc_);
 }
 
-void I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::FillStep
-(I3CLSimParticleToStepConverterPPC::MuonStepData_t &data,
+void I3CLSimLightSourceToStepConverterPPC::MakeSteps_visitor::FillStep
+(I3CLSimLightSourceToStepConverterPPC::MuonStepData_t &data,
  I3CLSimStep &newStep,
  uint64_t photonsPerStep) const
 {
@@ -550,7 +550,7 @@ void I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::FillStep
 
 template <typename T>
 std::pair<I3CLSimStepSeriesConstPtr, bool>
-I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::operator()
+I3CLSimLightSourceToStepConverterPPC::MakeSteps_visitor::operator()
 (T &data) const
 {
     I3CLSimStepSeriesPtr currentStepSeries(new I3CLSimStepSeries());
@@ -593,15 +593,15 @@ I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::operator()
 // specialization for BarrierData_t
 template <>
 std::pair<I3CLSimStepSeriesConstPtr, bool>
-I3CLSimParticleToStepConverterPPC::MakeSteps_visitor::operator()
-(I3CLSimParticleToStepConverterPPC::BarrierData_t &data) const
+I3CLSimLightSourceToStepConverterPPC::MakeSteps_visitor::operator()
+(I3CLSimLightSourceToStepConverterPPC::BarrierData_t &data) const
 {
     log_trace("== end barrier in visitor::operator()");
     return make_pair(I3CLSimStepSeriesConstPtr(), true); // true=="entry can be removed from the queue"
 }
 
 
-I3CLSimStepSeriesConstPtr I3CLSimParticleToStepConverterPPC::MakeSteps(bool &barrierWasReset)
+I3CLSimStepSeriesConstPtr I3CLSimLightSourceToStepConverterPPC::MakeSteps(bool &barrierWasReset)
 {
     barrierWasReset=false;
     
@@ -629,16 +629,16 @@ I3CLSimStepSeriesConstPtr I3CLSimParticleToStepConverterPPC::MakeSteps(bool &bar
     
     
 
-I3CLSimStepSeriesConstPtr I3CLSimParticleToStepConverterPPC::GetConversionResultWithBarrierInfo(bool &barrierWasReset, double timeout)
+I3CLSimStepSeriesConstPtr I3CLSimLightSourceToStepConverterPPC::GetConversionResultWithBarrierInfo(bool &barrierWasReset, double timeout)
 {
     if (!initialized_)
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC is not initialized!");
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterPPC is not initialized!");
     
     barrierWasReset=false;
     
     if (stepGenerationQueue_.empty())
     {
-        throw I3CLSimParticleToStepConverter_exception("I3CLSimParticleToStepConverterPPC: no particle is enqueued!");
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterPPC: no particle is enqueued!");
         return I3CLSimStepSeriesConstPtr();
     }
     
@@ -660,7 +660,7 @@ I3CLSimStepSeriesConstPtr I3CLSimParticleToStepConverterPPC::GetConversionResult
 
 /////// HELPERS
 
-I3CLSimParticleToStepConverterPPC::GenerateStepPreCalculator::GenerateStepPreCalculator(I3RandomServicePtr randomService,
+I3CLSimLightSourceToStepConverterPPC::GenerateStepPreCalculator::GenerateStepPreCalculator(I3RandomServicePtr randomService,
                                                      double angularDist_a,
                                                      double angularDist_b,
                                                      std::size_t numberOfValues)
@@ -689,13 +689,13 @@ queueFromFeederThreads_(10)  // size 10 for 5 threads
     for (unsigned int i=0;i<numFeederThreads;++i)
     {
         const uint64_t rngState = mwcRngInitState(randomService, rngAs[i]);
-        shared_ptr<boost::thread> newThread(new boost::thread(boost::bind(&I3CLSimParticleToStepConverterPPC::GenerateStepPreCalculator::FeederThread, this, i, rngState, rngAs[i])));
+        shared_ptr<boost::thread> newThread(new boost::thread(boost::bind(&I3CLSimLightSourceToStepConverterPPC::GenerateStepPreCalculator::FeederThread, this, i, rngState, rngAs[i])));
         feederThreads_.push_back(newThread);
     }
 
 }
 
-I3CLSimParticleToStepConverterPPC::GenerateStepPreCalculator::~GenerateStepPreCalculator()
+I3CLSimLightSourceToStepConverterPPC::GenerateStepPreCalculator::~GenerateStepPreCalculator()
 {
     // terminate threads
     
@@ -713,7 +713,7 @@ I3CLSimParticleToStepConverterPPC::GenerateStepPreCalculator::~GenerateStepPreCa
     feederThreads_.clear();
 }
 
-void I3CLSimParticleToStepConverterPPC::GenerateStepPreCalculator::FeederThread(unsigned int threadId,
+void I3CLSimLightSourceToStepConverterPPC::GenerateStepPreCalculator::FeederThread(unsigned int threadId,
                                                                                 uint64_t initialRngState,
                                                                                 uint32_t rngA)
 {
@@ -749,7 +749,7 @@ void I3CLSimParticleToStepConverterPPC::GenerateStepPreCalculator::FeederThread(
     }
 }
 
-void I3CLSimParticleToStepConverterPPC::GenerateStepPreCalculator::RegenerateValues()
+void I3CLSimLightSourceToStepConverterPPC::GenerateStepPreCalculator::RegenerateValues()
 {
     currentVector_ = queueFromFeederThreads_.Get();
     log_trace("queueSize=%zu", queueFromFeederThreads_.size());
@@ -759,7 +759,7 @@ void I3CLSimParticleToStepConverterPPC::GenerateStepPreCalculator::RegenerateVal
 
 
 
-void I3CLSimParticleToStepConverterPPC::GenerateStep(I3CLSimStep &newStep,
+void I3CLSimLightSourceToStepConverterPPC::GenerateStep(I3CLSimStep &newStep,
                          const I3Particle &p,
                          uint32_t identifier,
                          uint32_t photonsPerStep,
@@ -805,7 +805,7 @@ void I3CLSimParticleToStepConverterPPC::GenerateStep(I3CLSimStep &newStep,
     
 }
 
-void I3CLSimParticleToStepConverterPPC::GenerateStepForMuon(I3CLSimStep &newStep,
+void I3CLSimLightSourceToStepConverterPPC::GenerateStepForMuon(I3CLSimStep &newStep,
                                 const I3Particle &p,
                                 uint32_t identifier,
                                 uint32_t photonsPerStep,

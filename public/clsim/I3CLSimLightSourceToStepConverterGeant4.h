@@ -1,7 +1,7 @@
-#ifndef I3CLSIMPARTICLETOSTEPCONVERTERGEANT4_H_INCLUDED
-#define I3CLSIMPARTICLETOSTEPCONVERTERGEANT4_H_INCLUDED
+#ifndef I3CLSIMLIGHTSOURCETOSTEPCONVERTERGEANT4_H_INCLUDED
+#define I3CLSIMLIGHTSOURCETOSTEPCONVERTERGEANT4_H_INCLUDED
 
-#include "clsim/I3CLSimParticleToStepConverter.h"
+#include "clsim/I3CLSimLightSourceToStepConverter.h"
 #include "dataclasses/physics/I3Particle.h"
 
 #include <boost/thread.hpp>
@@ -17,7 +17,7 @@
  * @brief A particle-to-step converter using Geant4
  * for tracking.
  */
-struct I3CLSimParticleToStepConverterGeant4 : public I3CLSimParticleToStepConverter
+struct I3CLSimLightSourceToStepConverterGeant4 : public I3CLSimLightSourceToStepConverter
 {
 private:
     static boost::mutex thereCanBeOnlyOneGeant4_mutex;
@@ -31,12 +31,12 @@ public:
     static const uint32_t default_maxNumPhotonsPerStep;
     static const uint32_t default_maxQueueItems;
     
-    I3CLSimParticleToStepConverterGeant4(std::string physicsListName=default_physicsListName,
+    I3CLSimLightSourceToStepConverterGeant4(std::string physicsListName=default_physicsListName,
                                          double maxBetaChangePerStep=default_maxBetaChangePerStep,
                                          uint32_t maxNumPhotonsPerStep=default_maxNumPhotonsPerStep,
                                          uint32_t maxQueueItems=default_maxQueueItems
                                          );
-    virtual ~I3CLSimParticleToStepConverterGeant4();
+    virtual ~I3CLSimLightSourceToStepConverterGeant4();
 
     // inherited:
     
@@ -87,7 +87,7 @@ public:
     /**
      * Adds a new I3Particle to the queue for use as a primary in tracking.
      * The resulting I3CLSimSteps can be retrieved from the
-     * I3CLSimParticleToStepConverter after some processing time.
+     * I3CLSimLightSourceToStepConverter after some processing time.
      *
      * Enqueuing a particle after calling EnqueueBarrier 
      * will throw if not all steps have been retrieved.
@@ -174,9 +174,9 @@ private:
     I3CLSimWlenDependentValueConstPtr wlenBias_;
     I3CLSimMediumPropertiesConstPtr mediumProperties_;
     
-    SET_LOGGER("I3CLSimParticleToStepConverterGeant4");
+    SET_LOGGER("I3CLSimLightSourceToStepConverterGeant4");
 };
 
-I3_POINTER_TYPEDEFS(I3CLSimParticleToStepConverterGeant4);
+I3_POINTER_TYPEDEFS(I3CLSimLightSourceToStepConverterGeant4);
 
-#endif //I3CLSIMPARTICLETOSTEPCONVERTERGEANT4_H_INCLUDED
+#endif //I3CLSIMLIGHTSOURCETOSTEPCONVERTERGEANT4_H_INCLUDED

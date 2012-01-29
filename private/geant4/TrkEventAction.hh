@@ -8,10 +8,10 @@
 #include "clsim/I3CLSimStepStore.h"
 #include "clsim/I3CLSimStep.h"
 #include "clsim/I3CLSimQueue.h"
-#include "clsim/I3CLSimParticleToStepConverterGeant4.h"
+#include "clsim/I3CLSimLightSourceToStepConverterGeant4.h"
 
 #include "dataclasses/physics/I3Particle.h"
-#include "clsim/I3CLSimParticleParameterization.h"
+#include "clsim/I3CLSimLightSourceParameterization.h"
 
 #include <deque>
 #include <boost/tuple/tuple.hpp>
@@ -25,9 +25,9 @@ class TrkEventAction : public G4UserEventAction
 public:
     TrkEventAction(uint64_t maxBunchSize,
                    I3CLSimStepStorePtr stepStore,
-                   shared_ptr<std::deque<boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimParticleParameterization> > > sendToParameterizationQueue,
-                   const I3CLSimParticleParameterizationSeries &parameterizationAvailable,
-                   boost::shared_ptr<I3CLSimQueue<I3CLSimParticleToStepConverterGeant4::FromGeant4Pair_t> > queueFromGeant4,
+                   shared_ptr<std::deque<boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimLightSourceParameterization> > > sendToParameterizationQueue,
+                   const I3CLSimLightSourceParameterizationSeries &parameterizationAvailable,
+                   boost::shared_ptr<I3CLSimQueue<I3CLSimLightSourceToStepConverterGeant4::FromGeant4Pair_t> > queueFromGeant4,
                    boost::this_thread::disable_interruption &threadDisabledInterruptionState,
                    double maxRefractiveIndex);
     ~TrkEventAction();
@@ -43,12 +43,12 @@ private:
     bool abortRequested_;
     uint64_t maxBunchSize_;
     I3CLSimStepStorePtr stepStore_;
-    shared_ptr<std::deque<boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimParticleParameterization> > > sendToParameterizationQueue_;
+    shared_ptr<std::deque<boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimLightSourceParameterization> > > sendToParameterizationQueue_;
     uint32_t currentExternalParticleID_;
     
-    I3CLSimParticleParameterizationSeries parameterizationAvailable_;
+    I3CLSimLightSourceParameterizationSeries parameterizationAvailable_;
     
-    boost::shared_ptr<I3CLSimQueue<I3CLSimParticleToStepConverterGeant4::FromGeant4Pair_t> > queueFromGeant4_;
+    boost::shared_ptr<I3CLSimQueue<I3CLSimLightSourceToStepConverterGeant4::FromGeant4Pair_t> > queueFromGeant4_;
     boost::this_thread::disable_interruption &threadDisabledInterruptionState_;
     
     double maxRefractiveIndex_;

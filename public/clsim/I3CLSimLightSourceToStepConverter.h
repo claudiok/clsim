@@ -1,5 +1,5 @@
-#ifndef I3CLSIMPARTICLETOSTEPCONVERTER_H_INCLUDED
-#define I3CLSIMPARTICLETOSTEPCONVERTER_H_INCLUDED
+#ifndef I3CLSIMLIGHTSOURCETOSTEPCONVERTER_H_INCLUDED
+#define I3CLSIMLIGHTSOURCETOSTEPCONVERTER_H_INCLUDED
 
 #include "icetray/I3TrayHeaders.h"
 #include "dataclasses/physics/I3Particle.h"
@@ -8,7 +8,7 @@
 
 #include "clsim/I3CLSimStep.h"
 #include "clsim/I3CLSimMediumProperties.h"
-#include "clsim/I3CLSimParticleParameterization.h"
+#include "clsim/I3CLSimLightSourceParameterization.h"
 #include "clsim/I3CLSimWlenDependentValue.h"
 
 #include <boost/noncopyable.hpp>
@@ -23,19 +23,19 @@
  * as bunches in an I3CLSimStepSeries.
  */
 
-class I3CLSimParticleToStepConverter_exception : public std::runtime_error
+class I3CLSimLightSourceToStepConverter_exception : public std::runtime_error
 {
 public:
-    I3CLSimParticleToStepConverter_exception(const std::string &msg)
+    I3CLSimLightSourceToStepConverter_exception(const std::string &msg)
     :std::runtime_error(msg)
     {;}
 };
 
-struct I3CLSimParticleToStepConverter : private boost::noncopyable
+struct I3CLSimLightSourceToStepConverter : private boost::noncopyable
 {
 public:
-    I3CLSimParticleToStepConverter();
-    virtual ~I3CLSimParticleToStepConverter();
+    I3CLSimLightSourceToStepConverter();
+    virtual ~I3CLSimLightSourceToStepConverter();
 
     /**
      * Sets the granularity of the bunch size for the
@@ -80,14 +80,14 @@ public:
      * having been converted into steps.
      * Will throw if used after the call to Initialize().
      */
-    virtual void SetParticleParameterizationSeries(const I3CLSimParticleParameterizationSeries &parameterizationSeries_);
+    virtual void SetParticleParameterizationSeries(const I3CLSimLightSourceParameterizationSeries &parameterizationSeries_);
 
     /**
      * Returns the available parameterizations.
      * Particles with parameterizations may be returned without
      * having been converted into steps.
      */
-    virtual const I3CLSimParticleParameterizationSeries &GetParticleParameterizationSeries() const;
+    virtual const I3CLSimLightSourceParameterizationSeries &GetParticleParameterizationSeries() const;
 
     /**
      * Initializes the simulation.
@@ -104,7 +104,7 @@ public:
     /**
      * Adds a new I3Particle to the queue for use as a primary in tracking.
      * The resulting I3CLSimSteps can be retrieved from the
-     * I3CLSimParticleToStepConverter after some processing time.
+     * I3CLSimLightSourceToStepConverter after some processing time.
      *
      * Enqueuing a particle after calling EnqueueBarrier 
      * will throw if not all steps have been retrieved.
@@ -163,9 +163,9 @@ public:
 
     
 protected:
-    I3CLSimParticleParameterizationSeries parameterizationSeries;
+    I3CLSimLightSourceParameterizationSeries parameterizationSeries;
 };
 
-I3_POINTER_TYPEDEFS(I3CLSimParticleToStepConverter);
+I3_POINTER_TYPEDEFS(I3CLSimLightSourceToStepConverter);
 
-#endif //I3CLSIMPARTICLETOSTEPCONVERTER_H_INCLUDED
+#endif //I3CLSIMLIGHTSOURCETOSTEPCONVERTER_H_INCLUDED
