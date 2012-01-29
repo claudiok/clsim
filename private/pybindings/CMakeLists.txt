@@ -39,6 +39,7 @@ if(BUILD_PYBINDINGS)
     I3CLSimEventStatistics.cxx
     I3CLSimPMTPhotonSimulator.cxx
     I3CLSimOpenCLDevice.cxx
+    I3CLSimLightSource.cxx
     I3Converters.cxx
     I3HoleIceSimulator.cxx
     module.cxx

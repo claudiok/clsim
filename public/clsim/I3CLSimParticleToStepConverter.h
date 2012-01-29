@@ -109,7 +109,7 @@ public:
      * Enqueuing a particle after calling EnqueueBarrier 
      * will throw if not all steps have been retrieved.
      *
-     * Each step produced by this particles will be tagged
+     * Each step produced by this particle will be tagged
      * with the id set by "identifier".
      * 
      * Will throw if not initialized.
