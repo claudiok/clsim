@@ -111,8 +111,8 @@ def I3CLSimMakeHits(tray, name,
     :param SimulateAfterPulses:
         Use an algorithm from hit-maker to simulate after-pulses.
         Turn this on to be compatble to hit-maker with afer-pulse
-        simulation. Do not use this when using external after-pulse
-        simulation modules.
+        simulation. This also includes PMT jitter simulation (2ns).
+        Do not use this when using external after-pulse simulation modules.
     :param ParallelEvents:
         clsim will work on a couple of events in parallel in order
         not to starve the GPU. Setting this too high will result
@@ -233,7 +233,7 @@ def I3CLSimMakeHits(tray, name,
     if SimulateAfterPulses:
         pmtPhotonSimulator = clsim.I3CLSimPMTPhotonSimulatorIceCube(jitter=Jitter)
     else:
-        pmtPhotonSimulator = clsim.I3CLSimPMTPhotonSimulatorIceCube(jitter=Jitter,
+        pmtPhotonSimulator = clsim.I3CLSimPMTPhotonSimulatorIceCube(jitter=0.,
                                                                     pre_pulse_probability=0.,
                                                                     late_pulse_probability=0.,
                                                                     after_pulse_probability=0.)
