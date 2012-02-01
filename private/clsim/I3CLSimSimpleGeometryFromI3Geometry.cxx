@@ -173,6 +173,10 @@ useHardcodedDeepCoreSubdetector_(useHardcodedDeepCoreSubdetector)
                     else
                         subdetectorName="DeepCoreLower";
                 }
+				else if (string > 86)
+				{
+					subdetectorName="PINGU";
+				}
             }
         }
         
