@@ -166,7 +166,7 @@ void I3CLSimLightSourceToStepConverterGeant4::Initialize()
         throw I3CLSimLightSourceToStepConverter_exception("MaxBunchSize is not a multiple of BunchSizeGranularity!");
     
     // make sure none of the parameterizations are initialized
-    const I3CLSimLightSourceParameterizationSeries &parameterizations = this->GetParticleParameterizationSeries();
+    const I3CLSimLightSourceParameterizationSeries &parameterizations = this->GetLightSourceParameterizationSeries();
     for (I3CLSimLightSourceParameterizationSeries::const_iterator it=parameterizations.begin();
          it!=parameterizations.end(); ++it)
     {
@@ -303,8 +303,8 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
     I3CLSimStepStorePtr stepStore(new I3CLSimStepStore( (isnan(maxNumPhotonsPerStep_)||(maxNumPhotonsPerStep_<0.))?0:(static_cast<uint32_t>(maxNumPhotonsPerStep_*1.5)) ));
 
     // this stores all particles that will be ent to parametrizations
-    shared_ptr<std::deque<boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimLightSourceParameterization> > > sendToParameterizationQueue
-    (new std::deque<boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimLightSourceParameterization> >());
+    shared_ptr<std::deque<boost::tuple<I3CLSimLightSourceConstPtr, uint32_t, const I3CLSimLightSourceParameterization> > > sendToParameterizationQueue
+    (new std::deque<boost::tuple<I3CLSimLightSourceConstPtr, uint32_t, const I3CLSimLightSourceParameterization> >());
     
     
     // keep this around to "catch" G4Eceptions and throw real exceptions
@@ -351,7 +351,7 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
     TrkEventAction *theEventAction = new TrkEventAction(maxBunchSize_,
                                                         stepStore,
                                                         sendToParameterizationQueue,
-                                                        this->GetParticleParameterizationSeries(),
+                                                        this->GetLightSourceParameterizationSeries(),
                                                         queueFromGeant4_,
                                                         di,
                                                         maxRefractiveIndex);
@@ -387,20 +387,21 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
     NoOpStepTemplate.SetBeta(1.);
     
     // make a copy of the list of available parameterizations
-    const I3CLSimLightSourceParameterizationSeries parameterizations = this->GetParticleParameterizationSeries();
+    const I3CLSimLightSourceParameterizationSeries parameterizations = this->GetLightSourceParameterizationSeries();
 
     // start the main loop
     for (;;)
     {
-        I3ParticleConstPtr particle;
-        uint32_t particleIdentifier;
+        //I3ParticleConstPtr particle;
+        I3CLSimLightSourceConstPtr lightSource;
+        uint32_t lightSourceIdentifier;
 
         {
             boost::this_thread::restore_interruption ri(di);
             try {
                 ToGeant4Pair_t val = queueToGeant4_->Get();
-                particleIdentifier = val.first;
-                particle = val.second;
+                lightSourceIdentifier = val.first;
+                lightSource = val.second;
             }
             catch(boost::thread_interrupted &i)
             {
@@ -433,7 +434,7 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
         }
         
         
-        if (!particle) {
+        if (!lightSource) {
             //G4cout << "G4 thread got NULL! flushing " << stepStore->size() << " steps." << G4endl;
 
             if (stepStore->empty()) {
@@ -514,7 +515,13 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
             continue;
         }
 
-	if (particle->GetType() == I3Particle::unknown)
+        if (lightSource->GetType() == I3CLSimLightSource::Unknown)
+        {
+	    G4cerr << "Ignoring a light source with type \"Unknown\"." << std::endl;
+	    continue;
+        }
+        
+	if ((lightSource->GetType() == I3CLSimLightSource::Particle) && (lightSource->GetParticle().GetType() == I3Particle::unknown))
 	{
 	    G4cerr << "Ignoring a particle with type \"unknown\"." << std::endl;
 	    continue;
@@ -532,9 +539,9 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
         {
             const I3CLSimLightSourceParameterization &parameterization = *it;
             
-            if (parameterization.IsValidForParticle(*particle))
+            if (parameterization.IsValidForLightSource(*lightSource))
             {
-                sendToParameterizationQueue->push_back(boost::make_tuple(particle, particleIdentifier, parameterization));
+                sendToParameterizationQueue->push_back(boost::make_tuple(lightSource, lightSourceIdentifier, parameterization));
                 parameterizationIsAvailable=true;
                 break;
             }
@@ -544,31 +551,38 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
         if (!parameterizationIsAvailable) 
         {
             // no parameterization was found, use default Geant4
+            if (lightSource->GetType() != I3CLSimLightSource::Particle)
+            {
+                G4cerr << "Geant4 can only handle light sources of type \"Particle\". Please add parameterizations for light source of other types (e.g. flashers). Ignoring non-particle light source." << G4endl;
 
+                continue;
+            }
+            
+            const I3Particle &particle = lightSource->GetParticle();
             
             // configure the Geant4 particle gun
             {
                 G4ParticleGun *particleGun = thePrimaryGenerator->GetParticleGun();
                 if (!particleGun) log_fatal("Internal error: G4ParticleGun instance is NULL!");
                 
-                const bool ret = I3CLSimI3ParticleGeantConverter::SetParticleGun(particleGun, *particle);
+                const bool ret = I3CLSimI3ParticleGeantConverter::SetParticleGun(particleGun, particle);
                 
                 if (!ret) {
-                    G4cerr << "Could not configure Geant4 to shoot a " << particle->GetTypeString() << "! Ignoring." << G4endl;
+                    G4cerr << "Could not configure Geant4 to shoot a " << particle.GetTypeString() << "! Ignoring." << G4endl;
 
                     continue;
                 }
             }
             
             // set the current particle ID
-            theEventAction->SetExternalParticleID(particleIdentifier);
+            theEventAction->SetExternalParticleID(lightSourceIdentifier);
 
-            log_trace("Geant4: no parameterization for %s with E=%fGeV", particle->GetTypeString().c_str(), particle->GetEnergy()/I3Units::GeV);
+            log_trace("Geant4: no parameterization for %s with E=%fGeV", particle.GetTypeString().c_str(), particle.GetEnergy()/I3Units::GeV);
             
-            G4cout << "Geant4: shooting a " << particle->GetTypeString() << " with id " << particleIdentifier << " and E=" << particle->GetEnergy()/I3Units::GeV << "GeV." << G4endl;
+            G4cout << "Geant4: shooting a " << particle.GetTypeString() << " with id " << lightSourceIdentifier << " and E=" << particle.GetEnergy()/I3Units::GeV << "GeV." << G4endl;
 
-            // we don't need the particle anymore.
-            particle.reset();
+            // we don't need the light source anymore.
+            lightSource.reset();
             
             // turn on the Geant4 beam!
             // (this fills the stepStore with steps and our particle list with
@@ -580,30 +594,30 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
         }
         else
         {
-            // we don't need the particle anymore.
-            particle.reset();
+            // we don't need the light source anymore.
+            lightSource.reset();
         }
         
-        
+
         // loop over all particles that should be sent to a parameterization and send them.
         // They were added by Geant4 (our by this code directly) to sendToParameterizationQueue
         bool interruptionOccured=false;
-        typedef boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimLightSourceParameterization> particleAndIndexAndParamTuple_t;
+        typedef boost::tuple<I3CLSimLightSourceConstPtr, uint32_t, const I3CLSimLightSourceParameterization> particleAndIndexAndParamTuple_t;
         BOOST_FOREACH(const particleAndIndexAndParamTuple_t &particleAndIndexPair, *sendToParameterizationQueue)
         {
-            particle = particleAndIndexPair.get<0>();              // re-use the particle and particleIdentifier variables (the original
-            particleIdentifier = particleAndIndexPair.get<1>();    // ones are not needed anymore)
+            lightSource = particleAndIndexPair.get<0>();              // re-use the lightSource and lightSourceIdentifier variables (the original
+            lightSourceIdentifier = particleAndIndexPair.get<1>();    // ones are not needed anymore)
             const I3CLSimLightSourceParameterization &parameterization = particleAndIndexPair.get<2>();
             
-            if (!parameterization.IsValidForParticle(*particle))
-                log_fatal("internal error. Parameterization in queue is not valid for the particle that came with it..");
+            if (!parameterization.IsValidForLightSource(*lightSource))
+                log_fatal("internal error. Parameterization in queue is not valid for the light source that came with it..");
 
             // call the converter
             if (!parameterization.converter) log_fatal("Internal error: parameteriation has NULL converter");
             if (!parameterization.converter->IsInitialized()) log_fatal("Internal error: parameterization converter is not initialized.");
             if (parameterization.converter->BarrierActive()) log_fatal("Logic error: parameterization converter has active barrier.");
                     
-            parameterization.converter->EnqueueParticle(*particle, particleIdentifier);
+            parameterization.converter->EnqueueLightSource(*lightSource, lightSourceIdentifier);
             parameterization.converter->EnqueueBarrier();
             
             // get steps from the parameterization until the barrier is reached
@@ -670,7 +684,7 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
 
         // empty the queue and clean up  
         sendToParameterizationQueue->clear();
-        particle.reset();
+        lightSource.reset();
         
     }
 
@@ -749,7 +763,7 @@ void I3CLSimLightSourceToStepConverterGeant4::SetMediumProperties(I3CLSimMediumP
     mediumProperties_=mediumProperties;
 }
 
-void I3CLSimLightSourceToStepConverterGeant4::EnqueueParticle(const I3Particle &particle, uint32_t identifier)
+void I3CLSimLightSourceToStepConverterGeant4::EnqueueLightSource(const I3CLSimLightSource &lightSource, uint32_t identifier)
 {
     LogGeant4Messages();
 
@@ -762,8 +776,8 @@ void I3CLSimLightSourceToStepConverterGeant4::EnqueueParticle(const I3Particle &
             throw I3CLSimLightSourceToStepConverter_exception("A barrier is enqueued! You must receive all steps before enqueuing a new particle.");
     }
     
-    I3ParticleConstPtr particleCopy(new I3Particle(particle));
-    queueToGeant4_->Put(std::make_pair(identifier, particleCopy));
+    I3CLSimLightSourceConstPtr lightSourceCopy(new I3CLSimLightSource(lightSource));
+    queueToGeant4_->Put(std::make_pair(identifier, lightSourceCopy));
     
     LogGeant4Messages();
 }
@@ -783,7 +797,7 @@ void I3CLSimLightSourceToStepConverterGeant4::EnqueueBarrier()
         barrier_is_enqueued_=true;
 
         // we use a NULL pointer as the barrier
-        queueToGeant4_->Put(std::make_pair(0, I3ParticleConstPtr()));
+        queueToGeant4_->Put(std::make_pair(0, I3CLSimLightSourceConstPtr()));
     }
     
     LogGeant4Messages();

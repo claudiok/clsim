@@ -41,6 +41,7 @@
 
 #include "clsim/I3CLSimWlenDependentValueConstant.h"
 
+#include "clsim/I3CLSimLightSource.h"
 #include "clsim/I3CLSimLightSourceToStepConverterGeant4.h"
 
 #include "clsim/I3CLSimModuleHelper.h"
@@ -1108,7 +1109,9 @@ void I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
             
             totalSimulatedEnergyForFlush_ += particle.GetEnergy();
             totalNumParticlesForFlush_++;
-            geant4ParticleToStepsConverter_->EnqueueParticle(particle, currentParticleCacheIndex_);
+            
+            I3CLSimLightSource newParticleLightSource(particle);
+            geant4ParticleToStepsConverter_->EnqueueLightSource(newParticleLightSource, currentParticleCacheIndex_);
 
             if (particleCache_.find(currentParticleCacheIndex_) != particleCache_.end())
                 log_fatal("Internal error. Particle cache index already used.");

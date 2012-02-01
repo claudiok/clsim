@@ -261,7 +261,7 @@ namespace I3CLSimModuleHelper {
         conv->SetMaxBunchSize(maxBunchSize);
         conv->SetBunchSizeGranularity(bunchSizeGranularity);
         
-        conv->SetParticleParameterizationSeries(parameterizationList);
+        conv->SetLightSourceParameterizationSeries(parameterizationList);
         
         conv->Initialize();
         

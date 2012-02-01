@@ -55,7 +55,7 @@ public:
 
     virtual bool IsInitialized() const;
     
-    virtual void EnqueueParticle(const I3Particle &particle, uint32_t identifier);
+    virtual void EnqueueLightSource(const I3CLSimLightSource &lightSource, uint32_t identifier);
     
     virtual void EnqueueBarrier();
     

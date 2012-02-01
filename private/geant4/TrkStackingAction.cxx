@@ -92,30 +92,31 @@ G4ClassificationOfNewTrack TrkStackingAction::ClassifyNewTrack(const G4Track * a
         if (parameterization.IsValidForPdgEncoding(aTrack->GetDefinition()->GetPDGEncoding(), trackEnergy*I3Units::GeV/GeV))
 #endif
         {
-            shared_ptr<std::deque<boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimLightSourceParameterization> > > sendToParameterizationQueue = eventInformation->sendToParameterizationQueue;
+            shared_ptr<std::deque<boost::tuple<I3CLSimLightSourceConstPtr, uint32_t, const I3CLSimLightSourceParameterization> > > sendToParameterizationQueue = eventInformation->sendToParameterizationQueue;
 
             if (!sendToParameterizationQueue) 
                 log_fatal("internal error: sendToParameterizationQueue==NULL");
             
-            I3ParticlePtr particle(new I3Particle());
+            I3Particle particle;
             
             const G4ThreeVector &trackPos = aTrack->GetPosition();
             const G4double trackTime = aTrack->GetGlobalTime();
             const G4ThreeVector &trackDir = aTrack->GetMomentumDirection();
 
 #ifdef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
-            particle->SetPdgEncoding(aTrack->GetDefinition()->GetPDGEncoding());
+            particle.SetPdgEncoding(aTrack->GetDefinition()->GetPDGEncoding());
 #else
-            particle->SetType(trackI3ParticleType);
+            particle.SetType(trackI3ParticleType);
 #endif
-            particle->SetPos(trackPos.x()*I3Units::m/m,trackPos.y()*I3Units::m/m,trackPos.z()*I3Units::m/m);
-            particle->SetDir(trackDir.x(),trackDir.y(),trackDir.z());
-            particle->SetTime(trackTime*I3Units::ns/ns);
-            particle->SetEnergy(trackEnergy*I3Units::GeV/GeV);
+            particle.SetPos(trackPos.x()*I3Units::m/m,trackPos.y()*I3Units::m/m,trackPos.z()*I3Units::m/m);
+            particle.SetDir(trackDir.x(),trackDir.y(),trackDir.z());
+            particle.SetTime(trackTime*I3Units::ns/ns);
+            particle.SetEnergy(trackEnergy*I3Units::GeV/GeV);
 
-            //G4cout << "Geant4: sending a " << particle->GetTypeString() << " with id " << eventInformation->currentExternalParticleID << " and E=" << particle->GetEnergy()/I3Units::GeV << "GeV to a parameterization handler." << G4endl;
+            //G4cout << "Geant4: sending a " << particle.GetTypeString() << " with id " << eventInformation->currentExternalParticleID << " and E=" << particle.GetEnergy()/I3Units::GeV << "GeV to a parameterization handler." << G4endl;
 
-            sendToParameterizationQueue->push_back(boost::make_tuple(particle, eventInformation->currentExternalParticleID, parameterization));
+            I3CLSimLightSourcePtr lightSource(new I3CLSimLightSource(particle));
+            sendToParameterizationQueue->push_back(boost::make_tuple(lightSource, eventInformation->currentExternalParticleID, parameterization));
 
             return fKill;
         }

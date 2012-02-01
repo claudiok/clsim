@@ -4,17 +4,17 @@
 I3CLSimLightSourceToStepConverter::I3CLSimLightSourceToStepConverter() {;}
 I3CLSimLightSourceToStepConverter::~I3CLSimLightSourceToStepConverter() {;}
 
-void I3CLSimLightSourceToStepConverter::SetParticleParameterizationSeries
+void I3CLSimLightSourceToStepConverter::SetLightSourceParameterizationSeries
 (const I3CLSimLightSourceParameterizationSeries &parameterizationSeries_)
 {
     if (IsInitialized())
-        throw I3CLSimLightSourceToStepConverter_exception("SetParticleParameterizationSeries() called after Initialize().");
+        throw I3CLSimLightSourceToStepConverter_exception("SetLightSourceParameterizationSeries() called after Initialize().");
         
     parameterizationSeries = parameterizationSeries_;
 }
 
 const I3CLSimLightSourceParameterizationSeries &
-I3CLSimLightSourceToStepConverter::GetParticleParameterizationSeries() const
+I3CLSimLightSourceToStepConverter::GetLightSourceParameterizationSeries() const
 { 
     return parameterizationSeries;
 }

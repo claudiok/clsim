@@ -2,7 +2,6 @@
 #define I3CLSIMLIGHTSOURCETOSTEPCONVERTER_H_INCLUDED
 
 #include "icetray/I3TrayHeaders.h"
-#include "dataclasses/physics/I3Particle.h"
 
 #include "phys-services/I3RandomService.h"
 
@@ -10,6 +9,7 @@
 #include "clsim/I3CLSimMediumProperties.h"
 #include "clsim/I3CLSimLightSourceParameterization.h"
 #include "clsim/I3CLSimWlenDependentValue.h"
+#include "clsim/I3CLSimLightSource.h"
 
 #include <boost/noncopyable.hpp>
 #include <boost/variant.hpp>
@@ -18,7 +18,8 @@
 #include <stdexcept>
 
 /**
- * @brief Base class for objects that get a single I3Particle
+ * @brief Base class for objects that get a I3CLSimLightSource
+ * (i.e. either a I3Particle or a I3FlasherInfo)
  * and convert it into individual I3CLSimStep objects stored
  * as bunches in an I3CLSimStepSeries.
  */
@@ -80,14 +81,14 @@ public:
      * having been converted into steps.
      * Will throw if used after the call to Initialize().
      */
-    virtual void SetParticleParameterizationSeries(const I3CLSimLightSourceParameterizationSeries &parameterizationSeries_);
+    virtual void SetLightSourceParameterizationSeries(const I3CLSimLightSourceParameterizationSeries &parameterizationSeries_);
 
     /**
      * Returns the available parameterizations.
      * Particles with parameterizations may be returned without
      * having been converted into steps.
      */
-    virtual const I3CLSimLightSourceParameterizationSeries &GetParticleParameterizationSeries() const;
+    virtual const I3CLSimLightSourceParameterizationSeries &GetLightSourceParameterizationSeries() const;
 
     /**
      * Initializes the simulation.
@@ -102,7 +103,7 @@ public:
     virtual bool IsInitialized() const = 0;
     
     /**
-     * Adds a new I3Particle to the queue for use as a primary in tracking.
+     * Adds a new I3CLSimLightSource to the queue for use as a primary in tracking.
      * The resulting I3CLSimSteps can be retrieved from the
      * I3CLSimLightSourceToStepConverter after some processing time.
      *
@@ -114,7 +115,7 @@ public:
      * 
      * Will throw if not initialized.
      */
-    virtual void EnqueueParticle(const I3Particle &particle, uint32_t identifier) = 0;
+    virtual void EnqueueLightSource(const I3CLSimLightSource &lightSource, uint32_t identifier) = 0;
 
     /**
      * Adds a "barrier" to the particle queue. This will keep the
@@ -146,11 +147,9 @@ public:
     virtual bool MoreStepsAvailable() const = 0;
 
     /**
-     * Returns a bunch of steps stored in a vector<I3CLSimStep> or
-     * a pair of <uint32_t, I3ParticleConstPtr>.
-     * Returned particles were produced by the primary particle.
+     * Returns a bunch of steps stored in a vector<I3CLSimStep>.
      * The uint32_t value is the primary's identifier as passed to
-     * EnqueueParticle().
+     * EnqueueLightSource().
      *
      * Might block if no steps are available.
      * The steps may belong to various particles at the same time.

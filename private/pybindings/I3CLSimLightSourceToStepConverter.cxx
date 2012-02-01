@@ -44,8 +44,8 @@ struct I3CLSimLightSourceToStepConverterWrapper : I3CLSimLightSourceToStepConver
     virtual void SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties) {this->get_override("SetMediumProperties")(mediumProperties);}
     virtual void Initialize() {this->get_override("Initialize")();}
     virtual bool IsInitialized() const {return this->get_override("IsInitialized")();}
-    virtual void EnqueueParticle(const I3Particle &particle, uint32_t identifier) {this->get_override("EnqueueParticle")(particle, identifier);}
-    virtual void EnqueueBarrier() {this->get_override("EnqueueParticle")();}
+    virtual void EnqueueLightSource(const I3Particle &particle, uint32_t identifier) {this->get_override("EnqueueLightSource")(particle, identifier);}
+    virtual void EnqueueBarrier() {this->get_override("EnqueueLightSource")();}
     virtual bool BarrierActive() const {return this->get_override("BarrierActive")();}
     virtual bool MoreStepsAvailable() const {return this->get_override("MoreStepsAvailable")();}
     
@@ -62,28 +62,28 @@ struct I3CLSimLightSourceToStepConverterWrapper : I3CLSimLightSourceToStepConver
     }
     I3CLSimStepSeriesConstPtr default_GetConversionResult(double timeout) {return this->get_override("GetConversionResult")(timeout);}
 
-    virtual void SetParticleParameterizationSeries(const I3CLSimLightSourceParameterizationSeries &parameterizationSeries_)
+    virtual void SetLightSourceParameterizationSeries(const I3CLSimLightSourceParameterizationSeries &parameterizationSeries_)
     {
-        if (override f = this->get_override("SetParticleParameterizationSeries")) {
+        if (override f = this->get_override("SetLightSourceParameterizationSeries")) {
             f(parameterizationSeries_);
         } else {
-            I3CLSimLightSourceToStepConverter::SetParticleParameterizationSeries(parameterizationSeries_);
+            I3CLSimLightSourceToStepConverter::SetLightSourceParameterizationSeries(parameterizationSeries_);
         }
     }
-    void default_SetParticleParameterizationSeries(const I3CLSimLightSourceParameterizationSeries &parameterizationSeries_) 
-    {this->I3CLSimLightSourceToStepConverter::SetParticleParameterizationSeries(parameterizationSeries_);}
+    void default_SetLightSourceParameterizationSeries(const I3CLSimLightSourceParameterizationSeries &parameterizationSeries_) 
+    {this->I3CLSimLightSourceToStepConverter::SetLightSourceParameterizationSeries(parameterizationSeries_);}
 
 
-    virtual const I3CLSimLightSourceParameterizationSeries &GetParticleParameterizationSeries() const
+    virtual const I3CLSimLightSourceParameterizationSeries &GetLightSourceParameterizationSeries() const
     {
-        if (override f = this->get_override("GetParticleParameterizationSeries")) {
+        if (override f = this->get_override("GetLightSourceParameterizationSeries")) {
             return f();
         } else {
-            return I3CLSimLightSourceToStepConverter::GetParticleParameterizationSeries();
+            return I3CLSimLightSourceToStepConverter::GetLightSourceParameterizationSeries();
         }
     }
-    const I3CLSimLightSourceParameterizationSeries &default_GetParticleParameterizationSeries() const
-    {return this->I3CLSimLightSourceToStepConverter::GetParticleParameterizationSeries();}
+    const I3CLSimLightSourceParameterizationSeries &default_GetLightSourceParameterizationSeries() const
+    {return this->I3CLSimLightSourceToStepConverter::GetLightSourceParameterizationSeries();}
 
 };
 
@@ -144,7 +144,7 @@ void register_I3CLSimLightSourceToStepConverter()
         .def("SetMediumProperties", bp::pure_virtual(&I3CLSimLightSourceToStepConverter::SetMediumProperties))
         .def("Initialize", bp::pure_virtual(&I3CLSimLightSourceToStepConverter::Initialize))
         .def("IsInitialized", bp::pure_virtual(&I3CLSimLightSourceToStepConverter::IsInitialized))
-        .def("EnqueueParticle", bp::pure_virtual(&I3CLSimLightSourceToStepConverter::EnqueueParticle))
+        .def("EnqueueLightSource", bp::pure_virtual(&I3CLSimLightSourceToStepConverter::EnqueueLightSource))
         .def("EnqueueBarrier", bp::pure_virtual(&I3CLSimLightSourceToStepConverter::EnqueueBarrier))
         .def("BarrierActive", bp::pure_virtual(&I3CLSimLightSourceToStepConverter::BarrierActive))
         .def("MoreStepsAvailable", bp::pure_virtual(&I3CLSimLightSourceToStepConverter::MoreStepsAvailable))
@@ -154,13 +154,13 @@ void register_I3CLSimLightSourceToStepConverter()
              &I3CLSimLightSourceToStepConverterWrapper::GetConversionResultWithBarrierInfo,
              bp::arg("barrierWasReset"), bp::arg("timeout")=NAN)
 
-        .def("SetParticleParameterizationSeries", 
-             &I3CLSimLightSourceToStepConverter::SetParticleParameterizationSeries,
-             &I3CLSimLightSourceToStepConverterWrapper::default_SetParticleParameterizationSeries)
+        .def("SetLightSourceParameterizationSeries", 
+             &I3CLSimLightSourceToStepConverter::SetLightSourceParameterizationSeries,
+             &I3CLSimLightSourceToStepConverterWrapper::default_SetLightSourceParameterizationSeries)
 
-        .def("GetParticleParameterizationSeries", 
-             &I3CLSimLightSourceToStepConverter::GetParticleParameterizationSeries,
-             &I3CLSimLightSourceToStepConverterWrapper::default_GetParticleParameterizationSeries,
+        .def("GetLightSourceParameterizationSeries", 
+             &I3CLSimLightSourceToStepConverter::GetLightSourceParameterizationSeries,
+             &I3CLSimLightSourceToStepConverterWrapper::default_GetLightSourceParameterizationSeries,
              bp::return_internal_reference<>())
         ;
     }

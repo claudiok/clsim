@@ -97,7 +97,7 @@ public:
      * 
      * Will throw if not initialized.
      */
-    virtual void EnqueueParticle(const I3Particle &particle, uint32_t identifier);
+    virtual void EnqueueLightSource(const I3CLSimLightSource &lightSource, uint32_t identifier);
     
     /**
      * Adds a "barrier" to the particle queue. This will keep the
@@ -133,7 +133,7 @@ public:
      * a pair of <uint32_t, I3ParticleConstPtr>.
      * Returned particles were produced by the primary particle.
      * The uint32_t value is the primary's identifier as passed to
-     * EnqueueParticle().
+     * EnqueueLightSource().
      *
      * Might block if no steps are available.
      * The steps may belong to various particles at the same time.
@@ -145,7 +145,7 @@ public:
 private:
     void LogGeant4Messages(bool allAsWarn=false) const;
 
-    typedef std::pair<uint32_t, I3ParticleConstPtr> ToGeant4Pair_t;
+    typedef std::pair<uint32_t, I3CLSimLightSourceConstPtr> ToGeant4Pair_t;
 
     void Geant4Thread();
     void Geant4Thread_impl(boost::this_thread::disable_interruption &di);

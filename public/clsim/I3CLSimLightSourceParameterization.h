@@ -25,6 +25,7 @@
 #include "icetray/I3TrayHeaders.h"
 
 #include "dataclasses/physics/I3Particle.h"
+#include "clsim/I3CLSimLightSource.h"
 
 #include <vector>
 
@@ -43,21 +44,26 @@ public:
     ~I3CLSimLightSourceParameterization();
 
     I3CLSimLightSourceParameterization(I3CLSimLightSourceToStepConverterPtr converter_,
-                                    I3Particle::ParticleType forParticleType_,
-                                    double fromEnergy_, double toEnergy_,
-                                    bool needsLength_=false);
+                                       I3Particle::ParticleType forParticleType_,
+                                       double fromEnergy_, double toEnergy_,
+                                       bool needsLength_=false);
 
     I3CLSimLightSourceParameterization(I3CLSimLightSourceToStepConverterPtr converter_,
-                                    const I3Particle &forParticleType_,
-                                    double fromEnergy_, double toEnergy_,
-                                    bool needsLength_=false);
+                                       const I3Particle &forParticleType_,
+                                       double fromEnergy_, double toEnergy_,
+                                       bool needsLength_=false);
 
     struct AllParticles_t {};
     static const AllParticles_t AllParticles;
     I3CLSimLightSourceParameterization(I3CLSimLightSourceToStepConverterPtr converter_,
-                                    const AllParticles_t &,
-                                    double fromEnergy_, double toEnergy_,
-                                    bool needsLength_=false);
+                                       const AllParticles_t &,
+                                       double fromEnergy_, double toEnergy_,
+                                       bool needsLength_=false);
+
+    struct AllFlashers_t {};
+    static const AllFlashers_t AllFlashers;
+    I3CLSimLightSourceParameterization(I3CLSimLightSourceToStepConverterPtr converter_,
+                                       const AllFlashers_t &);
 
     
     I3CLSimLightSourceToStepConverterPtr converter;
@@ -70,11 +76,15 @@ public:
     bool needsLength;
     bool catchAll;
     
+    bool catchFlashers;
+    
     bool IsValidForParticle(const I3Particle &particle) const;
     bool IsValid(I3Particle::ParticleType type, double energy, double length=NAN) const;
 #ifdef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
     bool IsValidForPdgEncoding(int32_t encoding, double energy, double length=NAN) const;
 #endif
+    
+    bool IsValidForLightSource(const I3CLSimLightSource &lightSource) const;
     
 private:
 };

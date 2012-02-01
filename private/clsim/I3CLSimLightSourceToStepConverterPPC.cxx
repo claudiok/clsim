@@ -159,7 +159,7 @@ void I3CLSimLightSourceToStepConverterPPC::SetMediumProperties(I3CLSimMediumProp
     mediumProperties_=mediumProperties;
 }
 
-void I3CLSimLightSourceToStepConverterPPC::EnqueueParticle(const I3Particle &particle, uint32_t identifier)
+void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLightSource &lightSource, uint32_t identifier)
 {
     if (!initialized_)
         throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterPPC is not initialized!");
@@ -167,6 +167,11 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueParticle(const I3Particle &par
     if (barrier_is_enqueued_)
         throw I3CLSimLightSourceToStepConverter_exception("A barrier is enqueued! You must receive all steps before enqueuing a new particle.");
 
+    if (lightSource.GetType() != I3CLSimLightSource::Particle)
+        throw I3CLSimLightSourceToStepConverter_exception("The I3CLSimLightSourceToStepConverterPPC parameterization only works on particles.");
+    
+    const I3Particle &particle = lightSource.GetParticle();
+    
     // determine current layer
     uint32_t mediumLayer =static_cast<uint32_t>(std::max(0.,(particle.GetPos().GetZ()-mediumProperties_->GetLayersZStart())/(mediumProperties_->GetLayersHeight())));
     if (mediumLayer >= mediumProperties_->GetLayersNum()) mediumLayer=mediumProperties_->GetLayersNum()-1;

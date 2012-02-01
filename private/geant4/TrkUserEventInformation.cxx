@@ -3,7 +3,7 @@
 
 TrkUserEventInformation::TrkUserEventInformation(uint64_t maxBunchSize_,
                                                  I3CLSimStepStorePtr stepStore_,
-                                                 shared_ptr<std::deque<boost::tuple<I3ParticleConstPtr, uint32_t, const I3CLSimLightSourceParameterization> > > sendToParameterizationQueue_,
+                                                 shared_ptr<std::deque<boost::tuple<I3CLSimLightSourceConstPtr, uint32_t, const I3CLSimLightSourceParameterization> > > sendToParameterizationQueue_,
                                                  const I3CLSimLightSourceParameterizationSeries &parameterizationAvailable_,
                                                  boost::shared_ptr<I3CLSimQueue<I3CLSimLightSourceToStepConverterGeant4::FromGeant4Pair_t> > queueFromGeant4_,
                                                  boost::this_thread::disable_interruption &threadDisabledInterruptionState_,

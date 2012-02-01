@@ -44,6 +44,9 @@ class I3CLSimLightSource
 public:
     ~I3CLSimLightSource();
 
+    // copy construction:
+    I3CLSimLightSource(const I3CLSimLightSource &lightSource);
+
     I3CLSimLightSource(const I3Particle &particle);
     I3CLSimLightSource(const I3FlasherInfo &flasher);
     

@@ -31,6 +31,26 @@ lightSourceType_(I3CLSimLightSource::Unknown)
     
 }
 
+I3CLSimLightSource::I3CLSimLightSource(const I3CLSimLightSource &lightSource)
+:
+lightSourceType_(lightSource.lightSourceType_)
+{
+    // copy either particle or flasher info depending on type
+    switch(lightSourceType_)
+    {
+        case Unknown:
+            break;
+        case Particle:
+            particle_ = lightSource.particle_;
+            break;
+        case Flasher:
+            flasher_ = lightSource.flasher_;
+            break;
+        default:
+            break;
+    }
+}
+
 
 I3CLSimLightSource::~I3CLSimLightSource() 
 { 
