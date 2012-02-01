@@ -29,6 +29,8 @@
 #endif
 #include <inttypes.h>
 
+#include <algorithm>
+
 #include "clsim/I3PhotonToMCHitConverter.h"
 
 #include <boost/foreach.hpp>
@@ -212,6 +214,14 @@ void I3PhotonToMCHitConverter::Calibration(I3FramePtr frame)
     calibration_ = calibration;
     
     PushFrame(frame);
+}
+
+namespace {
+    // Return whether first element is greater than the second
+    bool MCHitTimeLess(const I3MCHit &elem1, const I3MCHit &elem2)
+    {
+        return elem1.GetTime() < elem2.GetTime();
+    }
 }
 
 #ifdef IS_Q_FRAME_ENABLED
@@ -506,7 +516,10 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
             }
         }
         
-        
+        if (hits) {
+        	// sort the photons in each hit series by time
+            std::sort(hits->begin(), hits->end(), MCHitTimeLess);
+        }
     }
     
     // store the output I3MCHitSeriesMap
