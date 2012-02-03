@@ -276,6 +276,48 @@ void I3CLSimStepToPhotonConverterOpenCL::Initialize()
     initialized_=true;
 }
 
+namespace {
+    std::string makeGenerateWavelengthMasterFunction(std::size_t num,
+                                                     const std::string &functionName,
+                                                     const std::string &functionArgs,
+                                                     const std::string &functionArgsToCall)
+    {
+        std::string ret = std::string("inline float ") + functionName + "(uint number, " + functionArgs + ")\n";
+        ret = ret + "{\n";
+
+        if (num==0) {
+            ret = ret + "    return 0.f;\n";
+            ret = ret + "}\n";
+            return ret;
+        }
+
+        if (num==1) {
+            ret = ret + "    return " + functionName + "_0(" + functionArgsToCall + ");\n";
+            ret = ret + "}\n";
+            return ret;
+        }
+
+        // num>=2:
+        
+        ret = ret + "    if (number==0) {\n";
+        ret = ret + "        return " + functionName + "_0(" + functionArgsToCall + ");\n";
+        
+        for (std::size_t i=1;i<num;++i)
+        {
+            ret = ret + "    } else if (number==" + boost::lexical_cast<std::string>(i) + ") {\n";
+            ret = ret + "        return " + functionName + "_" + boost::lexical_cast<std::string>(i) + "(" + functionArgsToCall + ");\n";
+        }
+
+        ret = ret + "    } else {\n";
+        ret = ret + "        return 0.f;\n";
+        ret = ret + "    }\n";
+        
+        
+        ret = ret + "}\n\n";
+
+        return ret;
+    }
+}
 
 void I3CLSimStepToPhotonConverterOpenCL::Compile()
 {
@@ -284,8 +326,8 @@ void I3CLSimStepToPhotonConverterOpenCL::Compile()
     
     if (compiled_) return; // silently
     
-    if (!wlenGenerator_)
-        throw I3CLSimStepToPhotonConverter_exception("WlenGenerator not set!");
+    if (wlenGenerators_.empty())
+        throw I3CLSimStepToPhotonConverter_exception("WlenGenerators not set!");
     
     if (!wlenBias_)
         throw I3CLSimStepToPhotonConverter_exception("WlenBias not set!");
@@ -299,13 +341,30 @@ void I3CLSimStepToPhotonConverterOpenCL::Compile()
     if (!deviceIsSelected_)
         throw I3CLSimStepToPhotonConverter_exception("Device not selected!");
     
-    wlenGeneratorSource_ = wlenGenerator_->GetOpenCLFunction("generateWavelength", // name
-                                                             // these are all defined as macros by the rng code:
-                                                             "RNG_ARGS",               // function arguments for rng
-                                                             "RNG_ARGS_TO_CALL",       // if we call anothor function, this is how we pass on the rng state
-                                                             "RNG_CALL_UNIFORM_CO",    // the call to the rng for creating a uniform number [0;1[
-                                                             "RNG_CALL_UNIFORM_OC"     // the call to the rng for creating a uniform number ]0;1]
-                                                             );
+    
+    wlenGeneratorSource_ = "";
+    for (std::size_t i=0; i<wlenGenerators_.size(); ++i)
+    {
+        const std::string generatorName = "generateWavelength_" + boost::lexical_cast<std::string>(i);
+        const std::string thisGeneratorSource = 
+        wlenGenerators_[i]->GetOpenCLFunction(generatorName, // name
+                                              // these are all defined as macros by the rng code:
+                                              "RNG_ARGS",               // function arguments for rng
+                                              "RNG_ARGS_TO_CALL",       // if we call anothor function, this is how we pass on the rng state
+                                              "RNG_CALL_UNIFORM_CO",    // the call to the rng for creating a uniform number [0;1[
+                                              "RNG_CALL_UNIFORM_OC"     // the call to the rng for creating a uniform number ]0;1]
+                                              );
+        
+        wlenGeneratorSource_ = wlenGeneratorSource_ + thisGeneratorSource + "\n";
+    }
+    wlenGeneratorSource_ = wlenGeneratorSource_+ makeGenerateWavelengthMasterFunction(wlenGenerators_.size(),
+                                                                                      "generateWavelength",
+                                                                                      "RNG_ARGS",               // function arguments for rng
+                                                                                      "RNG_ARGS_TO_CALL"        // if we call anothor function, this is how we pass on the rng state
+                                                                                      );
+    wlenGeneratorSource_ = wlenGeneratorSource_ + "\n";
+
+    
     wlenBiasSource_ = wlenBias_->GetOpenCLFunction("getWavelengthBias"); // name
     
     mediumPropertiesSource_ = I3CLSimHelper::GenerateMediumPropertiesSource(*mediumProperties_);
@@ -974,7 +1033,7 @@ bool I3CLSimStepToPhotonConverterOpenCL::GetDisableDoubleBuffering() const
     return disableDoubleBuffering_;
 }
 
-void I3CLSimStepToPhotonConverterOpenCL::SetWlenGenerator(I3CLSimRandomValueConstPtr wlenGenerator)
+void I3CLSimStepToPhotonConverterOpenCL::SetWlenGenerators(const std::vector<I3CLSimRandomValueConstPtr> &wlenGenerators)
 {
     if (initialized_)
         throw I3CLSimStepToPhotonConverter_exception("I3CLSimStepToPhotonConverterOpenCL already initialized!");
@@ -983,7 +1042,7 @@ void I3CLSimStepToPhotonConverterOpenCL::SetWlenGenerator(I3CLSimRandomValueCons
     kernel_.clear();
     queue_.clear();
     
-    wlenGenerator_=wlenGenerator;
+    wlenGenerators_=wlenGenerators;
 }
 
 void I3CLSimStepToPhotonConverterOpenCL::SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias)

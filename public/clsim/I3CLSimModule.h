@@ -221,8 +221,8 @@ private:
     double totalSimulatedEnergyForFlush_;
     uint64_t totalNumParticlesForFlush_;
     
-    // this is calculated from wavelengthGenerationBias:
-    I3CLSimRandomValueConstPtr wavelengthGenerator_;
+    // this is calculated using wavelengthGenerationBias:
+    std::vector<I3CLSimRandomValueConstPtr> wavelengthGenerators_;
 
     I3CLSimSimpleGeometryFromI3GeometryPtr geometry_;
     std::vector<I3CLSimStepToPhotonConverterOpenCLPtr> openCLStepsToPhotonsConverters_;

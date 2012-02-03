@@ -300,12 +300,14 @@ void I3CLSimModule::Configure()
 
     if (openCLDeviceList_.empty()) log_fatal("You have to provide at least one OpenCL device using the \"OpenCLDeviceList\" parameter.");
     
-    // fill wavelengthGenerator_
-    wavelengthGenerator_ =
-    I3CLSimModuleHelper::makeWavelengthGenerator
-    (wavelengthGenerationBias_,
-     generateCherenkovPhotonsWithoutDispersion_,
-     mediumProperties_);
+    // fill wavelengthGenerators_[0] (index 0 is the Cherenkov generator)
+    wavelengthGenerators_.clear();
+    wavelengthGenerators_.push_back(I3CLSimModuleHelper::makeWavelengthGenerator
+                                    (wavelengthGenerationBias_,
+                                     generateCherenkovPhotonsWithoutDispersion_,
+                                     mediumProperties_
+                                    )
+                                   );
     
     currentParticleCacheIndex_ = 1;
     geometryIsConfigured_ = false;
@@ -539,7 +541,7 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
                                               geometry_,
                                               mediumProperties_,
                                               wavelengthGenerationBias_,
-                                              wavelengthGenerator_);
+                                              wavelengthGenerators_);
         if (!openCLStepsToPhotonsConverter)
             log_fatal("Could not initialize OpenCL!");
         

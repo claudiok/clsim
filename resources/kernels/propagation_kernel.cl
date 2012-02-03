@@ -159,7 +159,7 @@ inline void createPhotonFromTrack(struct I3CLSimStep *step,
     if (step->sourceType == 0) {
 #endif
         // our photon still needs a wavelength. create one!
-        const float wavelength = generateWavelength(RNG_ARGS_TO_CALL);
+        const float wavelength = generateWavelength_0(RNG_ARGS_TO_CALL);
 
         const float cosCherenkov = my_recip(step->dirAndLengthAndBeta.w*getPhaseRefIndex(layer, wavelength)); // cos theta = 1/(beta*n)
         const float sinCherenkov = my_sqrt(1.0f-cosCherenkov*cosCherenkov);
@@ -178,7 +178,7 @@ inline void createPhotonFromTrack(struct I3CLSimStep *step,
     } else {
         // steps >= 1 are flasher emissions, they do not need cherenkov rotation
         
-        const float wavelength = generateWavelength(RNG_ARGS_TO_CALL);
+        const float wavelength = generateWavelength(convert_uint(step->sourceType), RNG_ARGS_TO_CALL);
         
         // use the step direction as the photon direction
         (*photonDirAndWlen).xyz = stepDir.xyz;

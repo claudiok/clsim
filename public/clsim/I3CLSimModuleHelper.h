@@ -43,6 +43,7 @@
 
 #include "clsim/I3CLSimOpenCLDevice.h"
 
+#include <vector>
 #include <string>
 
 namespace I3CLSimModuleHelper {
@@ -52,7 +53,7 @@ namespace I3CLSimModuleHelper {
                      I3CLSimSimpleGeometryFromI3GeometryPtr geometry,
                      I3CLSimMediumPropertiesPtr medium,
                      I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
-                     I3CLSimRandomValueConstPtr wavelengthGenerator);
+                     const std::vector<I3CLSimRandomValueConstPtr> &wavelengthGenerators);
     
     I3CLSimLightSourceToStepConverterGeant4Ptr
     initializeGeant4(I3RandomServicePtr rng,

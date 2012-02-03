@@ -13,6 +13,7 @@
 
 #include <boost/noncopyable.hpp>
 
+#include <vector>
 #include <map>
 #include <string>
 #include <stdexcept>
@@ -42,16 +43,24 @@ public:
     //virtual ~I3CLSimStepToPhotonConverter();
 
     /**
-     * Sets the wavelength generator. By default it should
-     * return wavelengths according to a Cherenkov spectrum.
+     * Sets the wavelength generators. 
+     * The first generator (index 0) is assumed to return a Cherenkov
+     * spectrum that may have a bias applied to it. This bias factor
+     * needs to be set using SetWlenBias().
+     * All other generator indices are assumed to be for flasher/laser
+     * light generation. During generation, no Cherenkov angle
+     * rotation will be applied to those photons with indices >= 1.
      * Will throw if used after the call to Initialize().
      */
-    virtual void SetWlenGenerator(I3CLSimRandomValueConstPtr wlenGenerator) = 0;
+    virtual void SetWlenGenerators(const std::vector<I3CLSimRandomValueConstPtr> &wlenGenerators) = 0;
 
     /**
-     * Sets the wavelength bias. Set this to a constant value
+     * Sets the wavelength weights. Set this to a constant value
      * of 1 if you do not need biased photon generation.
-     * Photons will be assigned a weight equal to 1/bias.
+     * The wavelength spectrum set with SetWlenGenerator()
+     * is assumed to have a biassing factor already applied to it.
+     * This call sets this factor in order to be able to assign
+     * correct weights.
      * Will throw if used after the call to Initialize().
      */
     virtual void SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias) = 0;

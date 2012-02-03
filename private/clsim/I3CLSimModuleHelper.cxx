@@ -195,13 +195,13 @@ namespace I3CLSimModuleHelper {
                                                            I3CLSimSimpleGeometryFromI3GeometryPtr geometry,
                                                            I3CLSimMediumPropertiesPtr medium,
                                                            I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
-                                                           I3CLSimRandomValueConstPtr wavelengthGenerator)
+                                                           const std::vector<I3CLSimRandomValueConstPtr> &wavelengthGenerators)
     {
         I3CLSimStepToPhotonConverterOpenCLPtr conv(new I3CLSimStepToPhotonConverterOpenCL(rng, device.GetUseNativeMath()));
 
         conv->SetDevice(device);
 
-        conv->SetWlenGenerator(wavelengthGenerator);
+        conv->SetWlenGenerators(wavelengthGenerators);
         conv->SetWlenBias(wavelengthGenerationBias);
 
         conv->SetMediumProperties(medium);
