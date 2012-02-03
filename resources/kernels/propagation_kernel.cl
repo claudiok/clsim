@@ -49,29 +49,33 @@ inline float sqr(float a) {return a*a;}
 
 struct __attribute__ ((packed)) I3CLSimStep 
 {
-    float4 posAndTime;   // x,y,z,time
-    float4 dirAndLengthAndBeta; // theta,phi,length,beta
-    uint numPhotons;
-    float weight;
-    uint identifier;
-    uint dummy;
+    float4 posAndTime;   // x,y,z,time                      // 4x 32bit float
+    float4 dirAndLengthAndBeta; // theta,phi,length,beta    // 4x 32bit float
+    uint numPhotons;                                        //    32bit unsigned
+    float weight;                                           //    32bit float
+    uint identifier;                                        //    32bit unsigned
+    uchar sourceType;                                       //     8bit unsigned
+    uchar dummy1;                                           //     8bit unsigned
+    ushort dummy2;                                          //    16bit unsigned
+                                                            // total: 12x 32bit float = 48 bytes
 };
 
 struct __attribute__ ((packed)) I3CLSimPhoton 
 {
-    float4 posAndTime;   // x,y,z,time
-    float2 dir; // theta,phi
-    float wavelength; // photon wavelength
-    float cherenkovDist; // Cherenkov distance travelled 
-    uint numScatters; // number of scatters
-    float weight;
-    uint identifier;
-    short stringID;
-    ushort omID;
-    float4 startPosAndTime;
-    float2 startDir;
-    float groupVelocity;
-    uint dummy;
+    float4 posAndTime;   // x,y,z,time                      // 4x 32bit float
+    float2 dir; // theta,phi                                // 2x 32bit float
+    float wavelength; // photon wavelength                  //    32bit float
+    float cherenkovDist; // Cherenkov distance travelled    //    32bit float
+    uint numScatters; // number of scatters                 //    32bit unsigned
+    float weight;                                           //    32bit float
+    uint identifier;                                        //    32bit unsigned
+    short stringID;                                         //    16bit signed
+    ushort omID;                                            //    16bit unsigned
+    float4 startPosAndTime;                                 // 4x 32bit float
+    float2 startDir;                                        // 2x 32bit float
+    float groupVelocity;                                    //    32bit float
+    uint dummy;                                             //    32bit unsigned
+                                                            // total: 20x 32bit float = 80 bytes
 };
 
 
@@ -151,22 +155,36 @@ inline void createPhotonFromTrack(struct I3CLSimStep *step,
     // determine the photon layer (clamp if necessary)
     unsigned int layer = min(max(findLayerForGivenZPos( (*photonPosAndTime).z ), 0), MEDIUM_LAYERS-1);
 
-    // our photon still needs a wavelength. create one!
-    const float wavelength = generateWavelength(RNG_ARGS_TO_CALL);
+#ifndef NO_FLASHER
+    if (step->sourceType == 0) {
+#endif
+        // our photon still needs a wavelength. create one!
+        const float wavelength = generateWavelength(RNG_ARGS_TO_CALL);
 
-    const float cosCherenkov = my_recip(step->dirAndLengthAndBeta.w*getPhaseRefIndex(layer, wavelength)); // cos theta = 1/(beta*n)
-    const float sinCherenkov = my_sqrt(1.0f-cosCherenkov*cosCherenkov);
+        const float cosCherenkov = my_recip(step->dirAndLengthAndBeta.w*getPhaseRefIndex(layer, wavelength)); // cos theta = 1/(beta*n)
+        const float sinCherenkov = my_sqrt(1.0f-cosCherenkov*cosCherenkov);
 
-    // determine the photon direction
+        // determine the photon direction
 
-    // start with the track direction
-    (*photonDirAndWlen).xyz = stepDir.xyz;
-    (*photonDirAndWlen).w = wavelength;
+        // start with the track direction
+        (*photonDirAndWlen).xyz = stepDir.xyz;
+        (*photonDirAndWlen).w = wavelength;
 
-    // and now rotate to cherenkov emission direction
-    //printf("gen:\n");
-    scatterDirectionByAngle(cosCherenkov, sinCherenkov, photonDirAndWlen, RNG_CALL_UNIFORM_CO);
-    //printf("endgen.\n");
+        // and now rotate to cherenkov emission direction
+        //printf("gen:\n");
+        scatterDirectionByAngle(cosCherenkov, sinCherenkov, photonDirAndWlen, RNG_CALL_UNIFORM_CO);
+        //printf("endgen.\n");
+#ifndef NO_FLASHER
+    } else {
+        // steps >= 1 are flasher emissions, they do not need cherenkov rotation
+        
+        const float wavelength = generateWavelength(RNG_ARGS_TO_CALL);
+        
+        // use the step direction as the photon direction
+        (*photonDirAndWlen).xyz = stepDir.xyz;
+        (*photonDirAndWlen).w = wavelength;
+    }
+#endif
 }
 
 inline float2 sphDirFromCar(float4 carDir)
@@ -546,7 +564,12 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
     step.numPhotons = inputSteps[i].numPhotons;
     step.weight = inputSteps[i].weight;
     step.identifier = inputSteps[i].identifier;
-    step.dummy = inputSteps[i].dummy;
+#ifndef NO_FLASHER
+    // only needed for flashers
+    step.sourceType = inputSteps[i].sourceType;
+#endif
+    //step.dummy1 = inputSteps[i].dummy1;  // NOT USED
+    //step.dummy2 = inputSteps[i].dummy2;  // NOT USED
     //step = inputSteps[i]; // Intel OpenCL does not like this
 
     float4 stepDir;

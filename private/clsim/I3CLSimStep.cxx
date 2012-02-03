@@ -55,7 +55,9 @@ void I3CLSimStep::save(Archive &ar, unsigned version) const
     ar << make_nvp("weight", weight);
     ar << make_nvp("id", identifier);
 
-    ar << make_nvp("dummy", dummy);
+    ar << make_nvp("sourceType", sourceType);
+    ar << make_nvp("dummy1", dummy1);
+    ar << make_nvp("dummy2", dummy2);
 }     
 
 
@@ -66,6 +68,7 @@ void I3CLSimStep::load(Archive &ar, unsigned version)
 		log_fatal("Attempting to read version %u from file but running version %u of I3CLSimStep class.",version,i3clsimstep_version_);
     
     float temp; uint32_t temp_uint;
+    uint16_t temp_uint16; uint8_t temp_uint8;
     ar >> make_nvp("x", temp); ((cl_float *)&posAndTime)[0]=temp;
     ar >> make_nvp("y", temp); ((cl_float *)&posAndTime)[1]=temp;
     ar >> make_nvp("z", temp); ((cl_float *)&posAndTime)[2]=temp;
@@ -79,7 +82,9 @@ void I3CLSimStep::load(Archive &ar, unsigned version)
     ar >> make_nvp("num", temp_uint); numPhotons=temp_uint;
     ar >> make_nvp("weight", temp); weight=temp;
     ar >> make_nvp("id", temp_uint); identifier=temp_uint;
-    ar >> make_nvp("dummy", temp_uint); dummy=temp_uint;
+    ar >> make_nvp("sourceType", temp_uint8); sourceType=temp_uint8;
+    ar >> make_nvp("dummy1", temp_uint8); dummy1=temp_uint8;
+    ar >> make_nvp("dummy2", temp_uint16); dummy2=temp_uint16;
 
 }     
 

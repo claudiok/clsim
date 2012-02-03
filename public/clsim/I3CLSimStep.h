@@ -84,7 +84,9 @@ public:
     inline uint32_t GetNumPhotons() const {return numPhotons;}
     inline float GetWeight() const {return weight;}
     inline uint32_t GetID() const {return identifier;}
-    inline int32_t GetDummy() const {return dummy;}
+    inline uint8_t GetSourceType() const {return sourceType;}
+    inline uint8_t GetDummy1() const {return dummy1;}
+    inline uint16_t GetDummy2() const {return dummy2;}
 
     inline I3PositionPtr GetPos() const {return I3PositionPtr(new I3Position(((const cl_float *)&posAndTime)[0], ((const cl_float *)&posAndTime)[1], ((const cl_float *)&posAndTime)[2]));}
 
@@ -108,7 +110,9 @@ public:
     inline void SetNumPhotons(const uint32_t &val) {numPhotons=val;}
     inline void SetWeight(const float &val) {weight=val;}
     inline void SetID(const uint32_t &val) {identifier=val;}
-    inline void SetDummy(const int32_t &val) {dummy=val;}
+    inline void SetSourceType(const uint8_t &val) {sourceType=val;}
+    inline void SetDummy1(const uint8_t &val) {dummy1=val;}
+    inline void SetDummy2(const uint16_t &val) {dummy2=val;}
     
     inline void SetPos(const I3Position &pos) {((cl_float *)&posAndTime)[0]=pos.GetX(); ((cl_float *)&posAndTime)[1]=pos.GetY(); ((cl_float *)&posAndTime)[2]=pos.GetZ();}
 
@@ -134,7 +138,9 @@ public:
     cl_uint numPhotons;
     cl_float weight;
     cl_uint identifier;
-    cl_int dummy;
+    cl_uchar sourceType;
+    cl_uchar dummy1;
+    cl_ushort dummy2;
 
 private:
     friend class boost::serialization::access;

@@ -218,6 +218,7 @@ TrkCerenkov::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
         newStep.SetWeight(1.);
         newStep.SetBeta(beta);
         newStep.SetID(eventInformation->currentExternalParticleID);
+        newStep.SetSourceType(0); // cherenkov emission
     }
     
     // if the store size is large enough, flush some events to the external queue

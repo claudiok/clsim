@@ -799,6 +799,7 @@ void I3CLSimLightSourceToStepConverterPPC::GenerateStep(I3CLSimStep &newStep,
     newStep.SetWeight(1.);
     newStep.SetBeta(1.);
     newStep.SetID(identifier);
+    newStep.SetSourceType(0); // cherenkov emission
     
     // rotate in-place
     scatterDirectionByAngle(angular_cos, angular_sin,
@@ -828,6 +829,7 @@ void I3CLSimLightSourceToStepConverterPPC::GenerateStepForMuon(I3CLSimStep &newS
     newStep.SetWeight(1.);
     newStep.SetBeta(1.);
     newStep.SetID(identifier);
+    newStep.SetSourceType(0); // cherenkov emission
 }
 
 
