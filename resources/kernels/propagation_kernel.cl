@@ -158,6 +158,8 @@ inline void createPhotonFromTrack(struct I3CLSimStep *step,
 #ifndef NO_FLASHER
     if (step->sourceType == 0) {
 #endif
+		// sourceType==0 is always Cherenkov light with the correct angle w.r.t. the particle/step
+		
         // our photon still needs a wavelength. create one!
         const float wavelength = generateWavelength_0(RNG_ARGS_TO_CALL);
 

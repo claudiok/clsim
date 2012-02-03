@@ -480,7 +480,13 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
     //BuildOptions += "-cl-nv-opt-level=3 ";     // Passed on to ptxas as --opt-level <N>
     
     if (useNativeMath_) {BuildOptions += "-DUSE_NATIVE_MATH ";}
-    
+
+    // let the kernel code know that no flasher spectra will be used
+    // (might be useful for some optimizations, i.e. less branches)
+    if (wlenGenerators_.size() <= 1) {
+        BuildOptions += "-DNO_FLASHER ";
+    }
+
     cl::Program program;
     try {
         // build the program
