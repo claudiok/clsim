@@ -123,7 +123,7 @@ void register_I3CLSimTester()
          bp::init<const I3CLSimOpenCLDevice &, uint64_t, uint64_t, I3CLSimMediumPropertiesConstPtr, I3RandomServicePtr>
          (
           (
-           bp::arg("platformAndDeviceName"),
+           bp::arg("device"),
            bp::arg("workgroupSize"),
            bp::arg("workItemsPerIteration"),
            bp::arg("mediumProperties"),

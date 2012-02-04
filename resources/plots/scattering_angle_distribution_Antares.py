@@ -220,10 +220,23 @@ from icecube import icetray, dataclasses, clsim, phys_services
 def genMCHistogramsOpenCL(distribution, iterations=1000, numBins=10000):
     rng = phys_services.I3SPRNGRandomService(seed=3244, nstreams=2, streamnum=0)
     
-    tester = clsim.I3CLSimRandomDistributionTester(platformAndDeviceName=clsim.I3CLSimRandomDistributionTester.GetDeviceNameList()[0],
-                                                   workgroupSize=512,
-                                                   workItemsPerIteration=102400,
-                                                   useNativeMath=False,
+    # get OpenCL CPU devices
+    openCLDevices = [device for device in clsim.I3CLSimOpenCLDevice.GetAllDevices() if device.cpu]
+    if len(openCLDevices)==0:
+        raise RuntimeError("No CPU OpenCL devices available!")
+    openCLDevice = openCLDevices[0]
+
+    openCLDevice.useNativeMath=False
+    workgroupSize = 1
+    workItemsPerIteration = 10240
+    print "           using platform:", openCLDevice.platform
+    print "             using device:", openCLDevice.device
+    print "            workgroupSize:", workgroupSize
+    print "    workItemsPerIteration:", workItemsPerIteration
+    
+    tester = clsim.I3CLSimRandomDistributionTester(device=openCLDevice,
+                                                   workgroupSize=workgroupSize,
+                                                   workItemsPerIteration=workItemsPerIteration,
                                                    randomService=rng,
                                                    randomDistribution=distribution)
     

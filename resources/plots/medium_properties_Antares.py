@@ -35,12 +35,17 @@ from I3Tray import I3Units
 
 #rng = phys_services.I3SPRNGRandomService(seed=3244, nstreams=2, streamnum=0)
 
-platformAndDeviceName = clsim.I3CLSimTesterBase.GetDeviceNameList()[0]
-useNativeMath=False
-workgroupSize = 512
+# get OpenCL CPU devices
+openCLDevices = [device for device in clsim.I3CLSimOpenCLDevice.GetAllDevices() if device.cpu]
+if len(openCLDevices)==0:
+    raise RuntimeError("No CPU OpenCL devices available!")
+openCLDevice = openCLDevices[0]
+
+openCLDevice.useNativeMath=False
+workgroupSize = 1
 workItemsPerIteration = 10240
-print "           using platform:", platformAndDeviceName[0]
-print "             using device:", platformAndDeviceName[1]
+print "           using platform:", openCLDevice.platform
+print "             using device:", openCLDevice.device
 print "            workgroupSize:", workgroupSize
 print "    workItemsPerIteration:", workItemsPerIteration
 
@@ -49,10 +54,9 @@ print "    workItemsPerIteration:", workItemsPerIteration
 def applyOpenCLWlenDependentFunction(xValues, functionOpenCL, getDerivative=False, useReferenceFunction=False):
     #print "         number of values:", len(xValues)
     
-    tester = clsim.I3CLSimWlenDependentValueTester(platformAndDeviceName=platformAndDeviceName,
+    tester = clsim.I3CLSimWlenDependentValueTester(device=openCLDevice,
                                                    workgroupSize=workgroupSize,
                                                    workItemsPerIteration=workItemsPerIteration,
-                                                   useNativeMath=useNativeMath,
                                                    wlenDependentValue=functionOpenCL)
     
     #print "maxWorkgroupSizeForKernel:", tester.maxWorkgroupSize
@@ -74,10 +78,9 @@ def applyOpenCLWlenDependentFunction(xValues, functionOpenCL, getDerivative=Fals
     return yValues
 
 def applyOpenCLMediumPropertyFunction(xValues, layer, mediumProps, mode):
-    tester = clsim.I3CLSimMediumPropertiesTester(platformAndDeviceName=platformAndDeviceName,
+    tester = clsim.I3CLSimMediumPropertiesTester(device=openCLDevice,
                                                  workgroupSize=workgroupSize,
                                                  workItemsPerIteration=workItemsPerIteration,
-                                                 useNativeMath=useNativeMath,
                                                  mediumProperties=mediumProps,
                                                  randomService=None)
     
