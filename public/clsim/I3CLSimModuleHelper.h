@@ -68,10 +68,14 @@ namespace I3CLSimModuleHelper {
                      bool multiprocessor=false);
 
     I3CLSimRandomValueConstPtr
-    makeWavelengthGenerator(I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
+    makeCherenkovWavelengthGenerator(I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
                                      bool generateCherenkovPhotonsWithoutDispersion,
                                      I3CLSimMediumPropertiesPtr mediumProperties);
 
+    I3CLSimRandomValueConstPtr
+    makeWavelengthGenerator(I3CLSimWlenDependentValueConstPtr unbiasedSpectrum,
+                            I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
+                            I3CLSimMediumPropertiesPtr mediumProperties);
 
 };
 

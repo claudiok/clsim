@@ -302,7 +302,7 @@ void I3CLSimModule::Configure()
     
     // fill wavelengthGenerators_[0] (index 0 is the Cherenkov generator)
     wavelengthGenerators_.clear();
-    wavelengthGenerators_.push_back(I3CLSimModuleHelper::makeWavelengthGenerator
+    wavelengthGenerators_.push_back(I3CLSimModuleHelper::makeCherenkovWavelengthGenerator
                                     (wavelengthGenerationBias_,
                                      generateCherenkovPhotonsWithoutDispersion_,
                                      mediumProperties_

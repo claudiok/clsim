@@ -37,6 +37,7 @@ namespace bp = boost::python;
 void register_I3ModuleHelper()
 {
     // this can be used for testing purposes
+    bp::def("makeCherenkovWavelengthGenerator", &I3CLSimModuleHelper::makeCherenkovWavelengthGenerator);
     bp::def("makeWavelengthGenerator", &I3CLSimModuleHelper::makeWavelengthGenerator);
     
     

@@ -70,9 +70,97 @@ namespace I3CLSimModuleHelper {
     
     
     I3CLSimRandomValueConstPtr
-    makeWavelengthGenerator(I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
-                            bool generateCherenkovPhotonsWithoutDispersion,
+    makeWavelengthGenerator(I3CLSimWlenDependentValueConstPtr unbiasedSpectrum,
+                            I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
                             I3CLSimMediumPropertiesPtr mediumProperties)
+    {
+        double minWlen = unbiasedSpectrum->GetMinWlen();
+        double maxWlen = unbiasedSpectrum->GetMaxWlen();
+        
+        // check if the spectrum is from a tabulated distribution (instead of
+        // a parameterized one)
+        I3CLSimWlenDependentValueFromTableConstPtr unbiasedSpectrumFromTable;
+        unbiasedSpectrumFromTable =
+        dynamic_pointer_cast<const I3CLSimWlenDependentValueFromTable>(unbiasedSpectrum);
+
+        if (!unbiasedSpectrumFromTable) {
+            // do not clip wavelengths if they are from a tabulated distribution. In that case,
+            // re-use the entire table binning
+            if (mediumProperties->GetMinWavelength() > minWlen) minWlen=mediumProperties->GetMinWavelength();
+            if (mediumProperties->GetMaxWavelength() < maxWlen) maxWlen=mediumProperties->GetMaxWavelength();
+        }
+        
+        const double wlenRange = maxWlen-minWlen;
+        if (wlenRange <= 0.) log_fatal("Internal error, wavelength range <= 0!");
+
+        if (wavelengthGenerationBias->GetMinWlen() > minWlen)
+            log_fatal("wavelength generation bias has to have a wavelength range larger or equal to the spectrum wavelength range!");
+        if (wavelengthGenerationBias->GetMaxWlen() < maxWlen)
+            log_fatal("wavelength generation bias has to have a wavelength range larger or equal to the spectrum wavelength range!");
+
+        // Check if the spectrum values are from a tabulated distribution.
+        // If yes, use the table binning, if not make up a binning.
+        if (unbiasedSpectrumFromTable)
+        {
+            std::size_t wlenPoints = unbiasedSpectrumFromTable->GetNumEntries();
+            const double firstWlen = unbiasedSpectrumFromTable->GetFirstWavelength();
+            const double wlenStep = unbiasedSpectrumFromTable->GetWavelengthStepping();
+            
+            std::vector<double> spectrum(wlenPoints, NAN);
+            std::vector<double> wavelengths(wlenPoints, NAN);
+            for (std::size_t i=0;i<wlenPoints;++i)
+            {
+                const double wavelength = unbiasedSpectrumFromTable->GetEntryWavelength(i);
+                const double entry = unbiasedSpectrumFromTable->GetEntryValue(i);
+                const double bias = wavelengthGenerationBias->GetValue(wavelength);
+                
+                spectrum[i] = bias * entry;
+                wavelengths[i] = wavelength;
+            }
+            
+            if (unbiasedSpectrumFromTable->GetInEqualSpacingMode()) {
+                const double wlenStep = unbiasedSpectrumFromTable->GetWavelengthStepping();
+
+                return I3CLSimRandomValueInterpolatedDistributionConstPtr
+                (new I3CLSimRandomValueInterpolatedDistribution(firstWlen,
+                                                                wlenStep,
+                                                                spectrum));
+            } else {
+                // slightly less efficient if non-equally spaced
+                return I3CLSimRandomValueInterpolatedDistributionConstPtr
+                (new I3CLSimRandomValueInterpolatedDistribution(wavelengths,
+                                                                spectrum));
+            }
+        }
+        else
+        {
+            // use a pre-defined binning of 10ns (an arbitrary value..)
+            
+            std::size_t wlenPoints = static_cast<std::size_t>(wlenRange/(10.*I3Units::nanometer))+2;
+            const double firstWlen = minWlen;
+            const double wlenStep = wlenRange/static_cast<double>(wlenPoints-1);
+            
+            std::vector<double> spectrum(wlenPoints, NAN);
+            for (std::size_t i=0;i<wlenPoints;++i)
+            {
+                const double wavelength = firstWlen + static_cast<double>(i)*wlenStep;
+                const double entry = unbiasedSpectrum->GetValue(wavelength);
+                const double bias = wavelengthGenerationBias->GetValue(wavelength);
+                
+                spectrum[i] = bias * entry;
+            }
+            
+            return I3CLSimRandomValueInterpolatedDistributionConstPtr
+            (new I3CLSimRandomValueInterpolatedDistribution(firstWlen,
+                                                            wlenStep,
+                                                            spectrum));
+        }
+    }
+    
+    I3CLSimRandomValueConstPtr
+    makeCherenkovWavelengthGenerator(I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
+                                     bool generateCherenkovPhotonsWithoutDispersion,
+                                     I3CLSimMediumPropertiesPtr mediumProperties)
     {
         const double minWlen = mediumProperties->GetMinWavelength();
         const double maxWlen = mediumProperties->GetMaxWavelength();
@@ -85,7 +173,7 @@ namespace I3CLSimModuleHelper {
             log_fatal("wavelength generation bias has to have a wavelength range larger or equal to the medium property range!");
         
         bool noBias=false;
-        bool biasIsConstant=false;
+        //bool biasIsConstant=false;
         
         {
             I3CLSimWlenDependentValueConstantConstPtr wavelengthGenerationBiasConstant =
@@ -93,7 +181,7 @@ namespace I3CLSimModuleHelper {
             
             if (wavelengthGenerationBiasConstant)
             {
-                biasIsConstant=true;
+                //biasIsConstant=true;
                 
                 if ( std::abs(wavelengthGenerationBiasConstant->GetValue((minWlen+maxWlen)/2.)-1.) < 1e-10 )
                     noBias=true;
@@ -101,11 +189,8 @@ namespace I3CLSimModuleHelper {
         }
         
         I3CLSimWlenDependentValueFromTableConstPtr wavelengthGenerationBiasFromTable;
-        if (!biasIsConstant)
-        {
-            wavelengthGenerationBiasFromTable =
-            dynamic_pointer_cast<const I3CLSimWlenDependentValueFromTable>(wavelengthGenerationBias);
-        }
+        wavelengthGenerationBiasFromTable =
+        dynamic_pointer_cast<const I3CLSimWlenDependentValueFromTable>(wavelengthGenerationBias);
         
         
 
@@ -120,19 +205,18 @@ namespace I3CLSimModuleHelper {
         }
         
         // Check if the bias values are from a tabulated distribution.
-        // If yes, use the table binning, if no, make up a binning.
-        
+        // If yes, use the table binning, if not make up a binning.
         if (wavelengthGenerationBiasFromTable)
         {
-            std::size_t wlenPoints = wavelengthGenerationBiasFromTable->GetWavelengthNumValues();
+            std::size_t wlenPoints = wavelengthGenerationBiasFromTable->GetNumEntries();
             const double firstWlen = wavelengthGenerationBiasFromTable->GetFirstWavelength();
-            const double wlenStep = wavelengthGenerationBiasFromTable->GetWavelengthStepping();
             
             std::vector<double> spectrum(wlenPoints, NAN);
+            std::vector<double> wavelengths(wlenPoints, NAN);
             for (std::size_t i=0;i<wlenPoints;++i)
             {
-                const double wavelength = firstWlen + static_cast<double>(i)*wlenStep;
-                const double bias = wavelengthGenerationBiasFromTable->GetWavelengthValue(i);
+                const double wavelength = wavelengthGenerationBiasFromTable->GetEntryWavelength(i);
+                const double bias = wavelengthGenerationBiasFromTable->GetEntryValue(i);
                 
                 if (generateCherenkovPhotonsWithoutDispersion)
                 {
@@ -144,12 +228,23 @@ namespace I3CLSimModuleHelper {
                     spectrum[i] =
                     bias * CherenkovYieldDistribution(wavelength, mediumProperties);
                 }
+                
+                wavelengths[i] = wavelength;
             }
             
-            return I3CLSimRandomValueInterpolatedDistributionConstPtr
-            (new I3CLSimRandomValueInterpolatedDistribution(firstWlen,
-                                                            wlenStep,
-                                                            spectrum));
+            if (wavelengthGenerationBiasFromTable->GetInEqualSpacingMode()) {
+                const double wlenStep = wavelengthGenerationBiasFromTable->GetWavelengthStepping();
+
+                return I3CLSimRandomValueInterpolatedDistributionConstPtr
+                (new I3CLSimRandomValueInterpolatedDistribution(firstWlen,
+                                                                wlenStep,
+                                                                spectrum));
+            } else {
+                // slightly less efficient if non-equally spaced
+                return I3CLSimRandomValueInterpolatedDistributionConstPtr
+                (new I3CLSimRandomValueInterpolatedDistribution(wavelengths,
+                                                                spectrum));
+            }
         }
         else if ((noBias) && (generateCherenkovPhotonsWithoutDispersion))
         {

@@ -15,6 +15,11 @@ struct I3CLSimWlenDependentValueFromTable : public I3CLSimWlenDependentValue
 {
 public:
     
+    // arbitrary wavelength values
+    I3CLSimWlenDependentValueFromTable(const std::vector<double> &wlens,
+                                       const std::vector<double> &values);
+    
+    // wavelengths with constant spacing (more efficient)
     I3CLSimWlenDependentValueFromTable(double startWlen,
                                        double wlenStep,
                                        const std::vector<double> &values);
@@ -58,14 +63,24 @@ public:
     inline double GetWavelengthStepping() const {return wlenStep_;}
 
     /**
-     * Returns the internal state: wavelength stepping
+     * Returns the internal state: number of bins
      */
-    inline std::size_t GetWavelengthNumValues() const {return values_.size();}
+    inline std::size_t GetNumEntries() const {return values_.size();}
 
     /**
-     * Returns the internal state: wavelength stepping
+     * Returns the internal state: value at entry i
      */
-    inline double GetWavelengthValue(std::size_t i) const {return values_[i];}
+    inline double GetEntryValue(std::size_t i) const {return values_[i];}
+
+    /**
+     * Returns the internal state: wavenelgth at entry i
+     */
+    inline double GetEntryWavelength(std::size_t i) const {return wlens_[i];}
+
+    /**
+     * Returns the internal state: has equally spaced bins?
+     */
+    inline bool GetInEqualSpacingMode() const {return equalSpacingMode_;}
 
     /**
      * Shall return an OpenCL-compatible function named
@@ -83,7 +98,10 @@ private:
     
     double startWlen_;
     double wlenStep_;
+    std::vector<double> wlens_;
     std::vector<double> values_;
+    
+    bool equalSpacingMode_;
     
     friend class boost::serialization::access;
     template <class Archive> void serialize(Archive & ar, unsigned version);

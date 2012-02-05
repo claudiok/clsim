@@ -141,10 +141,22 @@ void register_I3CLSimWlenDependentValue()
            )
           )
         )
+        .def(bp::init<
+             const std::vector<double> &,
+             const std::vector<double> &
+             >(
+               (
+                bp::arg("wlens"),
+                bp::arg("values")
+               )
+              )
+            )
         .def("GetFirstWavelength", &I3CLSimWlenDependentValueFromTable::GetFirstWavelength)
         .def("GetWavelengthStepping", &I3CLSimWlenDependentValueFromTable::GetWavelengthStepping)
-        .def("GetWavelengthNumValues", &I3CLSimWlenDependentValueFromTable::GetWavelengthNumValues)
-        .def("GetWavelengthValue", &I3CLSimWlenDependentValueFromTable::GetWavelengthValue)
+        .def("GetNumEntries", &I3CLSimWlenDependentValueFromTable::GetNumEntries)
+        .def("GetEntryValue", &I3CLSimWlenDependentValueFromTable::GetEntryValue)
+        .def("GetEntryWavelength", &I3CLSimWlenDependentValueFromTable::GetEntryWavelength)
+        .def("GetInEqualSpacingMode", &I3CLSimWlenDependentValueFromTable::GetInEqualSpacingMode)
         ;
     }
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueFromTable>, shared_ptr<const I3CLSimWlenDependentValueFromTable> >();
