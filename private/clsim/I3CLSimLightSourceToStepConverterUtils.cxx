@@ -53,7 +53,7 @@ namespace I3CLSimLightSourceToStepConverterUtils {
         f_params.phaseRefIndex = &phaseRefIndex;
         f_params.wavelengthGenerationBias = &wavelengthGenerationBias;
         
-        gsl_integration_workspace *w = gsl_integration_workspace_alloc(1000);
+        gsl_integration_workspace *w = gsl_integration_workspace_alloc(10000);
         
         gsl_function F;
         F.function = &f;
@@ -78,6 +78,96 @@ namespace I3CLSimLightSourceToStepConverterUtils {
     }
 #undef H_TIMES_C    
     
+
+    
+    
+    
+    
+    struct f2_params_t {
+        const I3CLSimWlenDependentValue *unbiasedSpectrum;
+        const I3CLSimWlenDependentValue *wavelengthGenerationBias; // can be NULL
+    };
+    
+    static double f2(double wlen, void *params)
+    {
+        f2_params_t *f2_params = static_cast<f2_params_t *>(params);
+        
+        double bias = 1.; // no bias by default
+        if (f2_params->wavelengthGenerationBias) {
+            const I3CLSimWlenDependentValue &wavelengthGenerationBias = *(f2_params->wavelengthGenerationBias);
+            bias = wavelengthGenerationBias.GetValue(wlen);
+        }
+
+        const I3CLSimWlenDependentValue &unbiasedSpectrum = *(f2_params->unbiasedSpectrum);
+        double spectrumValue = unbiasedSpectrum.GetValue(wlen);
+        
+        const double retval = bias*spectrumValue;
+        
+        log_trace("spectrumValue(%fnm)=%g  bias(%fnm)=%g  f(%fnm)=%g",
+                  wlen/I3Units::nanometer,
+                  spectrumValue,
+                  wlen/I3Units::nanometer,
+                  bias,
+                  wlen/I3Units::nanometer,
+                  retval);
+        
+        return retval;
+    }
+    
+    double PhotonNumberCorrectionFactorAfterBias(const I3CLSimWlenDependentValue &unbiasedSpectrum,
+                                                 const I3CLSimWlenDependentValue &wavelengthGenerationBias,
+                                                 double fromWlen, double toWlen)
+    {
+        log_trace("integrating in range [%f;%f]nm",
+                  fromWlen/I3Units::nanometer,
+                  toWlen/I3Units::nanometer);
+
+        gsl_integration_workspace *w = gsl_integration_workspace_alloc(10000);
+
+        f2_params_t f2_params;
+        gsl_function F;
+        F.function = &f2;
+        F.params = static_cast<void *>(&f2_params); // I'm not proud of this..
+
+        double result, error;
+
+        f2_params.unbiasedSpectrum = &unbiasedSpectrum;
+        
+        // without bias first
+        f2_params.wavelengthGenerationBias = NULL;
+        
+        gsl_integration_qag(&F,
+                            fromWlen,
+                            toWlen,
+                            0,
+                            1e-5,
+                            1000,
+                            GSL_INTEG_GAUSS61,
+                            w,
+                            &result,
+                            &error); 
+
+        const double integralUnbiased = result;
+        
+        // and again, this time with the bias
+        f2_params.wavelengthGenerationBias = &wavelengthGenerationBias;
+
+        gsl_integration_qag(&F,
+                            fromWlen,
+                            toWlen,
+                            0,
+                            1e-5,
+                            1000,
+                            GSL_INTEG_GAUSS61,
+                            w,
+                            &result,
+                            &error); 
+        const double integralWithBias = result;
+        
+        gsl_integration_workspace_free(w);
+        
+        return integralWithBias/integralUnbiased;
+    }
 
 
 }

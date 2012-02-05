@@ -92,7 +92,6 @@ void register_I3CLSimWlenDependentValue()
     bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueWrapper>, shared_ptr<const I3CLSimWlenDependentValueWrapper> >();
     utils::register_const_ptr<I3CLSimWlenDependentValue>();
 
-
     // constant value
     {
         bp::class_<

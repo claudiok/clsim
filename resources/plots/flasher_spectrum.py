@@ -196,17 +196,16 @@ for i in range(len(flasherName)):
     
     integral_spectrum = scipy.integrate.quad(vectorizedSpectrum, spectrum[i].GetMinWlen(), spectrum[i].GetMaxWlen())[0]/I3Units.nanometer
     print "spectrum integral (w/o bias) [", spectrum[i].GetMinWlen()/I3Units.nanometer, "nm,", spectrum[i].GetMaxWlen()/I3Units.nanometer, "nm] =", integral_spectrum
-
-    integral_spectrumWithBias = scipy.integrate.quad(vectorizedSpectrumWithBias, spectrum[i].GetMinWlen(), spectrum[i].GetMaxWlen())[0]/I3Units.nanometer
-    print "spectrum integral (w/  bias) [", spectrum[i].GetMinWlen()/I3Units.nanometer, "nm,", spectrum[i].GetMaxWlen()/I3Units.nanometer, "nm] =", integral_spectrumWithBias
     
     bins = numpy.linspace(wlen_range[0]*I3Units.nanometer, wlen_range[1]*I3Units.nanometer, 1000)
     vals = vectorizedSpectrum(bins) / integral_spectrum
     valsWithBias = vectorizedSpectrumWithBias(bins) / integral_spectrum
 
+    correctionFactor = clsim.PhotonNumberCorrectionFactorAfterBias(spectrum[i], domAcceptance, spectrum[i].GetMinWlen(), spectrum[i].GetMaxWlen())
+
     spectrumData.append([bins, vals])
     spectrumDataWithBias.append([bins, valsWithBias])
-    multiplicatorForBiassedMCSpectrum.append(integral_spectrumWithBias / integral_spectrum)
+    multiplicatorForBiassedMCSpectrum.append(correctionFactor)
 
 biasDataBins = numpy.linspace(wlen_range[0]*I3Units.nanometer, wlen_range[1]*I3Units.nanometer, 10000)
 biasDataVals = vectorizedDomAcceptance(biasDataBins)

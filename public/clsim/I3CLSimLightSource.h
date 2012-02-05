@@ -29,7 +29,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <dataclasses/physics/I3Particle.h>
-#include <dataclasses/physics/I3FlasherInfo.h>
+#include <clsim/I3CLSimFlasherPulse.h>
 
 #define I3CLSIMLIGHTSOURCE_H_I3CLSimLightSource_LightSourceType \
     (Unknown)(Particle)(Flasher)
@@ -37,7 +37,7 @@
 /**
  * @brief Describes a light source. This is currently
  * either a I3Particle or a flasher described by
- * I3FlasherInfo and some additional variables.
+ * I3CLSimFlasherPulse and some additional variables.
  */
 class I3CLSimLightSource
 {
@@ -48,7 +48,7 @@ public:
     I3CLSimLightSource(const I3CLSimLightSource &lightSource);
 
     I3CLSimLightSource(const I3Particle &particle);
-    I3CLSimLightSource(const I3FlasherInfo &flasher);
+    I3CLSimLightSource(const I3CLSimFlasherPulse &flasher);
     
     enum LightSourceType {
         Unknown = 0,
@@ -59,7 +59,7 @@ public:
     inline LightSourceType GetType() const {return lightSourceType_;}
     
     const I3Particle &GetParticle() const;
-    const I3FlasherInfo &GetFlasherInfo() const;
+    const I3CLSimFlasherPulse &GetFlasherPulse() const;
 
 private:
     I3CLSimLightSource(); // no default construction
@@ -67,7 +67,7 @@ private:
     LightSourceType lightSourceType_;
 
     I3Particle particle_;
-    I3FlasherInfo flasher_;
+    I3CLSimFlasherPulse flasher_;
 
 private: // static stuff
     friend bool operator==(const I3CLSimLightSource &, const I3CLSimLightSource &);

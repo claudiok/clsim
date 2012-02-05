@@ -17,6 +17,9 @@ namespace I3CLSimLightSourceToStepConverterUtils
                                    const I3CLSimWlenDependentValue &wavelengthGenerationBias,
                                    double fromWlen, double toWlen);
     
+    double PhotonNumberCorrectionFactorAfterBias(const I3CLSimWlenDependentValue &unbiasedSpectrum,
+                                                 const I3CLSimWlenDependentValue &wavelengthGenerationBias,
+                                                 double fromWlen, double toWlen);
     
     inline uint64_t mwcRngInitState(I3RandomServicePtr randomService, uint32_t a)
     {

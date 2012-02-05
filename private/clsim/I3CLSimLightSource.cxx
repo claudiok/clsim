@@ -16,7 +16,7 @@ particle_(particle)
     
 }
 
-I3CLSimLightSource::I3CLSimLightSource(const I3FlasherInfo &flasher)
+I3CLSimLightSource::I3CLSimLightSource(const I3CLSimFlasherPulse &flasher)
 :
 lightSourceType_(I3CLSimLightSource::Flasher),
 flasher_(flasher)
@@ -87,10 +87,10 @@ const I3Particle &I3CLSimLightSource::GetParticle() const
 }
 
 
-const I3FlasherInfo &I3CLSimLightSource::GetFlasherInfo() const
+const I3CLSimFlasherPulse &I3CLSimLightSource::GetFlasherPulse() const
 {
     if (lightSourceType_ != Flasher)
-        throw std::runtime_error("this light source is not an I3FlasherInfo");
+        throw std::runtime_error("this light source is not an I3CLSimFlasherPulse");
     
     return flasher_;
 }

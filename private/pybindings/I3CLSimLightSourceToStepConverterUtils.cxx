@@ -39,7 +39,9 @@ void register_I3CLSimLightSourceToStepConverterUtils()
 
     // this can be used for testing purposes
     bp::def("NumberOfPhotonsPerMeter", &I3CLSimLightSourceToStepConverterUtils::NumberOfPhotonsPerMeter);
+    bp::def("PhotonNumberCorrectionFactorAfterBias", &I3CLSimLightSourceToStepConverterUtils::PhotonNumberCorrectionFactorAfterBias);
     bp::def("gammaDistributedNumber", gammaDistributedNumber_smartPtr);
+
     //bp::def("scatterDirectionByAngle", &I3CLSimLightSourceToStepConverterUtils::scatterDirectionByAngle);
     //bp::def("GenerateStep", &I3CLSimLightSourceToStepConverterUtils::GenerateStep);
     //bp::def("GenerateStepForMuon", &I3CLSimLightSourceToStepConverterUtils::GenerateStepForMuon);

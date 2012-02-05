@@ -44,7 +44,7 @@ void register_I3CLSimLightSource()
           )
          )
         )
-        .def(bp::init<const I3FlasherInfo &>
+        .def(bp::init<const I3CLSimFlasherPulse &>
              (
               (
                bp::arg("flasher")
@@ -58,8 +58,8 @@ void register_I3CLSimLightSource()
         .add_property("particle", make_function(&I3CLSimLightSource::GetParticle, bp::return_value_policy<bp::copy_const_reference>()))
         .def("GetParticle", &I3CLSimLightSource::GetParticle, bp::return_value_policy<bp::copy_const_reference>())
 
-        .add_property("flasher_info", make_function(&I3CLSimLightSource::GetFlasherInfo, bp::return_value_policy<bp::copy_const_reference>()))
-        .def("GetFlasherInfo", &I3CLSimLightSource::GetFlasherInfo, bp::return_value_policy<bp::copy_const_reference>())
+        .add_property("flasherPulse", make_function(&I3CLSimLightSource::GetFlasherPulse, bp::return_value_policy<bp::copy_const_reference>()))
+        .def("GetFlasherPulse", &I3CLSimLightSource::GetFlasherPulse, bp::return_value_policy<bp::copy_const_reference>())
         ;
         
         

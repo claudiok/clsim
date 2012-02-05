@@ -40,6 +40,8 @@ if(BUILD_PYBINDINGS)
     I3CLSimPMTPhotonSimulator.cxx
     I3CLSimOpenCLDevice.cxx
     I3CLSimLightSource.cxx
+    I3CLSimSpectrumTable.cxx
+    I3CLSimFlasherPulse.cxx
     I3Converters.cxx
     I3HoleIceSimulator.cxx
     module.cxx

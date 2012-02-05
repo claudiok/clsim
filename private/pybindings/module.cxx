@@ -39,17 +39,18 @@ namespace bp = boost::python;
 	(I3CLSimStep)(I3CLSimPhoton)                    \
     (I3CLSimWlenDependentValue)                     \
     (I3CLSimMediumProperties)(I3CLSimRandomValue)   \
-    (I3CLSimLightSourceToStepConverter)                \
+    (I3CLSimLightSourceToStepConverter)             \
     (I3CLSimStepToPhotonConverter)                  \
     (I3CLSimSimpleGeometry)                         \
     (augmentDataclassesWithPicklingSupport)         \
-    (I3Photon)(I3CLSimLightSourceParameterization)     \
+    (I3Photon)(I3CLSimLightSourceParameterization)  \
     (I3CLSimTester)(I3ModuleHelper)                 \
-    (I3CLSimLightSourceToStepConverterUtils)           \
+    (I3CLSimLightSourceToStepConverterUtils)        \
     (I3CLSimEventStatistics)                        \
     (I3CLSimPMTPhotonSimulator)                     \
     (I3Converters)(I3CLSimOpenCLDevice)             \
-    (I3CLSimLightSource)(I3HoleIceSimulator)
+    (I3CLSimLightSource)(I3CLSimSpectrumTable)      \
+    (I3CLSimFlasherPulse)(I3HoleIceSimulator)
 
 #define I3_REGISTRATION_FN_DECL(r, data, t) void BOOST_PP_CAT(register_,t)();
 #define I3_REGISTER(r, data, t) BOOST_PP_CAT(register_,t)();

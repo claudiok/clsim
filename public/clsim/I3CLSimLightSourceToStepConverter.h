@@ -19,7 +19,7 @@
 
 /**
  * @brief Base class for objects that get a I3CLSimLightSource
- * (i.e. either a I3Particle or a I3FlasherInfo)
+ * (i.e. either a I3Particle or a I3CLSimFlasherPulse)
  * and convert it into individual I3CLSimStep objects stored
  * as bunches in an I3CLSimStepSeries.
  */
