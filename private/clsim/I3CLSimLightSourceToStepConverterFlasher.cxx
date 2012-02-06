@@ -15,7 +15,7 @@
 using namespace I3CLSimLightSourceToStepConverterUtils;
 
 
-const uint32_t I3CLSimLightSourceToStepConverterFlasher::default_photonsPerStep=2000;
+const uint32_t I3CLSimLightSourceToStepConverterFlasher::default_photonsPerStep=400;
 
 
 I3CLSimLightSourceToStepConverterFlasher::I3CLSimLightSourceToStepConverterFlasher
