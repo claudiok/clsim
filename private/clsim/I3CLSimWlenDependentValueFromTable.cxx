@@ -130,7 +130,7 @@ double I3CLSimWlenDependentValueFromTable::GetMaxWlen() const
 
 std::string I3CLSimWlenDependentValueFromTable::GetOpenCLFunction(const std::string &functionName) const
 {
-    if (equalSpacingMode_)
+    if (!equalSpacingMode_)
         log_fatal("GetOpenCLFunction() has not yet been implemented for non-equal bin spacings.");
     
     // some names

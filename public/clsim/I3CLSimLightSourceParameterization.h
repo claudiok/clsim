@@ -43,6 +43,7 @@ public:
     I3CLSimLightSourceParameterization();
     ~I3CLSimLightSourceParameterization();
 
+    // for I3Particle
     I3CLSimLightSourceParameterization(I3CLSimLightSourceToStepConverterPtr converter_,
                                        I3Particle::ParticleType forParticleType_,
                                        double fromEnergy_, double toEnergy_,
@@ -60,10 +61,9 @@ public:
                                        double fromEnergy_, double toEnergy_,
                                        bool needsLength_=false);
 
-    struct AllFlashers_t {};
-    static const AllFlashers_t AllFlashers;
+    // for I3CLSimFlasherPulse
     I3CLSimLightSourceParameterization(I3CLSimLightSourceToStepConverterPtr converter_,
-                                       const AllFlashers_t &);
+                                       I3CLSimFlasherPulse::FlasherPulseType forFlasherPulseType_);
 
     
     I3CLSimLightSourceToStepConverterPtr converter;
@@ -75,8 +75,9 @@ public:
     double fromEnergy, toEnergy;
     bool needsLength;
     bool catchAll;
-    
-    bool catchFlashers;
+
+    bool flasherMode;
+    I3CLSimFlasherPulse::FlasherPulseType forFlasherPulseType;
     
     bool IsValidForParticle(const I3Particle &particle) const;
     bool IsValid(I3Particle::ParticleType type, double energy, double length=NAN) const;
@@ -91,15 +92,23 @@ private:
 
 inline bool operator==(const I3CLSimLightSourceParameterization &a, const I3CLSimLightSourceParameterization &b)
 {
-    if (a.fromEnergy != b.fromEnergy) return false;
-    if (a.toEnergy != b.toEnergy) return false;
-#ifndef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
-    if (a.forParticleType != b.forParticleType) return false;
-#else
-    if (a.forPdgEncoding != b.forPdgEncoding) return false;
-#endif
     if (a.converter != b.converter) return false;
-    if (a.needsLength != b.needsLength) return false;
+    if (a.flasherMode != b.flasherMode) return false;
+
+    if (a.flasherMode) {
+        if (a.fromEnergy != b.fromEnergy) return false;
+        if (a.toEnergy != b.toEnergy) return false;
+#ifndef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
+        if (a.forParticleType != b.forParticleType) return false;
+#else
+        if (a.forPdgEncoding != b.forPdgEncoding) return false;
+#endif
+        if (a.needsLength != b.needsLength) return false;
+        if (a.catchAll != b.catchAll) return false;
+    } else {
+        if (a.forFlasherPulseType != b.forFlasherPulseType) return false;
+    }
+    
     return true;
 }
 

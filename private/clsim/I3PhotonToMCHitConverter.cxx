@@ -242,28 +242,33 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
         log_fatal("no DetectorStatus frame yet, but received a Physics frame.");
     
     I3PhotonSeriesMapConstPtr inputPhotonSeriesMap = frame->Get<I3PhotonSeriesMapConstPtr>(inputPhotonSeriesMapName_);
-    if (!inputPhotonSeriesMap) log_fatal("Frame does not contain an I3PhotonSeriesMap named \"%s\".",
-                                         inputPhotonSeriesMapName_.c_str());
+    if (!inputPhotonSeriesMap) {
+        log_debug("Frame does not contain an I3PhotonSeriesMap named \"%s\".",
+                  inputPhotonSeriesMapName_.c_str());
+        
+        // do nothing if there is no input data
+        PushFrame(frame);
+        return;
+    }
     
     // currently, the only reason we need the MCTree is that I3MCHit does
     // only allow setting the major/minor particle IDs using an existing
     // I3Particle instance with that ID combination.
     I3MCTreeConstPtr MCTree = frame->Get<I3MCTreeConstPtr>(MCTreeName_);
-    if (!MCTree) log_fatal("Frame does not contain an I3MCTree named \"%s\".",
-                           MCTreeName_.c_str());
 
     // allocate the output hitSeriesMap
     I3MCHitSeriesMapPtr outputMCHitSeriesMap(new I3MCHitSeriesMap());
     
-    // build an index into the I3MCTree
     std::map<std::pair<uint64_t, int>, const I3Particle *> mcTreeIndex;
-    for (I3MCTree::iterator it = MCTree->begin();
-         it != MCTree->end(); ++it)
-    {
-        const I3Particle &particle = *it;
-        mcTreeIndex.insert(std::make_pair(std::make_pair(particle.GetMajorID(), particle.GetMinorID()), &particle));
-    }
-    
+    if (MCTree) {
+        // build an index into the I3MCTree
+        for (I3MCTree::iterator it = MCTree->begin();
+             it != MCTree->end(); ++it)
+        {
+            const I3Particle &particle = *it;
+            mcTreeIndex.insert(std::make_pair(std::make_pair(particle.GetMajorID(), particle.GetMinorID()), &particle));
+        }
+    }    
     
 #ifndef HAS_MULTIPMT_SUPPORT    
     // DOM is looking downwards
@@ -465,13 +470,19 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
             if (hitProbability <= randomService_->Uniform()) continue;
 
             // find the particle
-            std::map<std::pair<uint64_t, int>, const I3Particle *>::const_iterator it = 
-            mcTreeIndex.find(std::make_pair(photon.GetParticleMajorID(), photon.GetParticleMinorID()));
-            if (it==mcTreeIndex.end())
-                log_fatal("Particle with id maj=%" PRIu64 ", min=%i does not exist in MC tree, but we have a photon that claims it was created by that particle..",
-                          photon.GetParticleMajorID(), photon.GetParticleMinorID());
-            const I3Particle &particle = *(it->second);
+            const I3Particle *particle = NULL;
             
+            if ((photon.GetParticleMajorID() != 0) || (photon.GetParticleMinorID() != 0))
+            {
+                // index (0,0) is used for flasher photons, set no hit particle for those
+                std::map<std::pair<uint64_t, int>, const I3Particle *>::const_iterator it = 
+                mcTreeIndex.find(std::make_pair(photon.GetParticleMajorID(), photon.GetParticleMinorID()));
+                if (it==mcTreeIndex.end())
+                    log_fatal("Particle with id maj=%" PRIu64 ", min=%i does not exist in MC tree, but we have a photon that claims it was created by that particle..",
+                              photon.GetParticleMajorID(), photon.GetParticleMinorID());
+                particle = it->second;
+            }
+        
             // allocate the output vector if not already done
             if (!hits) hits = &(outputMCHitSeriesMap->insert(std::make_pair(key, I3MCHitSeries())).first->second);
 
@@ -493,7 +504,7 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
                 hit.SetTime(correctedTime);
                 hit.SetHitID(photon.GetID());
                 hit.SetWeight(1.);
-                hit.SetParticleID(particle);
+                if (particle) hit.SetParticleID(*particle);
                 hit.SetCherenkovDistance(NAN);
                 hit.SetHitSource(I3MCHit::SPE); // SPE for now, may be changed by afterpulse simulation
             }
@@ -508,7 +519,7 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
                 hit.SetTime(correctedTime);
                 hit.SetHitID(photon.GetID());
                 hit.SetWeight(1.);
-                hit.SetParticleID(particle);
+                if (particle) hit.SetParticleID(*particle);
                 hit.SetCherenkovDistance(NAN);
 
                 pmtPhotonSimulator_->ApplyAfterPulseLatePulseAndJitterSim

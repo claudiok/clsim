@@ -104,7 +104,6 @@ namespace I3CLSimModuleHelper {
         {
             std::size_t wlenPoints = unbiasedSpectrumFromTable->GetNumEntries();
             const double firstWlen = unbiasedSpectrumFromTable->GetFirstWavelength();
-            const double wlenStep = unbiasedSpectrumFromTable->GetWavelengthStepping();
             
             std::vector<double> spectrum(wlenPoints, NAN);
             std::vector<double> wavelengths(wlenPoints, NAN);

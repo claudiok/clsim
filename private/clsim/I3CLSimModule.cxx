@@ -48,6 +48,7 @@
 
 #include <limits>
 #include <set>
+#include <deque>
 
 // The module
 I3_MODULE(I3CLSimModule);
@@ -87,6 +88,11 @@ geometryIsConfigured_(false)
                  "An instance of I3CLSimMediumProperties describing the ice/water properties.",
                  mediumProperties_);
 
+    AddParameter("SpectrumTable",
+                 "All spectra that could be requested by an I3CLSimStep.\n"
+                 "If set to NULL/None, only spectrum #0 (Cherenkov photons) will be available.",
+                 spectrumTable_);
+
     AddParameter("ParameterizationList",
                  "An instance I3CLSimLightSourceParameterizationSeries specifying the fast simulation parameterizations to be used.",
                  parameterizationList_);
@@ -100,6 +106,12 @@ geometryIsConfigured_(false)
     AddParameter("MCTreeName",
                  "Name of the I3MCTree frame object. All particles except neutrinos will be read from this tree.",
                  MCTreeName_);
+
+    flasherPulseSeriesName_="";
+    AddParameter("FlasherPulseSeriesName",
+                 "Name of the I3CLSimFlasherPulseSeries frame object. Flasher pulses will be read from this object.\n"
+                 "Set this to the empty string to disable flashers.",
+                 flasherPulseSeriesName_);
 
     photonSeriesMapName_="PropagatedPhotons";
     AddParameter("PhotonSeriesMapName",
@@ -265,8 +277,11 @@ void I3CLSimModule::Configure()
     GetParameter("WavelengthGenerationBias", wavelengthGenerationBias_);
 
     GetParameter("MediumProperties", mediumProperties_);
+    GetParameter("SpectrumTable", spectrumTable_);
+
     GetParameter("MaxNumParallelEvents", maxNumParallelEvents_);
     GetParameter("MCTreeName", MCTreeName_);
+    GetParameter("FlasherPulseSeriesName", flasherPulseSeriesName_);
     GetParameter("PhotonSeriesMapName", photonSeriesMapName_);
     GetParameter("IgnoreMuons", ignoreMuons_);
     GetParameter("ParameterizationList", parameterizationList_);
@@ -291,6 +306,9 @@ void I3CLSimModule::Configure()
 
     GetParameter("UseHardcodedDeepCoreSubdetector", useHardcodedDeepCoreSubdetector_);
 
+    if ((flasherPulseSeriesName_=="") && (MCTreeName_==""))
+        log_fatal("You need to set at least one of the \"MCTreeName\" and \"FlasherPulseSeriesName\" parameters.");
+    
     if (!wavelengthGenerationBias_) {
         wavelengthGenerationBias_ = I3CLSimWlenDependentValueConstantConstPtr(new I3CLSimWlenDependentValueConstant(1.));
     }
@@ -309,6 +327,24 @@ void I3CLSimModule::Configure()
                                     )
                                    );
     
+    if ((spectrumTable_) && (spectrumTable_->size() > 1)) {
+        // a spectrum table has been configured and it contains more than the
+        // default Cherenkov spectrum at index #0.
+        
+        for (std::size_t i=1;i<spectrumTable_->size();++i)
+        {
+            wavelengthGenerators_.push_back(I3CLSimModuleHelper::makeWavelengthGenerator
+                                            ((*spectrumTable_)[i],
+                                             wavelengthGenerationBias_,
+                                             mediumProperties_
+                                             )
+                                            );
+        }
+        
+        log_warn("%zu additional (non-Cherenkov) wavelength generators (spectra) have been configured.",
+                 spectrumTable_->size()-1);
+    }
+
     currentParticleCacheIndex_ = 1;
     geometryIsConfigured_ = false;
     totalSimulatedEnergyForFlush_ = 0.;
@@ -752,7 +788,7 @@ void I3CLSimModule::FlushFrameCache()
     {
         std::vector<I3CLSimEventStatisticsPtr> eventStatisticsForFrame;
         for (std::size_t i=0;i<frameList_.size();++i) {
-            if (workOnTheseStops_set_.count(frameList_[i]->GetStop()) >= 1) {
+            if (frameIsBeingWorkedOn_[i]) {
                 eventStatisticsForFrame.push_back(I3CLSimEventStatisticsPtr(new I3CLSimEventStatistics()));
             } else {
                 eventStatisticsForFrame.push_back(I3CLSimEventStatisticsPtr()); // NULL pointer for non-physics(/DAQ)-frames
@@ -841,7 +877,7 @@ void I3CLSimModule::FlushFrameCache()
         // store statistics to frame
         for (std::size_t i=0;i<frameList_.size();++i)
         {
-            if (workOnTheseStops_set_.count(frameList_[i]->GetStop()) >= 1) {
+            if (frameIsBeingWorkedOn_[i]) {
                 frameList_[i]->Put(statisticsName_, eventStatisticsForFrame[i]);
             }
         }
@@ -858,8 +894,10 @@ void I3CLSimModule::FlushFrameCache()
     
     for (std::size_t identifier=0;identifier<frameList_.size();++identifier)
     {
-        log_debug("putting photons into frame %zu...", identifier);
-        frameList_[identifier]->Put(photonSeriesMapName_, photonsForFrameList_[identifier]);
+        if (frameIsBeingWorkedOn_[identifier]) {
+            log_debug("putting photons into frame %zu...", identifier);
+            frameList_[identifier]->Put(photonSeriesMapName_, photonsForFrameList_[identifier]);
+        }
         
         log_debug("pushing frame number %zu...", identifier);
         PushFrame(frameList_[identifier]);
@@ -870,6 +908,8 @@ void I3CLSimModule::FlushFrameCache()
     frameList_.clear();
     photonsForFrameList_.clear();
     currentPhotonIdForFrame_.clear();
+    frameIsBeingWorkedOn_.clear();
+    
     frameListPhysicsFrameCounter_=0;
 }
 
@@ -968,6 +1008,11 @@ namespace {
 
 }
 
+bool I3CLSimModule::ShouldDoProcess(I3FramePtr frame)
+{
+    return true;
+}
+
 void I3CLSimModule::Process()
 {
     I3FramePtr frame = PopFrame();
@@ -979,7 +1024,7 @@ void I3CLSimModule::Process()
         // these will trigger a full re-initialization of OpenCL
         // (currently a second Geometry frame triggers a fatal error
         // in DigestGeometry()..)
-        
+
         DigestGeometry(frame);
         PushFrame(frame);
         return;
@@ -997,153 +1042,116 @@ void I3CLSimModule::Process()
     DigestOtherFrame(frame);
 }
 
+
 void I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
 {
     log_trace("%s", __PRETTY_FUNCTION__);
-    
-    if (!geometryIsConfigured_)
-        log_fatal("Received Physics frame before Geometry frame");
-
-    // start the connector thread if necessary
-    if (!threadObj_) {
-        log_debug("No thread found running during Physics(), starting one.");
-        StartThread();
-    }
     
     frameList_.push_back(frame);
     photonsForFrameList_.push_back(I3PhotonSeriesMapPtr(new I3PhotonSeriesMap()));
     currentPhotonIdForFrame_.push_back(0);
     std::size_t currentFrameListIndex = frameList_.size()-1;
 
-    if (workOnTheseStops_set_.count(frame->GetStop()) >= 1)
+
+    // check if we got a geometry before starting to work
+    if (!geometryIsConfigured_)
+        log_fatal("Received Physics frame before Geometry frame");
+    
+    // start the connector thread if necessary
+    if (!threadObj_) {
+        log_debug("No thread found running during Physics(), starting one.");
+        StartThread();
+    }
+
+    
+    // a few cases where we don't work with the frame:
+    
+    //// not our designated Stop
+    if (workOnTheseStops_set_.count(frame->GetStop()) == 0) {
+        // nothing to do for this frame, it is chached, however
+        frameIsBeingWorkedOn_.push_back(false); // do not touch this frame, just push it later on
+        return;
+    }
+
+    // should we process it? (conditional module)
+    if (!I3ConditionalModule::ShouldDoProcess(frame)) {
+        frameIsBeingWorkedOn_.push_back(false); // do not touch this frame, just push it later on
+        return;
+    }
+    
+    // does it include some work?
+    I3MCTreeConstPtr MCTree;
+    I3CLSimFlasherPulseSeriesConstPtr flasherPulses;
+    
+    if (MCTreeName_ != "")
+        MCTree = frame->Get<I3MCTreeConstPtr>(MCTreeName_);
+    if (flasherPulseSeriesName_ != "")
+        flasherPulses = frame->Get<I3CLSimFlasherPulseSeriesConstPtr>(flasherPulseSeriesName_);
+
+    if ((!MCTree) && (!flasherPulses)) {
+        // ignore frames without any MCTree and/or Flashers
+        frameIsBeingWorkedOn_.push_back(false); // do not touch this frame, just push it later on
+        return;
+    }
+    
+    
+    // work with this frame!
+    frameIsBeingWorkedOn_.push_back(true); // this frame will receive results (->Put() will be called later)
+    
+    frameListPhysicsFrameCounter_++;
+    
+    std::deque<I3CLSimLightSource> lightSources;
+    if (MCTree) ConvertMCTreeToLightSources(*MCTree, lightSources);
+    
+    
+    
+    BOOST_FOREACH(const I3CLSimLightSource &lightSource, lightSources)
     {
-        frameListPhysicsFrameCounter_++;
-        
-        I3MCTreeConstPtr MCTree = frame->Get<I3MCTreeConstPtr>(MCTreeName_);
-        if (!MCTree) log_fatal("Frame does not contain an I3MCTree named \"%s\".",
-                               MCTreeName_.c_str());
-
-        for (I3MCTree::iterator it = MCTree->begin();
-             it != MCTree->end(); ++it)
+        if (lightSource.GetType() == I3CLSimLightSource::Particle)
         {
-            const I3Particle &particle_ref = *it;
-            
-            // In-ice particles only
-            if (particle_ref.GetLocationType() != I3Particle::InIce) continue;
-
-            // ignore particles with shape "Dark"
-            if (particle_ref.GetShape() == I3Particle::Dark) continue;
-
-            // check particle type
-            const bool isMuon = (particle_ref.GetType() == I3Particle::MuMinus) || (particle_ref.GetType() == I3Particle::MuPlus);
-            const bool isNeutrino = particle_ref.IsNeutrino();
-            const bool isTrack = particle_ref.IsTrack();
-
-            // mmc-icetray currently stores continuous loss entries as "unknown"
-            const bool isContinuousLoss = (particle_ref.GetType() == -1111) || (particle_ref.GetType() == I3Particle::unknown); // special magic number used by MMC
-            
-            // ignore continuous loss entries
-            if (isContinuousLoss) {
-                log_debug("ignored a continuous loss I3MCTree entry");
-                continue;
-            }
-            
-            // always ignore neutrinos
-            if (isNeutrino) continue;
-
-            // ignore muons if requested
-            if ((ignoreMuons_) && (isMuon)) continue;
-            
-            if (!isTrack) 
-            {
-                const double distToClosestDOM = DistToClosestDOM(*geometry_, particle_ref.GetPos());
-
-                if (distToClosestDOM >= 300.*I3Units::m)
-                {
-                    log_debug("Ignored a non-track that is %fm (>300m) away from the closest DOM.",
-                             distToClosestDOM);
-                    continue;
-                }
-            }
-
-            // make a copy of the particle, we may need to change its length
-            I3Particle particle = particle_ref;
-
-            if (isTrack)
-            {
-                bool nostart = false;
-                bool nostop = false;
-                double particleLength = particle.GetLength();
-                
-                if (isnan(particleLength)) {
-                    // assume infinite track (starting at given position)
-                    nostop = true;
-                } else if (particleLength < 0.) {
-                    log_warn("got track with negative length. assuming it starts at given position.");
-                    nostop = true;
-                } else if (particleLength == 0.){
-                    // zero length: starting track
-                    nostop = true;
-                }
-                
-                const double distToClosestDOM = DistToClosestDOM(*geometry_, particle.GetPos(), particle.GetDir(), particleLength, nostart, nostop);
-                if (distToClosestDOM >= 300.*I3Units::m)
-                {
-                    log_debug("Ignored a track that is always at least %fm (>300m) away from the closest DOM.",
-                             distToClosestDOM);
-                    continue;
-                }
-                
-                
-            }
-            
-            
-            // ignore muons with muons as child particles
-            // -> those already ran through MMC(-recc) or
-            // were sliced with I3MuonSlicer. Only add their
-            // children.
-            if (!ignoreMuons_) {
-                if (ParticleHasMuonDaughter(particle_ref, *MCTree)) {
-                    log_warn("particle has muon as daughter(s) but is not \"Dark\". Strange. Ignoring.");
-                    continue;
-                }
-            }
+            const I3Particle &particle = lightSource.GetParticle();
             
             totalSimulatedEnergyForFlush_ += particle.GetEnergy();
             totalNumParticlesForFlush_++;
-            
-            I3CLSimLightSource newParticleLightSource(particle);
-            geant4ParticleToStepsConverter_->EnqueueLightSource(newParticleLightSource, currentParticleCacheIndex_);
-
-            if (particleCache_.find(currentParticleCacheIndex_) != particleCache_.end())
-                log_fatal("Internal error. Particle cache index already used.");
-            
-            particleCacheEntry &cacheEntry = 
-            particleCache_.insert(std::make_pair(currentParticleCacheIndex_, particleCacheEntry())).first->second;
-            
-            cacheEntry.frameListEntry = currentFrameListIndex;
-            cacheEntry.particleMajorID = particle.GetMajorID();
-            cacheEntry.particleMinorID = particle.GetMinorID();
-            
-            // make a new index. This will eventually overflow,
-            // but at that time, index 0 should be unused again.
-            ++currentParticleCacheIndex_;
-            if (currentParticleCacheIndex_==0) ++currentParticleCacheIndex_; // never use index==0
         }
         
-        if (frameListPhysicsFrameCounter_ >= maxNumParallelEvents_)
-        {
-            log_debug("Flushing results for a total energy of %fGeV for %" PRIu64 " particles",
-                     totalSimulatedEnergyForFlush_/I3Units::GeV, totalNumParticlesForFlush_);
-                     
-            totalSimulatedEnergyForFlush_=0.;
-            totalNumParticlesForFlush_=0;
-            
-            FlushFrameCache();
-            
-            log_debug("============== CACHE FLUSHED ================");
+        geant4ParticleToStepsConverter_->EnqueueLightSource(lightSource, currentParticleCacheIndex_);
+
+        if (particleCache_.find(currentParticleCacheIndex_) != particleCache_.end())
+            log_fatal("Internal error. Particle cache index already used.");
+        
+        particleCacheEntry &cacheEntry = 
+        particleCache_.insert(std::make_pair(currentParticleCacheIndex_, particleCacheEntry())).first->second;
+        
+        cacheEntry.frameListEntry = currentFrameListIndex;
+        if (lightSource.GetType() == I3CLSimLightSource::Particle) {
+            cacheEntry.particleMajorID = lightSource.GetParticle().GetMajorID();
+            cacheEntry.particleMinorID = lightSource.GetParticle().GetMinorID();
+        } else {
+            cacheEntry.particleMajorID = 0; // flashers, etc. do get ID 0,0
+            cacheEntry.particleMinorID = 0;
         }
-    }    
+        
+        // make a new index. This will eventually overflow,
+        // but at that time, index 0 should be unused again.
+        ++currentParticleCacheIndex_;
+        if (currentParticleCacheIndex_==0) ++currentParticleCacheIndex_; // never use index==0
+    }
+    
+    lightSources.clear();
+    
+    if (frameListPhysicsFrameCounter_ >= maxNumParallelEvents_)
+    {
+        log_debug("Flushing results for a total energy of %fGeV for %" PRIu64 " particles",
+                 totalSimulatedEnergyForFlush_/I3Units::GeV, totalNumParticlesForFlush_);
+                 
+        totalSimulatedEnergyForFlush_=0.;
+        totalNumParticlesForFlush_=0;
+        
+        FlushFrameCache();
+        
+        log_debug("============== CACHE FLUSHED ================");
+    }
     
 }
 
@@ -1161,6 +1169,103 @@ void I3CLSimModule::Finish()
     
     log_info("Flushing I3Tray..");
     Flush();
+}
+
+
+
+
+//////////////
+
+void I3CLSimModule::ConvertMCTreeToLightSources(const I3MCTree &mcTree,
+                                                std::deque<I3CLSimLightSource> &lightSources)
+{
+    for (I3MCTree::iterator it = mcTree.begin();
+         it != mcTree.end(); ++it)
+    {
+        const I3Particle &particle_ref = *it;
+        
+        // In-ice particles only
+        if (particle_ref.GetLocationType() != I3Particle::InIce) continue;
+        
+        // ignore particles with shape "Dark"
+        if (particle_ref.GetShape() == I3Particle::Dark) continue;
+        
+        // check particle type
+        const bool isMuon = (particle_ref.GetType() == I3Particle::MuMinus) || (particle_ref.GetType() == I3Particle::MuPlus);
+        const bool isNeutrino = particle_ref.IsNeutrino();
+        const bool isTrack = particle_ref.IsTrack();
+        
+        // mmc-icetray currently stores continuous loss entries as "unknown"
+        const bool isContinuousLoss = (particle_ref.GetType() == I3Particle::ContinuousEnergyLoss) || (particle_ref.GetType() == I3Particle::unknown);
+        
+        // ignore continuous loss entries
+        if (isContinuousLoss) {
+            log_debug("ignored a continuous loss I3MCTree entry");
+            continue;
+        }
+        
+        // always ignore neutrinos
+        if (isNeutrino) continue;
+        
+        // ignore muons if requested
+        if ((ignoreMuons_) && (isMuon)) continue;
+        
+        if (!isTrack) 
+        {
+            const double distToClosestDOM = DistToClosestDOM(*geometry_, particle_ref.GetPos());
+            
+            if (distToClosestDOM >= 300.*I3Units::m)
+            {
+                log_debug("Ignored a non-track that is %fm (>300m) away from the closest DOM.",
+                          distToClosestDOM);
+                continue;
+            }
+        }
+        
+        // make a copy of the particle, we may need to change its length
+        I3Particle particle = particle_ref;
+        
+        if (isTrack)
+        {
+            bool nostart = false;
+            bool nostop = false;
+            double particleLength = particle.GetLength();
+            
+            if (isnan(particleLength)) {
+                // assume infinite track (starting at given position)
+                nostop = true;
+            } else if (particleLength < 0.) {
+                log_warn("got track with negative length. assuming it starts at given position.");
+                nostop = true;
+            } else if (particleLength == 0.){
+                // zero length: starting track
+                nostop = true;
+            }
+            
+            const double distToClosestDOM = DistToClosestDOM(*geometry_, particle.GetPos(), particle.GetDir(), particleLength, nostart, nostop);
+            if (distToClosestDOM >= 300.*I3Units::m)
+            {
+                log_debug("Ignored a track that is always at least %fm (>300m) away from the closest DOM.",
+                          distToClosestDOM);
+                continue;
+            }
+        }
+        
+        // ignore muons with muons as child particles
+        // -> those already ran through MMC(-recc) or
+        // were sliced with I3MuonSlicer. Only add their
+        // children.
+        if (!ignoreMuons_) {
+            if (ParticleHasMuonDaughter(particle_ref, mcTree)) {
+                log_warn("particle has muon as daughter(s) but is not \"Dark\". Strange. Ignoring.");
+                continue;
+            }
+        }
+        
+        lightSources.push_back(I3CLSimLightSource(particle));
+    }
+    
+    
 }
 
 

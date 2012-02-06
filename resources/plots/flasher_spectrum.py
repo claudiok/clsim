@@ -164,10 +164,15 @@ def genMCHistogramsOpenCL(distribution, range, iterations=1000, numBins=1000):
     return dict(num=num, bins=bins)
 
 flasherName = ["340nm", "370nm", "405nm", "450nm", "505nm"]
+flasherTypes = [clsim.I3CLSimFlasherPulse.FlasherPulseType.LED340nm,
+                clsim.I3CLSimFlasherPulse.FlasherPulseType.LED370nm,
+                clsim.I3CLSimFlasherPulse.FlasherPulseType.LED405nm,
+                clsim.I3CLSimFlasherPulse.FlasherPulseType.LED450nm,
+                clsim.I3CLSimFlasherPulse.FlasherPulseType.LED505nm]
 
 spectrum = []
 for i in range(len(flasherName)):
-    spectrum.append(clsim.GetIceCubeFlasherSpectrum(colorIndex=i))
+    spectrum.append(clsim.GetIceCubeFlasherSpectrum(spectrumType=flasherTypes[i]))
 
 
 mediumProps = clsim.MakeIceCubeMediumProperties()
@@ -202,6 +207,7 @@ for i in range(len(flasherName)):
     valsWithBias = vectorizedSpectrumWithBias(bins) / integral_spectrum
 
     correctionFactor = clsim.PhotonNumberCorrectionFactorAfterBias(spectrum[i], domAcceptance, spectrum[i].GetMinWlen(), spectrum[i].GetMaxWlen())
+    print "bias photon number correction factor", correctionFactor
 
     spectrumData.append([bins, vals])
     spectrumDataWithBias.append([bins, valsWithBias])

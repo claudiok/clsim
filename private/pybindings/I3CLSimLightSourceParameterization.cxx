@@ -69,6 +69,14 @@ void register_I3CLSimLightSourceParameterization()
               )
              )
             ) 
+        .def(init<I3CLSimLightSourceToStepConverterPtr, I3CLSimFlasherPulse::FlasherPulseType>
+             (
+              (
+               bp::arg("converter"),
+               bp::arg("forFlasherPulseType")
+               )
+              )
+             ) 
         .def(init<>()) // the class also has a default constructor
         .def(copy_suite<I3CLSimLightSourceParameterization>())
         .def_readwrite("converter", &I3CLSimLightSourceParameterization::converter)
@@ -80,11 +88,17 @@ void register_I3CLSimLightSourceParameterization()
         .def_readwrite("fromEnergy", &I3CLSimLightSourceParameterization::fromEnergy)
         .def_readwrite("toEnergy", &I3CLSimLightSourceParameterization::toEnergy)
         .def_readwrite("needsLength", &I3CLSimLightSourceParameterization::needsLength)
+        .def_readwrite("catchAll", &I3CLSimLightSourceParameterization::catchAll)
+
+        .def_readwrite("flasherMode", &I3CLSimLightSourceParameterization::flasherMode)
+        .def_readwrite("forFlasherPulseType", &I3CLSimLightSourceParameterization::forFlasherPulseType)
+
         .def("IsValidForParticle", &I3CLSimLightSourceParameterization::IsValidForParticle, bp::arg("particle"))
         .def("IsValid", &I3CLSimLightSourceParameterization::IsValid, bp::arg("type"), bp::arg("energy"), bp::arg("length")=NAN)
 #ifdef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
         .def("IsValidForPdgEncoding", &I3CLSimLightSourceParameterization::IsValidForPdgEncoding, bp::arg("encoding"), bp::arg("energy"), bp::arg("length")=NAN)
 #endif
+        .def("IsValidForLightSource", &I3CLSimLightSourceParameterization::IsValidForLightSource, bp::arg("lightSource"))
         ;
 
         bp::class_<I3CLSimLightSourceParameterization::AllParticles_t>("AllParticles_t");

@@ -61,9 +61,6 @@ tray.AddModule(clsim.FakeFlasherInfoGenerator, "FakeFlasherInfoGenerator",
                FlasherBrightness = 127, # full brightness
                FlasherWidth = 127)      # full width
 
-tray.AddModule(clsim.FlasherInfoVectToFlasherPulseSeriesConverter, "FlasherInfoVectToFlasherPulseSeriesConverter",
-               NumberOfPhotonsAtMaxBrightness = 8.0e9)
-
 tray.AddModule("I3Writer","writer",
     Filename = options.OUTFILE)
 

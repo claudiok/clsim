@@ -59,6 +59,7 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
     private/clsim/I3CLSimLightSource.cxx
     private/clsim/I3CLSimSpectrumTable.cxx
     private/clsim/I3CLSimFlasherPulse.cxx
+	private/clsim/I3CLSimLightSourceToStepConverterFlasher.cxx
     private/clsim/I3MuonSlicer.cxx
     private/clsim/I3Photon.cxx
     private/clsim/I3PhotonToMCHitConverter.cxx

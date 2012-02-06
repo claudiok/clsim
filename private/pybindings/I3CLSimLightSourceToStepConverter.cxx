@@ -24,6 +24,7 @@
 #include <clsim/I3CLSimLightSourceToStepConverter.h>
 #include <clsim/I3CLSimLightSourceToStepConverterGeant4.h>
 #include <clsim/I3CLSimLightSourceToStepConverterPPC.h>
+#include <clsim/I3CLSimLightSourceToStepConverterFlasher.h>
 
 #include <boost/preprocessor/seq.hpp>
 #include <icetray/python/std_vector_indexing_suite.hpp>
@@ -229,5 +230,33 @@ void register_I3CLSimLightSourceToStepConverter()
     bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterPPC>, shared_ptr<const I3CLSimLightSourceToStepConverterPPC> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterPPC>, shared_ptr<I3CLSimLightSourceToStepConverter> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterPPC>, shared_ptr<const I3CLSimLightSourceToStepConverter> >();
+
+    
+    // I3CLSimLightSourceToStepConverterFlasher
+    {
+        bp::class_<
+        I3CLSimLightSourceToStepConverterFlasher, 
+        boost::shared_ptr<I3CLSimLightSourceToStepConverterFlasher>,
+        bases<I3CLSimLightSourceToStepConverter>,
+        boost::noncopyable
+        >
+        (
+         "I3CLSimLightSourceToStepConverterFlasher",
+         bp::init<
+         I3CLSimWlenDependentValueConstPtr, I3CLSimSpectrumTablePtr, uint32_t
+         >(
+           (
+            bp::arg("flasherSpectrumNoBias"),
+            bp::arg("spectrumTable"),
+            bp::arg("photonsPerStep") = I3CLSimLightSourceToStepConverterPPC::default_photonsPerStep
+            )
+           )
+         )
+        ;
+    }
+    
+    bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterFlasher>, shared_ptr<const I3CLSimLightSourceToStepConverterFlasher> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterFlasher>, shared_ptr<I3CLSimLightSourceToStepConverter> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterFlasher>, shared_ptr<const I3CLSimLightSourceToStepConverter> >();
 
 }

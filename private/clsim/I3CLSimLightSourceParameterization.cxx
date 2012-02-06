@@ -16,7 +16,8 @@ fromEnergy(0.),
 toEnergy(std::numeric_limits<double>::infinity()),
 needsLength(false),
 catchAll(false),
-catchFlashers(false)
+flasherMode(false),
+forFlasherPulseType(I3CLSimFlasherPulse::Unknown)
 { 
     
 }
@@ -43,7 +44,8 @@ fromEnergy(fromEnergy_),
 toEnergy(toEnergy_),
 needsLength(needsLength_),
 catchAll(false),
-catchFlashers(false)
+flasherMode(false),
+forFlasherPulseType(I3CLSimFlasherPulse::Unknown)
 {
     
 }
@@ -65,7 +67,8 @@ fromEnergy(fromEnergy_),
 toEnergy(toEnergy_),
 needsLength(needsLength_),
 catchAll(false),
-catchFlashers(false)
+flasherMode(false),
+forFlasherPulseType(I3CLSimFlasherPulse::Unknown)
 {
     
 }
@@ -87,14 +90,15 @@ fromEnergy(fromEnergy_),
 toEnergy(toEnergy_),
 needsLength(needsLength_),
 catchAll(true),
-catchFlashers(false)
+flasherMode(false),
+forFlasherPulseType(I3CLSimFlasherPulse::Unknown)
 {
     
 }
 
 I3CLSimLightSourceParameterization::I3CLSimLightSourceParameterization
 (I3CLSimLightSourceToStepConverterPtr converter_,
- const I3CLSimLightSourceParameterization::AllFlashers_t &dummy
+ I3CLSimFlasherPulse::FlasherPulseType forFlasherPulseType_
 )
 :
 converter(converter_),
@@ -107,14 +111,15 @@ fromEnergy(NAN),
 toEnergy(NAN),
 needsLength(false),
 catchAll(false),
-catchFlashers(true)
+flasherMode(true),
+forFlasherPulseType(forFlasherPulseType_)
 {
     
 }
 
 bool I3CLSimLightSourceParameterization::IsValidForParticle(const I3Particle &particle) const
 {
-    if (catchFlashers) return false; // flasher params. cannot be valid for particles
+    if (flasherMode) return false; // flasher params. cannot be valid for particles
     
     if (isnan(particle.GetEnergy())) {
         log_warn("I3CLSimLightSourceParameterization::IsValid() called with particle with NaN energy. Parameterization is NOT valid.");
@@ -126,7 +131,7 @@ bool I3CLSimLightSourceParameterization::IsValidForParticle(const I3Particle &pa
 
 bool I3CLSimLightSourceParameterization::IsValid(I3Particle::ParticleType type, double energy, double length) const
 {
-    if (catchFlashers) return false; // flasher params. cannot be valid for particles
+    if (flasherMode) return false; // flasher params. cannot be valid for particles
 
     if (isnan(energy)) return false;
     if (!catchAll) {
@@ -147,7 +152,7 @@ bool I3CLSimLightSourceParameterization::IsValid(I3Particle::ParticleType type, 
 #ifdef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
 bool I3CLSimLightSourceParameterization::IsValidForPdgEncoding(int32_t encoding, double energy, double length) const
 {
-    if (catchFlashers) return false; // flasher params. cannot be valid for particles
+    if (flasherMode) return false; // flasher params. cannot be valid for particles
 
     if (isnan(energy)) return false;
     if (!catchAll) {
@@ -165,8 +170,10 @@ bool I3CLSimLightSourceParameterization::IsValidForLightSource(const I3CLSimLigh
     if (lightSource.GetType() == I3CLSimLightSource::Particle) {
         return IsValidForParticle(lightSource.GetParticle());
     } else if (lightSource.GetType() == I3CLSimLightSource::Flasher) {
-        if (catchFlashers) return true;
-        return false;
+        if (!flasherMode) return false;
+
+        // return true if the flasher pulse has the same type as the configured type
+        return (lightSource.GetFlasherPulse().GetType() == forFlasherPulseType);
     } else {
         log_error("Parameterization got light source with invalid or unknown type.");
         return false;

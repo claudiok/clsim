@@ -58,7 +58,7 @@ public:
      */
     std::size_t append(I3CLSimWlenDependentValueConstPtr newSpectrum);
 
-    I3CLSimWlenDependentValueConstPtr operator[](std::size_t index)
+    I3CLSimWlenDependentValueConstPtr operator[](std::size_t index) const
     {
         if (index>=spectra_.size())
             throw std::out_of_range("invalid index");

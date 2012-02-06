@@ -411,8 +411,12 @@ void I3MuonSlicer::Physics(I3FramePtr frame)
     log_trace("%s", __PRETTY_FUNCTION__);
     
     I3MCTreeConstPtr inputMCTree = frame->Get<I3MCTreeConstPtr>(inputMCTreeName_);
-    if (!inputMCTree) log_fatal("Frame does not contain an I3MCTree named \"%s\".",
-                                inputMCTreeName_.c_str());
+    if (!inputMCTree) {
+        log_debug("Frame does not contain an I3MCTree named \"%s\".",
+                  inputMCTreeName_.c_str());
+        PushFrame(frame);
+        return;
+    }
 
     I3MMCTrackListConstPtr MMCTrackList = frame->Get<I3MMCTrackListConstPtr>(MMCTrackListName_);
     if (!MMCTrackList) log_fatal("Frame does not contain an I3MMCTrackList named \"%s\".",

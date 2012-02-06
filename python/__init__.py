@@ -20,7 +20,7 @@ from FakeFlasherInfoGenerator import FakeFlasherInfoGenerator
 
 # import tray segments (if available)
 if hasattr(icetray, "traysegment"):
-    from traysegments import I3CLSimMakeHits, genDefaultParameterizationList
+    from traysegments import I3CLSimMakeHits, genDefaultParameterizationList, genFlasherParameterizationList
 
 # clean up the clsim namespace
 del icetray

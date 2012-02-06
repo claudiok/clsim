@@ -30,6 +30,8 @@
 #include "icetray/I3Module.h"
 #include "icetray/I3ConditionalModule.h"
 
+#include "dataclasses/physics/I3MCTree.h"
+
 #include "phys-services/I3RandomService.h"
 
 #include "clsim/I3CLSimOpenCLDevice.h"
@@ -38,6 +40,8 @@
 #include "clsim/I3CLSimWlenDependentValue.h"
 
 #include "clsim/I3CLSimMediumProperties.h"
+#include "clsim/I3CLSimSpectrumTable.h"
+
 #include "clsim/I3CLSimSimpleGeometryFromI3Geometry.h"
 
 #include "clsim/I3CLSimStepToPhotonConverterOpenCL.h"
@@ -91,6 +95,17 @@ public:
      */
     virtual void Finish();
     
+
+    /**
+     * Hack to allow buffering. This ShouldDoProcess overrides
+     * the I3ConditionalModule implementation and always returns
+     * true. The original ShouldDoProcess() is used in our
+     * Process() in order mark frames in case they should not be
+     * touched. They will be put in the buffer in any case, however.
+     *
+     * This should retain frame ordering.
+     */
+    virtual bool ShouldDoProcess(I3FramePtr frame);
     
 private:
     /**
@@ -127,6 +142,10 @@ private:
     /// Parameter: An instance of I3CLSimMediumProperties describing the ice/water properties.
     I3CLSimMediumPropertiesPtr mediumProperties_;
 
+    /// Parameter: All spectra that could be requested by an I3CLSimStep.
+    /// If set to NULL/None, only spectrum #0 (Cherenkov photons) will be available.
+    I3CLSimSpectrumTableConstPtr spectrumTable_;
+
     /// Parameter: Maximum number of events that will be processed by the GPU in parallel.
     unsigned int maxNumParallelEvents_;
 
@@ -141,7 +160,11 @@ private:
 
     /// Parameter: Name of the I3MCTree frame object. All particles except neutrinos will be read from this tree.
     std::string MCTreeName_;
-    
+
+    /// Parameter: Name of the I3CLSimFlasherPulseSeries frame object. Flasher pulses will be read from this object.
+    /// Set this to the empty string to disable flashers.
+    std::string flasherPulseSeriesName_;
+
     /// Parameter: Name of the I3CLSimPhotonSeriesMap frame object that will be written to the frame.
     std::string photonSeriesMapName_;
     
@@ -205,7 +228,10 @@ private:
     // helper functions
     void FlushFrameCache();
     void AddPhotonsToFrames(const I3CLSimPhotonSeries &photons);
+    void ConvertMCTreeToLightSources(const I3MCTree &mcTree,
+                                     std::deque<I3CLSimLightSource> &lightSources);
 
+    
     // statistics will be collected here:
     std::map<uint32_t, uint64_t> photonNumGeneratedPerParticle_;
     std::map<uint32_t, double> photonWeightSumGeneratedPerParticle_;
@@ -233,6 +259,7 @@ private:
     std::vector<I3FramePtr> frameList_;
     std::vector<I3PhotonSeriesMapPtr> photonsForFrameList_;
     std::vector<int32_t> currentPhotonIdForFrame_;
+    std::vector<bool> frameIsBeingWorkedOn_;
     
     struct particleCacheEntry
     {
