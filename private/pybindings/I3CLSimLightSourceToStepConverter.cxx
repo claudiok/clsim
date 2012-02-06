@@ -248,7 +248,7 @@ void register_I3CLSimLightSourceToStepConverter()
            (
             bp::arg("flasherSpectrumNoBias"),
             bp::arg("spectrumTable"),
-            bp::arg("photonsPerStep") = I3CLSimLightSourceToStepConverterPPC::default_photonsPerStep
+            bp::arg("photonsPerStep") = I3CLSimLightSourceToStepConverterFlasher::default_photonsPerStep
             )
            )
          )
