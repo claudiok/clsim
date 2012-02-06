@@ -89,6 +89,7 @@ class FlasherInfoVectToFlasherPulseSeriesConverter(icetray.I3ConditionalModule):
                 newPulse.type = I3CLSimFlasherPulse.FlasherPulseType.LED405nm
                 newPulse.pos = flasherPos
                 newPulse.dir = flasherDir
+                newPulse.time = flasherInfo.flash_time
                 # FWHM according to http://wiki.icecube.wisc.edu/index.php/LED_output_time_profile :
                 newPulse.pulseWidth = (float(flasherInfo.width)/2.) * I3Units.ns
                 newPulse.numberOfPhotonsNoBias = numPhotons

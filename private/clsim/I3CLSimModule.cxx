@@ -1102,6 +1102,7 @@ void I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
     
     std::deque<I3CLSimLightSource> lightSources;
     if (MCTree) ConvertMCTreeToLightSources(*MCTree, lightSources);
+    if (flasherPulses) ConvertFlasherPulsesToLightSources(*flasherPulses, lightSources);
     
     
     
@@ -1269,3 +1270,11 @@ void I3CLSimModule::ConvertMCTreeToLightSources(const I3MCTree &mcTree,
 }
 
 
+void I3CLSimModule::ConvertFlasherPulsesToLightSources(const I3CLSimFlasherPulseSeries &flasherPulses,
+                                                       std::deque<I3CLSimLightSource> &lightSources)
+{
+    BOOST_FOREACH(const I3CLSimFlasherPulse &flasherPulse, flasherPulses)
+    {
+        lightSources.push_back(I3CLSimLightSource(flasherPulse));
+    }
+}

@@ -147,7 +147,7 @@ namespace I3CLSimHelper
         }
         if (numberOfStrings<=0) {log_fatal("no strings found");}
 
-        // calculte cell widths
+        // calculate cell widths
         cellStartX=minX;
         cellStartY=minY;
         cellWidthX=(maxX-minX)/static_cast<double>(cellNumX);

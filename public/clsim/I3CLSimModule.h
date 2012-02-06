@@ -230,6 +230,8 @@ private:
     void AddPhotonsToFrames(const I3CLSimPhotonSeries &photons);
     void ConvertMCTreeToLightSources(const I3MCTree &mcTree,
                                      std::deque<I3CLSimLightSource> &lightSources);
+    void ConvertFlasherPulsesToLightSources(const I3CLSimFlasherPulseSeries &flasherPulses,
+                                            std::deque<I3CLSimLightSource> &lightSources);
 
     
     // statistics will be collected here:

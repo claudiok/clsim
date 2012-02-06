@@ -276,7 +276,7 @@ inline void checkForCollision_OnString(
         //    *hitRecorded=true;
         //}
         //else
-        if (discr >= 0.0f) 
+        if ((discr >= 0.0f) && (dr2 > OM_RADIUS*OM_RADIUS)) // the second part allows photons starting inside a DOM to leave (necessary for flashers)
         {
             discr = my_sqrt(discr);
 
