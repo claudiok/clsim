@@ -228,14 +228,17 @@ def I3CLSimMakeHits(tray, name,
     if FlasherInfoVectName is None or FlasherInfoVectName=="":
         SimulateFlashers=False
         clSimFlasherPulseSeriesName = ""
+        clSimOMKeyMaskName = ""
     else:
         SimulateFlashers=True
         clSimFlasherPulseSeriesName = FlasherInfoVectName + "_pulses"
+        clSimOMKeyMaskName = FlasherInfoVectName + "_OMKeys"
         
         tray.AddModule(clsim.FlasherInfoVectToFlasherPulseSeriesConverter,
                        "FlasherInfoVectToFlasherPulseSeriesConverter",
                        FlasherInfoVectName = FlasherInfoVectName,
                        FlasherPulseSeriesName = clSimFlasherPulseSeriesName,
+                       FlasherOMKeyVectName = clSimOMKeyMaskName,
                        NumberOfPhotonsAtMaxBrightness = numFlasherPhotonsAtFullBrightness,
                        If=If)
 
@@ -331,6 +334,7 @@ def I3CLSimMakeHits(tray, name,
                    MediumProperties=mediumProperties,
                    SpectrumTable=spectrumTable,
                    FlasherPulseSeriesName=clSimFlasherPulseSeriesName,
+                   OMKeyMaskName=clSimOMKeyMaskName,
                    # ignore IceTop
                    IgnoreSubdetectors = ["IceTop"],
                    IgnoreNonIceCubeOMNumbers=False, 

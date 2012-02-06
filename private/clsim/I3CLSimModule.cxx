@@ -118,6 +118,11 @@ geometryIsConfigured_(false)
                  "Name of the I3CLSimPhotonSeriesMap frame object that will be written to the frame.",
                  photonSeriesMapName_);
 
+    omKeyMaskName_="";
+    AddParameter("OMKeyMaskName",
+                 "Name of a I3VectorOMKey with masked OMKeys. DOMs in this list will not record I3Photons.",
+                 omKeyMaskName_);
+
     ignoreMuons_=false;
     AddParameter("IgnoreMuons",
                  "If set to True, muons will not be propagated.",
@@ -283,6 +288,7 @@ void I3CLSimModule::Configure()
     GetParameter("MCTreeName", MCTreeName_);
     GetParameter("FlasherPulseSeriesName", flasherPulseSeriesName_);
     GetParameter("PhotonSeriesMapName", photonSeriesMapName_);
+    GetParameter("OMKeyMaskName", omKeyMaskName_);
     GetParameter("IgnoreMuons", ignoreMuons_);
     GetParameter("ParameterizationList", parameterizationList_);
 
@@ -682,6 +688,10 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons)
         // generate the OMKey
         const OMKey key = OMKeyFromOpenCLSimIDs(photon.stringID, photon.omID);
         
+        // get the OMKey mask
+        const std::set<OMKey> &keyMask = maskedOMKeys_[cacheEntry.frameListEntry];
+        if (keyMask.count(key) > 0) continue; // ignore masked DOMs
+        
         // this either inserts a new vector or retrieves an existing one
         I3PhotonSeries &outputPhotonSeries = outputPhotonMap.insert(std::make_pair(key, I3PhotonSeries())).first->second;
         
@@ -909,6 +919,7 @@ void I3CLSimModule::FlushFrameCache()
     photonsForFrameList_.clear();
     currentPhotonIdForFrame_.clear();
     frameIsBeingWorkedOn_.clear();
+    maskedOMKeys_.clear();
     
     frameListPhysicsFrameCounter_=0;
 }
@@ -1051,7 +1062,7 @@ void I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
     photonsForFrameList_.push_back(I3PhotonSeriesMapPtr(new I3PhotonSeriesMap()));
     currentPhotonIdForFrame_.push_back(0);
     std::size_t currentFrameListIndex = frameList_.size()-1;
-
+    maskedOMKeys_.push_back(std::set<OMKey>()); // insert an empty OMKey mask
 
     // check if we got a geometry before starting to work
     if (!geometryIsConfigured_)
@@ -1093,7 +1104,12 @@ void I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
         frameIsBeingWorkedOn_.push_back(false); // do not touch this frame, just push it later on
         return;
     }
-    
+
+    I3VectorOMKeyConstPtr omKeyMask;
+    if (omKeyMaskName_ != "") {
+        omKeyMask = frame->Get<I3VectorOMKeyConstPtr>(omKeyMaskName_);
+    }
+
     
     // work with this frame!
     frameIsBeingWorkedOn_.push_back(true); // this frame will receive results (->Put() will be called later)
@@ -1104,6 +1120,12 @@ void I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
     if (MCTree) ConvertMCTreeToLightSources(*MCTree, lightSources);
     if (flasherPulses) ConvertFlasherPulsesToLightSources(*flasherPulses, lightSources);
     
+    if (omKeyMask) {
+        // assign the current OMKey mask if there is one
+        BOOST_FOREACH(const OMKey &key, *omKeyMask) {
+            maskedOMKeys_.back().insert(key);
+        }
+    }
     
     
     BOOST_FOREACH(const I3CLSimLightSource &lightSource, lightSources)

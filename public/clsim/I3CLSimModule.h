@@ -30,6 +30,7 @@
 #include "icetray/I3Module.h"
 #include "icetray/I3ConditionalModule.h"
 
+#include "dataclasses/I3Vector.h"
 #include "dataclasses/physics/I3MCTree.h"
 
 #include "phys-services/I3RandomService.h"
@@ -167,6 +168,9 @@ private:
 
     /// Parameter: Name of the I3CLSimPhotonSeriesMap frame object that will be written to the frame.
     std::string photonSeriesMapName_;
+
+    /// Parameter: Name of a I3VectorOMKey with masked OMKeys. DOMs in this list will not record I3Photons.
+    std::string omKeyMaskName_;
     
     /// Parameter: If set to True, muons will not be propagated.
     bool ignoreMuons_;
@@ -262,6 +266,7 @@ private:
     std::vector<I3PhotonSeriesMapPtr> photonsForFrameList_;
     std::vector<int32_t> currentPhotonIdForFrame_;
     std::vector<bool> frameIsBeingWorkedOn_;
+    std::vector<std::set<OMKey> > maskedOMKeys_;
     
     struct particleCacheEntry
     {
