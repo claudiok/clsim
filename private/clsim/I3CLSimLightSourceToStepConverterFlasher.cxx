@@ -192,10 +192,10 @@ void I3CLSimLightSourceToStepConverterFlasher::EnqueueLightSource(const I3CLSimL
     if (numPhotons==0) return;
     
 
-    log_warn("Generating %zu photons for flasher (after bias). Requested number was %f, with bias %f",
-             static_cast<std::size_t>(numPhotons),
-             flasherPulse.GetNumberOfPhotonsNoBias(),
-             numPhotonsWithBias);
+    log_debug("Generating %zu photons for flasher (after bias). Requested number was %f, with bias %f",
+              static_cast<std::size_t>(numPhotons),
+              flasherPulse.GetNumberOfPhotonsNoBias(),
+              numPhotonsWithBias);
     
     LightSourceData_t newEntry;
     newEntry.isBarrier = false;
@@ -279,6 +279,7 @@ I3CLSimStepSeriesConstPtr I3CLSimLightSourceToStepConverterFlasher::MakeSteps(bo
 
     // barrier?
     if (currentElement.isBarrier) {
+        inputQueue_.pop_front(); // remove the element
         barrierWasReset=true;
         return I3CLSimStepSeriesConstPtr(new I3CLSimStepSeries());
     }
