@@ -1,0 +1,6 @@
+This directory contains plotting scripts for code verification.
+Most of these scripts plot different properties used in clsim
+(such as the DOM angular acceptance and the ice properties).
+The plotted values are calculated using the internal OpenCL
+code, the CPU verification code and most of the time also using
+Python code. 
