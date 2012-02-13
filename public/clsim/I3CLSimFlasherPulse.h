@@ -81,7 +81,13 @@ public:
 
     inline double GetPulseWidth() const {return pulseWidth_;}
     inline void SetPulseWidth(double newWidth) {pulseWidth_=newWidth;}
-    
+
+    inline double GetAngularEmissionSigmaPolar() const {return angularEmissionSigmaPolar_;}
+    inline void SetAngularEmissionSigmaPolar(double newSigma) {angularEmissionSigmaPolar_=newSigma;}
+
+    inline double GetAngularEmissionSigmaAzimuthal() const {return angularEmissionSigmaAzimuthal_;}
+    inline void SetAngularEmissionSigmaAzimuthal(double newSigma) {angularEmissionSigmaAzimuthal_=newSigma;}
+
     
 private:
     FlasherPulseType flasherPulseType_;
@@ -92,6 +98,10 @@ private:
     
     double numberOfPhotonsNoBias_;
     double pulseWidth_; // FWHM
+    
+    double angularEmissionSigmaPolar_;
+    double angularEmissionSigmaAzimuthal_;
+    
 
 private: // static stuff
     friend class boost::serialization::access;

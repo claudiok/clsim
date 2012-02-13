@@ -55,9 +55,11 @@ tray.AddModule("I3MCEventHeaderGenerator","gen_header",
                IncrementEventID=True)
 
 tray.AddModule(clsim.FakeFlasherInfoGenerator, "FakeFlasherInfoGenerator",
-               FlashingDOM = icetray.OMKey(63,2),
+               FlashingDOM = icetray.OMKey(79,22), # a cDOM
+               #FlashingDOM = icetray.OMKey(36,22), # a cDOM
                FlasherTime = 0.*I3Units.ns,
-               FlasherMask = 4032, # only the 6 horizontal LEDs,
+               #FlasherMask = 0b111111000000, # only the 6 horizontal LEDs,  0-5 are tilted, 6-11 are horizontal [cDOM LEDs are all horizantal]
+               FlasherMask = 0b10101, # 505nm LEDs only (on a cDOM) 
                FlasherBrightness = 127, # full brightness
                FlasherWidth = 127)      # full width
 

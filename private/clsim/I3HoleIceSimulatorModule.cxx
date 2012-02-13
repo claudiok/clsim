@@ -44,6 +44,9 @@
 // The module
 I3_MODULE(I3HoleIceSimulatorModule);
 
+/**
+ * This module is not ready for use yet.
+ */
 I3HoleIceSimulatorModule::I3HoleIceSimulatorModule(const I3Context& context) 
 : I3ConditionalModule(context)
 {

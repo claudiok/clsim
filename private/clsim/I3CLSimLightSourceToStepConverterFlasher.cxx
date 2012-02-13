@@ -7,6 +7,8 @@
 #include <boost/math/special_functions/fpclassify.hpp>
 #include <limits>
 
+#include "phys-services/I3Calculator.h"
+
 #include "clsim/I3CLSimLightSourceToStepConverterFlasher.h"
 
 #include "clsim/I3CLSimWlenDependentValue.h"
@@ -376,9 +378,32 @@ void I3CLSimLightSourceToStepConverterFlasher::FillStep(I3CLSimStep &step,
                                                         const I3CLSimFlasherPulse &flasherPulse,
                                                         uint32_t identifier)
 {
+    // smear the direction
+    const double polarAngle = flasherPulse.GetDir().CalcTheta();
+    const double azimuthalAngle = flasherPulse.GetDir().CalcPhi();
+    
+    // the smearing angle
+    const double smearPolar     = randomService_->Gaus(0., flasherPulse.GetAngularEmissionSigmaPolar());
+    const double smearAzimuthal = randomService_->Gaus(0., flasherPulse.GetAngularEmissionSigmaAzimuthal());
+
+    // calculate the new azimuthal angle (in the horizontal plane)
+    const double smearedAzimuth = azimuthalAngle + smearAzimuthal;
+    
+    I3Direction smearedDirection;
+    // no polar direction yet (theta==0 <=> + x-axis)
+    smearedDirection.SetThetaPhi(90.*I3Units::deg, smearedAzimuth);
+    
+    // this is the rotation axis 
+    I3Direction rotAxis;
+    rotAxis.SetThetaPhi(90.*I3Units::deg, smearedAzimuth-90.*I3Units::deg);
+    
+    // now rotate to the polar angle (plus smearing)
+    I3Calculator::Rotate(rotAxis, smearedDirection, (90.*I3Units::deg-polarAngle) + smearPolar);
+    
+    
     step.SetPos(flasherPulse.GetPos());
     step.SetTime(flasherPulse.GetTime());
-    step.SetDir(flasherPulse.GetDir());
+    step.SetDir(smearedDirection);
     step.SetLength(0.);
     step.SetBeta(1.);
     step.SetNumPhotons(numberOfPhotons);

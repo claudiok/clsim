@@ -62,6 +62,14 @@ void register_I3CLSimFlasherPulse()
         .def("GetPulseWidth", &I3CLSimFlasherPulse::GetPulseWidth)
         .def("SetPulseWidth", &I3CLSimFlasherPulse::SetPulseWidth)
         .add_property("pulseWidth", &I3CLSimFlasherPulse::GetPulseWidth, &I3CLSimFlasherPulse::SetPulseWidth)
+
+        .def("GetAngularEmissionSigmaPolar", &I3CLSimFlasherPulse::GetAngularEmissionSigmaPolar)
+        .def("SetAngularEmissionSigmaPolar", &I3CLSimFlasherPulse::SetAngularEmissionSigmaPolar)
+        .add_property("angularEmissionSigmaPolar", &I3CLSimFlasherPulse::GetAngularEmissionSigmaPolar, &I3CLSimFlasherPulse::SetAngularEmissionSigmaPolar)
+
+        .def("GetAngularEmissionSigmaAzimuthal", &I3CLSimFlasherPulse::GetAngularEmissionSigmaAzimuthal)
+        .def("SetAngularEmissionSigmaAzimuthal", &I3CLSimFlasherPulse::SetAngularEmissionSigmaAzimuthal)
+        .add_property("angularEmissionSigmaAzimuthal", &I3CLSimFlasherPulse::GetAngularEmissionSigmaAzimuthal, &I3CLSimFlasherPulse::SetAngularEmissionSigmaAzimuthal)
         ;
         
         

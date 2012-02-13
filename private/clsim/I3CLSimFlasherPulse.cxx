@@ -13,7 +13,9 @@ I3CLSimFlasherPulse::I3CLSimFlasherPulse()
 flasherPulseType_(I3CLSimFlasherPulse::Unknown),
 time_(NAN),
 numberOfPhotonsNoBias_(NAN),
-pulseWidth_(NAN)
+pulseWidth_(NAN),
+angularEmissionSigmaPolar_(NAN),
+angularEmissionSigmaAzimuthal_(NAN)
 {
     
 }
@@ -38,6 +40,8 @@ void I3CLSimFlasherPulse::serialize(Archive &ar, unsigned version)
 	ar & make_nvp("time", time_);
 	ar & make_nvp("numberOfPhotonsNoBias", numberOfPhotonsNoBias_);
 	ar & make_nvp("pulseWidth", pulseWidth_);
+	ar & make_nvp("angularEmissionSigmaPolar", angularEmissionSigmaPolar_);
+	ar & make_nvp("angularEmissionSigmaAzimuthal", angularEmissionSigmaAzimuthal_);
 }     
 
 I3_SERIALIZABLE(I3CLSimFlasherPulse);
@@ -71,6 +75,18 @@ bool operator==(const I3CLSimFlasherPulse &a, const I3CLSimFlasherPulse &b)
         if ((!isnan(a.pulseWidth_)) || (!isnan(b.pulseWidth_))) return false;
     } else {
         if (a.pulseWidth_ != b.pulseWidth_) return false;
+    }
+
+    if (isnan(a.angularEmissionSigmaPolar_) || isnan(b.angularEmissionSigmaPolar_)) {
+        if ((!isnan(a.angularEmissionSigmaPolar_)) || (!isnan(b.angularEmissionSigmaPolar_))) return false;
+    } else {
+        if (a.angularEmissionSigmaPolar_ != b.angularEmissionSigmaPolar_) return false;
+    }
+
+    if (isnan(a.angularEmissionSigmaAzimuthal_) || isnan(b.angularEmissionSigmaAzimuthal_)) {
+        if ((!isnan(a.angularEmissionSigmaAzimuthal_)) || (!isnan(b.angularEmissionSigmaAzimuthal_))) return false;
+    } else {
+        if (a.angularEmissionSigmaAzimuthal_ != b.angularEmissionSigmaAzimuthal_) return false;
     }
 
     

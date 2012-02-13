@@ -1,19 +1,19 @@
 #
 #  $Id$
-#  
+#
 #  Copyright (C) 2011
 #  Claudio Kopper  <claudio.kopper@nikhef.nl>
-#  
+#
 #  This file is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 3 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
@@ -23,7 +23,7 @@ i3_project(clsim
   )
 
 SET(LIB_${PROJECT_NAME}_SOURCEFILES
-    
+
     # private/clsim
     private/clsim/I3CLSimEventStatistics.cxx
     private/clsim/I3CLSimMediumProperties.cxx
@@ -59,17 +59,17 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
     private/clsim/I3CLSimLightSource.cxx
     private/clsim/I3CLSimSpectrumTable.cxx
     private/clsim/I3CLSimFlasherPulse.cxx
-	private/clsim/I3CLSimLightSourceToStepConverterFlasher.cxx
+    private/clsim/I3CLSimLightSourceToStepConverterFlasher.cxx
     private/clsim/I3MuonSlicer.cxx
     private/clsim/I3Photon.cxx
     private/clsim/I3PhotonToMCHitConverter.cxx
     private/clsim/I3HoleIceSimulator.cxx
     private/clsim/I3HoleIceSimulatorModule.cxx
-    
+
     # tableio converters
     private/clsim/converter/I3PhotonConverter.cxx
     private/clsim/converter/I3MCHitConverterWithIDs.cxx
-    
+
     # private/geant4
     private/geant4/I3CLSimLightSourceToStepConverterGeant4.cxx
     private/geant4/TrkCerenkov.cxx
@@ -122,7 +122,7 @@ if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/hit-maker)
     LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
          private/clsim/I3CLSimPMTPhotonSimulatorIceCube.cxx
          )
-    
+
     ADD_DEFINITIONS(-DUSE_HIT_MAKER)
     MESSAGE(STATUS "  + hit-maker support")
 endif(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/hit-maker)
