@@ -1,8 +1,8 @@
 The safeprimes_base32.txt file can be generated with the clsim-make_safeprimes tool
 (which might take some time) or it can be downloaded from:
-http://www.nikhef.nl/~ckopper/safeprimes_base32.txt.gz
+http://www.icecube.wisc.edu/~ckopper/safeprimes_base32.txt.gz
 or
-http://www.nikhef.nl/~ckopper/safeprimes_base32.txt.xz
+http://www.icecube.wisc.edu/~ckopper/safeprimes_base32.txt.xz
 
 Use gunzip/unxz to uncompress those files after downloading.
 
