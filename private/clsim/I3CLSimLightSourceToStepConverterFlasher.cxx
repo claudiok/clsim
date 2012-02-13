@@ -378,6 +378,8 @@ void I3CLSimLightSourceToStepConverterFlasher::FillStep(I3CLSimStep &step,
                                                         const I3CLSimFlasherPulse &flasherPulse,
                                                         uint32_t identifier)
 {
+    //////// bunch direction
+    
     // smear the direction
     const double polarAngle = flasherPulse.GetDir().CalcTheta();
     const double azimuthalAngle = flasherPulse.GetDir().CalcPhi();
@@ -399,10 +401,20 @@ void I3CLSimLightSourceToStepConverterFlasher::FillStep(I3CLSimStep &step,
     
     // now rotate to the polar angle (plus smearing)
     I3Calculator::Rotate(rotAxis, smearedDirection, (90.*I3Units::deg-polarAngle) + smearPolar);
+
     
+    //////// bunch time
+    
+    const double timeWidthFWHM = flasherPulse.GetPulseWidth();
+    const double timeWidthSigma = timeWidthFWHM / 2.3548; // convert from FWHM to sigma (assuming a gaussian distribution)
+    
+    // Use a gaussian for now. TODO: There is a non-gaussian tail/after-glow, which should be implemented.
+    const double smearedTime = flasherPulse.GetTime() + randomService_->Gaus(0., timeWidthSigma);
+    
+    //////// done!
     
     step.SetPos(flasherPulse.GetPos());
-    step.SetTime(flasherPulse.GetTime());
+    step.SetTime(smearedTime);
     step.SetDir(smearedDirection);
     step.SetLength(0.);
     step.SetBeta(1.);
