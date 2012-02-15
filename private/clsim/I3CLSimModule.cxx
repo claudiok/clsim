@@ -1218,8 +1218,19 @@ void I3CLSimModule::ConvertMCTreeToLightSources(const I3MCTree &mcTree,
         const bool isNeutrino = particle_ref.IsNeutrino();
         const bool isTrack = particle_ref.IsTrack();
         
+
         // mmc-icetray currently stores continuous loss entries as "unknown"
-        const bool isContinuousLoss = (particle_ref.GetType() == I3Particle::ContinuousEnergyLoss) || (particle_ref.GetType() == I3Particle::unknown);
+#ifdef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
+        // The ContinuousEnergyLoss type is only defined in the I3Particle version
+        // that also introduced "I3PARTICLE_SUPPORTS_PDG_ENCODINGS". In order
+        // to make clsim work on previous versions, disable the check for ContinuousEnergyLoss.
+        // (the way mmc-icetray is implemented, it would show up as "unknown" anyway.)
+
+        const bool isContinuousLoss = (particle_ref.GetType() == I3Particle::unknown) ||
+                                      (particle_ref.GetType() == I3Particle::ContinuousEnergyLoss);
+#else
+        const bool isContinuousLoss = (particle_ref.GetType() == I3Particle::unknown);
+#endif
         
         // ignore continuous loss entries
         if (isContinuousLoss) {
