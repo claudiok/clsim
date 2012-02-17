@@ -38,9 +38,9 @@ namespace bp = boost::python;
 struct I3CLSimPMTPhotonSimulatorWrapper : I3CLSimPMTPhotonSimulator, bp::wrapper<I3CLSimPMTPhotonSimulator>
 {
     // pure virtual
-    virtual void ApplyAfterPulseLatePulseAndJitterSim(const I3MCHit &input_hit, std::vector<I3MCHit> &output_vector) const
+    virtual void ApplyAfterPulseLatePulseAndJitterSim(const OMKey &key, const I3MCHit &input_hit, std::vector<I3MCHit> &output_vector) const
     {
-        this->get_override("ApplyAfterPulseLatePulseAndJitterSim")(input_hit, output_vector);
+        this->get_override("ApplyAfterPulseLatePulseAndJitterSim")(key, input_hit, output_vector);
     }
     
     virtual void SetCalibration(I3CalibrationConstPtr calibration)
