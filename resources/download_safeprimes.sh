@@ -44,7 +44,6 @@ echo "trying to download $RESOURCES_DIR/safeprimes_base32.txt..."
 
 set +e
 hash curl &> /dev/null
-set -e
 if [ $? -eq 1 ]; then
 	# no curl, maybe wget?
 	
@@ -59,10 +58,10 @@ if [ $? -eq 1 ]; then
 else
 	USE_CURL=1
 fi
+set -e
 
 set +e
 hash unxz &> /dev/null
-set -e
 if [ $? -eq 1 ]; then
 	# xz not found, use .gz file
 	# (just assume that gunzip is available,
@@ -75,6 +74,7 @@ else
 	USE_XZ=1
 	FILENAME="safeprimes_base32.txt.xz"
 fi
+set -e
 
 # download
 echo "  downloading $BASE_URL/$FILENAME ..."
