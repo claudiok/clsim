@@ -53,6 +53,15 @@
 
 #include <boost/thread.hpp>
 
+#include "G4Version.hh"
+
+#if G4VERSION_NUMBER >= 950
+// The G4MaterialPropertyVector is gone since 4.9.5.
+// It has been typedef'd to a G4UnorderedPhysicsVector
+// with a different interface. Try to support both
+// versions with an ifdef.
+#define MATERIAL_PROPERTY_VECTOR_IS_PHYSICS_VECTOR
+#endif
 
 /////////////////////////
 // Class Implementation  
@@ -141,7 +150,7 @@ TrkCerenkov::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
     aMaterial->GetMaterialPropertiesTable();
     if (!aMaterialPropertiesTable) return pParticleChange;
     
-    const G4MaterialPropertyVector* Rindex = 
+    G4MaterialPropertyVector* Rindex = 
     aMaterialPropertiesTable->GetProperty("RINDEX"); 
     if (!Rindex) return pParticleChange;
     
@@ -476,19 +485,28 @@ void TrkCerenkov::BuildThePhysicsTable()
                 // Retrieve the first refraction index in vector
                 // of (photon energy, refraction index) pairs 
                 
+#ifdef MATERIAL_PROPERTY_VECTOR_IS_PHYSICS_VECTOR
+                G4double currentRI = (*theRefractionIndexVector)[0];
+#else
                 theRefractionIndexVector->ResetIterator();
                 ++(*theRefractionIndexVector);	// advance to 1st entry 
                 
                 G4double currentRI = theRefractionIndexVector->
                 GetProperty();
+#endif
                 
                 if (currentRI > 1.0) {
                     
                     // Create first (photon energy, Cerenkov Integral)
                     // pair  
                     
+#ifdef MATERIAL_PROPERTY_VECTOR_IS_PHYSICS_VECTOR
+                    G4double currentPM = theRefractionIndexVector->
+                                           Energy(0);
+#else
                     G4double currentPM = theRefractionIndexVector->
                     GetPhotonEnergy();
+#endif
                     G4double currentCAI1 = 0.0;
                     G4double currentCAI2 = 0.0;
                     
@@ -507,13 +525,22 @@ void TrkCerenkov::BuildThePhysicsTable()
                     // loop over all (photon energy, refraction index)
                     // pairs stored for this material  
                     
+#ifdef MATERIAL_PROPERTY_VECTOR_IS_PHYSICS_VECTOR
+                    for (size_t i = 1;
+                         i < theRefractionIndexVector->GetVectorLength();
+                         i++)
+                    {
+                        currentRI=(*theRefractionIndexVector)[i];
+                        currentPM = theRefractionIndexVector->Energy(i);
+#else
                     while(++(*theRefractionIndexVector))
                     {
-                        currentRI=theRefractionIndexVector->	
+                        currentRI=theRefractionIndexVector->
                         GetProperty();
                         
                         currentPM = theRefractionIndexVector->
                         GetPhotonEnergy();
+#endif
                         
                         double currentBiasFactor=1.;
                         double prevBiasFactor=1.;
@@ -593,14 +620,18 @@ G4double TrkCerenkov::PostStepGetPhysicalInteractionLength(
     G4MaterialPropertiesTable* aMaterialPropertiesTable =
     aMaterial->GetMaterialPropertiesTable();
     
-    const G4MaterialPropertyVector* Rindex = NULL;
+    G4MaterialPropertyVector* Rindex = NULL;
     
     if (aMaterialPropertiesTable)
         Rindex = aMaterialPropertiesTable->GetProperty("RINDEX");
     
     G4double nMax;
     if (Rindex) {
+#ifdef MATERIAL_PROPERTY_VECTOR_IS_PHYSICS_VECTOR
+        nMax = Rindex->GetMaxValue();
+#else
         nMax = Rindex->GetMaxProperty();
+#endif
     } else {
         return StepLimit;
     }
@@ -679,9 +710,9 @@ G4double TrkCerenkov::PostStepGetPhysicalInteractionLength(
 
 G4double 
 TrkCerenkov::GetAverageNumberOfPhotons(const G4double charge,
-                                      const G4double beta, 
-                                      const G4Material* aMaterial,
-                                      const G4MaterialPropertyVector* Rindex) const
+                                       const G4double beta, 
+                                       const G4Material* aMaterial,
+                                       G4MaterialPropertyVector* Rindex) const
 {
     const G4double Rfact = 369.81/(eV * cm);
     
@@ -706,12 +737,22 @@ TrkCerenkov::GetAverageNumberOfPhotons(const G4double charge,
     if(!(CerenkovAngleIntegrals2->IsFilledVectorExist()))return 0.0;
     
     // Min and Max photon energies 
+#ifdef MATERIAL_PROPERTY_VECTOR_IS_PHYSICS_VECTOR
+    G4double Pmin = Rindex->GetMinLowEdgeEnergy();
+    G4double Pmax = Rindex->GetMaxLowEdgeEnergy();
+#else
     G4double Pmin = Rindex->GetMinPhotonEnergy();
     G4double Pmax = Rindex->GetMaxPhotonEnergy();
+#endif
     
     // Min and Max Refraction Indices 
-    G4double nMin = Rindex->GetMinProperty();	
+#ifdef MATERIAL_PROPERTY_VECTOR_IS_PHYSICS_VECTOR
+    G4double nMin = Rindex->GetMinValue();
+    G4double nMax = Rindex->GetMaxValue();
+#else
+    G4double nMin = Rindex->GetMinProperty();
     G4double nMax = Rindex->GetMaxProperty();
+#endif
     
     // Max Cerenkov Angle Integral 
     G4double CAImax1 = CerenkovAngleIntegrals1->GetMaxValue();
@@ -748,7 +789,11 @@ TrkCerenkov::GetAverageNumberOfPhotons(const G4double charge,
     else {
         kind=2;
         
+#ifdef MATERIAL_PROPERTY_VECTOR_IS_PHYSICS_VECTOR
+        Pmin = Rindex->GetEnergy(BetaInverse);
+#else
         Pmin = Rindex->GetPhotonEnergy(BetaInverse);
+#endif
         dp = Pmax - Pmin;
         
         // need boolean for current implementation of G4PhysicsVector

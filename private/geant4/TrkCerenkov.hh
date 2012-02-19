@@ -180,7 +180,7 @@ private:
     G4double GetAverageNumberOfPhotons(const G4double charge,
                                        const G4double beta,
                                        const G4Material *aMaterial,
-                                       const G4MaterialPropertyVector* Rindex) const;
+                                       G4MaterialPropertyVector* Rindex) const;
     
     ///////////////////////
     // Class Data Members
