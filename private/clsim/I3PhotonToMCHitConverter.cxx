@@ -233,10 +233,14 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
     log_trace("%s", __PRETTY_FUNCTION__);
     
     // First we need to get our geometry
-	const I3Geometry& geometry = frame->Get<I3Geometry>();
+    const I3Geometry& geometry = frame->Get<I3Geometry>();
 
-    if (!calibration_)
-        log_fatal("no Calibration frame yet, but received a Physics frame.");
+    if (!replaceRelativeDOMEfficiencyWithDefault_) {
+        // no need to check for exitsing calibration frames if the efficiency
+        // will be replaced with a default value anyway
+        if (!calibration_)
+            log_fatal("no Calibration frame yet, but received a Physics frame.");
+    }
 
     if ((!status_) && (ignoreDOMsWithoutDetectorStatusEntry_))
         log_fatal("no DetectorStatus frame yet, but received a Physics frame.");

@@ -302,13 +302,19 @@ def I3CLSimMakeHits(tray, name,
         spectrumTable = None
 
     # after-pulse simulation
+    has_I3CLSimPMTPhotonSimulatorIceCube = "I3CLSimPMTPhotonSimulatorIceCube" in clsim.__dict__
     if SimulateAfterPulses:
+        if not has_I3CLSimPMTPhotonSimulatorIceCube:
+            raise RuntimeError("cannot simulate jitter/after-pulses because hit-maker is not installed")
         pmtPhotonSimulator = clsim.I3CLSimPMTPhotonSimulatorIceCube(jitter=Jitter)
     else:
-        pmtPhotonSimulator = clsim.I3CLSimPMTPhotonSimulatorIceCube(jitter=0.,
-                                                                    pre_pulse_probability=0.,
-                                                                    late_pulse_probability=0.,
-                                                                    after_pulse_probability=0.)
+        if has_I3CLSimPMTPhotonSimulatorIceCube:
+            pmtPhotonSimulator = clsim.I3CLSimPMTPhotonSimulatorIceCube(jitter=0.,
+                                                                        pre_pulse_probability=0.,
+                                                                        late_pulse_probability=0.,
+                                                                        after_pulse_probability=0.)
+        else:
+            pmtPhotonSimulator = None
 
     # get OpenCL devices
     openCLDevices = [device for device in clsim.I3CLSimOpenCLDevice.GetAllDevices() if (device.gpu and UseGPUs) or (device.cpu and UseCPUs)]
