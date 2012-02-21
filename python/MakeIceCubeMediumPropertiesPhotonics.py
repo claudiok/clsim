@@ -45,17 +45,17 @@ def MakeIceCubeMediumPropertiesPhotonics(tableFile,
     # make a list of wavelengths
     wavelengths = numpy.linspace(start=startWavelength, stop=startWavelength+float(nWavelengths)*stepWavelength, num=nWavelengths, endpoint=False)
     
-    print "The table file {} has {} layers and {} wavelengths, starting from {}ns in {}ns steps".format(tableFile, nLayers, nWavelengths, startWavelength/I3Units.nanometer, stepWavelength/I3Units.nanometer)
+    print "The table file {0} has {1} layers and {2} wavelengths, starting from {3}ns in {4}ns steps".format(tableFile, nLayers, nWavelengths, startWavelength/I3Units.nanometer, stepWavelength/I3Units.nanometer)
     
     
     # replace parsedtable with a version without NLAYER and NWVL entries
     parsedtable = [line for line in parsedtable if ((line[0].upper()!="NLAYER") and (line[0].upper()!="NWVL"))]
     
     if len(parsedtable) != nLayers*6:
-        raise RuntimeError("Expected {}*6={} lines [not counting NLAYER and NWVL] in the icetable file, found {}".format(nLayers, nLayers*6, len(parsedtable)))
+        raise RuntimeError("Expected {0}*6={1} lines [not counting NLAYER and NWVL] in the icetable file, found {2}".format(nLayers, nLayers*6, len(parsedtable)))
     
     if parsedtable[0][0].upper() != "LAYER":
-        raise RuntimeError("Layer definitions should start with the LAYER keyword (reading {})".format(tableFile))
+        raise RuntimeError("Layer definitions should start with the LAYER keyword (reading {0})".format(tableFile))
     
     # parse the lines
     layers = []
@@ -73,7 +73,7 @@ def MakeIceCubeMediumPropertiesPhotonics(tableFile,
         else:
             # some other keyword
             if keyword in layerdict:
-                raise RuntimeError("Keyword {} is used twice for one layer (reading {})".format(keyword, tableFile))
+                raise RuntimeError("Keyword {0} is used twice for one layer (reading {1})".format(keyword, tableFile))
 
         # optional units
         unit = 1.                                       # no units by default
@@ -88,10 +88,10 @@ def MakeIceCubeMediumPropertiesPhotonics(tableFile,
         layers.append(layerdict)        
 
     if len(layers) < 1:
-        raise RuntimeError("At least one layers is requried (reading {})".format(tableFile))
+        raise RuntimeError("At least one layers is requried (reading {0})".format(tableFile))
 
     layerHeight = abs(layers[0]['LAYER'][1] - layers[0]['LAYER'][0])
-    print "layer height is {}m".format(layerHeight/I3Units.m)
+    print "layer height is {0}m".format(layerHeight/I3Units.m)
     
     # sort layers into dict by bottom z coordinate and check some assumptions
     layersByZ = dict()
@@ -100,14 +100,14 @@ def MakeIceCubeMediumPropertiesPhotonics(tableFile,
         layerTop = layer['LAYER'][1]
         
         if layerBottom > layerTop:
-            print "a layer is upside down. compensating. (reading {})".format(tableFile)
+            print "a layer is upside down. compensating. (reading {0})".format(tableFile)
             dummy = layerBottom
             layerBottom = layerTop
             layerTop = dummy
         
         # check layer height
         if abs((layerTop-layerBottom) - layerHeight) > 0.0001:
-            raise RuntimeError("Differing layer heights while reading {}. Expected {}m, got {}m.".format(tableFile, layerHeight, layerTop-layerBottom))
+            raise RuntimeError("Differing layer heights while reading {0}. Expected {1}m, got {2}m.".format(tableFile, layerHeight, layerTop-layerBottom))
         
         layersByZ[layerBottom] = layer
     
@@ -117,7 +117,7 @@ def MakeIceCubeMediumPropertiesPhotonics(tableFile,
     for dummy, layer in sorted(layersByZ.iteritems()):
         startZ = layer['LAYER'][0]
         if (endZ is not None) and (abs(endZ-startZ) > 0.0001):
-            raise RuntimeError("Your layers have holes. previous layer ends at {}m, next one starts at {}m".format(endZ/I3Units.m, startZ/I3Units.m))
+            raise RuntimeError("Your layers have holes. previous layer ends at {0}m, next one starts at {1}m".format(endZ/I3Units.m, startZ/I3Units.m))
         endZ = layer['LAYER'][1]
         layers.append(layer)
     
@@ -128,18 +128,18 @@ def MakeIceCubeMediumPropertiesPhotonics(tableFile,
         
         for cosVal in layer['COS']:
             if abs(cosVal-meanCos) > 0.0001:
-                raise RuntimeError("only a consant mean cosing is supported by clsim (expected {}, got {})".format(meanCos, cosVal))
+                raise RuntimeError("only a consant mean cosing is supported by clsim (expected {0}, got {1})".format(meanCos, cosVal))
         
         if len(layer['COS']) != len(wavelengths):
-            raise RuntimeError("Expected {} COS values, got {}".format(len(wavelengths), len(layer['COS'])))
+            raise RuntimeError("Expected {0} COS values, got {1}".format(len(wavelengths), len(layer['COS'])))
         if len(layer['ABS']) != len(wavelengths):
-            raise RuntimeError("Expected {} ABS values, got {}".format(len(wavelengths), len(layer['ABS'])))
+            raise RuntimeError("Expected {0} ABS values, got {1}".format(len(wavelengths), len(layer['ABS'])))
         if len(layer['SCAT']) != len(wavelengths):
-            raise RuntimeError("Expected {} SCAT values, got {}".format(len(wavelengths), len(layer['SCAT'])))
+            raise RuntimeError("Expected {0} SCAT values, got {1}".format(len(wavelengths), len(layer['SCAT'])))
         if len(layer['N_GROUP']) != len(wavelengths):
-            raise RuntimeError("Expected {} N_GROUP values, got {}".format(len(wavelengths), len(layer['N_GROUP'])))
+            raise RuntimeError("Expected {0} N_GROUP values, got {1}".format(len(wavelengths), len(layer['N_GROUP'])))
         if len(layer['N_PHASE']) != len(wavelengths):
-            raise RuntimeError("Expected {} N_PHASE values, got {}".format(len(wavelengths), len(layer['N_PHASE'])))
+            raise RuntimeError("Expected {0} N_PHASE values, got {1}".format(len(wavelengths), len(layer['N_PHASE'])))
 
         for i in range(len(wavelengths)):
             if abs(layer['N_GROUP'][i]-layers[0]['N_GROUP'][i]) > 0.0001:
