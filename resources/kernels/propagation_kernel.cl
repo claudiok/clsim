@@ -704,14 +704,14 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             dbg_printf("   - j_final=%i\n", j);
 #endif
         
-            float tot;
+            float distanceToAbsorption;
             if ((currentPhotonLayer==j) || fabs(photon_dz)<EPSILON) {
                 distancePropagated=sca_step_left*currentScaLen;
-                tot=abs_lens_left*currentAbsLen;
+                distanceToAbsorption=abs_lens_left*currentAbsLen;
             } else {
                 const float recip_photon_dz = my_recip(photon_dz);
                 distancePropagated=(ais*((float)MEDIUM_LAYER_THICKNESS)*currentScaLen+mediumBoundary-photonPosAndTime.z)*recip_photon_dz;
-                tot=(aia*((float)MEDIUM_LAYER_THICKNESS)*currentAbsLen+mediumBoundary-photonPosAndTime.z)*recip_photon_dz;
+                distanceToAbsorption=(aia*((float)MEDIUM_LAYER_THICKNESS)*currentAbsLen+mediumBoundary-photonPosAndTime.z)*recip_photon_dz;
             }
             currentPhotonLayer=j;
             
@@ -720,11 +720,11 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
 #endif
         
             // get overburden for distance
-            if (tot<distancePropagated) {
-                distancePropagated=tot;
+            if (distanceToAbsorption<distancePropagated) {
+                distancePropagated=distanceToAbsorption;
                 abs_lens_left=0.f;
             } else {
-                abs_lens_left=my_divide(tot-distancePropagated, currentAbsLen);
+                abs_lens_left=my_divide(distanceToAbsorption-distancePropagated, currentAbsLen);
             }
         }
 

@@ -36,7 +36,7 @@ public:
                                         uint32_t ignoreDomIDsLargerThan=default_ignoreDomIDsLargerThan,
                                         bool splitIntoPartsAccordingToPosition=default_splitIntoPartsAccordingToPosition,
                                         bool useHardcodedDeepCoreSubdetector=default_useHardcodedDeepCoreSubdetector);
-    ~I3CLSimSimpleGeometryFromI3Geometry();
+    virtual ~I3CLSimSimpleGeometryFromI3Geometry();
 
     virtual std::size_t size() const {return numOMs_;}
 

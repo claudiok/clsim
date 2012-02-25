@@ -14,7 +14,7 @@ class I3CLSimSimpleGeometryUserConfigurable : public I3CLSimSimpleGeometry
     
 public:
     I3CLSimSimpleGeometryUserConfigurable(double OMRadius, std::size_t numOMs);
-    ~I3CLSimSimpleGeometryUserConfigurable();
+    virtual ~I3CLSimSimpleGeometryUserConfigurable();
 
     virtual std::size_t size() const {return numOMs_;}
 

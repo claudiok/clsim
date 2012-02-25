@@ -23,12 +23,6 @@ const uint32_t I3CLSimSimpleGeometryFromI3Geometry::default_ignoreDomIDsLargerTh
 const bool I3CLSimSimpleGeometryFromI3Geometry::default_splitIntoPartsAccordingToPosition=false;
 const bool I3CLSimSimpleGeometryFromI3Geometry::default_useHardcodedDeepCoreSubdetector=false;
 
-// some helpers
-namespace {
-    
-    
-}
-
 
 I3CLSimSimpleGeometryFromI3Geometry::
 I3CLSimSimpleGeometryFromI3Geometry(double OMRadius,

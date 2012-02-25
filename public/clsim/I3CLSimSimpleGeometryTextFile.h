@@ -25,7 +25,7 @@ public:
                                   uint32_t ignoreDomIDsSmallerThan=default_ignoreDomIDsSmallerThan,
                                   uint32_t ignoreDomIDsLargerThan=default_ignoreDomIDsLargerThan
                                   );
-    ~I3CLSimSimpleGeometryTextFile();
+    virtual ~I3CLSimSimpleGeometryTextFile();
 
     virtual std::size_t size() const {return numOMs_;}
 

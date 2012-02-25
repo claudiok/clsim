@@ -43,7 +43,7 @@ struct I3CLSimLightSourceToStepConverterWrapper : I3CLSimLightSourceToStepConver
     virtual void SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties) {this->get_override("SetMediumProperties")(mediumProperties);}
     virtual void Initialize() {this->get_override("Initialize")();}
     virtual bool IsInitialized() const {return this->get_override("IsInitialized")();}
-    virtual void EnqueueLightSource(const I3Particle &particle, uint32_t identifier) {this->get_override("EnqueueLightSource")(particle, identifier);}
+    virtual void EnqueueLightSource(const I3CLSimLightSource &lightSource, uint32_t identifier) {this->get_override("EnqueueLightSource")(lightSource, identifier);}
     virtual void EnqueueBarrier() {this->get_override("EnqueueLightSource")();}
     virtual bool BarrierActive() const {return this->get_override("BarrierActive")();}
     virtual bool MoreStepsAvailable() const {return this->get_override("MoreStepsAvailable")();}
