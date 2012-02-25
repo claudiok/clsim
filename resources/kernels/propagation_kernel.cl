@@ -231,9 +231,9 @@ inline void checkForCollision_OnString(
         if (smin > sqr(convert_float(GEO_STRING_MAX_RADIUS))) return;  // NOTE: smin == distance squared
     }
 
-    { // check if photon is above or below the string
-        if ((photonDirAndWlen.z > 0.f) && (photonPosAndTime.z > geoStringMaxZ[stringNum])) return;
-        if ((photonDirAndWlen.z < 0.f) && (photonPosAndTime.z < geoStringMinZ[stringNum])) return;
+    { // check if photon is above or below the string (geoStringMaxZ and geoStringMinZ do not include the OM radius!)
+        if ((photonDirAndWlen.z > 0.f) && (photonPosAndTime.z > geoStringMaxZ[stringNum]+OM_RADIUS)) return;
+        if ((photonDirAndWlen.z < 0.f) && (photonPosAndTime.z < geoStringMinZ[stringNum]-OM_RADIUS)) return;
     }
 
     // this photon could potentially be hitting an om
