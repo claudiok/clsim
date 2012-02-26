@@ -535,6 +535,14 @@ inline void checkForCollision_OnString(
     lowLayerZ = min(max(lowLayerZ, 0), geoLayerNum[stringSet]-1);
     highLayerZ = min(max(highLayerZ, 0), geoLayerNum[stringSet]-1);
 
+#ifndef STOP_PHOTONS_ON_DETECTION
+	// the number of 64bit integers needed to store bits for all doms
+	#define numComponents ((GEO_MAX_DOM_INDEX + 64 - 1)/64)
+	ulong dom_bitmask[numComponents];
+	for (uint i=0;i<numComponents;++i) dom_bitmask[i]=0;
+	#undef numComponents
+#endif
+
     //__constant const unsigned short *geoLayerToOMNumIndex=geoLayerToOMNumIndexPerStringSet + (convert_uint(stringSet)*GEO_LAYER_STRINGSET_MAX_NUM_LAYERS) + lowLayerZ;
     __local const unsigned short *geoLayerToOMNumIndex=geoLayerToOMNumIndexPerStringSetLocal + (convert_uint(stringSet)*GEO_LAYER_STRINGSET_MAX_NUM_LAYERS) + lowLayerZ;
     for (int layer_z=lowLayerZ;layer_z<=highLayerZ;++layer_z,++geoLayerToOMNumIndex)
@@ -542,6 +550,12 @@ inline void checkForCollision_OnString(
         const unsigned short domNum = *geoLayerToOMNumIndex;
         if (domNum==0xFFFF) continue; // empty layer for this string
 
+#ifndef STOP_PHOTONS_ON_DETECTION
+			// prevent strings from being checked twice
+			if (dom_bitmask[stringNum/64] & (1 << convert_ulong(domNum%64))) continue;	// already check this string
+			dom_bitmask[stringNum/64] |= (1 << convert_ulong(domNum%64));				// mark this string as checked
+#endif
+		
         floating_t domPosX, domPosY, domPosZ;
         geometryGetDomPosition(stringNum, domNum, &domPosX, &domPosY, &domPosZ);
 
@@ -664,13 +678,27 @@ inline void checkForCollision_InCell(
     highCellX = min(max(highCellX, 0), this_geoCellNumX-1);
     highCellY = min(max(highCellY, 0), this_geoCellNumY-1);
 
+#ifndef STOP_PHOTONS_ON_DETECTION
+	// the number of 64bit integers needed to store bits for all strings
+	#define numComponents ((NUM_STRINGS + 64 - 1)/64)
+	ulong string_bitmask[numComponents];
+	for (uint i=0;i<numComponents;++i) string_bitmask[i]=0;
+	#undef numComponents
+#endif
+
     for (int cell_y=lowCellY;cell_y<=highCellY;++cell_y)
     {
         for (int cell_x=lowCellX;cell_x<=highCellX;++cell_x)
         {
             const unsigned short stringNum = this_geoCellIndex[cell_y*this_geoCellNumX+cell_x];
             if (stringNum==0xFFFF) continue; // empty cell
-        
+		
+#ifndef STOP_PHOTONS_ON_DETECTION
+			// prevent strings from being checked twice
+			if (string_bitmask[stringNum/64] & (1 << convert_ulong(stringNum%64))) continue;	// already check this string
+			string_bitmask[stringNum/64] |= (1 << convert_ulong(stringNum%64));				// mark this string as checked
+#endif
+		
             checkForCollision_OnString(
                 stringNum,
                 photonDirLenXYSqr,
