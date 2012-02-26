@@ -652,15 +652,15 @@ namespace I3CLSimHelper
         output << "};" << std::endl;
 
         
-        output << "inline void geometryGetDomPosition(unsigned short stringNum, unsigned short domNum, float *domPosX, float *domPosY, float *domPosZ);" << std::endl;
-        output << "inline void geometryGetDomPosition(unsigned short stringNum, unsigned short domNum, float *domPosX, float *domPosY, float *domPosZ)" << std::endl;
+        output << "inline void geometryGetDomPosition(unsigned short stringNum, unsigned short domNum, floating_t *domPosX, floating_t *domPosY, floating_t *domPosZ);" << std::endl;
+        output << "inline void geometryGetDomPosition(unsigned short stringNum, unsigned short domNum, floating_t *domPosX, floating_t *domPosY, floating_t *domPosZ)" << std::endl;
         output << "{" << std::endl;
         
         output << "    const unsigned int index = geoDomPosStringStartIndexInTemplateDomList[stringNum]+convert_uint(domNum);" << std::endl;
 
         if (useShortsInsteadOfFloats) {
-            output << "    *domPosX = convert_float(geoDomPosTemplatePositionsX_flat[index])*GEO_DOM_POS_MAX_ABS_X_MULTIPLIER_IN_TEMPLATE + geoDomPosStringMeanPosX[stringNum];" << std::endl;
-            output << "    *domPosY = convert_float(geoDomPosTemplatePositionsY_flat[index])*GEO_DOM_POS_MAX_ABS_Y_MULTIPLIER_IN_TEMPLATE + geoDomPosStringMeanPosY[stringNum];" << std::endl;
+            output << "    *domPosX = convert_floating_t(geoDomPosTemplatePositionsX_flat[index])*GEO_DOM_POS_MAX_ABS_X_MULTIPLIER_IN_TEMPLATE + geoDomPosStringMeanPosX[stringNum];" << std::endl;
+            output << "    *domPosY = convert_floating_t(geoDomPosTemplatePositionsY_flat[index])*GEO_DOM_POS_MAX_ABS_Y_MULTIPLIER_IN_TEMPLATE + geoDomPosStringMeanPosY[stringNum];" << std::endl;
             output << "    *domPosZ = geoDomPosTemplatePositionsZ_flat[index];" << std::endl;
         } else {
             output << "    *domPosX = geoDomPosTemplatePositionsX_flat[index] + geoDomPosStringMeanPosX[stringNum];" << std::endl;

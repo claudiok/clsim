@@ -342,6 +342,38 @@ void I3CLSimStepToPhotonConverterOpenCL::Compile()
     if (!deviceIsSelected_)
         throw I3CLSimStepToPhotonConverter_exception("Device not selected!");
     
+
+    const bool doublePrecision=false;
+    
+    prependSource_ = "";
+    
+    // necessary OpenCL extensions
+    prependSource_ = prependSource_ + "#pragma OPENCL EXTENSION cl_khr_global_int32_base_atomics : enable\n";
+    //prependSource_ = prependSource_ + "#pragma OPENCL EXTENSION cl_khr_local_int32_base_atomics : enable\n";
+    prependSource_ = prependSource_ + "#pragma OPENCL EXTENSION cl_khr_byte_addressable_store : enable\n";
+    //prependSource_ = prependSource_ + "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n";
+
+    if (doublePrecision) {
+        prependSource_ = prependSource_ + "#pragma OPENCL EXTERNSION cl_khr_fp64 : enable\n";
+        prependSource_ = prependSource_ + "typedef double floating_t;\n";
+        prependSource_ = prependSource_ + "typedef double2 floating2_t;\n";
+        prependSource_ = prependSource_ + "typedef double4 floating4_t;\n";
+        prependSource_ = prependSource_ + "#define convert_floating_t convert_double\n";
+        prependSource_ = prependSource_ + "#define DOUBLE_PRECISION\n";
+        prependSource_ = prependSource_ + "#define ZERO 0.\n";
+        prependSource_ = prependSource_ + "#define ONE 1.\n";
+        prependSource_ = prependSource_ + "\n";
+    } else {
+        prependSource_ = prependSource_ + "typedef float floating_t;\n";
+        prependSource_ = prependSource_ + "typedef float2 floating2_t;\n";
+        prependSource_ = prependSource_ + "typedef float4 floating4_t;\n";
+        prependSource_ = prependSource_ + "#define convert_floating_t convert_float\n";
+        prependSource_ = prependSource_ + "#define ZERO 0.f\n";
+        prependSource_ = prependSource_ + "#define ONE 1.f\n";
+        prependSource_ = prependSource_ + "\n";
+    }
+
+
     
     wlenGeneratorSource_ = "";
     for (std::size_t i=0; i<wlenGenerators_.size(); ++i)
@@ -384,6 +416,7 @@ std::string I3CLSimStepToPhotonConverterOpenCL::GetFullSource()
 {
     std::ostringstream code;
     
+    code << prependSource_;
     code << mwcrngKernelSource_;
     code << wlenGeneratorSource_;
     code << wlenBiasSource_;
@@ -469,7 +502,7 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
     std::string BuildOptions;
     
     //BuildOptions += "-w "; // no warnings
-    //BuildOptions += "-Werror "; // warnings will become errors
+    BuildOptions += "-Werror "; // warnings will become errors
     BuildOptions += "-cl-mad-enable ";
     //BuildOptions += "-cl-opt-disable ";
     //BuildOptions += "-cl-no-signed-zeros ";
@@ -494,6 +527,7 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
         // build the program
         cl::Program::Sources source;
         
+        source.push_back(std::make_pair(prependSource_.c_str(),prependSource_.size()));
         source.push_back(std::make_pair(mwcrngKernelSource_.c_str(),mwcrngKernelSource_.size()));
         source.push_back(std::make_pair(wlenGeneratorSource_.c_str(),wlenGeneratorSource_.size()));
         source.push_back(std::make_pair(wlenBiasSource_.c_str(),wlenBiasSource_.size()));

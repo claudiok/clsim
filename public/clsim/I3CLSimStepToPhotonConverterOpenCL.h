@@ -267,6 +267,7 @@ private:
     bool disableDoubleBuffering_;
     
     // some kernel sources loaded on construction
+    std::string prependSource_;
     std::string mwcrngKernelSource_;
     std::string wlenGeneratorSource_;
     std::string wlenBiasSource_;

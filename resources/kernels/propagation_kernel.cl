@@ -1,8 +1,3 @@
-#pragma OPENCL EXTENSION cl_khr_global_int32_base_atomics : enable
-//#pragma OPENCL EXTENSION cl_khr_local_int32_base_atomics : enable
-#pragma OPENCL EXTENSION cl_khr_byte_addressable_store : enable
-//#pragma OPENCL EXTENSION cl_khr_fp16 : enable
-
 /////////////////// preprocessor defines
 
 // debug mode: store all photons right after they are generated on string0/OM0
@@ -21,6 +16,8 @@
 #define dbg_printf(format, ...) printf(format, ##__VA_ARGS__)
 #endif
 
+
+// ZERO and ONE will be defined as either 0.f/1.f or 0./1. depending on DOUBLE_PRECISION
 
 /////////////////// struct definitions
 
@@ -57,32 +54,36 @@ struct __attribute__ ((packed)) I3CLSimPhoton
 
 ///////////////// forward declarations
 
-inline int findLayerForGivenZPos(float posZ);
+inline int findLayerForGivenZPos(floating_t posZ);
 
-inline float mediumLayerBoundary(int layer);
+inline floating_t mediumLayerBoundary(int layer);
 
-void scatterDirectionByAngle(float cosa,
-    float sina,
-    float4 *direction,
-    float randomNumber);
+void scatterDirectionByAngle(floating_t cosa,
+    floating_t sina,
+    floating4_t *direction,
+    floating_t randomNumber);
 
 inline void createPhotonFromTrack(struct I3CLSimStep *step,
-    const float4 stepDir,
+    const floating4_t stepDir,
     RNG_ARGS,
-    float4 *photonPosAndTime,
-    float4 *photonDirAndWlen);
+    floating4_t *photonPosAndTime,
+    floating4_t *photonDirAndWlen);
 
+#ifdef DOUBLE_PRECISION
+inline float2 sphDirFromCar(double4 carDir);
+#else
 inline float2 sphDirFromCar(float4 carDir);
+#endif
 
 inline void saveHit(
-    const float4 photonPosAndTime,
-    const float4 photonDirAndWlen,
-    const float thisStepLength,
-    float inv_groupvel,
-    float photonTotalPathLength,
+    const floating4_t photonPosAndTime,
+    const floating4_t photonDirAndWlen,
+    const floating_t thisStepLength,
+    floating_t inv_groupvel,
+    floating_t photonTotalPathLength,
     uint photonNumScatters,
-    const float4 photonStartPosAndTime,
-    const float4 photonStartDirAndWlen,
+    const floating4_t photonStartPosAndTime,
+    const floating4_t photonStartDirAndWlen,
     const struct I3CLSimStep *step,
     unsigned short hitOnString,
     unsigned short hitOnDom,
@@ -93,21 +94,21 @@ inline void saveHit(
 	
 inline void checkForCollision_OnString(
     const unsigned short stringNum,
-    const float photonDirLenXYSqr,
-    const float4 photonPosAndTime,
-    const float4 photonDirAndWlen,
+    const floating_t photonDirLenXYSqr,
+    const floating4_t photonPosAndTime,
+    const floating4_t photonDirAndWlen,
 #ifdef STOP_PHOTONS_ON_DETECTION
-    float *thisStepLength,
+    floating_t *thisStepLength,
     bool *hitRecorded,
     unsigned short *hitOnString,
     unsigned short *hitOnDom,
 #else
-    float thisStepLength,
-    float inv_groupvel,
-    float photonTotalPathLength,
+    floating_t thisStepLength,
+    floating_t inv_groupvel,
+    floating_t photonTotalPathLength,
     uint photonNumScatters,
-    const float4 photonStartPosAndTime,
-    const float4 photonStartDirAndWlen,
+    const floating4_t photonStartPosAndTime,
+    const floating4_t photonStartDirAndWlen,
     const struct I3CLSimStep *step,
     __global uint* hitIndex,
     uint maxHitIndex,
@@ -117,21 +118,21 @@ inline void checkForCollision_OnString(
     );
 	
 inline void checkForCollision_InCell(
-    const float photonDirLenXYSqr,
-    const float4 photonPosAndTime,
-    const float4 photonDirAndWlen,
+    const floating_t photonDirLenXYSqr,
+    const floating4_t photonPosAndTime,
+    const floating4_t photonDirAndWlen,
 #ifdef STOP_PHOTONS_ON_DETECTION
-    float *thisStepLength,
+    floating_t *thisStepLength,
     bool *hitRecorded,
     unsigned short *hitOnString,
     unsigned short *hitOnDom,
 #else
-    float thisStepLength,
-    float inv_groupvel,
-    float photonTotalPathLength,
+    floating_t thisStepLength,
+    floating_t inv_groupvel,
+    floating_t photonTotalPathLength,
     uint photonNumScatters,
-    const float4 photonStartPosAndTime,
-    const float4 photonStartDirAndWlen,
+    const floating4_t photonStartPosAndTime,
+    const floating4_t photonStartDirAndWlen,
     const struct I3CLSimStep *step,
     __global uint* hitIndex,
     uint maxHitIndex,
@@ -140,30 +141,30 @@ inline void checkForCollision_InCell(
     __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal,
     
     __constant unsigned short *this_geoCellIndex,
-    const float this_geoCellStartX,
-    const float this_geoCellStartY,
-    const float this_geoCellWidthX,
-    const float this_geoCellWidthY,
+    const floating_t this_geoCellStartX,
+    const floating_t this_geoCellStartY,
+    const floating_t this_geoCellWidthX,
+    const floating_t this_geoCellWidthY,
     const int this_geoCellNumX,
     const int this_geoCellNumY
     );
 	
 inline void checkForCollision_InCells(
-    const float photonDirLenXYSqr,
-    const float4 photonPosAndTime,
-    const float4 photonDirAndWlen,
+    const floating_t photonDirLenXYSqr,
+    const floating4_t photonPosAndTime,
+    const floating4_t photonDirAndWlen,
 #ifdef STOP_PHOTONS_ON_DETECTION
-    float *thisStepLength,
+    floating_t *thisStepLength,
     bool *hitRecorded,
     unsigned short *hitOnString,
     unsigned short *hitOnDom,
 #else
-    float thisStepLength,
-    float inv_groupvel,
-    float photonTotalPathLength,
+    floating_t thisStepLength,
+    floating_t inv_groupvel,
+    floating_t photonTotalPathLength,
     uint photonNumScatters,
-    const float4 photonStartPosAndTime,
-    const float4 photonStartDirAndWlen,
+    const floating4_t photonStartPosAndTime,
+    const floating4_t photonStartDirAndWlen,
     const struct I3CLSimStep *step,
     __global uint* hitIndex,
     uint maxHitIndex,
@@ -172,18 +173,18 @@ inline void checkForCollision_InCells(
     __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal
     );
 	
-inline bool checkForCollision(const float4 photonPosAndTime,
-    const float4 photonDirAndWlen,
-    float inv_groupvel,
-    float photonTotalPathLength,
+inline bool checkForCollision(const floating4_t photonPosAndTime,
+    const floating4_t photonDirAndWlen,
+    floating_t inv_groupvel,
+    floating_t photonTotalPathLength,
     uint photonNumScatters,
-    const float4 photonStartPosAndTime,
-    const float4 photonStartDirAndWlen,
+    const floating4_t photonStartPosAndTime,
+    const floating4_t photonStartDirAndWlen,
     const struct I3CLSimStep *step,
 #ifdef STOP_PHOTONS_ON_DETECTION
-    float *thisStepLength,
+    floating_t *thisStepLength,
 #else
-    float thisStepLength,
+    floating_t thisStepLength,
 #endif
     __global uint* hitIndex,
     uint maxHitIndex,
@@ -194,65 +195,71 @@ inline bool checkForCollision(const float4 photonPosAndTime,
 
 ///////////////////////// some constants
 
+#ifdef DOUBLE_PRECISION
+__constant double speedOfLight = 0.299792458; // [m/ns]
+__constant double recip_speedOfLight = 3.33564095; // [ns/m]
+__constant double PI = 3.14159265359;
+#else
 __constant float speedOfLight = 0.299792458f; // [m/ns]
 __constant float recip_speedOfLight = 3.33564095f; // [ns/m]
 __constant float PI = 3.14159265359f;
+#endif
 
 ///////////////////////////
 
 
-inline float my_divide(float a, float b);
-inline float my_recip(float a);
-inline float my_powr(float a, float b);
-inline float my_sqrt(float a);
-inline float my_rsqrt(float a);
-inline float my_cos(float a);
-inline float my_sin(float a);
-inline float my_log(float a);
-inline float my_exp(float a);
-inline float sqr(float a);
+inline floating_t my_divide(floating_t a, floating_t b);
+inline floating_t my_recip(floating_t a);
+inline floating_t my_powr(floating_t a, floating_t b);
+inline floating_t my_sqrt(floating_t a);
+inline floating_t my_rsqrt(floating_t a);
+inline floating_t my_cos(floating_t a);
+inline floating_t my_sin(floating_t a);
+inline floating_t my_log(floating_t a);
+inline floating_t my_exp(floating_t a);
+inline floating_t sqr(floating_t a);
 
 #ifdef USE_NATIVE_MATH
-inline float my_divide(float a, float b) {return native_divide(a,b);}
-inline float my_recip(float a) {return native_recip(a);}
-inline float my_powr(float a, float b) {return native_powr(a,b);}
-inline float my_sqrt(float a) {return native_sqrt(a);}
-inline float my_rsqrt(float a) {return native_rsqrt(a);}
-inline float my_cos(float a) {return native_cos(a);}
-inline float my_sin(float a) {return native_sin(a);}
-inline float my_log(float a) {return native_log(a);}
-inline float my_exp(float a) {return native_exp(a);}
+inline floating_t my_divide(floating_t a, floating_t b) {return native_divide(a,b);}
+inline floating_t my_recip(floating_t a) {return native_recip(a);}
+inline floating_t my_powr(floating_t a, floating_t b) {return native_powr(a,b);}
+inline floating_t my_sqrt(floating_t a) {return native_sqrt(a);}
+inline floating_t my_rsqrt(floating_t a) {return native_rsqrt(a);}
+inline floating_t my_cos(floating_t a) {return native_cos(a);}
+inline floating_t my_sin(floating_t a) {return native_sin(a);}
+inline floating_t my_log(floating_t a) {return native_log(a);}
+inline floating_t my_exp(floating_t a) {return native_exp(a);}
 #else
-inline float my_divide(float a, float b) {return a/b;}
-inline float my_recip(float a) {return 1.f/a;}
-inline float my_powr(float a, float b) {return powr(a,b);}
-inline float my_sqrt(float a) {return sqrt(a);}
-inline float my_rsqrt(float a) {return rsqrt(a);}
-inline float my_cos(float a) {return cos(a);}
-inline float my_sin(float a) {return sin(a);}
-inline float my_log(float a) {return log(a);}
-inline float my_exp(float a) {return exp(a);}
+inline floating_t my_divide(floating_t a, floating_t b) {return a/b;}
+inline floating_t my_recip(floating_t a) {return 1.f/a;}
+inline floating_t my_powr(floating_t a, floating_t b) {return powr(a,b);}
+inline floating_t my_sqrt(floating_t a) {return sqrt(a);}
+inline floating_t my_rsqrt(floating_t a) {return rsqrt(a);}
+inline floating_t my_cos(floating_t a) {return cos(a);}
+inline floating_t my_sin(floating_t a) {return sin(a);}
+inline floating_t my_log(floating_t a) {return log(a);}
+inline floating_t my_exp(floating_t a) {return exp(a);}
 #endif
 
-inline float sqr(float a) {return a*a;}
+inline floating_t sqr(floating_t a) {return a*a;}
 
 
 
 
-inline int findLayerForGivenZPos(float posZ)
+inline int findLayerForGivenZPos(floating_t posZ)
 {
-    return convert_int((posZ-(float)MEDIUM_LAYER_BOTTOM_POS)/(float)MEDIUM_LAYER_THICKNESS);
+    return convert_int((posZ-(floating_t)MEDIUM_LAYER_BOTTOM_POS)/(floating_t)MEDIUM_LAYER_THICKNESS);
 }
 
-inline float mediumLayerBoundary(int layer)
+inline floating_t mediumLayerBoundary(int layer)
 {
-    return (convert_float(layer)*((float)MEDIUM_LAYER_THICKNESS)) + (float)MEDIUM_LAYER_BOTTOM_POS;
+    return (convert_floating_t(layer)*((floating_t)MEDIUM_LAYER_THICKNESS)) + (floating_t)MEDIUM_LAYER_BOTTOM_POS;
 }
 
-void scatterDirectionByAngle(float cosa,
-    float sina,
-    float4 *direction,
-    float randomNumber)
+void scatterDirectionByAngle(floating_t cosa,
+    floating_t sina,
+    floating4_t *direction,
+    floating_t randomNumber)
 {
     //printf("direction before=(%f,%f,%f) len^2=%f  -> cos=%f, sin=%f, r=%f\n",
     //       (*direction).x, (*direction).y, (*direction).z,
@@ -260,15 +267,19 @@ void scatterDirectionByAngle(float cosa,
     //       cosa, sina, randomNumber);
 
     // randomize direction of scattering (rotation around old direction axis)
-    const float b=2.0f*PI*randomNumber;
-    const float cosb=my_cos(b);
-    const float sinb=my_sin(b);
+#ifdef DOUBLE_PRECISION
+    const floating_t b=2.0*PI*randomNumber;
+#else
+    const floating_t b=2.0f*PI*randomNumber;
+#endif
+    const floating_t cosb=my_cos(b);
+    const floating_t sinb=my_sin(b);
 
     // Rotate new direction into absolute frame of reference 
-    const float sinth = my_sqrt(max(0.0f, 1.0f-(*direction).z*(*direction).z));
-
+    const floating_t sinth = my_sqrt(max(ZERO, ONE-(*direction).z*(*direction).z));
+	
     if(sinth>0.f){  // Current direction not vertical, so rotate 
-        const float4 oldDir = *direction;
+        const floating4_t oldDir = *direction;
 
         (*direction).x=oldDir.x*cosa-my_divide((oldDir.y*cosb+oldDir.z*oldDir.x*sinb)*sina,sinth);
         (*direction).y=oldDir.y*cosa+my_divide((oldDir.x*cosb-oldDir.z*oldDir.y*sinb)*sina,sinth);
@@ -280,7 +291,7 @@ void scatterDirectionByAngle(float cosa,
     }
 
     {
-        const float recip_length = my_recip(fast_length((float4)((*direction).x, (*direction).y, (*direction).z, 0.0f)));
+		const floating_t recip_length = my_rsqrt(sqr((*direction).x) + sqr((*direction).y) + sqr((*direction).z));
 
         (*direction).x *= recip_length;
         (*direction).y *= recip_length;
@@ -295,16 +306,16 @@ void scatterDirectionByAngle(float cosa,
 
 
 inline void createPhotonFromTrack(struct I3CLSimStep *step,
-    const float4 stepDir,
+    const floating4_t stepDir,
     RNG_ARGS,
-    float4 *photonPosAndTime,
-    float4 *photonDirAndWlen)
+    floating4_t *photonPosAndTime,
+    floating4_t *photonDirAndWlen)
 {
-    float shiftMultiplied = step->dirAndLengthAndBeta.z*RNG_CALL_UNIFORM_CO;
-    float inverseParticleSpeed = my_recip(speedOfLight*step->dirAndLengthAndBeta.w);
+    floating_t shiftMultiplied = step->dirAndLengthAndBeta.z*RNG_CALL_UNIFORM_CO;
+    floating_t inverseParticleSpeed = my_recip(speedOfLight*step->dirAndLengthAndBeta.w);
 
     // move along the step direction
-    *photonPosAndTime = (float4)
+    *photonPosAndTime = (floating4_t)
         (
         step->posAndTime.x+stepDir.x*shiftMultiplied,
         step->posAndTime.y+stepDir.y*shiftMultiplied,
@@ -321,11 +332,10 @@ inline void createPhotonFromTrack(struct I3CLSimStep *step,
         // sourceType==0 is always Cherenkov light with the correct angle w.r.t. the particle/step
         
         // our photon still needs a wavelength. create one!
-        const float wavelength = generateWavelength_0(RNG_ARGS_TO_CALL);
+        const floating_t wavelength = generateWavelength_0(RNG_ARGS_TO_CALL);
 
-        const float cosCherenkov = my_recip(step->dirAndLengthAndBeta.w*getPhaseRefIndex(layer, wavelength)); // cos theta = 1/(beta*n)
-        const float sinCherenkov = my_sqrt(1.0f-cosCherenkov*cosCherenkov);
-
+        const floating_t cosCherenkov = my_recip(step->dirAndLengthAndBeta.w*getPhaseRefIndex(layer, wavelength)); // cos theta = 1/(beta*n)
+        const floating_t sinCherenkov = my_sqrt(ONE-cosCherenkov*cosCherenkov);
         // determine the photon direction
 
         // start with the track direction
@@ -340,7 +350,7 @@ inline void createPhotonFromTrack(struct I3CLSimStep *step,
     } else {
         // steps >= 1 are flasher emissions, they do not need cherenkov rotation
         
-        const float wavelength = generateWavelength(convert_uint(step->sourceType), RNG_ARGS_TO_CALL);
+        const floating_t wavelength = generateWavelength(convert_uint(step->sourceType), RNG_ARGS_TO_CALL);
         
         // use the step direction as the photon direction
         (*photonDirAndWlen).xyz = stepDir.xyz;
@@ -349,6 +359,26 @@ inline void createPhotonFromTrack(struct I3CLSimStep *step,
 #endif
 }
 
+#ifdef DOUBLE_PRECISION
+inline float2 sphDirFromCar(double4 carDir)
+{
+    // Calculate Spherical coordinates from Cartesian
+    const double r_inv = my_rsqrt(carDir.x*carDir.x+carDir.y*carDir.y+carDir.z*carDir.z);
+
+    double theta = 0.;
+    if (fabs(carDir.z*r_inv)<=1.) {
+        theta=acos(carDir.z*r_inv);
+    } else {
+        if (carDir.z<0.) theta=PI;
+    }
+    if (theta<0.) theta+=2.*PI;
+
+    double phi=atan2(carDir.y,carDir.x);
+    if (phi<0.) phi+=2.*PI;
+
+    return (float2)(theta, phi);
+}
+#else
 inline float2 sphDirFromCar(float4 carDir)
 {
     // Calculate Spherical coordinates from Cartesian
@@ -367,17 +397,18 @@ inline float2 sphDirFromCar(float4 carDir)
 
     return (float2)(theta, phi);
 }
+#endif
 
 // Record a photon on a DOM
 inline void saveHit(
-    const float4 photonPosAndTime,
-    const float4 photonDirAndWlen,
-    const float thisStepLength,
-    float inv_groupvel,
-    float photonTotalPathLength,
+    const floating4_t photonPosAndTime,
+    const floating4_t photonDirAndWlen,
+    const floating_t thisStepLength,
+    floating_t inv_groupvel,
+    floating_t photonTotalPathLength,
     uint photonNumScatters,
-    const float4 photonStartPosAndTime,
-    const float4 photonStartDirAndWlen,
+    const floating4_t photonStartPosAndTime,
+    const floating4_t photonStartDirAndWlen,
     const struct I3CLSimStep *step,
     unsigned short hitOnString,
     unsigned short hitOnDom,
@@ -413,7 +444,11 @@ inline void saveHit(
         outputPhotons[myIndex].stringID = convert_short(hitOnString);
         outputPhotons[myIndex].omID = convert_ushort(hitOnDom);
 
+#ifdef DOUBLE_PRECISION
+        outputPhotons[myIndex].startPosAndTime=(float4)(photonStartPosAndTime.x, photonStartPosAndTime.y, photonStartPosAndTime.z, photonStartPosAndTime.w);
+#else
         outputPhotons[myIndex].startPosAndTime=photonStartPosAndTime;
+#endif
         outputPhotons[myIndex].startDir = sphDirFromCar(photonStartDirAndWlen);
 
         outputPhotons[myIndex].groupVelocity = my_recip(inv_groupvel);
@@ -435,21 +470,21 @@ inline void saveHit(
 
 inline void checkForCollision_OnString(
     const unsigned short stringNum,
-    const float photonDirLenXYSqr,
-    const float4 photonPosAndTime,
-    const float4 photonDirAndWlen,
+    const floating_t photonDirLenXYSqr,
+    const floating4_t photonPosAndTime,
+    const floating4_t photonDirAndWlen,
 #ifdef STOP_PHOTONS_ON_DETECTION
-    float *thisStepLength,
+    floating_t *thisStepLength,
     bool *hitRecorded,
     unsigned short *hitOnString,
     unsigned short *hitOnDom,
 #else
-    float thisStepLength,
-    float inv_groupvel,
-    float photonTotalPathLength,
+    floating_t thisStepLength,
+    floating_t inv_groupvel,
+    floating_t photonTotalPathLength,
     uint photonNumScatters,
-    const float4 photonStartPosAndTime,
-    const float4 photonStartDirAndWlen,
+    const floating4_t photonStartPosAndTime,
+    const floating4_t photonStartDirAndWlen,
     const struct I3CLSimStep *step,
     __global uint* hitIndex,
     uint maxHitIndex,
@@ -463,14 +498,14 @@ inline void checkForCollision_OnString(
 
     { // check intersection with string cylinder
         // only use test if uhat lateral component is bigger than about 0.1 (NEED to check bigger than zero)
-        const float smin = my_divide(sqr(((photonPosAndTime.x - convert_float(geoStringPosX[stringNum]))*photonDirAndWlen.y - (photonPosAndTime.y - convert_float(geoStringPosY[stringNum]))*photonDirAndWlen.x)), photonDirLenXYSqr);
-        //if (smin > sqr(convert_float(geoStringRadius[stringNum]))) return;  // NOTE: smin == distance squared
-        if (smin > sqr(convert_float(GEO_STRING_MAX_RADIUS))) return;  // NOTE: smin == distance squared
+        const floating_t smin = my_divide(sqr(((photonPosAndTime.x - convert_floating_t(geoStringPosX[stringNum]))*photonDirAndWlen.y - (photonPosAndTime.y - convert_floating_t(geoStringPosY[stringNum]))*photonDirAndWlen.x)), photonDirLenXYSqr);
+        //if (smin > sqr(convert_floating_t(geoStringRadius[stringNum]))) return;  // NOTE: smin == distance squared
+        if (smin > sqr(convert_floating_t(GEO_STRING_MAX_RADIUS))) return;  // NOTE: smin == distance squared
     }
 
     { // check if photon is above or below the string (geoStringMaxZ and geoStringMinZ do not include the OM radius!)
-        if ((photonDirAndWlen.z > 0.f) && (photonPosAndTime.z > geoStringMaxZ[stringNum]+OM_RADIUS)) return;
-        if ((photonDirAndWlen.z < 0.f) && (photonPosAndTime.z < geoStringMinZ[stringNum]-OM_RADIUS)) return;
+        if ((photonDirAndWlen.z > ZERO) && (photonPosAndTime.z > geoStringMaxZ[stringNum]+OM_RADIUS)) return;
+        if ((photonDirAndWlen.z < ZERO) && (photonPosAndTime.z < geoStringMinZ[stringNum]-OM_RADIUS)) return;
     }
 
     // this photon could potentially be hitting an om
@@ -493,18 +528,18 @@ inline void checkForCollision_OnString(
         const unsigned short domNum = *geoLayerToOMNumIndex;
         if (domNum==0xFFFF) continue; // empty layer for this string
 
-        float domPosX, domPosY, domPosZ;
+        floating_t domPosX, domPosY, domPosZ;
         geometryGetDomPosition(stringNum, domNum, &domPosX, &domPosY, &domPosZ);
 
-        const float4 drvec = (const float4)(photonPosAndTime.x - domPosX,
+        const floating4_t drvec = (const floating4_t)(photonPosAndTime.x - domPosX,
             photonPosAndTime.y - domPosY,
             photonPosAndTime.z - domPosZ,
-            0.f);
+            ZERO);
 
-        const float dr2     = dot(drvec,drvec);
-        const float urdot   = dot(drvec, photonDirAndWlen); // this assumes drvec.w==0
+        const floating_t dr2     = dot(drvec,drvec);
+        const floating_t urdot   = dot(drvec, photonDirAndWlen); // this assumes drvec.w==0
 
-        float discr   = sqr(urdot) - dr2 + OM_RADIUS*OM_RADIUS;   // (discr)^2
+        floating_t discr   = sqr(urdot) - dr2 + OM_RADIUS*OM_RADIUS;   // (discr)^2
 
         //if (dr2 < OM_RADIUS*OM_RADIUS) // start point inside the OM
         //{
@@ -517,18 +552,18 @@ inline void checkForCollision_OnString(
         //    *hitRecorded=true;
         //}
         //else
-        if ((discr >= 0.0f) && (dr2 > OM_RADIUS*OM_RADIUS)) // the second part allows photons starting inside a DOM to leave (necessary for flashers)
+        if ((discr >= ZERO) && (dr2 > OM_RADIUS*OM_RADIUS)) // the second part allows photons starting inside a DOM to leave (necessary for flashers)
         {
             discr = my_sqrt(discr);
 
-            float smin = -urdot - discr;
-            if (smin < 0.0f) smin = -urdot + discr;
+            floating_t smin = -urdot - discr;
+            if (smin < ZERO) smin = -urdot + discr;
 
             // check if distance to intersection <= thisStepLength; if not then no detection 
 #ifdef STOP_PHOTONS_ON_DETECTION
-            if ((smin >= 0.0f) && (smin < *thisStepLength))
+            if ((smin >= ZERO) && (smin < *thisStepLength))
 #else
-            if ((smin >= 0.0f) && (smin < thisStepLength))
+            if ((smin >= ZERO) && (smin < thisStepLength))
 #endif
             {
 #ifdef STOP_PHOTONS_ON_DETECTION
@@ -565,21 +600,21 @@ inline void checkForCollision_OnString(
 }
 
 inline void checkForCollision_InCell(
-    const float photonDirLenXYSqr,
-    const float4 photonPosAndTime,
-    const float4 photonDirAndWlen,
+    const floating_t photonDirLenXYSqr,
+    const floating4_t photonPosAndTime,
+    const floating4_t photonDirAndWlen,
 #ifdef STOP_PHOTONS_ON_DETECTION
-    float *thisStepLength,
+    floating_t *thisStepLength,
     bool *hitRecorded,
     unsigned short *hitOnString,
     unsigned short *hitOnDom,
 #else
-    float thisStepLength,
-    float inv_groupvel,
-    float photonTotalPathLength,
+    floating_t thisStepLength,
+    floating_t inv_groupvel,
+    floating_t photonTotalPathLength,
     uint photonNumScatters,
-    const float4 photonStartPosAndTime,
-    const float4 photonStartDirAndWlen,
+    const floating4_t photonStartPosAndTime,
+    const floating4_t photonStartDirAndWlen,
     const struct I3CLSimStep *step,
     __global uint* hitIndex,
     uint maxHitIndex,
@@ -588,10 +623,10 @@ inline void checkForCollision_InCell(
     __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal,
     
     __constant unsigned short *this_geoCellIndex,
-    const float this_geoCellStartX,
-    const float this_geoCellStartY,
-    const float this_geoCellWidthX,
-    const float this_geoCellWidthY,
+    const floating_t this_geoCellStartX,
+    const floating_t this_geoCellStartY,
+    const floating_t this_geoCellWidthX,
+    const floating_t this_geoCellWidthY,
     const int this_geoCellNumX,
     const int this_geoCellNumY
     )
@@ -652,21 +687,21 @@ inline void checkForCollision_InCell(
 }
 
 inline void checkForCollision_InCells(
-    const float photonDirLenXYSqr,
-    const float4 photonPosAndTime,
-    const float4 photonDirAndWlen,
+    const floating_t photonDirLenXYSqr,
+    const floating4_t photonPosAndTime,
+    const floating4_t photonDirAndWlen,
 #ifdef STOP_PHOTONS_ON_DETECTION
-    float *thisStepLength,
+    floating_t *thisStepLength,
     bool *hitRecorded,
     unsigned short *hitOnString,
     unsigned short *hitOnDom,
 #else
-    float thisStepLength,
-    float inv_groupvel,
-    float photonTotalPathLength,
+    floating_t thisStepLength,
+    floating_t inv_groupvel,
+    floating_t photonTotalPathLength,
     uint photonNumScatters,
-    const float4 photonStartPosAndTime,
-    const float4 photonStartDirAndWlen,
+    const floating4_t photonStartPosAndTime,
+    const floating4_t photonStartDirAndWlen,
     const struct I3CLSimStep *step,
     __global uint* hitIndex,
     uint maxHitIndex,
@@ -772,18 +807,18 @@ inline void checkForCollision_InCells(
 }
 
 
-inline bool checkForCollision(const float4 photonPosAndTime,
-    const float4 photonDirAndWlen,
-    float inv_groupvel,
-    float photonTotalPathLength,
+inline bool checkForCollision(const floating4_t photonPosAndTime,
+    const floating4_t photonDirAndWlen,
+    floating_t inv_groupvel,
+    floating_t photonTotalPathLength,
     uint photonNumScatters,
-    const float4 photonStartPosAndTime,
-    const float4 photonStartDirAndWlen,
+    const floating4_t photonStartPosAndTime,
+    const floating4_t photonStartDirAndWlen,
     const struct I3CLSimStep *step,
 #ifdef STOP_PHOTONS_ON_DETECTION
-    float *thisStepLength,
+    floating_t *thisStepLength,
 #else
-    float thisStepLength,
+    floating_t thisStepLength,
 #endif
     __global uint* hitIndex,
     uint maxHitIndex,
@@ -794,7 +829,7 @@ inline bool checkForCollision(const float4 photonPosAndTime,
 #ifdef DEBUG_STORE_GENERATED_PHOTONS
     saveHit(photonPosAndTime,
             photonDirAndWlen,
-            0.f,
+            ZERO,
             inv_groupvel,
             photonTotalPathLength,
             photonNumScatters,
@@ -811,8 +846,8 @@ inline bool checkForCollision(const float4 photonPosAndTime,
 #else // DEBUG_STORE_GENERATED_PHOTONS
 
     // check for collisions
-    const float photonDirLenXYSqr = sqr(photonDirAndWlen.x) + sqr(photonDirAndWlen.y);
-    if (photonDirLenXYSqr <= 0.f) return false;
+    const floating_t photonDirLenXYSqr = sqr(photonDirAndWlen.x) + sqr(photonDirAndWlen.y);
+    if (photonDirLenXYSqr <= ZERO) return false;
 
 #ifdef STOP_PHOTONS_ON_DETECTION
     bool hitRecorded=false;
@@ -930,13 +965,13 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
     //step.dummy2 = inputSteps[i].dummy2;  // NOT USED
     //step = inputSteps[i]; // Intel OpenCL does not like this
 
-    float4 stepDir;
+    floating4_t stepDir;
     {
-        const float rho = my_sin(step.dirAndLengthAndBeta.x); // sin(theta)
-        stepDir = (float4)(rho*my_cos(step.dirAndLengthAndBeta.y), // rho*cos(phi)
+        const floating_t rho = my_sin(step.dirAndLengthAndBeta.x); // sin(theta)
+        stepDir = (floating4_t)(rho*my_cos(step.dirAndLengthAndBeta.y), // rho*cos(phi)
             rho*my_sin(step.dirAndLengthAndBeta.y), // rho*sin(phi)
             my_cos(step.dirAndLengthAndBeta.x),    // cos(phi)
-            0.f);
+            ZERO);
     }
 
 #ifdef PRINTF_ENABLED
@@ -950,23 +985,27 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
         step.numPhotons);
 #endif
 
+#ifdef DOUBLE_PRECISION
+    #define EPSILON 0.00000001
+#else
     #define EPSILON 0.00001f
+#endif
 
     uint photonsLeftToPropagate=step.numPhotons;
-    float abs_lens_left=0.f;
+    floating_t abs_lens_left=ZERO;
     
-    float4 photonStartPosAndTime;
-    float4 photonStartDirAndWlen;
-    float4 photonPosAndTime;
-    float4 photonDirAndWlen;
+    floating4_t photonStartPosAndTime;
+    floating4_t photonStartDirAndWlen;
+    floating4_t photonPosAndTime;
+    floating4_t photonDirAndWlen;
     uint photonNumScatters=0;
-    float photonTotalPathLength=0.f;
+    floating_t photonTotalPathLength=ZERO;
     int currentPhotonLayer=0;
 
 #ifndef FUNCTION_getGroupVelocity_DOES_NOT_DEPEND_ON_LAYER
 #error This kernel only works with a constant group velocity (constant w.r.t. layers)
 #endif
-    float inv_groupvel=0.f;
+    floating_t inv_groupvel=ZERO;
 
 
     while (photonsLeftToPropagate > 0)
@@ -985,7 +1024,7 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             photonStartDirAndWlen=photonDirAndWlen;
             
             photonNumScatters=0;
-            photonTotalPathLength=0.f;
+            photonTotalPathLength=ZERO;
             
 #ifdef PRINTF_ENABLED
             dbg_printf("   created photon %u at: p=(%f,%f,%f), d=(%f,%f,%f), t=%f, wlen=%fnm\n",
@@ -1015,24 +1054,24 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
         }
 
         // this block is along the lines of the PPC kernel
-        float distancePropagated;
+        floating_t distancePropagated;
         {
-            const float photon_dz=photonDirAndWlen.z;
+            const floating_t photon_dz=photonDirAndWlen.z;
             
             // the "next" medium boundary (either top or bottom, depending on step direction)
-            float mediumBoundary = (photon_dz<0.f)?(mediumLayerBoundary(currentPhotonLayer)):(mediumLayerBoundary(currentPhotonLayer)+(float)MEDIUM_LAYER_THICKNESS);
+            floating_t mediumBoundary = (photon_dz<ZERO)?(mediumLayerBoundary(currentPhotonLayer)):(mediumLayerBoundary(currentPhotonLayer)+(floating_t)MEDIUM_LAYER_THICKNESS);
 
             // track this thing to the next scattering point
-            float sca_step_left = -my_log(RNG_CALL_UNIFORM_OC);
+            floating_t sca_step_left = -my_log(RNG_CALL_UNIFORM_OC);
 #ifdef PRINTF_ENABLED
             dbg_printf("   - next scatter in %f scattering lengths\n", sca_step_left);
 #endif
             
-            float currentScaLen = getScatteringLength(currentPhotonLayer, photonDirAndWlen.w);
-            float currentAbsLen = getAbsorptionLength(currentPhotonLayer, photonDirAndWlen.w);
+            floating_t currentScaLen = getScatteringLength(currentPhotonLayer, photonDirAndWlen.w);
+            floating_t currentAbsLen = getAbsorptionLength(currentPhotonLayer, photonDirAndWlen.w);
             
-            float ais=( photon_dz*sca_step_left - my_divide((mediumBoundary-photonPosAndTime.z),currentScaLen) )*(1.f/(float)MEDIUM_LAYER_THICKNESS);
-            float aia=( photon_dz*abs_lens_left - my_divide((mediumBoundary-photonPosAndTime.z),currentAbsLen) )*(1.f/(float)MEDIUM_LAYER_THICKNESS);
+            floating_t ais=( photon_dz*sca_step_left - my_divide((mediumBoundary-photonPosAndTime.z),currentScaLen) )*(ONE/(floating_t)MEDIUM_LAYER_THICKNESS);
+            floating_t aia=( photon_dz*abs_lens_left - my_divide((mediumBoundary-photonPosAndTime.z),currentAbsLen) )*(ONE/(floating_t)MEDIUM_LAYER_THICKNESS);
 
 #ifdef PRINTF_ENABLED
             dbg_printf("   - ais=%f, aia=%f, j_initial=%i\n", ais, aia, currentPhotonLayer);
@@ -1041,15 +1080,15 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             // propagate through layers
             int j=currentPhotonLayer;
             if(photon_dz<0) {
-                for (; (j>0) && (ais<0.f) && (aia<0.f); 
-                     mediumBoundary-=(float)MEDIUM_LAYER_THICKNESS,
+                for (; (j>0) && (ais<ZERO) && (aia<ZERO); 
+                     mediumBoundary-=(floating_t)MEDIUM_LAYER_THICKNESS,
                      currentScaLen=getScatteringLength(j, photonDirAndWlen.w),
                      currentAbsLen=getAbsorptionLength(j, photonDirAndWlen.w),
                      ais+=my_recip(currentScaLen),
                      aia+=my_recip(currentAbsLen)) --j;
             } else {
-                for (; (j<MEDIUM_LAYERS-1) && (ais>0.f) && (aia>0.f);
-                     mediumBoundary+=(float)MEDIUM_LAYER_THICKNESS,
+                for (; (j<MEDIUM_LAYERS-1) && (ais>ZERO) && (aia>ZERO);
+                     mediumBoundary+=(floating_t)MEDIUM_LAYER_THICKNESS,
                      currentScaLen=getScatteringLength(j, photonDirAndWlen.w),
                      currentAbsLen=getAbsorptionLength(j, photonDirAndWlen.w),
                      ais-=my_recip(currentScaLen),
@@ -1060,14 +1099,14 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             dbg_printf("   - j_final=%i\n", j);
 #endif
         
-            float distanceToAbsorption;
+            floating_t distanceToAbsorption;
             if ((currentPhotonLayer==j) || fabs(photon_dz)<EPSILON) {
                 distancePropagated=sca_step_left*currentScaLen;
                 distanceToAbsorption=abs_lens_left*currentAbsLen;
             } else {
-                const float recip_photon_dz = my_recip(photon_dz);
-                distancePropagated=(ais*((float)MEDIUM_LAYER_THICKNESS)*currentScaLen+mediumBoundary-photonPosAndTime.z)*recip_photon_dz;
-                distanceToAbsorption=(aia*((float)MEDIUM_LAYER_THICKNESS)*currentAbsLen+mediumBoundary-photonPosAndTime.z)*recip_photon_dz;
+                const floating_t recip_photon_dz = my_recip(photon_dz);
+                distancePropagated=(ais*((floating_t)MEDIUM_LAYER_THICKNESS)*currentScaLen+mediumBoundary-photonPosAndTime.z)*recip_photon_dz;
+                distanceToAbsorption=(aia*((floating_t)MEDIUM_LAYER_THICKNESS)*currentAbsLen+mediumBoundary-photonPosAndTime.z)*recip_photon_dz;
             }
             currentPhotonLayer=j;
             
@@ -1078,7 +1117,7 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             // get overburden for distance
             if (distanceToAbsorption<distancePropagated) {
                 distancePropagated=distanceToAbsorption;
-                abs_lens_left=0.f;
+                abs_lens_left=ZERO;
             } else {
                 abs_lens_left=my_divide(distanceToAbsorption-distancePropagated, currentAbsLen);
             }
@@ -1120,7 +1159,7 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
 #endif
         if (collided) {
             // get rid of the photon if we detected it
-            abs_lens_left = 0.f;
+            abs_lens_left = ZERO;
 
 #ifdef PRINTF_ENABLED
             dbg_printf("    . colission detected, step limited to thisStepLength=%f!\n", 
@@ -1159,8 +1198,8 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
                 photonDirAndWlen.w/1e-9f);
 #endif
 
-            const float cosScatAngle = makeScatteringCosAngle(RNG_ARGS_TO_CALL);
-            const float sinScatAngle = my_sqrt(1.0f - sqr(cosScatAngle));
+            const floating_t cosScatAngle = makeScatteringCosAngle(RNG_ARGS_TO_CALL);
+            const floating_t sinScatAngle = my_sqrt(ONE - sqr(cosScatAngle));
 
             scatterDirectionByAngle(cosScatAngle, sinScatAngle, &photonDirAndWlen, RNG_CALL_UNIFORM_CO);
 
