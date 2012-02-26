@@ -92,7 +92,7 @@ inline void saveHit(
     uint maxHitIndex,
     __write_only __global struct I3CLSimPhoton *outputPhotons
     );
-	
+    
 inline void checkForCollision_OnString(
     const unsigned short stringNum,
     const floating_t photonDirLenXYSqr,
@@ -117,7 +117,7 @@ inline void checkForCollision_OnString(
 #endif
     __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal
     );
-	
+    
 inline void checkForCollision_InCell(
     const floating_t photonDirLenXYSqr,
     const floating4_t photonPosAndTime,
@@ -149,7 +149,7 @@ inline void checkForCollision_InCell(
     const int this_geoCellNumX,
     const int this_geoCellNumY
     );
-	
+    
 inline void checkForCollision_InCells(
     const floating_t photonDirLenXYSqr,
     const floating4_t photonPosAndTime,
@@ -173,7 +173,7 @@ inline void checkForCollision_InCells(
 #endif
     __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal
     );
-	
+    
 inline bool checkForCollision(const floating4_t photonPosAndTime,
     const floating4_t photonDirAndWlen,
     floating_t inv_groupvel,
@@ -291,7 +291,7 @@ void scatterDirectionByAngle(floating_t cosa,
 
     // Rotate new direction into absolute frame of reference 
     const floating_t sinth = my_sqrt(max(ZERO, ONE-(*direction).z*(*direction).z));
-	
+    
     if(sinth>0.f){  // Current direction not vertical, so rotate 
         const floating4_t oldDir = *direction;
 
@@ -305,7 +305,7 @@ void scatterDirectionByAngle(floating_t cosa,
     }
 
     {
-		const floating_t recip_length = my_rsqrt(sqr((*direction).x) + sqr((*direction).y) + sqr((*direction).z));
+        const floating_t recip_length = my_rsqrt(sqr((*direction).x) + sqr((*direction).y) + sqr((*direction).z));
 
         (*direction).x *= recip_length;
         (*direction).y *= recip_length;
@@ -536,11 +536,11 @@ inline void checkForCollision_OnString(
     highLayerZ = min(max(highLayerZ, 0), geoLayerNum[stringSet]-1);
 
 #ifndef STOP_PHOTONS_ON_DETECTION
-	// the number of 64bit integers needed to store bits for all doms
-	#define numComponents ((GEO_MAX_DOM_INDEX + 64 - 1)/64)
-	ulong dom_bitmask[numComponents];
-	for (uint i=0;i<numComponents;++i) dom_bitmask[i]=0;
-	#undef numComponents
+    // the number of 64bit integers needed to store bits for all doms
+    #define numComponents ((GEO_MAX_DOM_INDEX + 64 - 1)/64)
+    ulong dom_bitmask[numComponents];
+    for (uint i=0;i<numComponents;++i) dom_bitmask[i]=0;
+    #undef numComponents
 #endif
 
     //__constant const unsigned short *geoLayerToOMNumIndex=geoLayerToOMNumIndexPerStringSet + (convert_uint(stringSet)*GEO_LAYER_STRINGSET_MAX_NUM_LAYERS) + lowLayerZ;
@@ -551,11 +551,11 @@ inline void checkForCollision_OnString(
         if (domNum==0xFFFF) continue; // empty layer for this string
 
 #ifndef STOP_PHOTONS_ON_DETECTION
-			// prevent strings from being checked twice
-			if (dom_bitmask[stringNum/64] & (1 << convert_ulong(domNum%64))) continue;	// already check this string
-			dom_bitmask[stringNum/64] |= (1 << convert_ulong(domNum%64));				// mark this string as checked
+            // prevent strings from being checked twice
+            if (dom_bitmask[stringNum/64] & (1 << convert_ulong(domNum%64))) continue;  // already check this string
+            dom_bitmask[stringNum/64] |= (1 << convert_ulong(domNum%64));               // mark this string as checked
 #endif
-		
+        
         floating_t domPosX, domPosY, domPosZ;
         geometryGetDomPosition(stringNum, domNum, &domPosX, &domPosY, &domPosZ);
 
@@ -602,24 +602,24 @@ inline void checkForCollision_OnString(
                 *hitOnDom=domNum;
                 *hitRecorded=true;
                 // continue searching, maybe we hit a closer OM..
-				// (in that case, no hit will be saved for this one)
+                // (in that case, no hit will be saved for this one)
 #else
-				// save the hit right here
-		        saveHit(photonPosAndTime,
-		                photonDirAndWlen,
-		                smin, // this is the limited thisStepLength
-		                inv_groupvel,
-		                photonTotalPathLength,
-		                photonNumScatters,
-		                photonStartPosAndTime,
-		                photonStartDirAndWlen,
-		                step,
-		                stringNum,
-		                domNum,
-		                hitIndex,
-		                maxHitIndex,
-		                outputPhotons
-		                );
+                // save the hit right here
+                saveHit(photonPosAndTime,
+                        photonDirAndWlen,
+                        smin, // this is the limited thisStepLength
+                        inv_groupvel,
+                        photonTotalPathLength,
+                        photonNumScatters,
+                        photonStartPosAndTime,
+                        photonStartDirAndWlen,
+                        step,
+                        stringNum,
+                        domNum,
+                        hitIndex,
+                        maxHitIndex,
+                        outputPhotons
+                        );
 #endif
             }
         }
@@ -679,11 +679,11 @@ inline void checkForCollision_InCell(
     highCellY = min(max(highCellY, 0), this_geoCellNumY-1);
 
 #ifndef STOP_PHOTONS_ON_DETECTION
-	// the number of 64bit integers needed to store bits for all strings
-	#define numComponents ((NUM_STRINGS + 64 - 1)/64)
-	ulong string_bitmask[numComponents];
-	for (uint i=0;i<numComponents;++i) string_bitmask[i]=0;
-	#undef numComponents
+    // the number of 64bit integers needed to store bits for all strings
+    #define numComponents ((NUM_STRINGS + 64 - 1)/64)
+    ulong string_bitmask[numComponents];
+    for (uint i=0;i<numComponents;++i) string_bitmask[i]=0;
+    #undef numComponents
 #endif
 
     for (int cell_y=lowCellY;cell_y<=highCellY;++cell_y)
@@ -692,13 +692,13 @@ inline void checkForCollision_InCell(
         {
             const unsigned short stringNum = this_geoCellIndex[cell_y*this_geoCellNumX+cell_x];
             if (stringNum==0xFFFF) continue; // empty cell
-		
+        
 #ifndef STOP_PHOTONS_ON_DETECTION
-			// prevent strings from being checked twice
-			if (string_bitmask[stringNum/64] & (1 << convert_ulong(stringNum%64))) continue;	// already check this string
-			string_bitmask[stringNum/64] |= (1 << convert_ulong(stringNum%64));				// mark this string as checked
+            // prevent strings from being checked twice
+            if (string_bitmask[stringNum/64] & (1 << convert_ulong(stringNum%64))) continue;    // already check this string
+            string_bitmask[stringNum/64] |= (1 << convert_ulong(stringNum%64));             // mark this string as checked
 #endif
-		
+        
             checkForCollision_OnString(
                 stringNum,
                 photonDirLenXYSqr,
@@ -711,15 +711,15 @@ inline void checkForCollision_InCell(
                 hitOnDom,
 #else
                 thisStepLength,
-			    inv_groupvel,
-			    photonTotalPathLength,
-			    photonNumScatters,
-			    photonStartPosAndTime,
-			    photonStartDirAndWlen,
-			    step,
-			    hitIndex,
-			    maxHitIndex,
-			    outputPhotons,
+                inv_groupvel,
+                photonTotalPathLength,
+                photonNumScatters,
+                photonStartPosAndTime,
+                photonStartDirAndWlen,
+                step,
+                hitIndex,
+                maxHitIndex,
+                outputPhotons,
 #endif
                 geoLayerToOMNumIndexPerStringSetLocal
                 );
@@ -783,15 +783,15 @@ inline void checkForCollision_InCells(
         photonPosAndTime,                       \
         photonDirAndWlen,                       \
         thisStepLength,                         \
-	    inv_groupvel,							\
-	    photonTotalPathLength,					\
-	    photonNumScatters,						\
-	    photonStartPosAndTime,					\
-	    photonStartDirAndWlen,					\
-	    step,									\
-	    hitIndex,								\
-	    maxHitIndex,							\
-	    outputPhotons,							\
+        inv_groupvel,                           \
+        photonTotalPathLength,                  \
+        photonNumScatters,                      \
+        photonStartPosAndTime,                  \
+        photonStartDirAndWlen,                  \
+        step,                                   \
+        hitIndex,                               \
+        maxHitIndex,                            \
+        outputPhotons,                          \
         geoLayerToOMNumIndexPerStringSetLocal,  \
                                                 \
         geoCellIndex_ ## subdetectorNum,        \
@@ -908,15 +908,15 @@ inline bool checkForCollision(const floating4_t photonPosAndTime,
         &hitOnDom,
 #else
         thisStepLength,
-	    inv_groupvel,
-	    photonTotalPathLength,
-	    photonNumScatters,
-	    photonStartPosAndTime,
-	    photonStartDirAndWlen,
-	    step,
-	    hitIndex,
-	    maxHitIndex,
-	    outputPhotons,
+        inv_groupvel,
+        photonTotalPathLength,
+        photonNumScatters,
+        photonStartPosAndTime,
+        photonStartDirAndWlen,
+        step,
+        hitIndex,
+        maxHitIndex,
+        outputPhotons,
 #endif
         geoLayerToOMNumIndexPerStringSetLocal);
 
@@ -1176,7 +1176,7 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
 #endif
         collided = 
 #endif
-		checkForCollision(photonPosAndTime, 
+        checkForCollision(photonPosAndTime, 
             photonDirAndWlen, 
             inv_groupvel,
             photonTotalPathLength,
@@ -1209,7 +1209,7 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
 #endif
         }
 #endif
-		
+        
         // update the track to its next position
         photonPosAndTime.x += photonDirAndWlen.x*distancePropagated;
         photonPosAndTime.y += photonDirAndWlen.y*distancePropagated;
