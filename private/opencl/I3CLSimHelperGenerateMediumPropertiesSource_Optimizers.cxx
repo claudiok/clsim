@@ -135,6 +135,7 @@ namespace I3CLSimHelper
         code << "};\n";
         code << "\n";
 
+        code << "inline float " << functionName << "(unsigned int layer, float wlen);\n\n";
         code << "inline float " << functionName << "(unsigned int layer, float wlen)\n";
         code << "{\n";
         
@@ -198,15 +199,13 @@ namespace I3CLSimHelper
         code << "};\n";
         code << "\n";
         
+        code << "inline float " << functionName << "(unsigned int layer, float wlen);\n\n";
         code << "inline float " << functionName << "(unsigned int layer, float wlen)\n";
         code << "{\n";
         
         const std::string refWlenAsString = to_float_string(1./(400.*I3Units::nanometer));
 
         code << "    const float alpha = " << to_float_string(layeredFunctionIceCube[0]->GetAlpha()) << ";\n";
-        code << "    \n";
-        code << "    const float x = wlen/" << to_float_string(I3Units::nanometer) << ";\n";
-        code << "    \n";
         code << "    \n";
         code << "#ifdef USE_NATIVE_MATH\n";
         code << "    return " << to_float_string(I3Units::meter) << "*native_recip( " << functionName << "_b400[layer] * native_powr(wlen*" + refWlenAsString + ", -alpha) );\n";

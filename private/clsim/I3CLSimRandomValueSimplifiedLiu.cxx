@@ -31,7 +31,7 @@ std::string I3CLSimRandomValueSimplifiedLiu::GetOpenCLFunction
 {
     const std::string functionDecl = std::string("inline float ") + functionName + "(" + functionArgs + ")";
 
-    return functionDecl + "\n"
+    return functionDecl + ";\n\n" + functionDecl + "\n"
     "{\n"
     "    //const float g = " + to_float_string(meanCosine_) + ";\n"
     "    //const float beta = (1.f-g)/(1.f+g);\n"

@@ -652,6 +652,7 @@ namespace I3CLSimHelper
         output << "};" << std::endl;
 
         
+        output << "inline void geometryGetDomPosition(unsigned short stringNum, unsigned short domNum, float *domPosX, float *domPosY, float *domPosZ);" << std::endl;
         output << "inline void geometryGetDomPosition(unsigned short stringNum, unsigned short domNum, float *domPosX, float *domPosY, float *domPosZ)" << std::endl;
         output << "{" << std::endl;
         

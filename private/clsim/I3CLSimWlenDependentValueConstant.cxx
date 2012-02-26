@@ -70,7 +70,7 @@ std::string I3CLSimWlenDependentValueConstant::GetOpenCLFunction(const std::stri
     "}\n"
     ;
     
-    return funcDef + funcBody;
+    return funcDef + ";\n\n" + funcDef + funcBody;
 }
 
 std::string I3CLSimWlenDependentValueConstant::GetOpenCLFunctionDerivative(const std::string &functionName) const
@@ -84,7 +84,7 @@ std::string I3CLSimWlenDependentValueConstant::GetOpenCLFunctionDerivative(const
     "}\n"
     ;
     
-    return funcDef + funcBody;
+    return funcDef + ";\n\n" + funcDef + funcBody;
 }
 
 bool I3CLSimWlenDependentValueConstant::CompareTo(const I3CLSimWlenDependentValue &other) const

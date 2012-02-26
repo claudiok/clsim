@@ -172,7 +172,7 @@ std::string I3CLSimRandomValueInterpolatedDistribution::GetOpenCLFunction
     }
 
     std::string retString = 
-    tableDecl + "\n\n" + functionDecl + "\n"
+    tableDecl + "\n\n" + functionDecl + ";\n\n" + functionDecl + "\n"
     "{\n"
     "    const float randomNumber = " + uniformRandomCall_oc + ";\n"
     "    \n"

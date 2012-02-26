@@ -53,7 +53,7 @@ std::string I3CLSimWlenDependentValueScatLenIceCube::GetOpenCLFunction(const std
     "}\n"
     ;
     
-    return funcDef + funcBody;
+    return funcDef + ";\n\n" + funcDef + funcBody;
 }
 
 bool I3CLSimWlenDependentValueScatLenIceCube::CompareTo(const I3CLSimWlenDependentValue &other) const

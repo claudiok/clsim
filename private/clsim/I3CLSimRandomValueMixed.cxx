@@ -64,7 +64,7 @@ std::string I3CLSimRandomValueMixed::GetOpenCLFunction
         
         const std::string functionDecl = std::string("inline float ") + functionName + "(" + functionArgs + ")";
         
-        mainFunc = functionDecl + "\n"
+        mainFunc = functionDecl + ";\n\n" + functionDecl + "\n"
         "{\n"    
         "    const float rr = " + uniformRandomCall_co + ";\n"
         "    if (rr < " + to_float_string(fractionOfFirstDistribution_) + ")\n"
@@ -95,7 +95,7 @@ std::string I3CLSimRandomValueMixed::GetOpenCLFunction
         
         const std::string functionDecl = std::string("inline float ") + functionName + "(" + functionArgs + ")";
         
-        mainFunc = functionDecl + "\n"
+        mainFunc = functionDecl + ";\n\n" + functionDecl + "\n"
         "{\n"    
         "    const float rr = " + uniformRandomCall_co + ";\n"
         "    if (rr < " + to_float_string(fractionOfFirstDistribution_) + ")\n"

@@ -282,7 +282,8 @@ namespace {
                                                      const std::string &functionArgs,
                                                      const std::string &functionArgsToCall)
     {
-        std::string ret = std::string("inline float ") + functionName + "(uint number, " + functionArgs + ")\n";
+        std::string ret = std::string("inline float ") + functionName + "(uint number, " + functionArgs + ");\n\n";
+        ret = ret + std::string("inline float ") + functionName + "(uint number, " + functionArgs + ")\n";
         ret = ret + "{\n";
 
         if (num==0) {
@@ -467,7 +468,8 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
     // accumulate the build options
     std::string BuildOptions;
     
-    //BuildOptions += "-Werror ";
+    //BuildOptions += "-w "; // no warnings
+    //BuildOptions += "-Werror "; // warnings will become errors
     BuildOptions += "-cl-mad-enable ";
     //BuildOptions += "-cl-opt-disable ";
     //BuildOptions += "-cl-no-signed-zeros ";

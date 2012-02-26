@@ -74,6 +74,7 @@ namespace I3CLSimHelper
             code << "#define FUNCTION_" << functionName << "_DOES_NOT_DEPEND_ON_LAYER" << std::endl;
         }
         
+        code << "inline float " << functionName << "(unsigned int layer, float wavelength);\n\n";
         code << "inline float " << functionName << "(unsigned int layer, float wavelength)\n";
         code << "{\n";
         if (functionsToGenerate.size()==1) {
@@ -234,6 +235,7 @@ namespace I3CLSimHelper
             code << "#define FUNCTION_getGroupVelocity_DOES_NOT_DEPEND_ON_LAYER" << std::endl;
             code << "#endif" << std::endl;
             code << "// group velocity from group refractive index\n";
+            code << "inline float getGroupVelocity(unsigned int layer, float wavelength);\n\n";
             code << "inline float getGroupVelocity(unsigned int layer, float wavelength)\n";
             code << "{\n";
             code << "    const float c_light = " << to_float_string(I3Constants::c) << ";\n";
@@ -252,6 +254,7 @@ namespace I3CLSimHelper
             code << "#endif" << std::endl;
 
             code << "// group velocity from dispersion\n";
+            code << "inline float getGroupVelocity(unsigned int layer, float wavelength);\n\n";
             code << "inline float getGroupVelocity(unsigned int layer, float wavelength)\n";
             code << "{\n";
             code << "    const float c_light = " << to_float_string(I3Constants::c) << ";\n";
@@ -267,6 +270,7 @@ namespace I3CLSimHelper
             code << "    return c_light * (1.0f + y*wavelength*n_inv) * n_inv;\n";
             code << "}\n";
             code << "\n";        
+            code << "inline float getGroupRefIndex(unsigned int layer, float wavelength);\n\n";
             code << "inline float getGroupRefIndex(unsigned int layer, float wavelength)\n";
             code << "{\n";
             code << "    const float c_light = " << to_float_string(I3Constants::c) << ";\n";

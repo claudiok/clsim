@@ -24,7 +24,7 @@ std::string I3CLSimRandomValueRayleighScatteringCosAngle::GetOpenCLFunction
 {
     const std::string functionDecl = std::string("inline float ") + functionName + "(" + functionArgs + ")";
     
-    return functionDecl + "\n"
+    return functionDecl + ";\n\n" + functionDecl + "\n"
     "{\n"
     "    const float b = 0.835f;\n"
     "    const float p = 1.f/0.835f;\n"

@@ -148,7 +148,9 @@ std::string I3CLSimWlenDependentValueFromTable::GetOpenCLFunction(const std::str
     dataDef += "};\n\n";
 
     std::string interpHelperDef =
-    std::string("inline void ") + interpHelperName + "(float wavelength, int *bin, float *fraction)\n"
+    std::string("inline void ") + interpHelperName + "(float wavelength, int *bin, float *fraction)";
+
+    std::string interpHelperBody =
     "{\n"
     "    float fbin;\n"
     "    *fraction = modf((wavelength-" + to_float_string(startWlen_) + ")/" + to_float_string(wlenStep_) + ", &fbin);\n"
@@ -181,7 +183,7 @@ std::string I3CLSimWlenDependentValueFromTable::GetOpenCLFunction(const std::str
     "}\n"
     ;
     
-    return dataDef + interpHelperDef + funcDef + funcBody;
+    return funcDef + ";\n" + interpHelperDef + ";\n" + dataDef + interpHelperDef + interpHelperBody + funcDef + funcBody;
 }
 
 bool I3CLSimWlenDependentValueFromTable::CompareTo(const I3CLSimWlenDependentValue &other) const

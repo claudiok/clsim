@@ -47,7 +47,7 @@ std::string I3CLSimRandomValueWlenCherenkovNoDispersion::GetOpenCLFunction
 
     const std::string functionDecl = std::string("inline float ") + functionName + "(" + functionArgs + ")";
     
-    return functionDecl + "\n"
+    return functionDecl + ";\n\n" + functionDecl + "\n"
     "{\n"
     "    const float r = " + uniformRandomCall_oc + ";\n"
     "#ifdef USE_NATIVE_MATH\n"

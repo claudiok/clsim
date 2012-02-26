@@ -81,6 +81,7 @@ std::string I3CLSimWlenDependentValuePolynomial::GetOpenCLFunction(const std::st
     output.setf(std::ios::scientific,std::ios::floatfield);
     output.precision(std::numeric_limits<float>::digits10+4); // maximum precision for a float
 
+    output << "inline float " << functionName << "(float x);" << std::endl;
     output << "inline float " << functionName << "(float x)" << std::endl;
     output << "{" << std::endl;
 	

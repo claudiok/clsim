@@ -31,7 +31,7 @@ std::string I3CLSimRandomValueHenyeyGreenstein::GetOpenCLFunction
 {
     const std::string functionDecl = std::string("inline float ") + functionName + "(" + functionArgs + ")";
     
-    return functionDecl + "\n"
+    return functionDecl + ";\n\n" + functionDecl + "\n"
     "{\n"
     "    const float g = " + to_float_string(meanCosine_) + ";\n"
     "    const float g2 = " + to_float_string(meanCosine_*meanCosine_) + ";\n"

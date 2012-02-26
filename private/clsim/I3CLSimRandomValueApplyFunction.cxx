@@ -66,7 +66,7 @@ std::string I3CLSimRandomValueApplyFunction::GetOpenCLFunction
      uniformRandomCall_oc
     );
     
-    return usedFunctionDecl + "\n\n" + functionDecl + "\n"
+    return usedFunctionDecl + "\n\n" + functionDecl + ";\n\n" + functionDecl + "\n"
     "{\n"
     "    const float number = " + functionNameUsed + "(" + functionArgsToCall + ");\n"
     "    \n"

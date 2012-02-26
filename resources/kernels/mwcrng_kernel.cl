@@ -18,6 +18,10 @@
  *   along with GPUMCML.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// prototypes to make some compilers happy
+inline float rand_MWC_co(ulong *x,uint *a);
+inline float rand_MWC_oc(ulong *x,uint *a);
+
 //////////////////////////////////////////////////////////////////////////////
 //   Generates a random number between 0 and 1 [0,1) 
 //////////////////////////////////////////////////////////////////////////////

@@ -64,7 +64,7 @@ std::string I3CLSimWlenDependentValueScatLenPartic::GetOpenCLFunction(const std:
     "}\n"
     ;
     
-    return funcDef + funcBody;
+    return funcDef + ";\n\n" + funcDef + funcBody;
 }
 
 bool I3CLSimWlenDependentValueScatLenPartic::CompareTo(const I3CLSimWlenDependentValue &other) const

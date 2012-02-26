@@ -10,6 +10,16 @@
 //#pragma OPENCL EXTENSION cl_amd_printf : enable
 //#define dbg_printf(format, ...) printf(format, ##__VA_ARGS__)
 
+inline float my_divide(float a, float b);
+inline float my_recip(float a);
+inline float my_powr(float a, float b);
+inline float my_sqrt(float a);
+inline float my_cos(float a);
+inline float my_sin(float a);
+inline float my_log(float a);
+inline float my_exp(float a);
+inline float sqr(float a);
+
 #ifdef USE_NATIVE_MATH
 inline float my_divide(float a, float b) {return native_divide(a,b);}
 inline float my_recip(float a) {return native_recip(a);}

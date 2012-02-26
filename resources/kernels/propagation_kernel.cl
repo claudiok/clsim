@@ -3,6 +3,8 @@
 #pragma OPENCL EXTENSION cl_khr_byte_addressable_store : enable
 //#pragma OPENCL EXTENSION cl_khr_fp16 : enable
 
+/////////////////// preprocessor defines
+
 // debug mode: store all photons right after they are generated on string0/OM0
 //#define DEBUG_STORE_GENERATED_PHOTONS
 
@@ -19,35 +21,8 @@
 #define dbg_printf(format, ...) printf(format, ##__VA_ARGS__)
 #endif
 
-__constant float speedOfLight = 0.299792458f; // [m/ns]
-__constant float recip_speedOfLight = 3.33564095f; // [ns/m]
-__constant float PI = 3.14159265359f;
 
-
-#ifdef USE_NATIVE_MATH
-inline float my_divide(float a, float b) {return native_divide(a,b);}
-inline float my_recip(float a) {return native_recip(a);}
-inline float my_powr(float a, float b) {return native_powr(a,b);}
-inline float my_sqrt(float a) {return native_sqrt(a);}
-inline float my_rsqrt(float a) {return native_rsqrt(a);}
-inline float my_cos(float a) {return native_cos(a);}
-inline float my_sin(float a) {return native_sin(a);}
-inline float my_log(float a) {return native_log(a);}
-inline float my_exp(float a) {return native_exp(a);}
-#else
-inline float my_divide(float a, float b) {return a/b;}
-inline float my_recip(float a) {return 1.f/a;}
-inline float my_powr(float a, float b) {return powr(a,b);}
-inline float my_sqrt(float a) {return sqrt(a);}
-inline float my_rsqrt(float a) {return rsqrt(a);}
-inline float my_cos(float a) {return cos(a);}
-inline float my_sin(float a) {return sin(a);}
-inline float my_log(float a) {return log(a);}
-inline float my_exp(float a) {return exp(a);}
-#endif
-
-inline float sqr(float a) {return a*a;}
-
+/////////////////// struct definitions
 
 struct __attribute__ ((packed)) I3CLSimStep 
 {
@@ -79,6 +54,189 @@ struct __attribute__ ((packed)) I3CLSimPhoton
     uint dummy;                                             //    32bit unsigned
                                                             // total: 20x 32bit float = 80 bytes
 };
+
+///////////////// forward declarations
+
+inline int findLayerForGivenZPos(float posZ);
+
+inline float mediumLayerBoundary(int layer);
+
+void scatterDirectionByAngle(float cosa,
+    float sina,
+    float4 *direction,
+    float randomNumber);
+
+inline void createPhotonFromTrack(struct I3CLSimStep *step,
+    const float4 stepDir,
+    RNG_ARGS,
+    float4 *photonPosAndTime,
+    float4 *photonDirAndWlen);
+
+inline float2 sphDirFromCar(float4 carDir);
+
+inline void saveHit(
+    const float4 photonPosAndTime,
+    const float4 photonDirAndWlen,
+    const float thisStepLength,
+    float inv_groupvel,
+    float photonTotalPathLength,
+    uint photonNumScatters,
+    const float4 photonStartPosAndTime,
+    const float4 photonStartDirAndWlen,
+    const struct I3CLSimStep *step,
+    unsigned short hitOnString,
+    unsigned short hitOnDom,
+    __global uint* hitIndex,
+    uint maxHitIndex,
+    __write_only __global struct I3CLSimPhoton *outputPhotons
+    );
+	
+inline void checkForCollision_OnString(
+    const unsigned short stringNum,
+    const float photonDirLenXYSqr,
+    const float4 photonPosAndTime,
+    const float4 photonDirAndWlen,
+#ifdef STOP_PHOTONS_ON_DETECTION
+    float *thisStepLength,
+    bool *hitRecorded,
+    unsigned short *hitOnString,
+    unsigned short *hitOnDom,
+#else
+    float thisStepLength,
+    float inv_groupvel,
+    float photonTotalPathLength,
+    uint photonNumScatters,
+    const float4 photonStartPosAndTime,
+    const float4 photonStartDirAndWlen,
+    const struct I3CLSimStep *step,
+    __global uint* hitIndex,
+    uint maxHitIndex,
+    __write_only __global struct I3CLSimPhoton *outputPhotons,
+#endif
+    __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal
+    );
+	
+inline void checkForCollision_InCell(
+    const float photonDirLenXYSqr,
+    const float4 photonPosAndTime,
+    const float4 photonDirAndWlen,
+#ifdef STOP_PHOTONS_ON_DETECTION
+    float *thisStepLength,
+    bool *hitRecorded,
+    unsigned short *hitOnString,
+    unsigned short *hitOnDom,
+#else
+    float thisStepLength,
+    float inv_groupvel,
+    float photonTotalPathLength,
+    uint photonNumScatters,
+    const float4 photonStartPosAndTime,
+    const float4 photonStartDirAndWlen,
+    const struct I3CLSimStep *step,
+    __global uint* hitIndex,
+    uint maxHitIndex,
+    __write_only __global struct I3CLSimPhoton *outputPhotons,
+#endif
+    __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal,
+    
+    __constant unsigned short *this_geoCellIndex,
+    const float this_geoCellStartX,
+    const float this_geoCellStartY,
+    const float this_geoCellWidthX,
+    const float this_geoCellWidthY,
+    const int this_geoCellNumX,
+    const int this_geoCellNumY
+    );
+	
+inline void checkForCollision_InCells(
+    const float photonDirLenXYSqr,
+    const float4 photonPosAndTime,
+    const float4 photonDirAndWlen,
+#ifdef STOP_PHOTONS_ON_DETECTION
+    float *thisStepLength,
+    bool *hitRecorded,
+    unsigned short *hitOnString,
+    unsigned short *hitOnDom,
+#else
+    float thisStepLength,
+    float inv_groupvel,
+    float photonTotalPathLength,
+    uint photonNumScatters,
+    const float4 photonStartPosAndTime,
+    const float4 photonStartDirAndWlen,
+    const struct I3CLSimStep *step,
+    __global uint* hitIndex,
+    uint maxHitIndex,
+    __write_only __global struct I3CLSimPhoton *outputPhotons,
+#endif
+    __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal
+    );
+	
+inline bool checkForCollision(const float4 photonPosAndTime,
+    const float4 photonDirAndWlen,
+    float inv_groupvel,
+    float photonTotalPathLength,
+    uint photonNumScatters,
+    const float4 photonStartPosAndTime,
+    const float4 photonStartDirAndWlen,
+    const struct I3CLSimStep *step,
+#ifdef STOP_PHOTONS_ON_DETECTION
+    float *thisStepLength,
+#else
+    float thisStepLength,
+#endif
+    __global uint* hitIndex,
+    uint maxHitIndex,
+    __write_only __global struct I3CLSimPhoton *outputPhotons,
+    __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal
+    );
+
+
+///////////////////////// some constants
+
+__constant float speedOfLight = 0.299792458f; // [m/ns]
+__constant float recip_speedOfLight = 3.33564095f; // [ns/m]
+__constant float PI = 3.14159265359f;
+
+///////////////////////////
+
+
+inline float my_divide(float a, float b);
+inline float my_recip(float a);
+inline float my_powr(float a, float b);
+inline float my_sqrt(float a);
+inline float my_rsqrt(float a);
+inline float my_cos(float a);
+inline float my_sin(float a);
+inline float my_log(float a);
+inline float my_exp(float a);
+inline float sqr(float a);
+
+#ifdef USE_NATIVE_MATH
+inline float my_divide(float a, float b) {return native_divide(a,b);}
+inline float my_recip(float a) {return native_recip(a);}
+inline float my_powr(float a, float b) {return native_powr(a,b);}
+inline float my_sqrt(float a) {return native_sqrt(a);}
+inline float my_rsqrt(float a) {return native_rsqrt(a);}
+inline float my_cos(float a) {return native_cos(a);}
+inline float my_sin(float a) {return native_sin(a);}
+inline float my_log(float a) {return native_log(a);}
+inline float my_exp(float a) {return native_exp(a);}
+#else
+inline float my_divide(float a, float b) {return a/b;}
+inline float my_recip(float a) {return 1.f/a;}
+inline float my_powr(float a, float b) {return powr(a,b);}
+inline float my_sqrt(float a) {return sqrt(a);}
+inline float my_rsqrt(float a) {return rsqrt(a);}
+inline float my_cos(float a) {return cos(a);}
+inline float my_sin(float a) {return sin(a);}
+inline float my_log(float a) {return log(a);}
+inline float my_exp(float a) {return exp(a);}
+#endif
+
+inline float sqr(float a) {return a*a;}
+
+
 
 
 inline int findLayerForGivenZPos(float posZ)
@@ -330,7 +488,7 @@ inline void checkForCollision_OnString(
 
     //__constant const unsigned short *geoLayerToOMNumIndex=geoLayerToOMNumIndexPerStringSet + (convert_uint(stringSet)*GEO_LAYER_STRINGSET_MAX_NUM_LAYERS) + lowLayerZ;
     __local const unsigned short *geoLayerToOMNumIndex=geoLayerToOMNumIndexPerStringSetLocal + (convert_uint(stringSet)*GEO_LAYER_STRINGSET_MAX_NUM_LAYERS) + lowLayerZ;
-    for (unsigned int layer_z=lowLayerZ;layer_z<=highLayerZ;++layer_z,++geoLayerToOMNumIndex)
+    for (int layer_z=lowLayerZ;layer_z<=highLayerZ;++layer_z,++geoLayerToOMNumIndex)
     {
         const unsigned short domNum = *geoLayerToOMNumIndex;
         if (domNum==0xFFFF) continue; // empty layer for this string
@@ -457,9 +615,9 @@ inline void checkForCollision_InCell(
     highCellX = min(max(highCellX, 0), this_geoCellNumX-1);
     highCellY = min(max(highCellY, 0), this_geoCellNumY-1);
 
-    for (unsigned int cell_y=lowCellY;cell_y<=highCellY;++cell_y)
+    for (int cell_y=lowCellY;cell_y<=highCellY;++cell_y)
     {
-        for (unsigned int cell_x=lowCellX;cell_x<=highCellX;++cell_x)
+        for (int cell_x=lowCellX;cell_x<=highCellX;++cell_x)
         {
             const unsigned short stringNum = this_geoCellIndex[cell_y*this_geoCellNumX+cell_x];
             if (stringNum==0xFFFF) continue; // empty cell
@@ -633,19 +791,34 @@ inline bool checkForCollision(const float4 photonPosAndTime,
     __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal
     )
 {
+#ifdef DEBUG_STORE_GENERATED_PHOTONS
+    saveHit(photonPosAndTime,
+            photonDirAndWlen,
+            0.f,
+            inv_groupvel,
+            photonTotalPathLength,
+            photonNumScatters,
+            photonStartPosAndTime,
+            photonStartDirAndWlen,
+            step,
+            0,
+            0,
+            hitIndex,
+            maxHitIndex,
+            outputPhotons
+            );
+    return true;
+#else // DEBUG_STORE_GENERATED_PHOTONS
+
+    // check for collisions
+    const float photonDirLenXYSqr = sqr(photonDirAndWlen.x) + sqr(photonDirAndWlen.y);
+    if (photonDirLenXYSqr <= 0.f) return false;
+
+#ifdef STOP_PHOTONS_ON_DETECTION
     bool hitRecorded=false;
     unsigned short hitOnString;
     unsigned short hitOnDom;
-    
-    // check for collisions
-    const float photonDirLenXYSqr = sqr(photonDirAndWlen.x) + sqr(photonDirAndWlen.y);
-#ifdef DEBUG_STORE_GENERATED_PHOTONS
-    hitRecorded=true;
-    hitOnString=0;
-    hitOnDom=0;
-
-#else
-    if (photonDirLenXYSqr <= 0.f) return false;
+#endif
 
     checkForCollision_InCells(
         photonDirLenXYSqr,
@@ -669,7 +842,6 @@ inline bool checkForCollision(const float4 photonPosAndTime,
 	    outputPhotons,
 #endif
         geoLayerToOMNumIndexPerStringSetLocal);
-#endif    
 
 #ifdef STOP_PHOTONS_ON_DETECTION
     // In case photons are stopped on detection
@@ -698,12 +870,13 @@ inline bool checkForCollision(const float4 photonPosAndTime,
                 );
     }
     return hitRecorded;
-#else
+#else // STOP_PHOTONS_ON_DETECTION
     // in case photons should *not* be absorbed when they
     // hit a DOM, this will always return false (i.e.
     // no detection.)
     return false;
-#endif
+#endif // STOP_PHOTONS_ON_DETECTION
+#endif // DEBUG_STORE_GENERATED_PHOTONS
 }
 
 
@@ -718,9 +891,9 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
     __global uint* MWC_RNG_a)
 {
     unsigned int i = get_global_id(0);
-    unsigned int global_size = get_global_size(0);
 
 #ifdef PRINTF_ENABLED
+    unsigned int global_size = get_global_size(0);
     dbg_printf("Start kernel... (work item %u of %u)\n", i, global_size);
 #endif
 

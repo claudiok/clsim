@@ -99,7 +99,7 @@ std::string I3CLSimWlenDependentValueRefIndexQuanFry::GetOpenCLFunction(const st
     "}\n"
     ;
     
-    return funcDef + funcBody;
+    return funcDef + ";\n\n" + funcDef + funcBody;
 }
 
 std::string I3CLSimWlenDependentValueRefIndexQuanFry::GetOpenCLFunctionDerivative(const std::string &functionName) const
@@ -118,7 +118,7 @@ std::string I3CLSimWlenDependentValueRefIndexQuanFry::GetOpenCLFunctionDerivativ
     "}\n"
     ;
     
-    return funcDef + funcBody;
+    return funcDef + ";\n\n" + funcDef + funcBody;
 }
 
 bool I3CLSimWlenDependentValueRefIndexQuanFry::CompareTo(const I3CLSimWlenDependentValue &other) const
