@@ -588,6 +588,8 @@ namespace I3CLSimHelper
         output.setf(std::ios::scientific,std::ios::floatfield);
         output.precision(std::numeric_limits<float>::digits10+4); // maximum precision for a float
 
+        output << "#define GEO_MAX_DOM_INDEX " << maxNumDoms << std::endl;
+        
         if (useShortsInsteadOfFloats) {
             output << "#define GEO_DOM_POS_MAX_ABS_X_MULTIPLIER_IN_TEMPLATE " << geoDomPosMaxAbsX_inTemplate/32767. << "f" << std::endl;
             output << "#define GEO_DOM_POS_MAX_ABS_Y_MULTIPLIER_IN_TEMPLATE " << geoDomPosMaxAbsY_inTemplate/32767. << "f" << std::endl;
