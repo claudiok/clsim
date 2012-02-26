@@ -210,6 +210,27 @@ private:
     ///  and a lower part at z<-30m.
     bool useHardcodedDeepCoreSubdetector_;
 
+    /// Parmeter: Disables or enables double-buffered GPU usage. Double buffering will use
+    ///   two command queues and two sets of input and output buffers in order to transfer
+    ///   data to the GPU while a kernel is executing on the other buffer.
+    ///   This has been observed to yield empty results results on older drivers for the nVidia
+    ///   architecture, so it is disabled by default.
+    ///   
+    ///   Before enabling this for a certain driver/hardware combination, make sure that both correct results
+    ///   are returned. Most of the time the second buffer results are always empty, so this error should be
+    ///   easy to observe.
+    bool enableDoubleBuffering_;
+    
+    /// Parmeter: Enables double-precision support in the kernel. This slows down calculations and
+    ///   requires more memory. The performance hit is minimal on CPUs but up to an order
+    ///   of magnitude on GPUs.
+    bool doublePrecision_;
+    
+    /// Parmeter: Configures behaviour for photons that hit a DOM. If this is true (the default)
+    ///   photons will be stopped once they hit a DOM. If this is false, they continue to
+    ///   propagate.
+    bool stopDetectedPhotons_;
+
 private:
     // default, assignment, and copy constructor declared private
     I3CLSimModule();

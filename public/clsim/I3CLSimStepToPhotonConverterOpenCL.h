@@ -104,12 +104,45 @@ public:
      *
      * Will throw if already initialized.
      */
-    void SetDisableDoubleBuffering(bool value);
+    void SetEnableDoubleBuffering(bool value);
 
     /**
-     * Returns true if double buffering is disabled.
+     * Returns true if double buffering is enabled.
      */
-    bool GetDisableDoubleBuffering() const;
+    bool GetEnableDoubleBuffering() const;
+
+    /**
+     * Enables double-precision support in the
+     * kernel. This slows down calculations and
+     * requires more memory.
+     *
+     * The performance hit is minimal on CPUs
+     * but up to an order of magnitude on GPUs.
+     *
+     * Will throw if already initialized.
+     */
+    void SetDoublePrecision(bool value);
+        
+    /**
+     * Returns true if double precision is enabled.
+     */
+    bool GetDoublePrecision() const;
+
+    /**
+     * Configures behaviour for photons that
+     * hit a DOM. If this is true (the default)
+     * photons will be stopped once they hit a
+     * DOM. If this is false, they continue to
+     * propagate.
+     *
+     * Will throw if already initialized.
+     */
+    void SetStopDetectedPhotons(bool value);
+    
+    /**
+     * Returns true if detected photons are stopped.
+     */
+    bool GetStopDetectedPhotons() const;
 
     /**
      * Sets the wavelength generators. 
@@ -265,6 +298,8 @@ private:
     bool deviceIsSelected_;
     
     bool disableDoubleBuffering_;
+    bool doublePrecision_;
+    bool stopDetectedPhotons_;
     
     // some kernel sources loaded on construction
     std::string prependSource_;

@@ -44,6 +44,8 @@ useNativeMath_(useNativeMath),
 selectedDeviceIndex_(0),
 deviceIsSelected_(false),
 disableDoubleBuffering_(true),
+doublePrecision_(false),
+stopDetectedPhotons_(true),
 maxWorkgroupSize_(0),
 workgroupSize_(0),
 maxNumWorkitems_(10240)
@@ -343,8 +345,6 @@ void I3CLSimStepToPhotonConverterOpenCL::Compile()
         throw I3CLSimStepToPhotonConverter_exception("Device not selected!");
     
     
-    const bool doublePrecision=false;
-    
     prependSource_ = "";
     
     // necessary OpenCL extensions
@@ -353,7 +353,15 @@ void I3CLSimStepToPhotonConverterOpenCL::Compile()
     prependSource_ = prependSource_ + "#pragma OPENCL EXTENSION cl_khr_byte_addressable_store : enable\n";
     //prependSource_ = prependSource_ + "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n";
 
-    if (doublePrecision) {
+    // tell the kernel if photons should be stopped once they are detected
+    if (stopDetectedPhotons_) {
+        prependSource_ = prependSource_ + "#define STOP_PHOTONS_ON_DETECTION\n";
+        log_info("detected photons are stopped");
+    } else {
+        log_info("detected photons continue to propagate");
+    }
+    
+    if (doublePrecision_) {
         prependSource_ = prependSource_ + "#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n";
         prependSource_ = prependSource_ + "typedef double floating_t;\n";
         prependSource_ = prependSource_ + "typedef double2 floating2_t;\n";
@@ -1065,7 +1073,7 @@ bool I3CLSimStepToPhotonConverterOpenCL::IsInitialized() const
     return initialized_;
 }
 
-void I3CLSimStepToPhotonConverterOpenCL::SetDisableDoubleBuffering(bool value)
+void I3CLSimStepToPhotonConverterOpenCL::SetEnableDoubleBuffering(bool value)
 {
     if (initialized_)
         throw I3CLSimStepToPhotonConverter_exception("I3CLSimStepToPhotonConverterOpenCL already initialized!");
@@ -1074,13 +1082,49 @@ void I3CLSimStepToPhotonConverterOpenCL::SetDisableDoubleBuffering(bool value)
     kernel_.clear();
     queue_.clear();
     
-    disableDoubleBuffering_=value;
+    disableDoubleBuffering_=(!value);
 }
 
-bool I3CLSimStepToPhotonConverterOpenCL::GetDisableDoubleBuffering() const
+bool I3CLSimStepToPhotonConverterOpenCL::GetEnableDoubleBuffering() const
 {
-    return disableDoubleBuffering_;
+    return (!disableDoubleBuffering_);
 }
+
+void I3CLSimStepToPhotonConverterOpenCL::SetDoublePrecision(bool value)
+{
+    if (initialized_)
+        throw I3CLSimStepToPhotonConverter_exception("I3CLSimStepToPhotonConverterOpenCL already initialized!");
+    
+    compiled_=false;
+    kernel_.clear();
+    queue_.clear();
+    
+    doublePrecision_=value;
+}
+
+bool I3CLSimStepToPhotonConverterOpenCL::GetDoublePrecision() const
+{
+    return doublePrecision_;
+}
+
+
+void I3CLSimStepToPhotonConverterOpenCL::SetStopDetectedPhotons(bool value)
+{
+    if (initialized_)
+        throw I3CLSimStepToPhotonConverter_exception("I3CLSimStepToPhotonConverterOpenCL already initialized!");
+    
+    compiled_=false;
+    kernel_.clear();
+    queue_.clear();
+    
+    stopDetectedPhotons_=value;
+}
+
+bool I3CLSimStepToPhotonConverterOpenCL::GetStopDetectedPhotons() const
+{
+    return stopDetectedPhotons_;
+}
+
 
 void I3CLSimStepToPhotonConverterOpenCL::SetWlenGenerators(const std::vector<I3CLSimRandomValueConstPtr> &wlenGenerators)
 {

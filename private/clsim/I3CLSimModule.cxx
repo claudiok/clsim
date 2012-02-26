@@ -192,6 +192,34 @@ geometryIsConfigured_(false)
                  useHardcodedDeepCoreSubdetector_);
 
     
+    enableDoubleBuffering_=false;
+    AddParameter("EnableDoubleBuffering",
+                 "Disables or enables double-buffered GPU usage. Double buffering will use\n"
+                 "two command queues and two sets of input and output buffers in order to transfer\n"
+                 "data to the GPU while a kernel is executing on the other buffer.\n"
+                 "This has been observed to yield empty results results on older drivers for the nVidia\n"
+                 "architecture, so it is disabled by default.\n"
+                 "\n"
+                 "Before enabling this for a certain driver/hardware combination, make sure that both correct results\n"
+                 "are returned. Most of the time the second buffer results are always empty, so this error should be\n"
+                 "easy to observe.",
+                 enableDoubleBuffering_);
+
+    doublePrecision_=false;
+    AddParameter("DoublePrecision",
+                 "Enables double-precision support in the kernel. This slows down calculations and\n"
+                 "requires more memory. The performance hit is minimal on CPUs but up to an order\n"
+                 "of magnitude on GPUs.",
+                 doublePrecision_);
+
+    stopDetectedPhotons_=true;
+    AddParameter("StopDetectedPhotons",
+                 "Configures behaviour for photons that hit a DOM. If this is true (the default)\n"
+                 "photons will be stopped once they hit a DOM. If this is false, they continue to\n"
+                 "propagate.",
+                 stopDetectedPhotons_);
+
+    
     // add an outbox
     AddOutBox("OutBox");
 
@@ -311,6 +339,10 @@ void I3CLSimModule::Configure()
     GetParameter("SplitGeometryIntoPartsAcordingToPosition", splitGeometryIntoPartsAcordingToPosition_);
 
     GetParameter("UseHardcodedDeepCoreSubdetector", useHardcodedDeepCoreSubdetector_);
+
+    GetParameter("EnableDoubleBuffering", enableDoubleBuffering_);
+    GetParameter("DoublePrecision", doublePrecision_);
+    GetParameter("StopDetectedPhotons", stopDetectedPhotons_);
 
     if ((flasherPulseSeriesName_=="") && (MCTreeName_==""))
         log_fatal("You need to set at least one of the \"MCTreeName\" and \"FlasherPulseSeriesName\" parameters.");
@@ -583,7 +615,10 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
                                               geometry_,
                                               mediumProperties_,
                                               wavelengthGenerationBias_,
-                                              wavelengthGenerators_);
+                                              wavelengthGenerators_,
+                                              enableDoubleBuffering_,
+                                              doublePrecision_,
+                                              stopDetectedPhotons_);
         if (!openCLStepsToPhotonsConverter)
             log_fatal("Could not initialize OpenCL!");
         

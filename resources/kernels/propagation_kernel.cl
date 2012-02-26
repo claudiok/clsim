@@ -3,6 +3,7 @@
 // debug mode: store all photons right after they are generated on string0/OM0
 //#define DEBUG_STORE_GENERATED_PHOTONS
 
+// this will be (optinally) defined by the main code:
 //#define STOP_PHOTONS_ON_DETECTION
 
 //#define PRINTF_ENABLED

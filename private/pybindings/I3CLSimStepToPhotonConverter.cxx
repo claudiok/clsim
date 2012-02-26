@@ -134,12 +134,20 @@ void register_I3CLSimStepToPhotonConverter()
         .def("GetMaxNumWorkitems", &I3CLSimStepToPhotonConverterOpenCL::GetMaxNumWorkitems)
         .def("SetMaxNumWorkitems", &I3CLSimStepToPhotonConverterOpenCL::SetMaxNumWorkitems)
 
-        .def("SetDisableDoubleBuffering", &I3CLSimStepToPhotonConverterOpenCL::SetDisableDoubleBuffering)
-        .def("GetDisableDoubleBuffering", &I3CLSimStepToPhotonConverterOpenCL::GetDisableDoubleBuffering)
+        .def("SetEnableDoubleBuffering", &I3CLSimStepToPhotonConverterOpenCL::SetEnableDoubleBuffering)
+        .def("GetEnableDoubleBuffering", &I3CLSimStepToPhotonConverterOpenCL::GetEnableDoubleBuffering)
+
+        .def("SetDoublePrecision", &I3CLSimStepToPhotonConverterOpenCL::SetDoublePrecision)
+        .def("GetDoublePrecision", &I3CLSimStepToPhotonConverterOpenCL::GetDoublePrecision)
+
+        .def("SetStopDetectedPhotons", &I3CLSimStepToPhotonConverterOpenCL::SetStopDetectedPhotons)
+        .def("GetStopDetectedPhotonsn", &I3CLSimStepToPhotonConverterOpenCL::GetStopDetectedPhotons)
 
         .add_property("workgroupSize", &I3CLSimStepToPhotonConverterOpenCL::GetWorkgroupSize, &I3CLSimStepToPhotonConverterOpenCL::SetWorkgroupSize)
         .add_property("maxNumWorkitems", &I3CLSimStepToPhotonConverterOpenCL::GetMaxNumWorkitems, &I3CLSimStepToPhotonConverterOpenCL::SetMaxNumWorkitems)
-        .add_property("disableDoubleBuffering", &I3CLSimStepToPhotonConverterOpenCL::GetDisableDoubleBuffering, &I3CLSimStepToPhotonConverterOpenCL::SetDisableDoubleBuffering)
+        .add_property("enableDoubleBuffering", &I3CLSimStepToPhotonConverterOpenCL::GetEnableDoubleBuffering, &I3CLSimStepToPhotonConverterOpenCL::SetEnableDoubleBuffering)
+        .add_property("doublePrecision", &I3CLSimStepToPhotonConverterOpenCL::GetDoublePrecision, &I3CLSimStepToPhotonConverterOpenCL::SetDoublePrecision)
+        .add_property("stopDetectedPhotons", &I3CLSimStepToPhotonConverterOpenCL::GetStopDetectedPhotons, &I3CLSimStepToPhotonConverterOpenCL::SetStopDetectedPhotons)
         ;
     }
     

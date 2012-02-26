@@ -90,6 +90,7 @@ def I3CLSimMakeHits(tray, name,
                     IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
                     UnWeightedPhotons=False,
                     UseGeant4=False,
+                    StopDetectedPhotons=True,
                     DoNotParallelize=False,
                     DOMOversizeFactor=5.,
                     If=lambda f: True
@@ -175,6 +176,10 @@ def I3CLSimMakeHits(tray, name,
         slow down the simulation, but the optional ``PhotonSeries``
         will contain an unweighted sample of photons that arrive
         at your DOMs. This can be useful for DOM acceptance studies.
+    :param StopDetectedPhotons:
+        Configures behaviour for photons that hit a DOM. If this is true (the default)
+        photons will be stopped once they hit a DOM. If this is false, they continue to
+        propagate.
     :param UseGeant4:
         Enabling this setting will disable all cascade and muon light yield
         parameterizations. All particles will sent to Geant4 for a full
@@ -350,6 +355,7 @@ def I3CLSimMakeHits(tray, name,
                    MaxNumParallelEvents=ParallelEvents,
                    OpenCLDeviceList=openCLDevices,
                    UseHardcodedDeepCoreSubdetector=False, # setting this to true saves GPU constant memory but will reduce performance
+                   StopDetectedPhotons=StopDetectedPhotons,
                    If=If
                    )
 

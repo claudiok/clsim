@@ -53,7 +53,10 @@ namespace I3CLSimModuleHelper {
                      I3CLSimSimpleGeometryFromI3GeometryPtr geometry,
                      I3CLSimMediumPropertiesPtr medium,
                      I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
-                     const std::vector<I3CLSimRandomValueConstPtr> &wavelengthGenerators);
+                     const std::vector<I3CLSimRandomValueConstPtr> &wavelengthGenerators,
+                     bool enableDoubleBuffering,
+                     bool doublePrecision,
+                     bool stopDetectedPhotons);
     
     I3CLSimLightSourceToStepConverterGeant4Ptr
     initializeGeant4(I3RandomServicePtr rng,
