@@ -1,10 +1,12 @@
 #pragma OPENCL EXTENSION cl_khr_global_int32_base_atomics : enable
-#pragma OPENCL EXTENSION cl_khr_local_int32_base_atomics : enable
+//#pragma OPENCL EXTENSION cl_khr_local_int32_base_atomics : enable
 #pragma OPENCL EXTENSION cl_khr_byte_addressable_store : enable
 //#pragma OPENCL EXTENSION cl_khr_fp16 : enable
 
 // debug mode: store all photons right after they are generated on string0/OM0
 //#define DEBUG_STORE_GENERATED_PHOTONS
+
+//#define STOP_PHOTONS_ON_DETECTION
 
 //#define PRINTF_ENABLED
 
@@ -158,8 +160,8 @@ inline void createPhotonFromTrack(struct I3CLSimStep *step,
 #ifndef NO_FLASHER
     if (step->sourceType == 0) {
 #endif
-		// sourceType==0 is always Cherenkov light with the correct angle w.r.t. the particle/step
-		
+        // sourceType==0 is always Cherenkov light with the correct angle w.r.t. the particle/step
+        
         // our photon still needs a wavelength. create one!
         const float wavelength = generateWavelength_0(RNG_ARGS_TO_CALL);
 
@@ -208,16 +210,93 @@ inline float2 sphDirFromCar(float4 carDir)
     return (float2)(theta, phi);
 }
 
+// Record a photon on a DOM
+inline void saveHit(
+    const float4 photonPosAndTime,
+    const float4 photonDirAndWlen,
+    const float thisStepLength,
+    float inv_groupvel,
+    float photonTotalPathLength,
+    uint photonNumScatters,
+    const float4 photonStartPosAndTime,
+    const float4 photonStartDirAndWlen,
+    const struct I3CLSimStep *step,
+    unsigned short hitOnString,
+    unsigned short hitOnDom,
+    __global uint* hitIndex,
+    uint maxHitIndex,
+    __write_only __global struct I3CLSimPhoton *outputPhotons
+    )
+{
+    uint myIndex = atom_inc(hitIndex);
+    if (myIndex < maxHitIndex)
+    {
+#ifdef PRINTF_ENABLED
+        dbg_printf("     -> photon record added at position %u.\n",
+            myIndex);
+#endif
+
+        outputPhotons[myIndex].posAndTime = (float4)
+            (
+            photonPosAndTime.x+thisStepLength*photonDirAndWlen.x,
+            photonPosAndTime.y+thisStepLength*photonDirAndWlen.y,
+            photonPosAndTime.z+thisStepLength*photonDirAndWlen.z,
+            photonPosAndTime.w+thisStepLength*inv_groupvel
+            );
+
+        outputPhotons[myIndex].dir = sphDirFromCar(photonDirAndWlen);
+        outputPhotons[myIndex].wavelength = photonDirAndWlen.w;
+
+        outputPhotons[myIndex].cherenkovDist = photonTotalPathLength+thisStepLength;
+        outputPhotons[myIndex].numScatters = photonNumScatters;
+        outputPhotons[myIndex].weight = step->weight / getWavelengthBias(photonDirAndWlen.w);
+        outputPhotons[myIndex].identifier = step->identifier;
+
+        outputPhotons[myIndex].stringID = convert_short(hitOnString);
+        outputPhotons[myIndex].omID = convert_ushort(hitOnDom);
+
+        outputPhotons[myIndex].startPosAndTime=photonStartPosAndTime;
+        outputPhotons[myIndex].startDir = sphDirFromCar(photonStartDirAndWlen);
+
+        outputPhotons[myIndex].groupVelocity = my_recip(inv_groupvel);
+
+
+#ifdef PRINTF_ENABLED
+        dbg_printf("     -> stored photon: p=(%f,%f,%f), d=(%f,%f), t=%f, wlen=%fnm\n",
+            outputPhotons[myIndex].posAndTime.x, outputPhotons[myIndex].posAndTime.y, outputPhotons[myIndex].posAndTime.z,
+            outputPhotons[myIndex].dir.x, outputPhotons[myIndex].dir.y,
+            outputPhotons[myIndex].posAndTime.w, outputPhotons[myIndex].wavelength/1e-9f);
+#endif
+
+    }
+    
+    
+}
+
+
 
 inline void checkForCollision_OnString(
     const unsigned short stringNum,
     const float photonDirLenXYSqr,
     const float4 photonPosAndTime,
     const float4 photonDirAndWlen,
+#ifdef STOP_PHOTONS_ON_DETECTION
     float *thisStepLength,
     bool *hitRecorded,
     unsigned short *hitOnString,
     unsigned short *hitOnDom,
+#else
+    float thisStepLength,
+    float inv_groupvel,
+    float photonTotalPathLength,
+    uint photonNumScatters,
+    const float4 photonStartPosAndTime,
+    const float4 photonStartDirAndWlen,
+    const struct I3CLSimStep *step,
+    __global uint* hitIndex,
+    uint maxHitIndex,
+    __write_only __global struct I3CLSimPhoton *outputPhotons,
+#endif
     __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal
     )
 {
@@ -240,7 +319,11 @@ inline void checkForCollision_OnString(
     // -> check them all
 
     int lowLayerZ = convert_int((photonPosAndTime.z-geoLayerStartZ[stringSet])/geoLayerHeight[stringSet]);
+#ifdef STOP_PHOTONS_ON_DETECTION
     int highLayerZ = convert_int((photonPosAndTime.z+photonDirAndWlen.z*(*thisStepLength)-geoLayerStartZ[stringSet])/geoLayerHeight[stringSet]);
+#else
+    int highLayerZ = convert_int((photonPosAndTime.z+photonDirAndWlen.z*thisStepLength-geoLayerStartZ[stringSet])/geoLayerHeight[stringSet]);
+#endif
     if (highLayerZ<lowLayerZ) {int tmp=lowLayerZ; lowLayerZ=highLayerZ; highLayerZ=tmp;}
     lowLayerZ = min(max(lowLayerZ, 0), geoLayerNum[stringSet]-1);
     highLayerZ = min(max(highLayerZ, 0), geoLayerNum[stringSet]-1);
@@ -284,16 +367,39 @@ inline void checkForCollision_OnString(
             if (smin < 0.0f) smin = -urdot + discr;
 
             // check if distance to intersection <= thisStepLength; if not then no detection 
+#ifdef STOP_PHOTONS_ON_DETECTION
             if ((smin >= 0.0f) && (smin < *thisStepLength))
+#else
+            if ((smin >= 0.0f) && (smin < thisStepLength))
+#endif
             {
+#ifdef STOP_PHOTONS_ON_DETECTION
+                // record a hit (for later, the actual recording is done
+                // in checkForCollision().)
                 *thisStepLength=smin; // limit step length
-
-                // record a hit
                 *hitOnString=stringNum;
                 *hitOnDom=domNum;
-
                 *hitRecorded=true;
                 // continue searching, maybe we hit a closer OM..
+				// (in that case, no hit will be saved for this one)
+#else
+				// save the hit right here
+		        saveHit(photonPosAndTime,
+		                photonDirAndWlen,
+		                smin, // this is the limited thisStepLength
+		                inv_groupvel,
+		                photonTotalPathLength,
+		                photonNumScatters,
+		                photonStartPosAndTime,
+		                photonStartDirAndWlen,
+		                step,
+		                stringNum,
+		                domNum,
+		                hitIndex,
+		                maxHitIndex,
+		                outputPhotons
+		                );
+#endif
             }
         }
     }
@@ -304,10 +410,23 @@ inline void checkForCollision_InCell(
     const float photonDirLenXYSqr,
     const float4 photonPosAndTime,
     const float4 photonDirAndWlen,
+#ifdef STOP_PHOTONS_ON_DETECTION
     float *thisStepLength,
     bool *hitRecorded,
     unsigned short *hitOnString,
     unsigned short *hitOnDom,
+#else
+    float thisStepLength,
+    float inv_groupvel,
+    float photonTotalPathLength,
+    uint photonNumScatters,
+    const float4 photonStartPosAndTime,
+    const float4 photonStartDirAndWlen,
+    const struct I3CLSimStep *step,
+    __global uint* hitIndex,
+    uint maxHitIndex,
+    __write_only __global struct I3CLSimPhoton *outputPhotons,
+#endif
     __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal,
     
     __constant unsigned short *this_geoCellIndex,
@@ -322,8 +441,13 @@ inline void checkForCollision_InCell(
     int lowCellX = convert_int((photonPosAndTime.x-this_geoCellStartX)/this_geoCellWidthX);
     int lowCellY = convert_int((photonPosAndTime.y-this_geoCellStartY)/this_geoCellWidthY);
 
+#ifdef STOP_PHOTONS_ON_DETECTION
     int highCellX = convert_int((photonPosAndTime.x+photonDirAndWlen.x*(*thisStepLength)-this_geoCellStartX)/this_geoCellWidthX);
     int highCellY = convert_int((photonPosAndTime.y+photonDirAndWlen.y*(*thisStepLength)-this_geoCellStartY)/this_geoCellWidthY);
+#else
+    int highCellX = convert_int((photonPosAndTime.x+photonDirAndWlen.x*thisStepLength-this_geoCellStartX)/this_geoCellWidthX);
+    int highCellY = convert_int((photonPosAndTime.y+photonDirAndWlen.y*thisStepLength-this_geoCellStartY)/this_geoCellWidthY);
+#endif
 
     if (highCellX<lowCellX) {int tmp=lowCellX; lowCellX=highCellX; highCellX=tmp;}
     if (highCellY<lowCellY) {int tmp=lowCellY; lowCellY=highCellY; highCellY=tmp;}
@@ -345,10 +469,23 @@ inline void checkForCollision_InCell(
                 photonDirLenXYSqr,
                 photonPosAndTime,
                 photonDirAndWlen,
+#ifdef STOP_PHOTONS_ON_DETECTION
                 thisStepLength,
                 hitRecorded,
                 hitOnString,
                 hitOnDom,
+#else
+                thisStepLength,
+			    inv_groupvel,
+			    photonTotalPathLength,
+			    photonNumScatters,
+			    photonStartPosAndTime,
+			    photonStartDirAndWlen,
+			    step,
+			    hitIndex,
+			    maxHitIndex,
+			    outputPhotons,
+#endif
                 geoLayerToOMNumIndexPerStringSetLocal
                 );
         }
@@ -360,10 +497,23 @@ inline void checkForCollision_InCells(
     const float photonDirLenXYSqr,
     const float4 photonPosAndTime,
     const float4 photonDirAndWlen,
+#ifdef STOP_PHOTONS_ON_DETECTION
     float *thisStepLength,
     bool *hitRecorded,
     unsigned short *hitOnString,
     unsigned short *hitOnDom,
+#else
+    float thisStepLength,
+    float inv_groupvel,
+    float photonTotalPathLength,
+    uint photonNumScatters,
+    const float4 photonStartPosAndTime,
+    const float4 photonStartDirAndWlen,
+    const struct I3CLSimStep *step,
+    __global uint* hitIndex,
+    uint maxHitIndex,
+    __write_only __global struct I3CLSimPhoton *outputPhotons,
+#endif
     __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal
     )
 {
@@ -371,6 +521,7 @@ inline void checkForCollision_InCells(
     // not really the best thing to do here..
     // replace with a loop sometime.
     
+#ifdef STOP_PHOTONS_ON_DETECTION
 #define DO_CHECK(subdetectorNum)                \
     checkForCollision_InCell(                   \
         photonDirLenXYSqr,                      \
@@ -389,7 +540,34 @@ inline void checkForCollision_InCells(
         GEO_CELL_WIDTH_Y_ ## subdetectorNum,    \
         GEO_CELL_NUM_X_ ## subdetectorNum,      \
         GEO_CELL_NUM_Y_ ## subdetectorNum       \
-        );                                      \
+        );
+#else
+#define DO_CHECK(subdetectorNum)                \
+    checkForCollision_InCell(                   \
+        photonDirLenXYSqr,                      \
+        photonPosAndTime,                       \
+        photonDirAndWlen,                       \
+        thisStepLength,                         \
+	    inv_groupvel,							\
+	    photonTotalPathLength,					\
+	    photonNumScatters,						\
+	    photonStartPosAndTime,					\
+	    photonStartDirAndWlen,					\
+	    step,									\
+	    hitIndex,								\
+	    maxHitIndex,							\
+	    outputPhotons,							\
+        geoLayerToOMNumIndexPerStringSetLocal,  \
+                                                \
+        geoCellIndex_ ## subdetectorNum,        \
+        GEO_CELL_START_X_ ## subdetectorNum,    \
+        GEO_CELL_START_Y_ ## subdetectorNum,    \
+        GEO_CELL_WIDTH_X_ ## subdetectorNum,    \
+        GEO_CELL_WIDTH_Y_ ## subdetectorNum,    \
+        GEO_CELL_NUM_X_ ## subdetectorNum,      \
+        GEO_CELL_NUM_Y_ ## subdetectorNum       \
+        );
+#endif
 
     // argh..
 #if GEO_CELL_NUM_SUBDETECTORS > 0
@@ -434,16 +612,21 @@ inline void checkForCollision_InCells(
 
 #undef DO_CHECK
 }
-    
+
+
 inline bool checkForCollision(const float4 photonPosAndTime,
     const float4 photonDirAndWlen,
     float inv_groupvel,
     float photonTotalPathLength,
     uint photonNumScatters,
-    float4 photonStartPosAndTime,
-    float4 photonStartDirAndWlen,
+    const float4 photonStartPosAndTime,
+    const float4 photonStartDirAndWlen,
     const struct I3CLSimStep *step,
+#ifdef STOP_PHOTONS_ON_DETECTION
     float *thisStepLength,
+#else
+    float thisStepLength,
+#endif
     __global uint* hitIndex,
     uint maxHitIndex,
     __write_only __global struct I3CLSimPhoton *outputPhotons,
@@ -468,59 +651,59 @@ inline bool checkForCollision(const float4 photonPosAndTime,
         photonDirLenXYSqr,
         photonPosAndTime,
         photonDirAndWlen,
+#ifdef STOP_PHOTONS_ON_DETECTION
         thisStepLength,
         &hitRecorded,
         &hitOnString,
         &hitOnDom,
+#else
+        thisStepLength,
+	    inv_groupvel,
+	    photonTotalPathLength,
+	    photonNumScatters,
+	    photonStartPosAndTime,
+	    photonStartDirAndWlen,
+	    step,
+	    hitIndex,
+	    maxHitIndex,
+	    outputPhotons,
+#endif
         geoLayerToOMNumIndexPerStringSetLocal);
 #endif    
-    
-    if (hitRecorded)
-    {
-        uint myIndex = atom_inc(hitIndex);
-        if (myIndex < maxHitIndex)
-        {
-#ifdef PRINTF_ENABLED
-            dbg_printf("     -> photon record added at position %u.\n",
-                myIndex);
-#endif
 
-            outputPhotons[myIndex].posAndTime = (float4)
-                (
-                photonPosAndTime.x+(*thisStepLength)*photonDirAndWlen.x,
-                photonPosAndTime.y+(*thisStepLength)*photonDirAndWlen.y,
-                photonPosAndTime.z+(*thisStepLength)*photonDirAndWlen.z,
-                photonPosAndTime.w+(*thisStepLength)*inv_groupvel
+#ifdef STOP_PHOTONS_ON_DETECTION
+    // In case photons are stopped on detection
+    // (i.e. absorbed by the DOM), we need to record
+    // them here (after all possible DOM intersections
+    // have been checked). 
+    //
+    // Otherwise, the recording is done right after
+    // the intersection detection further down in
+    // checkForCollision_*().
+    if (hitRecorded) {
+        saveHit(photonPosAndTime,
+                photonDirAndWlen,
+                *thisStepLength,
+                inv_groupvel,
+                photonTotalPathLength,
+                photonNumScatters,
+                photonStartPosAndTime,
+                photonStartDirAndWlen,
+                step,
+                hitOnString,
+                hitOnDom,
+                hitIndex,
+                maxHitIndex,
+                outputPhotons
                 );
-
-            outputPhotons[myIndex].dir = sphDirFromCar(photonDirAndWlen);
-            outputPhotons[myIndex].wavelength = photonDirAndWlen.w;
-
-            outputPhotons[myIndex].cherenkovDist = photonTotalPathLength+(*thisStepLength);
-            outputPhotons[myIndex].numScatters = photonNumScatters;
-            outputPhotons[myIndex].weight = step->weight / getWavelengthBias(photonDirAndWlen.w);
-            outputPhotons[myIndex].identifier = step->identifier;
-
-            outputPhotons[myIndex].stringID = convert_short(hitOnString);
-            outputPhotons[myIndex].omID = convert_ushort(hitOnDom);
-
-            outputPhotons[myIndex].startPosAndTime=photonStartPosAndTime;
-            outputPhotons[myIndex].startDir = sphDirFromCar(photonStartDirAndWlen);
-
-            outputPhotons[myIndex].groupVelocity = my_recip(inv_groupvel);
-
-
-#ifdef PRINTF_ENABLED
-            dbg_printf("     -> stored photon: p=(%f,%f,%f), d=(%f,%f), t=%f, wlen=%fnm\n",
-                outputPhotons[myIndex].posAndTime.x, outputPhotons[myIndex].posAndTime.y, outputPhotons[myIndex].posAndTime.z,
-                outputPhotons[myIndex].dir.x, outputPhotons[myIndex].dir.y,
-                outputPhotons[myIndex].posAndTime.w, outputPhotons[myIndex].wavelength/1e-9f);
-#endif
-
-        }
-    }   
-
+    }
     return hitRecorded;
+#else
+    // in case photons should *not* be absorbed when they
+    // hit a DOM, this will always return false (i.e.
+    // no detection.)
+    return false;
+#endif
 }
 
 
@@ -730,13 +913,16 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
 
         // the photon is now either being absorbed or scattered.
         // Check for collisions in its way
+#ifdef STOP_PHOTONS_ON_DETECTION
 #ifdef DEBUG_STORE_GENERATED_PHOTONS
         bool collided;
         if (RNG_CALL_UNIFORM_OC > 0.9)  // prescale: 10%
 #else
         bool
 #endif
-        collided = checkForCollision(photonPosAndTime, 
+        collided = 
+#endif
+		checkForCollision(photonPosAndTime, 
             photonDirAndWlen, 
             inv_groupvel,
             photonTotalPathLength,
@@ -744,13 +930,18 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             photonStartPosAndTime,
             photonStartDirAndWlen,
             &step,
+#ifdef STOP_PHOTONS_ON_DETECTION
             &distancePropagated, 
+#else
+            distancePropagated, 
+#endif
             hitIndex, 
             maxHitIndex, 
             outputPhotons, 
             geoLayerToOMNumIndexPerStringSetLocal
             );
             
+#ifdef STOP_PHOTONS_ON_DETECTION
 #ifdef DEBUG_STORE_GENERATED_PHOTONS
         collided = true;
 #endif
@@ -763,7 +954,8 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
                 distancePropagated);
 #endif
         }
-
+#endif
+		
         // update the track to its next position
         photonPosAndTime.x += photonDirAndWlen.x*distancePropagated;
         photonPosAndTime.y += photonDirAndWlen.y*distancePropagated;
