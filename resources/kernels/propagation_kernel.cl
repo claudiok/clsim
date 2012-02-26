@@ -217,7 +217,15 @@ inline floating_t my_cos(floating_t a);
 inline floating_t my_sin(floating_t a);
 inline floating_t my_log(floating_t a);
 inline floating_t my_exp(floating_t a);
+inline floating_t my_fabs(floating_t a);
 inline floating_t sqr(floating_t a);
+
+#ifdef DOUBLE_PRECISION
+// can't have native_math with double precision
+#ifdef USE_NATIVE_MATH
+#undef USE_NATIVE_MATH
+#endif
+#endif
 
 #ifdef USE_NATIVE_MATH
 inline floating_t my_divide(floating_t a, floating_t b) {return native_divide(a,b);}
@@ -241,6 +249,7 @@ inline floating_t my_log(floating_t a) {return log(a);}
 inline floating_t my_exp(floating_t a) {return exp(a);}
 #endif
 
+inline floating_t my_fabs(floating_t a) {return fabs(a);}
 inline floating_t sqr(floating_t a) {return a*a;}
 
 
@@ -366,7 +375,7 @@ inline float2 sphDirFromCar(double4 carDir)
     const double r_inv = my_rsqrt(carDir.x*carDir.x+carDir.y*carDir.y+carDir.z*carDir.z);
 
     double theta = 0.;
-    if (fabs(carDir.z*r_inv)<=1.) {
+    if (my_fabs(carDir.z*r_inv)<=1.) {
         theta=acos(carDir.z*r_inv);
     } else {
         if (carDir.z<0.) theta=PI;
@@ -385,7 +394,7 @@ inline float2 sphDirFromCar(float4 carDir)
     const float r_inv = my_rsqrt(carDir.x*carDir.x+carDir.y*carDir.y+carDir.z*carDir.z);
 
     float theta = 0.f;
-    if (fabs(carDir.z*r_inv)<=1.f) {
+    if (my_fabs(carDir.z*r_inv)<=1.f) {
         theta=acos(carDir.z*r_inv);
     } else {
         if (carDir.z<0.f) theta=PI;
@@ -1100,7 +1109,7 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
 #endif
         
             floating_t distanceToAbsorption;
-            if ((currentPhotonLayer==j) || fabs(photon_dz)<EPSILON) {
+            if ((currentPhotonLayer==j) || my_fabs(photon_dz)<EPSILON) {
                 distancePropagated=sca_step_left*currentScaLen;
                 distanceToAbsorption=abs_lens_left*currentAbsLen;
             } else {

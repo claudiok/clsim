@@ -354,7 +354,7 @@ void I3CLSimStepToPhotonConverterOpenCL::Compile()
     //prependSource_ = prependSource_ + "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n";
 
     if (doublePrecision) {
-        prependSource_ = prependSource_ + "#pragma OPENCL EXTERNSION cl_khr_fp64 : enable\n";
+        prependSource_ = prependSource_ + "#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n";
         prependSource_ = prependSource_ + "typedef double floating_t;\n";
         prependSource_ = prependSource_ + "typedef double2 floating2_t;\n";
         prependSource_ = prependSource_ + "typedef double4 floating4_t;\n";
@@ -502,7 +502,7 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
     std::string BuildOptions;
     
     //BuildOptions += "-w "; // no warnings
-    BuildOptions += "-Werror "; // warnings will become errors
+    //BuildOptions += "-Werror "; // warnings will become errors
     BuildOptions += "-cl-mad-enable ";
     //BuildOptions += "-cl-opt-disable ";
     //BuildOptions += "-cl-no-signed-zeros ";
