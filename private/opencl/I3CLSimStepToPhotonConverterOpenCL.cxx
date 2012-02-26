@@ -342,7 +342,7 @@ void I3CLSimStepToPhotonConverterOpenCL::Compile()
     if (!deviceIsSelected_)
         throw I3CLSimStepToPhotonConverter_exception("Device not selected!");
     
-
+    
     const bool doublePrecision=false;
     
     prependSource_ = "";
@@ -362,6 +362,13 @@ void I3CLSimStepToPhotonConverterOpenCL::Compile()
         prependSource_ = prependSource_ + "#define DOUBLE_PRECISION\n";
         prependSource_ = prependSource_ + "#define ZERO 0.\n";
         prependSource_ = prependSource_ + "#define ONE 1.\n";
+        
+        if (device_->GetPlatformName()=="Apple")
+        {
+            prependSource_ = prependSource_ + "#define USE_FABS_WORKAROUND\n";
+            log_info("enabled fabs() workaround for OpenCL double-precision on Apple");
+        }
+        
         prependSource_ = prependSource_ + "\n";
     } else {
         prependSource_ = prependSource_ + "typedef float floating_t;\n";

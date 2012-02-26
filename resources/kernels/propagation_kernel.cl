@@ -249,7 +249,11 @@ inline floating_t my_log(floating_t a) {return log(a);}
 inline floating_t my_exp(floating_t a) {return exp(a);}
 #endif
 
+#ifdef USE_FABS_WORKAROUND
+inline floating_t my_fabs(floating_t a) {return (a<ZERO)?(-a):(a);}
+#else
 inline floating_t my_fabs(floating_t a) {return fabs(a);}
+#endif
 inline floating_t sqr(floating_t a) {return a*a;}
 
 
