@@ -42,7 +42,6 @@ namespace bp = boost::python;
     (I3CLSimLightSourceToStepConverter)             \
     (I3CLSimStepToPhotonConverter)                  \
     (I3CLSimSimpleGeometry)                         \
-    (augmentDataclassesWithPicklingSupport)         \
     (I3Photon)(I3CLSimLightSourceParameterization)  \
     (I3CLSimTester)(I3ModuleHelper)                 \
     (I3CLSimLightSourceToStepConverterUtils)        \

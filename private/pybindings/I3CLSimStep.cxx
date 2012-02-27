@@ -27,7 +27,9 @@
 #include <clsim/I3CLSimStep.h>
 #include <boost/preprocessor/seq.hpp>
 #include <icetray/python/std_vector_indexing_suite.hpp>
-#include "boost_serializable_pickle_suite.hpp"
+
+// disabled for now until this gets released into offline-software
+//#include "boost_serializable_pickle_suite.hpp"
 
 namespace bp=boost::python;
 
@@ -68,9 +70,6 @@ struct ConstPtr_to_python
 
 void register_I3CLSimStep()
 {
-    bp::def("I3Particle___getstate__", &boost_serializable_pickle_suite<I3Particle>::getstate);
-    bp::def("I3Particle___setstate__", &boost_serializable_pickle_suite<I3Particle>::setstate);
-
     {
         void (I3CLSimStep::* SetDir_oneary)(const I3Direction&) = &I3CLSimStep::SetDir; 
         void (I3CLSimStep::* SetDir_threeary)(const double &x, const double &y, const double &z) = &I3CLSimStep::SetDir;
@@ -107,7 +106,7 @@ void register_I3CLSimStep()
 
     bp::class_<I3CLSimStepSeries, bp::bases<I3FrameObject>, I3CLSimStepSeriesPtr>("I3CLSimStepSeries")
     .def(bp::std_vector_indexing_suite<I3CLSimStepSeries>())
-    .def_pickle(boost_serializable_pickle_suite<I3CLSimStepSeries>())
+    //.def_pickle(boost_serializable_pickle_suite<I3CLSimStepSeries>())
     ;
 
     // does not base on I3FrameObject, so register only the shared_ptr<T>-to-shared_ptr<const T> conversion

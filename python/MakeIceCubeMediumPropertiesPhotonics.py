@@ -165,8 +165,10 @@ def MakeIceCubeMediumPropertiesPhotonics(tableFile,
     iceCubeScatModel = I3CLSimRandomValueHenyeyGreenstein(meanCosine=meanCos)
     m.SetScatteringCosAngleDistribution(iceCubeScatModel)
     
-    phaseRefIndex = I3CLSimWlenDependentValueFromTable(startWavelength, stepWavelength, layers[0]['N_PHASE'])
-    groupRefIndex = I3CLSimWlenDependentValueFromTable(startWavelength, stepWavelength, layers[0]['N_GROUP'])
+    #phaseRefIndex = I3CLSimWlenDependentValueFromTable(startWavelength, stepWavelength, layers[0]['N_PHASE'])
+    #groupRefIndex = I3CLSimWlenDependentValueFromTable(startWavelength, stepWavelength, layers[0]['N_GROUP'])
+    phaseRefIndex = I3CLSimWlenDependentValueRefIndexIceCube(mode="phase")
+    groupRefIndex = I3CLSimWlenDependentValueRefIndexIceCube(mode="group")
 
     for i in range(len(layers)):
         #print "layer {0}: depth at bottom is {1} (z_bottom={2}), b_400={3}".format(i, depthAtBottomOfLayer[i], layerZStart[i], b_400[i])

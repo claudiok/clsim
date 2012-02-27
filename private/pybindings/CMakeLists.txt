@@ -2,9 +2,7 @@
 #  Copyright (C) 2011
 #  Claudio Kopper <claudio.kopper@physik.uni-erlangen.de>
 #  
-#  This file is part of the icetray module g4sim-interface.
-#  
-#  g4sim-interface is free software; you can redistribute it and/or modify
+#  clsim is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 3 of the License, or
 #  (at your option) any later version.
@@ -20,9 +18,6 @@
 
 if(BUILD_PYBINDINGS)
   i3_add_pybindings(clsim
-    # this should be integrated into dataclasses eventually
-    augmentDataclassesWithPicklingSupport.cxx
-
     I3CLSimStep.cxx
     I3CLSimPhoton.cxx
     I3CLSimWlenDependentValue.cxx
