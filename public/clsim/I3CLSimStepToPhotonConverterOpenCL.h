@@ -145,6 +145,24 @@ public:
     bool GetStopDetectedPhotons() const;
 
     /**
+     * Sets the maximum number of entries in the photon
+     * history table. Each point in the table
+     * will store the position of the photon
+     * at each point of scatter. (Only the most
+     * recent points are stored if there are
+     * more scatters than available entries.)
+     *
+     * Will throw if already initialized.
+     */
+    void SetPhotonHistoryEntries(uint32_t value);
+    
+    /**
+     * Returns the maximum number of photon
+     * history entries.
+     */
+    uint32_t GetPhotonHistoryEntries() const;
+
+    /**
      * Sets the wavelength generators. 
      * The first generator (index 0) is assumed to return a Cherenkov
      * spectrum that may have a bias applied to it. This bias factor
@@ -301,6 +319,8 @@ private:
     bool doublePrecision_;
     bool stopDetectedPhotons_;
     
+    uint32_t photonHistoryEntries_;
+    
     // some kernel sources loaded on construction
     std::string prependSource_;
     std::string mwcrngKernelSource_;
@@ -341,6 +361,7 @@ private:
     std::vector<shared_ptr<cl::Buffer> > deviceBuffer_InputSteps;
     std::vector<shared_ptr<cl::Buffer> > deviceBuffer_OutputPhotons;
     std::vector<shared_ptr<cl::Buffer> > deviceBuffer_CurrentNumOutputPhotons;
+    std::vector<shared_ptr<cl::Buffer> > deviceBuffer_PhotonHistory;
     
     // this one is constant, so we only need one
     shared_ptr<cl::Buffer> deviceBuffer_GeoLayerToOMNumIndexPerStringSet;

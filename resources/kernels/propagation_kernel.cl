@@ -17,7 +17,6 @@
 #define dbg_printf(format, ...) printf(format, ##__VA_ARGS__)
 #endif
 
-
 // ZERO and ONE will be defined as either 0.f/1.f or 0./1. depending on DOUBLE_PRECISION
 
 /////////////////// struct definitions
@@ -963,6 +962,10 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
 
     __read_only __global struct I3CLSimStep *inputSteps, // deviceBuffer_InputSteps
     __write_only __global struct I3CLSimPhoton *outputPhotons, // deviceBuffer_OutputPhotons
+
+#ifdef SAVE_PHOTON_HISTORY
+    __write_only __global float4 *photonHistory,
+#endif
 
     __global ulong* MWC_RNG_x,
     __global uint* MWC_RNG_a)

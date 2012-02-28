@@ -46,6 +46,7 @@ deviceIsSelected_(false),
 disableDoubleBuffering_(true),
 doublePrecision_(false),
 stopDetectedPhotons_(true),
+photonHistoryEntries_(0),
 maxWorkgroupSize_(0),
 workgroupSize_(0),
 maxNumWorkitems_(10240)
@@ -90,6 +91,7 @@ I3CLSimStepToPhotonConverterOpenCL::~I3CLSimStepToPhotonConverterOpenCL()
     deviceBuffer_InputSteps.clear();
     deviceBuffer_OutputPhotons.clear();
     deviceBuffer_CurrentNumOutputPhotons.clear();
+    deviceBuffer_PhotonHistory.clear();
 
     deviceBuffer_GeoLayerToOMNumIndexPerStringSet.reset();
     
@@ -208,6 +210,7 @@ void I3CLSimStepToPhotonConverterOpenCL::Initialize()
     deviceBuffer_MWC_RNG_a.reset();
     deviceBuffer_InputSteps.clear();
     deviceBuffer_OutputPhotons.clear();
+    deviceBuffer_PhotonHistory.clear();
     deviceBuffer_CurrentNumOutputPhotons.clear();
     deviceBuffer_GeoLayerToOMNumIndexPerStringSet.reset();
     
@@ -236,6 +239,18 @@ void I3CLSimStepToPhotonConverterOpenCL::Initialize()
         
         deviceBuffer_CurrentNumOutputPhotons.push_back(shared_ptr<cl::Buffer>
         (new cl::Buffer(*context_, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, sizeof(uint32_t), NULL)));
+
+        if (photonHistoryEntries_>0) {
+            deviceBuffer_PhotonHistory.push_back
+            (shared_ptr<cl::Buffer>
+             (new cl::Buffer(*context_,
+                             CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR,
+                             static_cast<std::size_t>(maxNumOutputPhotons_)*static_cast<std::size_t>(photonHistoryEntries_)*sizeof(cl_float4),
+                             NULL
+                            )
+             )
+            );
+        }
     }
     
     log_debug("Device buffers are set up.");
@@ -250,9 +265,18 @@ void I3CLSimStepToPhotonConverterOpenCL::Initialize()
         
         kernel_[i]->setArg(3, *(deviceBuffer_InputSteps[i]));                  // the input steps
         kernel_[i]->setArg(4, *(deviceBuffer_OutputPhotons[i]));               // the output photons
-        
-        kernel_[i]->setArg(5, *deviceBuffer_MWC_RNG_x);                        // rng state
-        kernel_[i]->setArg(6, *deviceBuffer_MWC_RNG_a);                        // rng state
+
+        if (photonHistoryEntries_>0) {
+            kernel_[i]->setArg(5, *(deviceBuffer_PhotonHistory[i]));           // the photon history (the last N points where the photon scattered)
+
+            kernel_[i]->setArg(6, *deviceBuffer_MWC_RNG_x);                    // rng state
+            kernel_[i]->setArg(7, *deviceBuffer_MWC_RNG_a);                    // rng state
+        } else {
+            kernel_[i]->setArg(5, *deviceBuffer_MWC_RNG_x);                    // rng state
+            kernel_[i]->setArg(6, *deviceBuffer_MWC_RNG_a);                    // rng state
+        }
+
+
     }
     log_debug("Kernel configured.");
     
@@ -361,6 +385,13 @@ void I3CLSimStepToPhotonConverterOpenCL::Compile()
         log_info("detected photons continue to propagate");
     }
     
+    // should the photon history be saved?
+    if (photonHistoryEntries_>0) {
+        prependSource_ = prependSource_ + "#define SAVE_PHOTON_HISTORY\n";
+        prependSource_ = prependSource_ + "#define NUM_PHOTONS_IN_HISTORY" + boost::lexical_cast<std::string>(photonHistoryEntries_) + "\n";
+    }
+    
+    // are we using double precision?
     if (doublePrecision_) {
         prependSource_ = prependSource_ + "#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n";
         prependSource_ = prependSource_ + "typedef double floating_t;\n";
@@ -924,6 +955,9 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
     if (deviceBuffer_InputSteps.size() != numBuffers) log_fatal("Internal error: deviceBuffer_InputSteps.size() != 2!");
     if (deviceBuffer_OutputPhotons.size() != numBuffers) log_fatal("Internal error: deviceBuffer_OutputPhotons.size() != 2!");
     if (deviceBuffer_CurrentNumOutputPhotons.size() != numBuffers) log_fatal("Internal error: deviceBuffer_CurrentNumOutputPhotons.size() != 2!");
+    if (photonHistoryEntries_ > 0) {
+        if (deviceBuffer_PhotonHistory.size() != numBuffers) log_fatal("Internal error: deviceBuffer_PhotonHistory.size() != 2!");
+    }
     
     BOOST_FOREACH(shared_ptr<cl::Buffer> &ptr, deviceBuffer_InputSteps) {
         if (!ptr) log_fatal("Internal error: deviceBuffer_InputSteps[] is (null)");
@@ -933,6 +967,12 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
     }
     BOOST_FOREACH(shared_ptr<cl::Buffer> &ptr, deviceBuffer_CurrentNumOutputPhotons) {
         if (!ptr) log_fatal("Internal error: deviceBuffer_CurrentNumOutputPhotons[] is (null)");
+    }
+
+    if (photonHistoryEntries_ > 0) {
+        BOOST_FOREACH(shared_ptr<cl::Buffer> &ptr, deviceBuffer_PhotonHistory) {
+            if (!ptr) log_fatal("Internal error: deviceBuffer_PhotonHistory[] is (null)");
+        }
     }
 
     if (!deviceBuffer_GeoLayerToOMNumIndexPerStringSet) log_fatal("Internal error: deviceBuffer_GeoLayerToOMNumIndexPerStringSet is (null)");
@@ -1123,6 +1163,24 @@ void I3CLSimStepToPhotonConverterOpenCL::SetStopDetectedPhotons(bool value)
 bool I3CLSimStepToPhotonConverterOpenCL::GetStopDetectedPhotons() const
 {
     return stopDetectedPhotons_;
+}
+
+
+void I3CLSimStepToPhotonConverterOpenCL::SetPhotonHistoryEntries(uint32_t value)
+{
+    if (initialized_)
+        throw I3CLSimStepToPhotonConverter_exception("I3CLSimStepToPhotonConverterOpenCL already initialized!");
+    
+    compiled_=false;
+    kernel_.clear();
+    queue_.clear();
+    
+    photonHistoryEntries_=value;
+}
+
+uint32_t I3CLSimStepToPhotonConverterOpenCL::GetPhotonHistoryEntries() const
+{
+    return photonHistoryEntries_;
 }
 
 

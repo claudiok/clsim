@@ -141,13 +141,17 @@ void register_I3CLSimStepToPhotonConverter()
         .def("GetDoublePrecision", &I3CLSimStepToPhotonConverterOpenCL::GetDoublePrecision)
 
         .def("SetStopDetectedPhotons", &I3CLSimStepToPhotonConverterOpenCL::SetStopDetectedPhotons)
-        .def("GetStopDetectedPhotonsn", &I3CLSimStepToPhotonConverterOpenCL::GetStopDetectedPhotons)
+        .def("GetStopDetectedPhotons", &I3CLSimStepToPhotonConverterOpenCL::GetStopDetectedPhotons)
+
+        .def("SetPhotonHistoryEntries", &I3CLSimStepToPhotonConverterOpenCL::SetPhotonHistoryEntries)
+        .def("GetPhotonHistoryEntries", &I3CLSimStepToPhotonConverterOpenCL::GetPhotonHistoryEntries)
 
         .add_property("workgroupSize", &I3CLSimStepToPhotonConverterOpenCL::GetWorkgroupSize, &I3CLSimStepToPhotonConverterOpenCL::SetWorkgroupSize)
         .add_property("maxNumWorkitems", &I3CLSimStepToPhotonConverterOpenCL::GetMaxNumWorkitems, &I3CLSimStepToPhotonConverterOpenCL::SetMaxNumWorkitems)
         .add_property("enableDoubleBuffering", &I3CLSimStepToPhotonConverterOpenCL::GetEnableDoubleBuffering, &I3CLSimStepToPhotonConverterOpenCL::SetEnableDoubleBuffering)
         .add_property("doublePrecision", &I3CLSimStepToPhotonConverterOpenCL::GetDoublePrecision, &I3CLSimStepToPhotonConverterOpenCL::SetDoublePrecision)
         .add_property("stopDetectedPhotons", &I3CLSimStepToPhotonConverterOpenCL::GetStopDetectedPhotons, &I3CLSimStepToPhotonConverterOpenCL::SetStopDetectedPhotons)
+        .add_property("photonHistoryEntries", &I3CLSimStepToPhotonConverterOpenCL::GetPhotonHistoryEntries, &I3CLSimStepToPhotonConverterOpenCL::SetPhotonHistoryEntries)
         ;
     }
     
