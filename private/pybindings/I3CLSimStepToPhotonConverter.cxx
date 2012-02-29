@@ -32,7 +32,6 @@
 
 #include <boost/foreach.hpp>
 
-
 using namespace boost::python;
 namespace bp = boost::python;
 
@@ -53,6 +52,24 @@ struct I3CLSimStepToPhotonConverterWrapper : I3CLSimStepToPhotonConverter, bp::w
     virtual bool MorePhotonsAvailable() const {return this->get_override("MorePhotonsAvailable")();}
     virtual I3CLSimStepToPhotonConverter::ConversionResult_t GetConversionResult() {return this->get_override("GetConversionResult")();}
 };
+
+struct I3CLSimStepToPhotonConverterOpenCLWrapper : I3CLSimStepToPhotonConverterOpenCL, bp::wrapper<I3CLSimStepToPhotonConverterOpenCL> {
+    I3CLSimStepToPhotonConverterOpenCLWrapper(I3RandomServicePtr rng, bool nm)
+        : I3CLSimStepToPhotonConverterOpenCL(rng, nm) {}
+    virtual std::string GetGeometrySource() {
+        if (this->get_override("GetGeometrySource"))
+            return this->get_override("GetGeometrySource")();
+        else
+            return I3CLSimStepToPhotonConverterOpenCL::GetGeometrySource();
+    }
+    virtual std::string GetCollisionDetectionSource(bool header) {
+        if (this->get_override("GetCollisionDetectionSource"))
+            return this->get_override("GetCollisionDetectionSource")(header);
+        else
+            return I3CLSimStepToPhotonConverterOpenCL::GetCollisionDetectionSource(header);
+    }
+};
+
 
 namespace I3CLSimStepToPhotonConverter_utils
 {
@@ -103,11 +120,15 @@ void register_I3CLSimStepToPhotonConverter()
     bp::implicitly_convertible<shared_ptr<I3CLSimStepToPhotonConverterWrapper>, shared_ptr<const I3CLSimStepToPhotonConverterWrapper> >();
     std_pair_to_python_converter<uint32_t, I3CLSimPhotonSeriesPtr>();
     
+
+    
     // I3CLSimStepToPhotonConverterOpenCL
     {
+
+        
         bp::class_<
-        I3CLSimStepToPhotonConverterOpenCL, 
-        boost::shared_ptr<I3CLSimStepToPhotonConverterOpenCL>, 
+        I3CLSimStepToPhotonConverterOpenCLWrapper, 
+        boost::shared_ptr<I3CLSimStepToPhotonConverterOpenCLWrapper>, 
         bases<I3CLSimStepToPhotonConverter>,
         boost::noncopyable
         >
@@ -118,45 +139,48 @@ void register_I3CLSimStepToPhotonConverter()
          >(
            (
             bp::arg("RandomService"),
-            bp::arg("UseNativeMath")=I3CLSimStepToPhotonConverterOpenCL::default_useNativeMath
+            bp::arg("UseNativeMath")=I3CLSimStepToPhotonConverterOpenCLWrapper::default_useNativeMath
            )
           )
         )
-        .def("Compile", &I3CLSimStepToPhotonConverterOpenCL::Compile)
-        .def("GetFullSource", &I3CLSimStepToPhotonConverterOpenCL::GetFullSource)
+        .def("Compile", &I3CLSimStepToPhotonConverterOpenCLWrapper::Compile)
+        .def("GetFullSource", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetFullSource)
+                
+        .def("GetGeometrySource", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetGeometrySource)
+        .def("GetCollisionDetectionSource", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetCollisionDetectionSource)
         
-        .def("SetDevice", &I3CLSimStepToPhotonConverterOpenCL::SetDevice)
-        .def("GetMaxWorkgroupSize", &I3CLSimStepToPhotonConverterOpenCL::GetMaxWorkgroupSize)
-        .add_property("maxWorkgroupSize", &I3CLSimStepToPhotonConverterOpenCL::GetMaxWorkgroupSize)
+        .def("SetDevice", &I3CLSimStepToPhotonConverterOpenCLWrapper::SetDevice)
+        .def("GetMaxWorkgroupSize", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetMaxWorkgroupSize)
+        .add_property("maxWorkgroupSize", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetMaxWorkgroupSize)
 
-        .def("GetWorkgroupSize", &I3CLSimStepToPhotonConverterOpenCL::GetWorkgroupSize)
-        .def("SetWorkgroupSize", &I3CLSimStepToPhotonConverterOpenCL::SetWorkgroupSize)
-        .def("GetMaxNumWorkitems", &I3CLSimStepToPhotonConverterOpenCL::GetMaxNumWorkitems)
-        .def("SetMaxNumWorkitems", &I3CLSimStepToPhotonConverterOpenCL::SetMaxNumWorkitems)
+        .def("GetWorkgroupSize", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetWorkgroupSize)
+        .def("SetWorkgroupSize", &I3CLSimStepToPhotonConverterOpenCLWrapper::SetWorkgroupSize)
+        .def("GetMaxNumWorkitems", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetMaxNumWorkitems)
+        .def("SetMaxNumWorkitems", &I3CLSimStepToPhotonConverterOpenCLWrapper::SetMaxNumWorkitems)
 
-        .def("SetEnableDoubleBuffering", &I3CLSimStepToPhotonConverterOpenCL::SetEnableDoubleBuffering)
-        .def("GetEnableDoubleBuffering", &I3CLSimStepToPhotonConverterOpenCL::GetEnableDoubleBuffering)
+        .def("SetEnableDoubleBuffering", &I3CLSimStepToPhotonConverterOpenCLWrapper::SetEnableDoubleBuffering)
+        .def("GetEnableDoubleBuffering", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetEnableDoubleBuffering)
 
-        .def("SetDoublePrecision", &I3CLSimStepToPhotonConverterOpenCL::SetDoublePrecision)
-        .def("GetDoublePrecision", &I3CLSimStepToPhotonConverterOpenCL::GetDoublePrecision)
+        .def("SetDoublePrecision", &I3CLSimStepToPhotonConverterOpenCLWrapper::SetDoublePrecision)
+        .def("GetDoublePrecision", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetDoublePrecision)
 
-        .def("SetStopDetectedPhotons", &I3CLSimStepToPhotonConverterOpenCL::SetStopDetectedPhotons)
-        .def("GetStopDetectedPhotons", &I3CLSimStepToPhotonConverterOpenCL::GetStopDetectedPhotons)
+        .def("SetStopDetectedPhotons", &I3CLSimStepToPhotonConverterOpenCLWrapper::SetStopDetectedPhotons)
+        .def("GetStopDetectedPhotons", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetStopDetectedPhotons)
 
-        .def("SetPhotonHistoryEntries", &I3CLSimStepToPhotonConverterOpenCL::SetPhotonHistoryEntries)
-        .def("GetPhotonHistoryEntries", &I3CLSimStepToPhotonConverterOpenCL::GetPhotonHistoryEntries)
+        .def("SetPhotonHistoryEntries", &I3CLSimStepToPhotonConverterOpenCLWrapper::SetPhotonHistoryEntries)
+        .def("GetPhotonHistoryEntries", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetPhotonHistoryEntries)
 
-        .add_property("workgroupSize", &I3CLSimStepToPhotonConverterOpenCL::GetWorkgroupSize, &I3CLSimStepToPhotonConverterOpenCL::SetWorkgroupSize)
-        .add_property("maxNumWorkitems", &I3CLSimStepToPhotonConverterOpenCL::GetMaxNumWorkitems, &I3CLSimStepToPhotonConverterOpenCL::SetMaxNumWorkitems)
-        .add_property("enableDoubleBuffering", &I3CLSimStepToPhotonConverterOpenCL::GetEnableDoubleBuffering, &I3CLSimStepToPhotonConverterOpenCL::SetEnableDoubleBuffering)
-        .add_property("doublePrecision", &I3CLSimStepToPhotonConverterOpenCL::GetDoublePrecision, &I3CLSimStepToPhotonConverterOpenCL::SetDoublePrecision)
-        .add_property("stopDetectedPhotons", &I3CLSimStepToPhotonConverterOpenCL::GetStopDetectedPhotons, &I3CLSimStepToPhotonConverterOpenCL::SetStopDetectedPhotons)
-        .add_property("photonHistoryEntries", &I3CLSimStepToPhotonConverterOpenCL::GetPhotonHistoryEntries, &I3CLSimStepToPhotonConverterOpenCL::SetPhotonHistoryEntries)
+        .add_property("workgroupSize", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetWorkgroupSize, &I3CLSimStepToPhotonConverterOpenCLWrapper::SetWorkgroupSize)
+        .add_property("maxNumWorkitems", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetMaxNumWorkitems, &I3CLSimStepToPhotonConverterOpenCLWrapper::SetMaxNumWorkitems)
+        .add_property("enableDoubleBuffering", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetEnableDoubleBuffering, &I3CLSimStepToPhotonConverterOpenCLWrapper::SetEnableDoubleBuffering)
+        .add_property("doublePrecision", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetDoublePrecision, &I3CLSimStepToPhotonConverterOpenCLWrapper::SetDoublePrecision)
+        .add_property("stopDetectedPhotons", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetStopDetectedPhotons, &I3CLSimStepToPhotonConverterOpenCLWrapper::SetStopDetectedPhotons)
+        .add_property("photonHistoryEntries", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetPhotonHistoryEntries, &I3CLSimStepToPhotonConverterOpenCLWrapper::SetPhotonHistoryEntries)
         ;
     }
     
-    bp::implicitly_convertible<shared_ptr<I3CLSimStepToPhotonConverterOpenCL>, shared_ptr<const I3CLSimStepToPhotonConverterOpenCL> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimStepToPhotonConverterOpenCL>, shared_ptr<I3CLSimStepToPhotonConverter> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimStepToPhotonConverterOpenCL>, shared_ptr<const I3CLSimStepToPhotonConverter> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimStepToPhotonConverterOpenCLWrapper>, shared_ptr<const I3CLSimStepToPhotonConverterOpenCLWrapper> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimStepToPhotonConverterOpenCLWrapper>, shared_ptr<I3CLSimStepToPhotonConverter> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimStepToPhotonConverterOpenCLWrapper>, shared_ptr<const I3CLSimStepToPhotonConverter> >();
     
 }

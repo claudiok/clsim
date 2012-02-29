@@ -59,7 +59,6 @@ maxNumWorkitems_(10240)
     
     try {
         mwcrngKernelSource_ = I3CLSimHelper::LoadProgramSource(kernelBaseDir+"/mwcrng_kernel.cl");
-        propagationKernelSource_ = I3CLSimHelper::LoadProgramSource(kernelBaseDir+"/propagation_kernel.cl");
     } catch (std::runtime_error &e) {
         throw I3CLSimStepToPhotonConverter_exception((std::string("Could not load kernel: ") + e.what()).c_str());
     }
