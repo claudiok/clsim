@@ -283,5 +283,12 @@ void register_I3CLSimRandomValue()
     bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueWlenCherenkovNoDispersion>, shared_ptr<I3CLSimRandomValue> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueWlenCherenkovNoDispersion>, shared_ptr<const I3CLSimRandomValue> >();
     utils::register_const_ptr<I3CLSimRandomValueWlenCherenkovNoDispersion>();
+    
+    {
+        typedef std::vector<I3CLSimRandomValueConstPtr> Series;
+	bp::class_<Series, shared_ptr<Series> >("I3CLSimRandomValuePtrSeries")
+            .def(bp::std_vector_indexing_suite<Series>())
+        ;
+    }
 
 }
