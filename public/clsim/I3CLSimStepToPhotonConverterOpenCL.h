@@ -214,6 +214,16 @@ public:
     virtual std::string GetFullSource();
     
     /**
+     * Provide individual bits of the OpenCL source code. 
+     */
+    virtual std::string GetPreambleSource();
+    std::string GetMediumPropertiesSource();
+    std::string GetWlenGeneratorSource();
+    std::string GetWlenBiasSource();
+    virtual std::string GetGeometrySource();
+    virtual std::string GetCollisionDetectionSource(bool header=true);
+    
+    /**
      * Initializes the simulation.
      * Will throw if already initialized.
      */

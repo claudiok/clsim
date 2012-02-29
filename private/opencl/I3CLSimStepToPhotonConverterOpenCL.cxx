@@ -346,6 +346,120 @@ namespace {
     }
 }
 
+std::string I3CLSimStepToPhotonConverterOpenCL::GetPreambleSource()
+{
+    std::string preamble;
+    
+    // necessary OpenCL extensions
+    preamble = preamble + "#pragma OPENCL EXTENSION cl_khr_global_int32_base_atomics : enable\n";
+    //preamble = preamble + "#pragma OPENCL EXTENSION cl_khr_local_int32_base_atomics : enable\n";
+    preamble = preamble + "#pragma OPENCL EXTENSION cl_khr_byte_addressable_store : enable\n";
+    //preamble = preamble + "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n";
+
+    // tell the kernel if photons should be stopped once they are detected
+    if (stopDetectedPhotons_) {
+        preamble = preamble + "#define STOP_PHOTONS_ON_DETECTION\n";
+        log_info("detected photons are stopped");
+    } else {
+        log_info("detected photons continue to propagate");
+    }
+    
+    // should the photon history be saved?
+    if (photonHistoryEntries_>0) {
+        preamble = preamble + "#define SAVE_PHOTON_HISTORY\n";
+        preamble = preamble + "#define NUM_PHOTONS_IN_HISTORY" + boost::lexical_cast<std::string>(photonHistoryEntries_) + "\n";
+    }
+    
+    // are we using double precision?
+    if (doublePrecision_) {
+        preamble = preamble + "#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n";
+        preamble = preamble + "typedef double floating_t;\n";
+        preamble = preamble + "typedef double2 floating2_t;\n";
+        preamble = preamble + "typedef double4 floating4_t;\n";
+        preamble = preamble + "#define convert_floating_t convert_double\n";
+        preamble = preamble + "#define DOUBLE_PRECISION\n";
+        preamble = preamble + "#define ZERO 0.\n";
+        preamble = preamble + "#define ONE 1.\n";
+        
+        if (device_->GetPlatformName()=="Apple")
+        {
+            preamble = preamble + "#define USE_FABS_WORKAROUND\n";
+            log_info("enabled fabs() workaround for OpenCL double-precision on Apple");
+        }
+        
+        preamble = preamble + "\n";
+    } else {
+        preamble = preamble + "typedef float floating_t;\n";
+        preamble = preamble + "typedef float2 floating2_t;\n";
+        preamble = preamble + "typedef float4 floating4_t;\n";
+        preamble = preamble + "#define convert_floating_t convert_float\n";
+        preamble = preamble + "#define ZERO 0.f\n";
+        preamble = preamble + "#define ONE 1.f\n";
+        preamble = preamble + "\n";
+    }
+    
+    return preamble;
+}
+
+std::string I3CLSimStepToPhotonConverterOpenCL::GetWlenGeneratorSource()
+{
+    std::string wlenGeneratorSource;
+    for (std::size_t i=0; i<wlenGenerators_.size(); ++i)
+    {
+        const std::string generatorName = "generateWavelength_" + boost::lexical_cast<std::string>(i);
+        const std::string thisGeneratorSource = 
+        wlenGenerators_[i]->GetOpenCLFunction(generatorName, // name
+                                              // these are all defined as macros by the rng code:
+                                              "RNG_ARGS",               // function arguments for rng
+                                              "RNG_ARGS_TO_CALL",       // if we call anothor function, this is how we pass on the rng state
+                                              "RNG_CALL_UNIFORM_CO",    // the call to the rng for creating a uniform number [0;1[
+                                              "RNG_CALL_UNIFORM_OC"     // the call to the rng for creating a uniform number ]0;1]
+                                              );
+        
+        wlenGeneratorSource = wlenGeneratorSource + thisGeneratorSource + "\n";
+    }
+    wlenGeneratorSource = wlenGeneratorSource+ makeGenerateWavelengthMasterFunction(wlenGenerators_.size(),
+                                                                                      "generateWavelength",
+                                                                                      "RNG_ARGS",               // function arguments for rng
+                                                                                      "RNG_ARGS_TO_CALL"        // if we call anothor function, this is how we pass on the rng state
+                                                                                      );
+    wlenGeneratorSource = wlenGeneratorSource + "\n";
+    
+    return wlenGeneratorSource;
+}
+
+std::string I3CLSimStepToPhotonConverterOpenCL::GetWlenBiasSource()
+{
+    return wlenBias_->GetOpenCLFunction("getWavelengthBias"); // name
+}
+
+std::string I3CLSimStepToPhotonConverterOpenCL::GetMediumPropertiesSource()
+{
+    return I3CLSimHelper::GenerateMediumPropertiesSource(*mediumProperties_);
+}
+
+std::string I3CLSimStepToPhotonConverterOpenCL::GetGeometrySource()
+{
+    return I3CLSimHelper::GenerateGeometrySource(*geometry_,
+                                                  geoLayerToOMNumIndexPerStringSetInfo_,
+                                                  stringIndexToStringIDBuffer_,
+                                                  domIndexToDomIDBuffer_perStringIndex_);
+}
+
+static std::string 
+loadKernel(const std::string& name, bool header)
+{
+    const std::string I3_SRC(getenv("I3_SRC"));
+    const std::string kernelBaseDir = I3_SRC+"/clsim/resources/kernels/";
+    const std::string ext = header ? ".h.cl" : ".c.cl";
+    return I3CLSimHelper::LoadProgramSource(kernelBaseDir+name+ext);
+}
+
+std::string I3CLSimStepToPhotonConverterOpenCL::GetCollisionDetectionSource(bool header)
+{
+	return loadKernel("sparse_collision_kernel", header);
+}
+
 void I3CLSimStepToPhotonConverterOpenCL::Compile()
 {
     if (initialized_)
@@ -369,88 +483,17 @@ void I3CLSimStepToPhotonConverterOpenCL::Compile()
         throw I3CLSimStepToPhotonConverter_exception("Device not selected!");
     
     
-    prependSource_ = "";
+    prependSource_ = this->GetPreambleSource();
+    wlenGeneratorSource_ = this->GetWlenGeneratorSource();
+    wlenBiasSource_ = this->GetWlenBiasSource();
     
-    // necessary OpenCL extensions
-    prependSource_ = prependSource_ + "#pragma OPENCL EXTENSION cl_khr_global_int32_base_atomics : enable\n";
-    //prependSource_ = prependSource_ + "#pragma OPENCL EXTENSION cl_khr_local_int32_base_atomics : enable\n";
-    prependSource_ = prependSource_ + "#pragma OPENCL EXTENSION cl_khr_byte_addressable_store : enable\n";
-    //prependSource_ = prependSource_ + "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n";
-
-    // tell the kernel if photons should be stopped once they are detected
-    if (stopDetectedPhotons_) {
-        prependSource_ = prependSource_ + "#define STOP_PHOTONS_ON_DETECTION\n";
-        log_info("detected photons are stopped");
-    } else {
-        log_info("detected photons continue to propagate");
-    }
+    mediumPropertiesSource_ = this->GetMediumPropertiesSource();
+    geometrySource_ = this->GetGeometrySource();
     
-    // should the photon history be saved?
-    if (photonHistoryEntries_>0) {
-        prependSource_ = prependSource_ + "#define SAVE_PHOTON_HISTORY\n";
-        prependSource_ = prependSource_ + "#define NUM_PHOTONS_IN_HISTORY" + boost::lexical_cast<std::string>(photonHistoryEntries_) + "\n";
-    }
-    
-    // are we using double precision?
-    if (doublePrecision_) {
-        prependSource_ = prependSource_ + "#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n";
-        prependSource_ = prependSource_ + "typedef double floating_t;\n";
-        prependSource_ = prependSource_ + "typedef double2 floating2_t;\n";
-        prependSource_ = prependSource_ + "typedef double4 floating4_t;\n";
-        prependSource_ = prependSource_ + "#define convert_floating_t convert_double\n";
-        prependSource_ = prependSource_ + "#define DOUBLE_PRECISION\n";
-        prependSource_ = prependSource_ + "#define ZERO 0.\n";
-        prependSource_ = prependSource_ + "#define ONE 1.\n";
-        
-        if (device_->GetPlatformName()=="Apple")
-        {
-            prependSource_ = prependSource_ + "#define USE_FABS_WORKAROUND\n";
-            log_info("enabled fabs() workaround for OpenCL double-precision on Apple");
-        }
-        
-        prependSource_ = prependSource_ + "\n";
-    } else {
-        prependSource_ = prependSource_ + "typedef float floating_t;\n";
-        prependSource_ = prependSource_ + "typedef float2 floating2_t;\n";
-        prependSource_ = prependSource_ + "typedef float4 floating4_t;\n";
-        prependSource_ = prependSource_ + "#define convert_floating_t convert_float\n";
-        prependSource_ = prependSource_ + "#define ZERO 0.f\n";
-        prependSource_ = prependSource_ + "#define ONE 1.f\n";
-        prependSource_ = prependSource_ + "\n";
-    }
-
-
-    
-    wlenGeneratorSource_ = "";
-    for (std::size_t i=0; i<wlenGenerators_.size(); ++i)
-    {
-        const std::string generatorName = "generateWavelength_" + boost::lexical_cast<std::string>(i);
-        const std::string thisGeneratorSource = 
-        wlenGenerators_[i]->GetOpenCLFunction(generatorName, // name
-                                              // these are all defined as macros by the rng code:
-                                              "RNG_ARGS",               // function arguments for rng
-                                              "RNG_ARGS_TO_CALL",       // if we call anothor function, this is how we pass on the rng state
-                                              "RNG_CALL_UNIFORM_CO",    // the call to the rng for creating a uniform number [0;1[
-                                              "RNG_CALL_UNIFORM_OC"     // the call to the rng for creating a uniform number ]0;1]
-                                              );
-        
-        wlenGeneratorSource_ = wlenGeneratorSource_ + thisGeneratorSource + "\n";
-    }
-    wlenGeneratorSource_ = wlenGeneratorSource_+ makeGenerateWavelengthMasterFunction(wlenGenerators_.size(),
-                                                                                      "generateWavelength",
-                                                                                      "RNG_ARGS",               // function arguments for rng
-                                                                                      "RNG_ARGS_TO_CALL"        // if we call anothor function, this is how we pass on the rng state
-                                                                                      );
-    wlenGeneratorSource_ = wlenGeneratorSource_ + "\n";
-
-    
-    wlenBiasSource_ = wlenBias_->GetOpenCLFunction("getWavelengthBias"); // name
-    
-    mediumPropertiesSource_ = I3CLSimHelper::GenerateMediumPropertiesSource(*mediumProperties_);
-    geometrySource_ = I3CLSimHelper::GenerateGeometrySource(*geometry_,
-                                                            geoLayerToOMNumIndexPerStringSetInfo_,
-                                                            stringIndexToStringIDBuffer_,
-                                                            domIndexToDomIDBuffer_perStringIndex_);
+    propagationKernelSource_  = loadKernel("propagation_kernel", true);
+    propagationKernelSource_ += this->GetCollisionDetectionSource(true);
+    propagationKernelSource_ += this->GetCollisionDetectionSource(false);
+    propagationKernelSource_ += loadKernel("propagation_kernel", false);
     
     SetupQueueAndKernel(*(device_->GetPlatformHandle()),
                         *(device_->GetDeviceHandle()));
