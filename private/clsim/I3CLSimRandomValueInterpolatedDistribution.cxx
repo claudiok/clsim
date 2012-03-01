@@ -18,7 +18,7 @@ x_(x),
 y_(y),
 constantXSpacing_(NAN),
 firstX_(NAN)
-{ 
+{
     if (x_.size() != y_.size())
         log_fatal("The \"x\" and \"y\" vectors must have the same size!");
     
@@ -33,7 +33,7 @@ I3CLSimRandomValueInterpolatedDistribution(double xFirst, double xSpacing,
 y_(y),
 constantXSpacing_(xSpacing),
 firstX_(xFirst)
-{ 
+{
     if (isnan(firstX_)) log_fatal("\"xFirst\" must not be NaN!");
     if (isnan(constantXSpacing_)) log_fatal("\"xSpacing\" must not be NaN!");
     if (constantXSpacing_<=0.) log_fatal("\"xSpacing\" must not be <= 0!");
@@ -51,20 +51,20 @@ I3CLSimRandomValueInterpolatedDistribution::I3CLSimRandomValueInterpolatedDistri
 
 std::string I3CLSimRandomValueInterpolatedDistribution::WriteTableCode(const std::string &prefix) const
 {
-	typedef std::vector<double>::size_type sizeType;
-	
-	// sanity checks
+    typedef std::vector<double>::size_type sizeType;
+    
+    // sanity checks
     if (isnan(constantXSpacing_)) {
         if (x_.size()!=y_.size()) log_fatal("Internal error: angles_.size()!=values_.size()");
     }
     
-	sizeType numEntries=y_.size();
-	if (numEntries<=1) log_fatal("Internal error: insufficient number of entries.");
-	
+    sizeType numEntries=y_.size();
+    if (numEntries<=1) log_fatal("Internal error: insufficient number of entries.");
+    
     
     // intermediate data containers
     std::vector<double> data_acu(numEntries);
-	std::vector<double> data_beta(numEntries);
+    std::vector<double> data_beta(numEntries);
 
     // simple trapezoidal integration (which is not an approximation in this case)
     data_acu[0]=0.;
@@ -92,19 +92,19 @@ std::string I3CLSimRandomValueInterpolatedDistribution::WriteTableCode(const std
     
     
     
-	// prepare the output buffer
-	std::ostringstream output(std::ostringstream::out);
-	
-	// write the output buffer
-	output << "// this is auto-generated code written by I3CLSimRandomValueInterpolatedDistribution::WriteTableCode()" << std::endl;
-	output << std::endl;
-	
-	
-	output << "#define " << prefix << "NUM_DIST_ENTRIES " << numEntries << std::endl;
-	output << std::endl;
+    // prepare the output buffer
+    std::ostringstream output(std::ostringstream::out);
     
-	output.setf(std::ios::scientific,std::ios::floatfield);
-	output.precision(std::numeric_limits<float>::digits10+4); // maximum precision for a float
+    // write the output buffer
+    output << "// this is auto-generated code written by I3CLSimRandomValueInterpolatedDistribution::WriteTableCode()" << std::endl;
+    output << std::endl;
+    
+    
+    output << "#define " << prefix << "NUM_DIST_ENTRIES " << numEntries << std::endl;
+    output << std::endl;
+    
+    output.setf(std::ios::scientific,std::ios::floatfield);
+    output.precision(std::numeric_limits<float>::digits10+4); // maximum precision for a float
     
     if (isnan(constantXSpacing_))
     {
@@ -117,20 +117,20 @@ std::string I3CLSimRandomValueInterpolatedDistribution::WriteTableCode(const std
     }
     
     output << "__constant float " << prefix << "distYValues[" << prefix << "NUM_DIST_ENTRIES] = {" << std::endl;
-	for (sizeType j=0;j<numEntries;++j){     
-		output << "  " << data_beta[j] << "f, " << std::endl;
-	}
-	output << "};" << std::endl;
-	output << std::endl;
+    for (sizeType j=0;j<numEntries;++j){     
+        output << "  " << data_beta[j] << "f, " << std::endl;
+    }
+    output << "};" << std::endl;
+    output << std::endl;
 
-	output << "__constant float " << prefix << "distYCumulativeValues[" << prefix << "NUM_DIST_ENTRIES] = {" << std::endl;
-	for (sizeType j=0;j<numEntries;++j){     
-		output << "  " << data_acu[j] << "f, " << std::endl;
-	}
-	output << "};" << std::endl;
-	output << std::endl;
-	
-	// return the code we just generated to the caller
+    output << "__constant float " << prefix << "distYCumulativeValues[" << prefix << "NUM_DIST_ENTRIES] = {" << std::endl;
+    for (sizeType j=0;j<numEntries;++j){     
+        output << "  " << data_acu[j] << "f, " << std::endl;
+    }
+    output << "};" << std::endl;
+    output << std::endl;
+    
+    // return the code we just generated to the caller
     return output.str();
 }
 
@@ -284,7 +284,7 @@ void I3CLSimRandomValueInterpolatedDistribution::serialize(Archive &ar, unsigned
     ar & make_nvp("y", y_);
     ar & make_nvp("constantXSpacing", constantXSpacing_);
     ar & make_nvp("firstX", firstX_);
-}     
+}
 
 
 I3_SERIALIZABLE(I3CLSimRandomValueInterpolatedDistribution);

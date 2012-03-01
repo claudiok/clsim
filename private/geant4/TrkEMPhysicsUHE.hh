@@ -5,14 +5,14 @@
 
 class TrkEMPhysicsUHE : public G4VPhysicsConstructor
 {
-    public:
-	TrkEMPhysicsUHE(const G4String& name);
-	virtual ~TrkEMPhysicsUHE();
-	
-	virtual void ConstructParticle();
-	virtual void ConstructProcess();
+public:
+    TrkEMPhysicsUHE(const G4String& name);
+    virtual ~TrkEMPhysicsUHE();
 
-    protected:
+    virtual void ConstructParticle();
+    virtual void ConstructProcess();
+
+protected:
 };
 
 #endif

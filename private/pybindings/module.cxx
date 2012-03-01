@@ -35,8 +35,8 @@ namespace bp = boost::python;
 //    void register_Nick();
 //  that does the boost.python registration for class Nick.
 //
-#define REGISTER_THESE_THINGS						\
-	(I3CLSimStep)(I3CLSimPhoton)                    \
+#define REGISTER_THESE_THINGS                       \
+    (I3CLSimStep)(I3CLSimPhoton)                    \
     (I3CLSimWlenDependentValue)                     \
     (I3CLSimMediumProperties)(I3CLSimRandomValue)   \
     (I3CLSimLightSourceToStepConverter)             \

@@ -31,8 +31,8 @@ matplotlib.rc('font',**{'family':'serif','serif':['Computer Modern']})
 dom_acceptance = GetIceCubeDOMAcceptance()
 
 #Evaluate the function
-x =			 [float(i)/10. for i in range(2500,7001)]
-dom_acc =	 [dom_acceptance.GetValue(i*I3Units.nanometer) for i in x]
+x =          [float(i)/10. for i in range(2500,7001)]
+dom_acc =    [dom_acceptance.GetValue(i*I3Units.nanometer) for i in x]
 
 #Make the plot
 fig = plt.figure(1, figsize=[10,7])

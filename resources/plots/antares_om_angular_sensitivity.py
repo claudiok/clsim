@@ -37,21 +37,21 @@ matplotlib.rc('font',**{'family':'serif','serif':['Computer Modern']})
 # A function definition for the original implementation of the 'old' acceptance
 def OriginalWang(x):
 
-		a0=59.115
-		a1=0.52258
-		a2=0.60944E-02
-		a3=-0.16955E-03
-		a4=0.60929E-06
-		
-		if x < -0.36:       
-			return 0.
-		elif x >= 1.:
-			return 1.
-		else:
-			th = plt.arccos(x) * 57.29578 + 57.75
-			wang = a0 + a1*th + a2*th*th + a3*th*th*th + a4*th*th*th*th
-			wang /= 84.
-			return wang
+        a0=59.115
+        a1=0.52258
+        a2=0.60944E-02
+        a3=-0.16955E-03
+        a4=0.60929E-06
+        
+        if x < -0.36:       
+            return 0.
+        elif x >= 1.:
+            return 1.
+        else:
+            th = plt.arccos(x) * 57.29578 + 57.75
+            wang = a0 + a1*th + a2*th*th + a3*th*th*th + a4*th*th*th*th
+            wang /= 84.
+            return wang
 
 
 #Get the implementations of the acceptance
@@ -62,10 +62,10 @@ acceptance_Spring09 = GetAntaresOMAngularSensitivity('Spring09')
 
 
 #Evaluate the functions
-x =			 [float(i)/1000. for i in range(-1000,1001)]
-y_old =		 [acceptance_old.GetValue(i) for i in x]
-y_NIM =		 [acceptance_NIM.GetValue(i) for i in x]
-y_Genova =	 [acceptance_Genova.GetValue(i) for i in x]
+x =          [float(i)/1000. for i in range(-1000,1001)]
+y_old =      [acceptance_old.GetValue(i) for i in x]
+y_NIM =      [acceptance_NIM.GetValue(i) for i in x]
+y_Genova =   [acceptance_Genova.GetValue(i) for i in x]
 y_Spring09 = [acceptance_Spring09.GetValue(i) for i in x]
 y_origwang = [OriginalWang(i) for i in x]
 

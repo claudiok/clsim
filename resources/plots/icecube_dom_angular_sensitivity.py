@@ -34,9 +34,9 @@ acceptance_holeIce = GetIceCubeDOMAngularSensitivity(holeIce=True)
 
 
 #Evaluate the functions
-x =			 [float(i)/1000. for i in range(-1000,1001)]
-y =			 [acceptance.GetValue(i) for i in x]
-y_holeIce =	 [acceptance_holeIce.GetValue(i) for i in x]
+x =          [float(i)/1000. for i in range(-1000,1001)]
+y =          [acceptance.GetValue(i) for i in x]
+y_holeIce =  [acceptance_holeIce.GetValue(i) for i in x]
 
 
 

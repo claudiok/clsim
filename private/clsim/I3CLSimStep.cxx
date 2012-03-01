@@ -64,9 +64,9 @@ void I3CLSimStep::save(Archive &ar, unsigned version) const
 template <class Archive>
 void I3CLSimStep::load(Archive &ar, unsigned version)
 {
-	if (version > i3clsimstep_version_)
-		log_fatal("Attempting to read version %u from file but running version %u of I3CLSimStep class.",version,i3clsimstep_version_);
-    
+    if (version > i3clsimstep_version_)
+        log_fatal("Attempting to read version %u from file but running version %u of I3CLSimStep class.",version,i3clsimstep_version_);
+
     float temp; uint32_t temp_uint;
     uint16_t temp_uint16; uint8_t temp_uint8;
     ar >> make_nvp("x", temp); ((cl_float *)&posAndTime)[0]=temp;
@@ -78,7 +78,7 @@ void I3CLSimStep::load(Archive &ar, unsigned version)
     ar >> make_nvp("phi", temp); ((cl_float *)&dirAndLengthAndBeta)[1]=temp;
     ar >> make_nvp("length", temp); ((cl_float *)&dirAndLengthAndBeta)[2]=temp;
     ar >> make_nvp("beta", temp); ((cl_float *)&dirAndLengthAndBeta)[3]=temp;
-    
+
     ar >> make_nvp("num", temp_uint); numPhotons=temp_uint;
     ar >> make_nvp("weight", temp); weight=temp;
     ar >> make_nvp("id", temp_uint); identifier=temp_uint;
@@ -86,7 +86,7 @@ void I3CLSimStep::load(Archive &ar, unsigned version)
     ar >> make_nvp("dummy1", temp_uint8); dummy1=temp_uint8;
     ar >> make_nvp("dummy2", temp_uint16); dummy2=temp_uint16;
 
-}     
+}
 
 
 
@@ -97,22 +97,21 @@ void I3CLSimStep::save(portable_binary_oarchive &ar, unsigned version) const
 {
     // check an assumption we will make throughout the code
     BOOST_STATIC_ASSERT((sizeof(I3CLSimStep) == blobSizeV0));
-    
+
     ar << make_nvp("blob", boost::serialization::make_binary_object((void *)this, blobSizeV0));
-}     
+}
 
 template <>
 void I3CLSimStep::load(portable_binary_iarchive &ar, unsigned version)
 {
-	if (version > i3clsimstep_version_)
-		log_fatal("Attempting to read version %u from file but running version %u of I3CLSimStep class.",version,i3clsimstep_version_);
-    
-    
+    if (version > i3clsimstep_version_)
+        log_fatal("Attempting to read version %u from file but running version %u of I3CLSimStep class.",version,i3clsimstep_version_);
+
     // check an assumption we will make throughout the code
     BOOST_STATIC_ASSERT((sizeof(I3CLSimStep) == blobSizeV0));
-    
+
     ar >> make_nvp("blob", boost::serialization::make_binary_object(this, blobSizeV0));
-}     
+}
 
 template<>
 template<>
@@ -125,7 +124,7 @@ void I3Vector<I3CLSimStep>::serialize(portable_binary_iarchive &ar, unsigned ver
         log_fatal("This reader can only read I3Vector<I3CLSimStep> version %u, but %u was provided.",i3clsimstep_version_,I3CLSimStep_version);
     uint64_t size;
     ar >> make_nvp("num", size);
-    
+
     this->resize(size);
 
     // read the binary blob in one go..

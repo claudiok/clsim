@@ -25,19 +25,19 @@ TrkStackingAction::~TrkStackingAction()
 
 G4ClassificationOfNewTrack TrkStackingAction::ClassifyNewTrack(const G4Track * aTrack)
 {
-	TrkUserEventInformation* eventInformation =
-	(TrkUserEventInformation*)G4EventManager::GetEventManager()
-	->GetConstCurrentEvent()->GetUserInformation();
+    TrkUserEventInformation* eventInformation =
+    (TrkUserEventInformation*)G4EventManager::GetEventManager()
+    ->GetConstCurrentEvent()->GetUserInformation();
 
-	{
+    {
         const double maxRefractiveIndex = eventInformation->maxRefractiveIndex;
         const double BetaInverse = c_light/aTrack->GetVelocity();
-        
+
         // below the Cherekov threshold?
         if (BetaInverse > maxRefractiveIndex)
             return fKill;
     }
-    
+
     /*
     // is it the primary particle?
     if (aTrack->GetParentID()!=0)
@@ -123,16 +123,16 @@ G4ClassificationOfNewTrack TrkStackingAction::ClassifyNewTrack(const G4Track * a
     }
     
         
-	return fUrgent;
+    return fUrgent;
 }
 
 void TrkStackingAction::NewStage()
 {
-	//G4cout << "New stage!" << G4endl;
+    //G4cout << "New stage!" << G4endl;
 }
 
 void TrkStackingAction::PrepareNewEvent()
 {
-	//G4cout << "Prepare new event!" << G4endl;
+    //G4cout << "Prepare new event!" << G4endl;
 }
 

@@ -6,7 +6,7 @@
 
 TrkPrimaryGeneratorAction::TrkPrimaryGeneratorAction()
 {
-	particleGun = new G4ParticleGun();
+    particleGun = new G4ParticleGun();
 }
 
 TrkPrimaryGeneratorAction::~TrkPrimaryGeneratorAction()
@@ -16,7 +16,7 @@ TrkPrimaryGeneratorAction::~TrkPrimaryGeneratorAction()
 
 void TrkPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 {
-	particleGun->GeneratePrimaryVertex(anEvent);
+    particleGun->GeneratePrimaryVertex(anEvent);
 }
 
 

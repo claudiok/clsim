@@ -47,9 +47,9 @@ void register_I3CLSimFlasherPulse()
         .def("SetDir", (void (I3CLSimFlasherPulse::*)(const I3Direction&)) &I3CLSimFlasherPulse::SetDir)
 
         .add_property("pos", bp::make_function( (const I3Position& (I3CLSimFlasherPulse::*)()) &I3CLSimFlasherPulse::GetPos, bp::return_internal_reference<1>() ),
-					  (void (I3CLSimFlasherPulse::*)(const I3Position&)) &I3CLSimFlasherPulse::SetPos ) 
+                      (void (I3CLSimFlasherPulse::*)(const I3Position&)) &I3CLSimFlasherPulse::SetPos ) 
         .add_property("dir", bp::make_function( (const I3Direction& (I3CLSimFlasherPulse::*)()) &I3CLSimFlasherPulse::GetDir, bp::return_internal_reference<1>() ),
-					  (void (I3CLSimFlasherPulse::*)(const I3Direction&)) &I3CLSimFlasherPulse::SetDir ) 
+                      (void (I3CLSimFlasherPulse::*)(const I3Direction&)) &I3CLSimFlasherPulse::SetDir ) 
 
         .def("GetTime", &I3CLSimFlasherPulse::GetTime)
         .def("SetTime", &I3CLSimFlasherPulse::SetTime)

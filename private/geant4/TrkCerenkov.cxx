@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////
 //
 // File:        TrkCerenkov.hh  
-// Description:	Discrete Process - Generation of Cerenkov Photons
+// Description: Discrete Process - Generation of Cerenkov Photons
 // Based on:    G4Cerenkov.hh from the original Geant4 distribution
 //              (v4.9.4)
 //
@@ -203,9 +203,9 @@ TrkCerenkov::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
         return pParticleChange;
     }
 
-	TrkUserEventInformation* eventInformation
-	=(TrkUserEventInformation*)G4EventManager::GetEventManager()
-	->GetConstCurrentEvent()->GetUserInformation();
+    TrkUserEventInformation* eventInformation
+    =(TrkUserEventInformation*)G4EventManager::GetEventManager()
+    ->GetConstCurrentEvent()->GetUserInformation();
     
     
     // add this step to the step store
@@ -322,13 +322,13 @@ TrkCerenkov::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
         // sample an energy
         
         do {
-            rand = G4UniformRand();	
+            rand = G4UniformRand(); 
             sampledEnergy = Pmin + rand * dp; 
             sampledRI = Rindex->GetProperty(sampledEnergy);
             cosTheta = BetaInverse / sampledRI;  
             
             sin2Theta = (1.0 - cosTheta)*(1.0 + cosTheta);
-            rand = G4UniformRand();	
+            rand = G4UniformRand(); 
             
         } while (rand*maxSin2 > sin2Theta);
         
@@ -489,7 +489,7 @@ void TrkCerenkov::BuildThePhysicsTable()
                 G4double currentRI = (*theRefractionIndexVector)[0];
 #else
                 theRefractionIndexVector->ResetIterator();
-                ++(*theRefractionIndexVector);	// advance to 1st entry 
+                ++(*theRefractionIndexVector);  // advance to 1st entry 
                 
                 G4double currentRI = theRefractionIndexVector->
                 GetProperty();
@@ -721,8 +721,8 @@ TrkCerenkov::GetAverageNumberOfPhotons(const G4double charge,
     G4double BetaInverse = 1./beta;
     
     // Vectors used in computation of Cerenkov Angle Integral:
-    // 	- Refraction Indices for the current material
-    //	- new G4PhysicsOrderedFreeVector allocated to hold CAI's
+    //  - Refraction Indices for the current material
+    //  - new G4PhysicsOrderedFreeVector allocated to hold CAI's
     
     G4int materialIndex = aMaterial->GetIndex();
     
@@ -822,5 +822,5 @@ TrkCerenkov::GetAverageNumberOfPhotons(const G4double charge,
     //std::cout << "CAImax1=" << CAImax1 << ", CAImax2=" << CAImax2 << ", Pmax=" << Pmax << ", Pmin=" << Pmin << std::endl;
     //std::cout << "Wmax=" << (h_Planck*c_light/Pmin)/nm << ", Wmin=" << (h_Planck*c_light/Pmax)/nm << std::endl;
     
-    return NumPhotons;		
+    return NumPhotons;      
 }

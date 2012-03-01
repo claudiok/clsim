@@ -126,8 +126,8 @@ I3VectorFloatPtr I3CLSimRandomDistributionTester::GenerateRandomNumbers(uint64_t
         // run the kernel
         try {
             queue->enqueueNDRangeKernel(*kernel, 
-                                       cl::NullRange,	// current implementations force this to be NULL
-                                       cl::NDRange(workItemsPerIteration),	// number of work items
+                                       cl::NullRange,    // current implementations force this to be NULL
+                                       cl::NDRange(workItemsPerIteration),    // number of work items
                                        cl::NDRange(workgroupSize),
                                        NULL,
                                        NULL);

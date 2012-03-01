@@ -152,11 +152,11 @@ void I3CLSimOpenCLDevice::InitializeStaticStuff()
     std::vector<cl::Platform> platforms;
     
     try {
-		// get a list of available platforms
-		cl::Platform::get(&platforms);
-	} catch (cl::Error &err) {
-		log_fatal("OpenCL ERROR: %s (%i)", err.what(), err.err());
-	}
+        // get a list of available platforms
+        cl::Platform::get(&platforms);
+    } catch (cl::Error &err) {
+        log_fatal("OpenCL ERROR: %s (%i)", err.what(), err.err());
+    }
     
     BOOST_FOREACH(cl::Platform &platform, platforms)
     {

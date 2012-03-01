@@ -45,67 +45,67 @@
  *
  */
 class I3PhotonToMCHitConverterForMultiPMT : public I3ConditionalModule
-	{
-	public:
-		
-		/**
-		 * @brief Constructor
-		 */
-		I3PhotonToMCHitConverterForMultiPMT(const I3Context& ctx);
-		
-		/**
-		 * @brief Destructor
-		 */
-		~I3PhotonToMCHitConverterForMultiPMT();
-		
-		/**
-		 * @brief Configure this module
-		 */
-		void Configure();
-		
-		/**
-		 * @brief We subscribe to physics events
-		 *
-		 * @param frame The frame
-		 */
+    {
+    public:
+        
+        /**
+         * @brief Constructor
+         */
+        I3PhotonToMCHitConverterForMultiPMT(const I3Context& ctx);
+        
+        /**
+         * @brief Destructor
+         */
+        ~I3PhotonToMCHitConverterForMultiPMT();
+        
+        /**
+         * @brief Configure this module
+         */
+        void Configure();
+        
+        /**
+         * @brief We subscribe to physics events
+         *
+         * @param frame The frame
+         */
 #ifdef IS_Q_FRAME_ENABLED
-		void DAQ(I3FramePtr frame);
+        void DAQ(I3FramePtr frame);
 #else
-		void Physics(I3FramePtr frame);
+        void Physics(I3FramePtr frame);
 #endif
         
-		/**
-		 * @brief To clean up
-		 */
-		void Finish();
-		
-	private:
         /**
-		 * Parameter:A random number generating service (derived from I3RandomService).
-		 */
+         * @brief To clean up
+         */
+        void Finish();
+        
+    private:
+        /**
+         * Parameter:A random number generating service (derived from I3RandomService).
+         */
         I3RandomServicePtr randomService_;
 
         /**
-		 * Parameter: Name of the input I3PhotonSeriesMap frame object
-		 */
-		std::string inputPhotonSeriesMapName_;
+         * Parameter: Name of the input I3PhotonSeriesMap frame object
+         */
+        std::string inputPhotonSeriesMapName_;
 
-		/**
-		 * Parameter: Name of the I3MCHitSeriesMap which will be put into the frame.
-		 */
-		std::string outputMCHitSeriesMapName_;
-		
-		/**
+        /**
+         * Parameter: Name of the I3MCHitSeriesMap which will be put into the frame.
+         */
+        std::string outputMCHitSeriesMapName_;
+        
+        /**
          * Parameter: Name of the I3MCTree frame object. All photon particle IDs are checked against this tree.
          */
         std::string MCTreeName_;
 
-		/**
-		 * @brief The logger can also be used for this module
-		 */
-		SET_LOGGER("I3PhotonToMCHitConverterForMultiPMT");
-		
-	};
+        /**
+         * @brief The logger can also be used for this module
+         */
+        SET_LOGGER("I3PhotonToMCHitConverterForMultiPMT");
+        
+    };
 
 #endif
 

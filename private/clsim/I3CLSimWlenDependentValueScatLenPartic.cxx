@@ -27,13 +27,13 @@ I3CLSimWlenDependentValueScatLenPartic::~I3CLSimWlenDependentValueScatLenPartic(
 double I3CLSimWlenDependentValueScatLenPartic::GetValue(double wlen) const
 {
     const double refWlen = 550.f*I3Units::nanometer;
-	const double x = refWlen/wlen;
-	
+    const double x = refWlen/wlen;
+
     const double scatCoeff = 
     0.0017 * std::pow(x,4.3) + 
     1.34  * volumeConcentrationSmallParticles_ * std::pow(x,1.7) + 
     0.312 * volumeConcentrationLargeParticles_ * std::pow(x,0.3);
-	
+
     return 1./scatCoeff;
 }
 
@@ -41,7 +41,7 @@ std::string I3CLSimWlenDependentValueScatLenPartic::GetOpenCLFunction(const std:
 {
     std::string funcDef = 
     std::string("inline float ") + functionName + std::string("(float wavelength)\n");
-    
+
     std::string funcBody = std::string() + 
     "{\n"
     "    const float volumeConcentrationSmallParticles=" + to_float_string(volumeConcentrationSmallParticles_) + ";   // in ppm\n"
@@ -63,7 +63,7 @@ std::string I3CLSimWlenDependentValueScatLenPartic::GetOpenCLFunction(const std:
     "#endif\n"
     "}\n"
     ;
-    
+
     return funcDef + ";\n\n" + funcDef + funcBody;
 }
 
@@ -80,7 +80,7 @@ bool I3CLSimWlenDependentValueScatLenPartic::CompareTo(const I3CLSimWlenDependen
         // not of the same type, treat it as non-equal
         return false;
     }
-    
+
 }
 
 

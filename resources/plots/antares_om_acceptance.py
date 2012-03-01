@@ -52,12 +52,12 @@ om_area = math.pi*domRadius**2.
 pm_area_factor = pmt_area/om_area
 
 #Evaluate the functions
-x =			 [float(i)/10. for i in range(2800,6201)]
-qe =		 [quantum_efficiency.GetValue(i*I3Units.nanometer) for i in x]
+x =          [float(i)/10. for i in range(2800,6201)]
+qe =         [quantum_efficiency.GetValue(i*I3Units.nanometer) for i in x]
 glass_abs =  [glass_absorption_length.GetValue(i*I3Units.nanometer) for i in x]
-gel_abs =	 [gel_absorption_length.GetValue(i*I3Units.nanometer) for i in x]
-om_acc =	 [om_acceptance.GetValue(i*I3Units.nanometer) for i in x]
-pm_coll =	 [pm_collection_efficiency for i in x]
+gel_abs =    [gel_absorption_length.GetValue(i*I3Units.nanometer) for i in x]
+om_acc =     [om_acceptance.GetValue(i*I3Units.nanometer) for i in x]
+pm_coll =    [pm_collection_efficiency for i in x]
 area_factor =    [pm_area_factor for i in x]
 
 #Calculate some more

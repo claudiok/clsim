@@ -35,56 +35,56 @@ TrkDetectorConstruction::~TrkDetectorConstruction()
 }
 
 void TrkDetectorConstruction::DefineMaterials(){
-	G4double a;  // atomic mass
-	G4double z;  // atomic number
-	G4double density;
-	
-	//***Elements
-	H = new G4Element("Hydrogen",   "H",  z=1.,  a=  1.00794*g/mole);
-	C = new G4Element("C",			"C",  z=6.,  a= 12.01   *g/mole);
-	N = new G4Element("Nitrogen",   "N",  z=7.,  a= 14.0067 *g/mole);
-	O = new G4Element("Oxygen",     "O",  z=8.,  a= 15.9994 *g/mole);
-	
-	Na = new G4Element("Sodium",    "Na", z=11., a= 22.98976928*g/mole);
-	Mg = new G4Element("Magnesium", "Mg", z=12., a= 24.3050 *g/mole);
-	Cl = new G4Element("Chlorine",  "Cl", z=17., a= 35.4527 *g/mole);
-	Ca = new G4Element("Calcium",   "Ca", z=20., a= 40.0784*g/mole);
-	
-	//***Materials
-	//Vacuum
-	Vacuum = new G4Material("Vacuum",z=1.,a=1.01*g/mole,
-							density=universe_mean_density,kStateGas,0.1*kelvin,
-							1.e-19*pascal); 
+    G4double a;  // atomic mass
+    G4double z;  // atomic number
+    G4double density;
+    
+    //***Elements
+    H = new G4Element("Hydrogen",   "H",  z=1.,  a=  1.00794*g/mole);
+    C = new G4Element("C",          "C",  z=6.,  a= 12.01   *g/mole);
+    N = new G4Element("Nitrogen",   "N",  z=7.,  a= 14.0067 *g/mole);
+    O = new G4Element("Oxygen",     "O",  z=8.,  a= 15.9994 *g/mole);
+    
+    Na = new G4Element("Sodium",    "Na", z=11., a= 22.98976928*g/mole);
+    Mg = new G4Element("Magnesium", "Mg", z=12., a= 24.3050 *g/mole);
+    Cl = new G4Element("Chlorine",  "Cl", z=17., a= 35.4527 *g/mole);
+    Ca = new G4Element("Calcium",   "Ca", z=20., a= 40.0784*g/mole);
+    
+    //***Materials
+    //Vacuum
+    Vacuum = new G4Material("Vacuum",z=1.,a=1.01*g/mole,
+                            density=universe_mean_density,kStateGas,0.1*kelvin,
+                            1.e-19*pascal); 
 
-	//Standard Rock (approximation with a composition of individual elements.
-	//Geant4 does not play well with average atomic weights, etc.)
-	//This is not too different from Gran Sasso rock, which
-	//in turn should not be too different from standard rock. The density of 2.65g/cm^3
-	//is the original "standard rock" density given by the full PDG report.
-	StdRock = new G4Material("StdRock",density=2.65*g/cm3,4, kStateSolid );
-	StdRock->AddElement(O,  52.*perCent);
-	StdRock->AddElement(Ca, 27.*perCent);
-	StdRock->AddElement(C,  12.*perCent);
-	StdRock->AddElement(Mg,  9.*perCent);
+    //Standard Rock (approximation with a composition of individual elements.
+    //Geant4 does not play well with average atomic weights, etc.)
+    //This is not too different from Gran Sasso rock, which
+    //in turn should not be too different from standard rock. The density of 2.65g/cm^3
+    //is the original "standard rock" density given by the full PDG report.
+    StdRock = new G4Material("StdRock",density=2.65*g/cm3,4, kStateSolid );
+    StdRock->AddElement(O,  52.*perCent);
+    StdRock->AddElement(Ca, 27.*perCent);
+    StdRock->AddElement(C,  12.*perCent);
+    StdRock->AddElement(Mg,  9.*perCent);
 
-	//Air
-	Air = new G4Material("Air", density= 1.29*mg/cm3, 2);
-	Air->AddElement(N, 70*perCent);
-	Air->AddElement(O, 30*perCent);
+    //Air
+    Air = new G4Material("Air", density= 1.29*mg/cm3, 2);
+    Air->AddElement(N, 70*perCent);
+    Air->AddElement(O, 30*perCent);
 
-	// Sea Water (with salt) TODO: check composition, include ice properties!
+    // Sea Water (with salt) TODO: check composition, include ice properties!
     const double mediumDensity = (mediumProperties_->GetMediumDensity()/( I3Units::g/I3Units::cm3 )) * (g/cm3);
     
-	H2O = new G4Material("H2O", density=mediumDensity, 5, kStateLiquid,286.35*kelvin,1.*atmosphere);
-	H2O->AddElement(H,  10.74*perCent);
-	H2O->AddElement(O,  85.41*perCent);
-	H2O->AddElement(Na,  1.32*perCent);
-	H2O->AddElement(Mg,  0.15*perCent);
-	H2O->AddElement(Cl,  2.37*perCent);
-	
+    H2O = new G4Material("H2O", density=mediumDensity, 5, kStateLiquid,286.35*kelvin,1.*atmosphere);
+    H2O->AddElement(H,  10.74*perCent);
+    H2O->AddElement(O,  85.41*perCent);
+    H2O->AddElement(Na,  1.32*perCent);
+    H2O->AddElement(Mg,  0.15*perCent);
+    H2O->AddElement(Cl,  2.37*perCent);
     
-	//***Material properties tables
-	
+    
+    //***Material properties tables
+    
     // refractive index. We get it as a function, convert it to a table.
     
     // the refractive index has to be constant for all layers at the moment.
@@ -181,48 +181,48 @@ void TrkDetectorConstruction::DefineMaterials(){
     }
     G4cout << G4endl;
 
- 	
-	// set up material properties table
-	MPT = new G4MaterialPropertiesTable();
-	MPT->AddProperty("RINDEX", &(rindex_ppckov[0]), &(rindex[0]), rindex_ppckov.size());
-	
-	H2O->SetMaterialPropertiesTable(MPT);
+    
+    // set up material properties table
+    MPT = new G4MaterialPropertiesTable();
+    MPT->AddProperty("RINDEX", &(rindex_ppckov[0]), &(rindex[0]), rindex_ppckov.size());
+    
+    H2O->SetMaterialPropertiesTable(MPT);
 }
 
 G4VPhysicalVolume* TrkDetectorConstruction::Construct()
 {
-	DefineMaterials();
-	return ConstructDetector();
+    DefineMaterials();
+    return ConstructDetector();
 }
 
 G4VPhysicalVolume* TrkDetectorConstruction::ConstructDetector()
 {
-	G4cout << " ===---***---=== CONSTRUCTING DETECTOR" << G4endl;
-	
+    G4cout << " ===---***---=== CONSTRUCTING DETECTOR" << G4endl;
+    
     const double seaFloorZCoordinate = (mediumProperties_->GetRockZCoord()/I3Units::m)*m;
     const double airZCoordinate = (mediumProperties_->GetAirZCoord()/I3Units::m)*m;
 
     // Set up the world volume. It is a box filled with water.
-	const double simvolume_x = 5.*km; // a rather arbitrary safety margin
-	const double simvolume_y = 5.*km; // a rather arbitrary safety margin
+    const double simvolume_x = 5.*km; // a rather arbitrary safety margin
+    const double simvolume_y = 5.*km; // a rather arbitrary safety margin
     // add 1km of rock and 1km of air // TODO: enough for high-energy simulations?
     const double simvolume_z = std::max(fabs(seaFloorZCoordinate)+1.*km, fabs(airZCoordinate)+1.*km);
-	
     
-	G4cout << "world_r_x=+/-" << simvolume_x/km << "km, " 
+    
+    G4cout << "world_r_x=+/-" << simvolume_x/km << "km, " 
            << "world_r_y=+/-" << simvolume_y/km << "km, " 
            << "world_r_z=+/-" << simvolume_z/km << "km"
            << G4endl; 
     
-	world_sol = new G4Box("world_sol",
-						  simvolume_x, // half-lengths!
-						  simvolume_y,
-						  simvolume_z);
-	world_log = new G4LogicalVolume(world_sol,H2O,
-									"world_log"
-									//,0,0,0,false
-									);
-	
+    world_sol = new G4Box("world_sol",
+                          simvolume_x, // half-lengths!
+                          simvolume_y,
+                          simvolume_z);
+    world_log = new G4LogicalVolume(world_sol,H2O,
+                                    "world_log"
+                                    //,0,0,0,false
+                                    );
+    
     //world_log->SetUserLimits
     //(
     // new G4UserLimits(uStepMax = DBL_MAX,
@@ -232,14 +232,14 @@ G4VPhysicalVolume* TrkDetectorConstruction::ConstructDetector()
     //                  uRangMin = 0. )
     //);
     
-	world_phys = new G4PVPlacement(0,G4ThreeVector(),
-								  world_log,"world_phys",NULL,false,0,false);
+    world_phys = new G4PVPlacement(0,G4ThreeVector(),
+                                  world_log,"world_phys",NULL,false,0,false);
 
-	
     
-	G4cout << "Placing rock at z=" << seaFloorZCoordinate/m << "m." << G4endl;
+    
+    G4cout << "Placing rock at z=" << seaFloorZCoordinate/m << "m." << G4endl;
 
-	// place the sea floor rock box
+    // place the sea floor rock box
     {
         const double seafloor_rock_height = simvolume_z+seaFloorZCoordinate;
         rock_sol = new G4Box("rock_sol",simvolume_x, simvolume_y, seafloor_rock_height/2.);
@@ -262,25 +262,25 @@ G4VPhysicalVolume* TrkDetectorConstruction::ConstructDetector()
     
     
     
-	return world_phys;
+    return world_phys;
 }
 
 void TrkDetectorConstruction::UpdateGeometry(){
-	
-	// clean-up previous geometry
-	G4GeometryManager::GetInstance()->OpenGeometry();
-	
-	G4PhysicalVolumeStore::GetInstance()->Clean();
-	G4LogicalVolumeStore::GetInstance()->Clean();
-	G4SolidStore::GetInstance()->Clean();
-	G4LogicalSkinSurface::CleanSurfaceTable();
-	G4LogicalBorderSurface::CleanSurfaceTable();
-	
-	//define new one
-	G4RunManager::GetRunManager()->DefineWorldVolume(ConstructDetector());
-	G4RunManager::GetRunManager()->GeometryHasBeenModified();
+    
+    // clean-up previous geometry
+    G4GeometryManager::GetInstance()->OpenGeometry();
+    
+    G4PhysicalVolumeStore::GetInstance()->Clean();
+    G4LogicalVolumeStore::GetInstance()->Clean();
+    G4SolidStore::GetInstance()->Clean();
+    G4LogicalSkinSurface::CleanSurfaceTable();
+    G4LogicalBorderSurface::CleanSurfaceTable();
+    
+    //define new one
+    G4RunManager::GetRunManager()->DefineWorldVolume(ConstructDetector());
+    G4RunManager::GetRunManager()->GeometryHasBeenModified();
 
-	updated=false;
+    updated=false;
 }
 
 

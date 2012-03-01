@@ -330,7 +330,7 @@ namespace I3CLSimHelper
                 if ((currentString.maxZ+domRadius > maxZ) || isnan(maxZ)) {
                     maxZ = currentString.maxZ+domRadius;
                 }
-            }	
+            }
         } else {
             BOOST_FOREACH(const stringStruct& currentString, strings)
             {
@@ -340,7 +340,7 @@ namespace I3CLSimHelper
                 if ((currentString.maxZ > maxZ) || isnan(maxZ)) {
                     maxZ = currentString.maxZ;
                 }
-            }	
+            }
         }
     }
     
@@ -414,7 +414,7 @@ namespace I3CLSimHelper
             
         } // for(i)
         
-        return true;	
+        return true;
     }
     
     namespace {
@@ -1051,9 +1051,9 @@ namespace I3CLSimHelper
                 //std::cout << "   new layering created! Contains " << geoLayerNum.back() << " layers." << std::endl;
                 //for (unsigned int l=0;l<geoLayerNum.back();++l)
                 //{
-				//if (layerToOMNumIndexPerStringSet.back()[l] == 0xFF) continue;
-				//std::cout << "    layer " << l << " -> OM " << (int)(layerToOMNumIndexPerStringSet.back()[l]) << std::endl;
-				
+                //if (layerToOMNumIndexPerStringSet.back()[l] == 0xFF) continue;
+                //std::cout << "    layer " << l << " -> OM " << (int)(layerToOMNumIndexPerStringSet.back()[l]) << std::endl;
+                
                 //}
                 
             } // end if (matchfound)
@@ -1139,7 +1139,7 @@ namespace I3CLSimHelper
         
         //output << "__constant const short geoStringIDs[NUM_STRINGS] = {" << std::endl;
         //for (sizeType j=0;j<strings.size();++j){     
-        //	output << "  " << strings[j].stringID << ", " << std::endl;
+        //  output << "  " << strings[j].stringID << ", " << std::endl;
         //}
         //output << "};" << std::endl;
         //output << std::endl;

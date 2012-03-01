@@ -35,26 +35,26 @@ from I3Tray import I3Units
 import numpy, math
 from os.path import expandvars
 
-	#################################################################
+    #################################################################
     # Some getters to store ANTARES specific constants
-	# copied from km3 (hit-eff_area_pmt.f and hit-transmit.f)
-	#################################################################
+    # copied from km3 (hit-eff_area_pmt.f and hit-transmit.f)
+    #################################################################
 def GetAntaresPMTCollectionEfficiency():
-	return 0.9
+    return 0.9
 
 def GetAntaresOMGlassThickness():
-	return 1.5*I3Units.cm
-	
+    return 1.5*I3Units.cm
+    
 def GetAntaresOMGelThickness():
-	return 1.*I3Units.cm
-	
+    return 1.*I3Units.cm
+    
 def GetAntaresPMTDiameter():
-	return 9.3 * 0.0254*I3Units.m # 9.3 inch PMT
-	
+    return 9.3 * 0.0254*I3Units.m # 9.3 inch PMT
+    
 
-	
-	
-	
+    
+    
+    
 #################################################################
 # A function to return the quantum efficiency as instance of
 # I3CLSimWlenDependentValueFromTable
@@ -226,16 +226,16 @@ def GetAntaresOMGelAbsorptionLength():
 #################################################################
 def GetAntaresOMAcceptance(domRadius = 0.2159*I3Units.m): # 17 inch diameter
     
-	# Load the constants
+    # Load the constants
     glass_width = GetAntaresOMGlassThickness()
     gel_width = GetAntaresOMGelThickness()
     pmt_collection_efficiency = GetAntaresPMTCollectionEfficiency()
     pmt_diameter = GetAntaresPMTDiameter()
     
-	# Geometrical area of the om profile
+    # Geometrical area of the om profile
     pmt_area = math.pi * (pmt_diameter/2.)**2 #is im square meters
     om_area = math.pi*domRadius**2.
-	
+    
     # Get the tables from above
     q_eff = GetAntaresOMQuantumEfficiency()
     abs_glass = GetAntaresOMGlassAbsorptionLength()

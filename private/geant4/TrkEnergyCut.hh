@@ -7,15 +7,15 @@ class G4UserSpecialCuts;
 
 class TrkEnergyCut : public G4VPhysicsConstructor
 {
-    public:
-	TrkEnergyCut(const G4String& name);
-	virtual ~TrkEnergyCut();
-	
-	virtual void ConstructParticle();
-	virtual void ConstructProcess();
+public:
+    TrkEnergyCut(const G4String& name);
+    virtual ~TrkEnergyCut();
 
-    protected:
-	G4UserSpecialCuts *theSpecialCutProcess;
+    virtual void ConstructParticle();
+    virtual void ConstructProcess();
+
+protected:
+    G4UserSpecialCuts *theSpecialCutProcess;
 };
 
 #endif

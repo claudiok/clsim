@@ -37,11 +37,11 @@ I3CLSimEventStatistics::I3CLSimEventStatistics()
 template <class Archive>
 void I3CLSimEventStatistics::serialize (Archive &ar, unsigned version)
 {
-	if (version > i3clsimeventstatistics_version_)
-		log_fatal("Attempting to read version %u from file but running version %u of I3CLSimEventStatistics class.",version,i3clsimeventstatistics_version_);
+    if (version > i3clsimeventstatistics_version_)
+        log_fatal("Attempting to read version %u from file but running version %u of I3CLSimEventStatistics class.",version,i3clsimeventstatistics_version_);
 
     ar & make_nvp("I3FrameObject", base_object<I3FrameObject>(*this));
-    
+
     ar & make_nvp("numberOfPhotonsGeneratedPerParticle",numberOfPhotonsGeneratedPerParticle_);
     ar & make_nvp("sumOfWeightsPhotonsGeneratedPerParticle",sumOfWeightsPhotonsGeneratedPerParticle_);
     ar & make_nvp("totalNumberOfPhotonsGenerated",totalNumberOfPhotonsGenerated_);
@@ -51,8 +51,6 @@ void I3CLSimEventStatistics::serialize (Archive &ar, unsigned version)
     ar & make_nvp("sumOfWeightsPhotonsAtDOMsPerParticle",sumOfWeightsPhotonsAtDOMsPerParticle_);
     ar & make_nvp("totalNumberOfPhotonsAtDOMs",totalNumberOfPhotonsAtDOMs_);
     ar & make_nvp("totalSumOfWeightsPhotonsAtDOMs",totalSumOfWeightsPhotonsAtDOMs_);
-
-    
-}     
+}
 
 I3_SERIALIZABLE(I3CLSimEventStatistics);

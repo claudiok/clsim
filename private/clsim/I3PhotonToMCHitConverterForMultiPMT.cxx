@@ -150,10 +150,10 @@ namespace {
         log_trace("OM orientation=(%f,%f,%f)", omOrientation.GetX(), omOrientation.GetY(), omOrientation.GetZ());
         
         //log_info("photon pos=(%f,%f,%f)m, dir=(%f,%f,%f), omRadius=%fm, PMTRadius=%fcm",
-        //		  px/I3Units::m, py/I3Units::m, pz/I3Units::m,
-        //		  dx, dy, dz,
-        //		  omRadius/I3Units::m,
-        //		  PMTRadius/I3Units::cm);
+        //        px/I3Units::m, py/I3Units::m, pz/I3Units::m,
+        //        dx, dy, dz,
+        //        omRadius/I3Units::m,
+        //        PMTRadius/I3Units::cm);
         
         int foundIntersection=-1;
         unsigned int numPMTs = om_typeinfo.GetNumPMTs();

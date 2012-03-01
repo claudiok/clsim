@@ -456,7 +456,7 @@ loadKernel(const std::string& name, bool header)
 
 std::string I3CLSimStepToPhotonConverterOpenCL::GetCollisionDetectionSource(bool header)
 {
-	return loadKernel("sparse_collision_kernel", header);
+    return loadKernel("sparse_collision_kernel", header);
 }
 
 void I3CLSimStepToPhotonConverterOpenCL::Compile()
@@ -854,8 +854,8 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl_runKernel(unsigned in
     try {
         // configure which input buffers to use
         queue_[bufferIndex]->enqueueNDRangeKernel(*(kernel_[bufferIndex]), 
-                                                  cl::NullRange,	// current implementations force this to be NULL
-                                                  cl::NDRange(numberOfInputSteps),	// number of work items
+                                                  cl::NullRange,    // current implementations force this to be NULL
+                                                  cl::NDRange(numberOfInputSteps),  // number of work items
                                                   cl::NDRange(workgroupSize_),
                                                   NULL, //&(bufferWriteEvents),  // wait for buffers to be filled
                                                   &kernelFinishEvent); // signal when finished

@@ -25,7 +25,7 @@
 TrkEMPhysicsUHE::TrkEMPhysicsUHE(const G4String& name)
   :  G4VPhysicsConstructor(name)
 {
-	G4cout << "<<<< UHE EM Physics and Loss Table Extension" << G4endl;
+    G4cout << "<<<< UHE EM Physics and Loss Table Extension" << G4endl;
 }
 
 TrkEMPhysicsUHE::~TrkEMPhysicsUHE()
@@ -35,16 +35,16 @@ TrkEMPhysicsUHE::~TrkEMPhysicsUHE()
 
 void TrkEMPhysicsUHE::ConstructParticle()
 {
-	// no additional particles
+    // no additional particles
 }
 
 void TrkEMPhysicsUHE::ConstructProcess()
 {
-	// Construct Processes
-	
-	//extend binning of PhysicsTables
-	G4LossTableManager::Instance()->SetMaxEnergy(10.*PeV);
-	G4LossTableManager::Instance()->SetDEDXBinning(440);
-	G4LossTableManager::Instance()->SetLambdaBinning(440);
-	G4LossTableManager::Instance()->SetVerbose(0);
+    // Construct Processes
+    
+    //extend binning of PhysicsTables
+    G4LossTableManager::Instance()->SetMaxEnergy(10.*PeV);
+    G4LossTableManager::Instance()->SetDEDXBinning(440);
+    G4LossTableManager::Instance()->SetLambdaBinning(440);
+    G4LossTableManager::Instance()->SetVerbose(0);
 }

@@ -73,13 +73,13 @@ I3CLSimWlenDependentValueRefIndexQuanFry::~I3CLSimWlenDependentValueRefIndexQuan
 double I3CLSimWlenDependentValueRefIndexQuanFry::GetValue(double wlen) const
 {
     const double x = I3Units::nanometer/wlen;
-	return a01 + x*(a2 + x*(a3 + x*a4));
+    return a01 + x*(a2 + x*(a3 + x*a4));
 }
 
 double I3CLSimWlenDependentValueRefIndexQuanFry::GetDerivative(double wlen) const
 {
-	const double x = I3Units::nanometer/wlen;
-	return -x*x*(a2 + x*(2.0f*a3 + x*3.0f*a4))/I3Units::nanometer;
+    const double x = I3Units::nanometer/wlen;
+    return -x*x*(a2 + x*(2.0f*a3 + x*3.0f*a4))/I3Units::nanometer;
 }
 
 std::string I3CLSimWlenDependentValueRefIndexQuanFry::GetOpenCLFunction(const std::string &functionName) const

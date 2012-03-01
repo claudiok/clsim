@@ -293,10 +293,10 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
         }
         
         // Find the current OM in the geometry map
-		I3OMGeoMap::const_iterator geo_it = geometry.omgeo.find(key);
-		if (geo_it == geometry.omgeo.end())
-			log_fatal("OM (%i/%u) not found in the current geometry map!", key.GetString(), key.GetOM());
-		const I3OMGeo &om = geo_it->second;
+        I3OMGeoMap::const_iterator geo_it = geometry.omgeo.find(key);
+        if (geo_it == geometry.omgeo.end())
+            log_fatal("OM (%i/%u) not found in the current geometry map!", key.GetString(), key.GetOM());
+        const I3OMGeo &om = geo_it->second;
 
 #ifdef HAS_MULTIPMT_SUPPORT    
         // get DOM (PMT) direction from geometry
@@ -532,7 +532,7 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
         }
         
         if (hits) {
-        	// sort the photons in each hit series by time
+            // sort the photons in each hit series by time
             std::sort(hits->begin(), hits->end(), MCHitTimeLess);
         }
     }

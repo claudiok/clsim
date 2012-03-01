@@ -32,7 +32,7 @@ maxBetaChangePerStep_(maxBetaChangePerStep),
 maxNumPhotonsPerStep_(maxNumPhotonsPerStep),
 wlenBias_(wlenBias)
 {
-	G4cout << "<<<< Optical Processes (TrkCerenkov)" << G4endl;
+    G4cout << "<<<< Optical Processes (TrkCerenkov)" << G4endl;
 }
 
 TrkOpticalPhysics::~TrkOpticalPhysics()
@@ -46,28 +46,28 @@ void TrkOpticalPhysics::ConstructParticle()
 
 void TrkOpticalPhysics::ConstructProcess()
 {
-	// Construct Processes
-	
-	theCerenkovProcess=new TrkCerenkov();
+    // Construct Processes
+    
+    theCerenkovProcess=new TrkCerenkov();
 
-	theCerenkovProcess->SetMaxBetaChangePerStep(maxBetaChangePerStep_);
-	theCerenkovProcess->SetMaxNumPhotonsPerStep(maxNumPhotonsPerStep_);
-	theCerenkovProcess->SetWlenBiasFunction(wlenBias_);
-	
-	// Add the processes to their respective particles
-	G4ProcessManager * pManager = NULL;
-	
-	
-	theParticleIterator->reset();
-	while ((*theParticleIterator)())
-	{
-		G4ParticleDefinition* particle = theParticleIterator->value();
-		pManager = particle->GetProcessManager();
-		if (theCerenkovProcess->IsApplicable(*particle))
-		{
-			pManager->AddProcess(theCerenkovProcess);
-			pManager->SetProcessOrdering(theCerenkovProcess,idxPostStep);
-		}
-	}
-	
+    theCerenkovProcess->SetMaxBetaChangePerStep(maxBetaChangePerStep_);
+    theCerenkovProcess->SetMaxNumPhotonsPerStep(maxNumPhotonsPerStep_);
+    theCerenkovProcess->SetWlenBiasFunction(wlenBias_);
+    
+    // Add the processes to their respective particles
+    G4ProcessManager * pManager = NULL;
+    
+    
+    theParticleIterator->reset();
+    while ((*theParticleIterator)())
+    {
+        G4ParticleDefinition* particle = theParticleIterator->value();
+        pManager = particle->GetProcessManager();
+        if (theCerenkovProcess->IsApplicable(*particle))
+        {
+            pManager->AddProcess(theCerenkovProcess);
+            pManager->SetProcessOrdering(theCerenkovProcess,idxPostStep);
+        }
+    }
+    
 }

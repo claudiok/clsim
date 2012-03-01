@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////
 //
 // File:        TrkCerenkov.hh  
-// Description:	Discrete Process - Generation of Cerenkov Photons
+// Description: Discrete Process - Generation of Cerenkov Photons
 // Based on:    G4Cerenkov.hh from the original Geant4 distribution
 //              (v4.9.4)
 //
@@ -91,7 +91,7 @@ public: // Without description
     
     // TrkCerenkov(const TrkCerenkov &right);
     
-    ~TrkCerenkov();	
+    ~TrkCerenkov();
     
     ////////////
     // Methods

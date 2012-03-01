@@ -21,7 +21,7 @@ overflow_(NAN)
 
 I3CLSimWlenDependentValuePolynomial::
 I3CLSimWlenDependentValuePolynomial(const std::vector<double> &coeffs,
-									double rangemin, double rangemax)
+                                    double rangemin, double rangemax)
 :
 coefficients_(coeffs),
 rangemin_(rangemin),
@@ -29,15 +29,15 @@ rangemax_(rangemax),
 underflow_(GetValue(rangemin)),
 overflow_(GetValue(rangemax))
 { 
-	if (rangemax_ <= rangemin_) log_fatal("Trying to initalize a polynomial with a invalid range! [%f,%f]", rangemin_, rangemax_);
+    if (rangemax_ <= rangemin_) log_fatal("Trying to initalize a polynomial with a invalid range! [%f,%f]", rangemin_, rangemax_);
 }
 
 
 
 I3CLSimWlenDependentValuePolynomial::
 I3CLSimWlenDependentValuePolynomial(const std::vector<double> &coeffs,
-									double rangemin, double rangemax,
-									double underflow, double overflow)
+                                    double rangemin, double rangemax,
+                                    double underflow, double overflow)
 :
 coefficients_(coeffs),
 rangemin_(rangemin),
@@ -45,7 +45,7 @@ rangemax_(rangemax),
 underflow_(underflow),
 overflow_(overflow)
 { 
-	if (rangemax_ <= rangemin_) log_fatal("Trying to initalize a polynomial with a invalid range! [%f,%f]", rangemin_, rangemax_);
+    if (rangemax_ <= rangemin_) log_fatal("Trying to initalize a polynomial with a invalid range! [%f,%f]", rangemin_, rangemax_);
 }
 
 
@@ -59,8 +59,8 @@ I3CLSimWlenDependentValuePolynomial::~I3CLSimWlenDependentValuePolynomial()
 double I3CLSimWlenDependentValuePolynomial::GetValue(double wlen) const
 {
     if (coefficients_.size()==0) return 0.;
-	if (wlen < rangemin_) return underflow_;
-	else if (wlen > rangemax_) return overflow_;
+    if (wlen < rangemin_) return underflow_;
+    else if (wlen > rangemax_) return overflow_;
     
     double sum=coefficients_[0];
     double multiplier=1.;
@@ -84,13 +84,13 @@ std::string I3CLSimWlenDependentValuePolynomial::GetOpenCLFunction(const std::st
     output << "inline float " << functionName << "(float x);" << std::endl;
     output << "inline float " << functionName << "(float x)" << std::endl;
     output << "{" << std::endl;
-	
-	// check the range
+    
+    // check the range
     if (!std::isinf(rangemin_)) {
         output << "if (x < " << to_float_string(rangemin_) << ")" << std::endl;
-	    output << "{" << std::endl;
-	    output << "    return " << to_float_string(underflow_) << ";" << std::endl;
-	    output << "}" << std::endl;
+        output << "{" << std::endl;
+        output << "    return " << to_float_string(underflow_) << ";" << std::endl;
+        output << "}" << std::endl;
     }
     
     if (!std::isinf(rangemax_)) {
@@ -138,10 +138,10 @@ bool I3CLSimWlenDependentValuePolynomial::CompareTo(const I3CLSimWlenDependentVa
         const I3CLSimWlenDependentValuePolynomial &other_ = dynamic_cast<const I3CLSimWlenDependentValuePolynomial &>(other);
         
         if (other_.coefficients_.size() != coefficients_.size()) return false;
-		if (other_.rangemin_ != rangemin_) return false;
-		if (other_.rangemax_ != rangemax_) return false;
-		if (other_.underflow_ != underflow_) return false;
-		if (other_.overflow_ != overflow_) return false;
+        if (other_.rangemin_ != rangemin_) return false;
+        if (other_.rangemax_ != rangemax_) return false;
+        if (other_.underflow_ != underflow_) return false;
+        if (other_.overflow_ != overflow_) return false;
         
         for (std::size_t i=0;i<coefficients_.size();++i)
         {

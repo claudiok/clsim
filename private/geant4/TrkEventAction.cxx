@@ -40,8 +40,8 @@ TrkEventAction::~TrkEventAction()
 
 void TrkEventAction::BeginOfEventAction(const G4Event* anEvent)
 {
-	// New event, add the user information object
-	TrkUserEventInformation* eventInformation = 
+    // New event, add the user information object
+    TrkUserEventInformation* eventInformation = 
     new TrkUserEventInformation(maxBunchSize_,
                                 stepStore_,
                                 sendToParameterizationQueue_,
@@ -51,17 +51,17 @@ void TrkEventAction::BeginOfEventAction(const G4Event* anEvent)
                                 currentExternalParticleID_,
                                 maxRefractiveIndex_);
 
-	G4EventManager::GetEventManager()->SetUserInformation(eventInformation);
-	
+    G4EventManager::GetEventManager()->SetUserInformation(eventInformation);
+    
     eventInformation->StartClock();
 }
 
 void TrkEventAction::EndOfEventAction(const G4Event* anEvent)
 {
-	//G4ParticleTable* theParticleTable = G4ParticleTable::GetParticleTable();
-	
-	TrkUserEventInformation* eventInformation =
-	(TrkUserEventInformation*)anEvent->GetUserInformation();
+    //G4ParticleTable* theParticleTable = G4ParticleTable::GetParticleTable();
+    
+    TrkUserEventInformation* eventInformation =
+    (TrkUserEventInformation*)anEvent->GetUserInformation();
 
     abortRequested_ = eventInformation->abortRequested;
 }

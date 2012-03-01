@@ -31,17 +31,17 @@ I3CLSimFlasherPulse::~I3CLSimFlasherPulse()
 template <class Archive>
 void I3CLSimFlasherPulse::serialize(Archive &ar, unsigned version)
 {
-	if (version > i3clsimflasherpulse_version_)
-		log_fatal("Attempting to read version %u from file but running version %u of I3CLSimFlasherPulse class.",version,i3clsimflasherpulse_version_);
-	
-	ar & make_nvp("flasherPulseType", flasherPulseType_);
-	ar & make_nvp("dir", dir_);
-	ar & make_nvp("pos", pos_);
-	ar & make_nvp("time", time_);
-	ar & make_nvp("numberOfPhotonsNoBias", numberOfPhotonsNoBias_);
-	ar & make_nvp("pulseWidth", pulseWidth_);
-	ar & make_nvp("angularEmissionSigmaPolar", angularEmissionSigmaPolar_);
-	ar & make_nvp("angularEmissionSigmaAzimuthal", angularEmissionSigmaAzimuthal_);
+    if (version > i3clsimflasherpulse_version_)
+        log_fatal("Attempting to read version %u from file but running version %u of I3CLSimFlasherPulse class.",version,i3clsimflasherpulse_version_);
+    
+    ar & make_nvp("flasherPulseType", flasherPulseType_);
+    ar & make_nvp("dir", dir_);
+    ar & make_nvp("pos", pos_);
+    ar & make_nvp("time", time_);
+    ar & make_nvp("numberOfPhotonsNoBias", numberOfPhotonsNoBias_);
+    ar & make_nvp("pulseWidth", pulseWidth_);
+    ar & make_nvp("angularEmissionSigmaPolar", angularEmissionSigmaPolar_);
+    ar & make_nvp("angularEmissionSigmaAzimuthal", angularEmissionSigmaAzimuthal_);
 }     
 
 I3_SERIALIZABLE(I3CLSimFlasherPulse);
