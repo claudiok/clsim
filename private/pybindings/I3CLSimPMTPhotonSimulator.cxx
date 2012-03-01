@@ -28,7 +28,6 @@
 #endif
 
 #include <boost/preprocessor/seq.hpp>
-#include <icetray/python/std_vector_indexing_suite.hpp>
 #include "const_ptr_helpers.h"
 
 

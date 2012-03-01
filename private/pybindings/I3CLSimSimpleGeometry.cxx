@@ -27,7 +27,6 @@
 #include <clsim/I3CLSimSimpleGeometryFromI3Geometry.h>
 
 #include <boost/preprocessor/seq.hpp>
-#include <icetray/python/std_vector_indexing_suite.hpp>
 
 using namespace boost::python;
 namespace bp = boost::python;

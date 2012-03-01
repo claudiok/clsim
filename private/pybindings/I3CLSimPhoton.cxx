@@ -27,6 +27,8 @@
 #include <boost/preprocessor/seq.hpp>
 #include <icetray/python/std_vector_indexing_suite.hpp>
 #include <icetray/python/std_map_indexing_suite.hpp>
+#include <icetray/python/copy_suite.hpp>
+#include <icetray/python/boost_serializable_pickle_suite.hpp>
 
 using namespace boost::python;
 
@@ -114,15 +116,20 @@ void register_I3CLSimPhoton()
         .def("SetStartDirXYZ", SetStartDir_threeary)
         
         .def("__str__", i3clsimphoton_prettyprint)
+
+        .def(bp::copy_suite<I3CLSimPhoton>())
+        .def_pickle(bp::boost_serializable_pickle_suite<I3CLSimPhoton>())
         ;
     }
     
     class_<I3CLSimPhotonSeries, bases<I3FrameObject>, I3CLSimPhotonSeriesPtr>("I3CLSimPhotonSeries")
     .def(std_vector_indexing_suite<I3CLSimPhotonSeries>())
+    .def_pickle(bp::boost_serializable_pickle_suite<I3CLSimPhotonSeries>())
     ;
 
     class_<I3CLSimPhotonSeriesMap, bases<I3FrameObject>, I3CLSimPhotonSeriesMapPtr>("I3CLSimPhotonSeriesMap")
     .def(std_map_indexing_suite<I3CLSimPhotonSeriesMap>())
+    .def_pickle(bp::boost_serializable_pickle_suite<I3CLSimPhotonSeriesMap>())
     ;
 
     // does not base on I3FrameObject, so register only the shared_ptr<T>-to-shared_ptr<const T> conversion

@@ -31,8 +31,9 @@
 
 #include <clsim/I3CLSimRandomValueWlenCherenkovNoDispersion.h>
 
-#include <boost/preprocessor/seq.hpp>
 #include <icetray/python/std_vector_indexing_suite.hpp>
+
+#include <boost/preprocessor/seq.hpp>
 #include "const_ptr_helpers.h"
 
 
@@ -286,7 +287,7 @@ void register_I3CLSimRandomValue()
     
     {
         typedef std::vector<I3CLSimRandomValueConstPtr> Series;
-	bp::class_<Series, shared_ptr<Series> >("I3CLSimRandomValuePtrSeries")
+        bp::class_<Series, shared_ptr<Series> >("I3CLSimRandomValuePtrSeries")
             .def(bp::std_vector_indexing_suite<Series>())
         ;
     }

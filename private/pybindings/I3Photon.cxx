@@ -23,8 +23,7 @@
 
 #include <clsim/I3Photon.h>
 #include <boost/preprocessor/seq.hpp>
-#include <icetray/python/std_vector_indexing_suite.hpp>
-#include <icetray/python/std_map_indexing_suite.hpp>
+#include <icetray/python/dataclass_suite.hpp>
 
 using namespace boost::python;
 
@@ -134,15 +133,17 @@ void register_I3Photon()
         .def("SetParticleID", &I3Photon::SetParticleID)
 
         .def("__str__", i3photon_prettyprint)
+
+        .def(dataclass_suite<I3Photon>())
         ;
     }
     
     class_<I3PhotonSeries, bases<I3FrameObject>, I3PhotonSeriesPtr>("I3PhotonSeries")
-    .def(std_vector_indexing_suite<I3PhotonSeries>())
+    .def(dataclass_suite<I3PhotonSeries>())
     ;
 
     class_<I3PhotonSeriesMap, bases<I3FrameObject>, I3PhotonSeriesMapPtr>("I3PhotonSeriesMap")
-    .def(std_map_indexing_suite<I3PhotonSeriesMap>())
+    .def(dataclass_suite<I3PhotonSeriesMap>())
     ;
 
     register_pointer_conversions<I3Photon>();

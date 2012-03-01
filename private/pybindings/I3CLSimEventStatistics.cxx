@@ -24,8 +24,7 @@
 #include <clsim/I3CLSimEventStatistics.h>
 
 #include <boost/preprocessor/seq.hpp>
-#include <icetray/python/std_vector_indexing_suite.hpp>
-#include <icetray/python/std_map_indexing_suite.hpp>
+#include <icetray/python/dataclass_suite.hpp>
 
 using namespace boost::python;
 
@@ -78,6 +77,8 @@ void register_I3CLSimEventStatistics()
 
         .def("AddNumPhotonsAtDOMsWithWeights", AddNumPhotonsAtDOMsWithWeights_oneary, bp::arg("numPhotons"), bp::arg("weightsForPhotons"), bp::arg("particle"))
         .def("AddNumPhotonsAtDOMsWithWeights", AddNumPhotonsAtDOMsWithWeights_twoary, bp::args("numPhotons", "weightsForPhotons", "majorID", "minorID"))
+
+        .def(dataclass_suite<I3CLSimEventStatistics>())
         ;
     }
 

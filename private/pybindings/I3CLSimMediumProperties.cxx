@@ -25,9 +25,7 @@
 
 #include <boost/preprocessor/seq.hpp>
 #include <icetray/python/std_vector_indexing_suite.hpp>
-
-// disabled for now until this gets released into offline-software
-//#include "boost_serializable_pickle_suite.hpp"
+#include <icetray/python/boost_serializable_pickle_suite.hpp>
 
 using namespace boost::python;
 namespace bp = boost::python;
@@ -94,7 +92,7 @@ void register_I3CLSimMediumProperties()
         .add_property("ForcedMinWlen", &I3CLSimMediumProperties::GetForcedMinWlen, &I3CLSimMediumProperties::SetForcedMinWlen)
         .add_property("ForcedMaxWlen", &I3CLSimMediumProperties::GetForcedMaxWlen, &I3CLSimMediumProperties::SetForcedMaxWlen)
 
-        //.def_pickle(boost_serializable_pickle_suite<I3CLSimMediumProperties>())
+        .def_pickle(boost_serializable_pickle_suite<I3CLSimMediumProperties>())
         ;
     }
     

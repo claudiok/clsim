@@ -27,9 +27,9 @@
 #include <clsim/I3CLSimStep.h>
 #include <boost/preprocessor/seq.hpp>
 #include <icetray/python/std_vector_indexing_suite.hpp>
+#include <icetray/python/copy_suite.hpp>
+#include <icetray/python/boost_serializable_pickle_suite.hpp>
 
-// disabled for now until this gets released into offline-software
-//#include "boost_serializable_pickle_suite.hpp"
 
 namespace bp=boost::python;
 
@@ -100,13 +100,16 @@ void register_I3CLSimStep()
         .def("SetDirXYZ", SetDir_threeary)
 
         .def("__str__", i3clsimstep_prettyprint)
+
+        .def(bp::copy_suite<I3CLSimStep>())
+        .def_pickle(bp::boost_serializable_pickle_suite<I3CLSimStep>())
         ;
     }
 
 
     bp::class_<I3CLSimStepSeries, bp::bases<I3FrameObject>, I3CLSimStepSeriesPtr>("I3CLSimStepSeries")
     .def(bp::std_vector_indexing_suite<I3CLSimStepSeries>())
-    //.def_pickle(boost_serializable_pickle_suite<I3CLSimStepSeries>())
+    .def_pickle(bp::boost_serializable_pickle_suite<I3CLSimStepSeries>())
     ;
 
     // does not base on I3FrameObject, so register only the shared_ptr<T>-to-shared_ptr<const T> conversion
