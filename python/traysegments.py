@@ -75,7 +75,14 @@ def genDefaultParameterizationList(theConverter, muonOnly=False):
 
     return parameterizationsMuon+parameterizationsOther
 
-@icetray.traysegment
+
+def unchanged(func):
+    "This decorator doesn't add any behavior"
+    return func
+my_traysegment = icetray.traysegment if hasattr(icetray, "traysegment") else unchanged
+
+
+@my_traysegment
 def I3CLSimMakeHits(tray, name,
                     UseCPUs=False,
                     UseGPUs=True,
