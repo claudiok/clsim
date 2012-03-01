@@ -202,12 +202,15 @@ def I3CLSimMakeHits(tray, name,
     if (PhotonSeriesName is None) and (MCHitSeriesName is None):
         raise RuntimeError("You need to set at least one of the \"PhotonSeriesName\" or \"MCHitSeriesName\" arguments to something other than None!")
 
+    # warn the user in case they might have done something they probably don't want
+    if UnWeightedPhotons and (DOMOversizeFactor != 1.):
+        print "********************"
+        print "Enabling the clsim.I3CLSimMakeHits() \"UnWeightedPhotons=True\" option without setting"
+        print "\"DOMOversizeFactor=1.\" will still apply a constant weighting factor of DOMOversizeFactor**2."
+        print "If this is what you want, you can safely ignore this warning."
+        print "********************"
+
     # some constants
-    if UnWeightedPhotons:
-        # no oversizing if the user requested unweighted photons
-        RadiusOverSizeFactor = 1.
-    else:
-        RadiusOverSizeFactor = DOMOversizeFactor
     DOMRadius = 0.16510*icetray.I3Units.m # 13" diameter
     Jitter = 2.*icetray.I3Units.ns
     numFlasherPhotonsAtFullBrightness = 8.0e9
@@ -274,7 +277,7 @@ def I3CLSimMakeHits(tray, name,
 
 
     # detector properties
-    domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius = DOMRadius*RadiusOverSizeFactor)
+    domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius = DOMRadius*DOMOversizeFactor)
     domAngularSensitivity = clsim.GetIceCubeDOMAngularSensitivity(holeIce=True)
 
     # photon generation wavelength bias
@@ -340,7 +343,7 @@ def I3CLSimMakeHits(tray, name,
     tray.AddModule("I3CLSimModule", name + "_clsim",
                    MCTreeName=clSimMCTreeName,
                    PhotonSeriesMapName=photonsName,
-                   DOMRadius = DOMRadius*RadiusOverSizeFactor, 
+                   DOMRadius = DOMRadius*DOMOversizeFactor, 
                    RandomService=RandomService,
                    MediumProperties=mediumProperties,
                    SpectrumTable=spectrumTable,
@@ -366,7 +369,7 @@ def I3CLSimMakeHits(tray, name,
                        InputPhotonSeriesMapName = photonsName,
                        OutputMCHitSeriesMapName = MCHitSeriesName,
                        DOMRadiusWithoutOversize=DOMRadius,
-                       DOMOversizeFactor = RadiusOverSizeFactor,
+                       DOMOversizeFactor = DOMOversizeFactor,
                        WavelengthAcceptance = domAcceptance,
                        AngularAcceptance = domAngularSensitivity,
                        PMTPhotonSimulator = pmtPhotonSimulator,
