@@ -111,12 +111,12 @@ if(OPENCL_FOUND)
   ADD_DEFINITIONS(-D__STDC_FORMAT_MACROS)
 
   if(NOT EXISTS ${CMAKE_SOURCE_DIR}/clsim/resources/safeprimes_base32.txt)
-    colormsg(RED   "+-- Downloading and unpacking the safeprimes_base32.txt data file...")
-    colormsg(RED   "    (this file will only be downloaded once)")
+    message(STATUS   "+-- Downloading and unpacking the safeprimes_base32.txt data file...")
+    message(STATUS   "    (this file will only be downloaded once)")
     EXECUTE_PROCESS(COMMAND ${CMAKE_SOURCE_DIR}/clsim/resources/download_safeprimes.sh ${CMAKE_SOURCE_DIR}/clsim/resources)
-    colormsg(GREEN "+-- ...download complete.")
+    message(STATUS "+-- ...download complete.")
   else(NOT EXISTS ${CMAKE_SOURCE_DIR}/clsim/resources/safeprimes_base32.txt)
-    colormsg(CYAN  "+-- safeprimes_base32.txt already downloaded")
+    message(STATUS  "+-- safeprimes_base32.txt already downloaded")
   endif(NOT EXISTS ${CMAKE_SOURCE_DIR}/clsim/resources/safeprimes_base32.txt)
 
   # check for Q-Frame support
@@ -124,9 +124,9 @@ if(OPENCL_FOUND)
     # we assume that the existence of this module means that we have
     # to deal with a Q-frame-enabled meta-project
     ADD_DEFINITIONS(-DIS_Q_FRAME_ENABLED)
-    colormsg(GREEN "+-- Q-frame-enabled")
+    message(STATUS "+-- Q-frame-enabled")
   else(EXISTS ${CMAKE_SOURCE_DIR}/dataio/private/dataio/QConverter.cxx)
-    colormsg(YELLOW "+-- old-style, non-Q-frame module")
+    message(STATUS "+-- old-style, non-Q-frame module")
   endif(EXISTS ${CMAKE_SOURCE_DIR}/dataio/private/dataio/QConverter.cxx)
 
 
@@ -139,7 +139,7 @@ if(OPENCL_FOUND)
          )
 
     ADD_DEFINITIONS(-DUSE_HIT_MAKER)
-    colormsg(GREEN "+-- hit-maker support (for pre-Rosencrantz simulations)")
+    message(STATUS "+-- hit-maker support (for pre-Rosencrantz simulations)")
   endif(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/hit-maker)
 
 
@@ -152,7 +152,7 @@ if(OPENCL_FOUND)
          )
 
     ADD_DEFINITIONS(-DHAS_MULTIPMT_SUPPORT)
-    colormsg(GREEN "+-- multiPMT support")
+    message(STATUS "+-- multiPMT support")
   endif(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3OMTypeInfo.h)
 
 
@@ -170,13 +170,13 @@ if(OPENCL_FOUND)
       private/make_safeprimes/main.c
       USE_TOOLS python boost gmp
       )
-    colormsg(GREEN "+-- gmp support (make_safeprimes utility)")
+    message(STATUS "+-- gmp support (make_safeprimes utility)")
   else(GMP_FOUND)
-    colormsg(CYAN  "+-- no gmp support (make_safeprimes utility)")
+    message(STATUS  "+-- no gmp support (make_safeprimes utility)")
   endif(GMP_FOUND)
 
   add_subdirectory(private/pybindings)
 
 else(OPENCL_FOUND) # there is no OpenCL installed on this system
-    colormsg(RED   "+-- OpenCL is not installed on your system. Cannot build clsim!")
+    message(STATUS "+-- OpenCL is not installed on your system. Cannot build clsim!")
 endif(OPENCL_FOUND)
