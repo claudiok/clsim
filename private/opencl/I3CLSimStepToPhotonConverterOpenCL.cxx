@@ -549,18 +549,20 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
     
     //BuildOptions += "-w "; // no warnings
     //BuildOptions += "-Werror "; // warnings will become errors
-    BuildOptions += "-cl-mad-enable ";
     //BuildOptions += "-cl-opt-disable ";
     //BuildOptions += "-cl-no-signed-zeros ";
     //BuildOptions += "-cl-unsafe-math-optimizations ";
-    BuildOptions += "-cl-fast-relaxed-math ";
+    BuildOptions += "-cl-mad-enable ";
     
     // only valid if extension "cl_nv_compiler_options" is present
     //BuildOptions += "-cl-nv-verbose ";          // Passed on to ptxas as --verbose
     //BuildOptions += "-cl-nv-maxrregcount=60 ";  // Passed on to ptxas as --maxrregcount <N>
     //BuildOptions += "-cl-nv-opt-level=3 ";     // Passed on to ptxas as --opt-level <N>
     
-    if (useNativeMath_) {BuildOptions += "-DUSE_NATIVE_MATH ";}
+    if (useNativeMath_) {
+        BuildOptions += "-cl-fast-relaxed-math ";
+        BuildOptions += "-DUSE_NATIVE_MATH ";
+    }
 
     // let the kernel code know that no flasher spectra will be used
     // (might be useful for some optimizations, i.e. less branches)
