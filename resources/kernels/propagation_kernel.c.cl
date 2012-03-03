@@ -160,7 +160,7 @@ inline float2 sphDirFromCar(double4 carDir)
     const double r_inv = my_rsqrt(carDir.x*carDir.x+carDir.y*carDir.y+carDir.z*carDir.z);
 
     double theta = 0.;
-    if (my_fabs(carDir.z*r_inv)<=1.) {
+    if ((my_fabs(carDir.z*r_inv))<=1.) {
         theta=acos(carDir.z*r_inv);
     } else {
         if (carDir.z<0.) theta=PI;
@@ -179,7 +179,7 @@ inline float2 sphDirFromCar(float4 carDir)
     const float r_inv = my_rsqrt(carDir.x*carDir.x+carDir.y*carDir.y+carDir.z*carDir.z);
 
     float theta = 0.f;
-    if (my_fabs(carDir.z*r_inv)<=1.f) {
+    if ((my_fabs(carDir.z*r_inv))<=1.f) {
         theta=acos(carDir.z*r_inv);
     } else {
         if (carDir.z<0.f) theta=PI;
@@ -449,7 +449,7 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
 #endif
         
             floating_t distanceToAbsorption;
-            if ((currentPhotonLayer==j) || my_fabs(photon_dz)<EPSILON) {
+            if ((currentPhotonLayer==j) || ((my_fabs(photon_dz))<EPSILON)) {
                 distancePropagated=sca_step_left*currentScaLen;
                 distanceToAbsorption=abs_lens_left*currentAbsLen;
             } else {

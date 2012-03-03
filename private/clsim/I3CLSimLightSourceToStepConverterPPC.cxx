@@ -243,12 +243,14 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLight
     (particle.GetType()==I3Particle::MuPlus);
 
     const double E = particle.GetEnergy()/I3Units::GeV;
-    const double logE = log(E);
+    const double logE = std::max(0., std::log(E)); // protect against extremely low energies
     const double Lrad=0.358*(I3Units::g/I3Units::cm3)/density;
 
     if (isElectron) {
         const double pa=2.03+0.604*logE;
-        const double pb=Lrad/0.633;
+        double pb=Lrad/0.633;
+        
+        if (E < 1.*I3Units::GeV) pb=0.; // this sets the cascade length to 0.
         
         const double nph=5.21*(0.924*I3Units::g/I3Units::cm3)/density;
         
@@ -289,6 +291,7 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLight
         cascadeStepGenInfo.numPhotonsInLastStep=numPhotonsInLastStep;
         cascadeStepGenInfo.pa=pa;
         cascadeStepGenInfo.pb=pb;
+        
         log_trace("== enqueue cascade (e-m)");
         stepGenerationQueue_.push_back(cascadeStepGenInfo);
         
@@ -296,6 +299,8 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLight
     } else if (isHadron) {
         double pa=1.49+0.359*logE;
         double pb=Lrad/0.772;
+        
+        if (E < 1.*I3Units::GeV) pb=0.; // this sets the cascade length to 0.
         
         const double em=5.21*(0.924*I3Units::g/I3Units::cm3)/density;
         
@@ -807,8 +812,6 @@ void I3CLSimLightSourceToStepConverterPPC::GenerateStep(I3CLSimStep &newStep,
                             random_value);
     
     newStep.SetDir(step_dx, step_dy, step_dz);
-    
-    
 }
 
 void I3CLSimLightSourceToStepConverterPPC::GenerateStepForMuon(I3CLSimStep &newStep,
