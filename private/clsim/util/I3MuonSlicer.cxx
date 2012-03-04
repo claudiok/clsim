@@ -29,7 +29,7 @@
 #endif
 #include <inttypes.h>
 
-#include "clsim/I3MuonSlicer.h"
+#include "clsim/util/I3MuonSlicer.h"
 
 #include <boost/foreach.hpp>
 

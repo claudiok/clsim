@@ -32,7 +32,7 @@
 
 #include "dataclasses/geometry/I3Geometry.h"
 
-#include "clsim/I3ShadowedPhotonRemover.h"
+#include "clsim/shadow/I3ShadowedPhotonRemover.h"
 
 #include <string>
 

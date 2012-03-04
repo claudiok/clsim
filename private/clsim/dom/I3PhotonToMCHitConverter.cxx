@@ -31,7 +31,7 @@
 
 #include <algorithm>
 
-#include "clsim/I3PhotonToMCHitConverter.h"
+#include "clsim/dom/I3PhotonToMCHitConverter.h"
 
 #include <boost/foreach.hpp>
 

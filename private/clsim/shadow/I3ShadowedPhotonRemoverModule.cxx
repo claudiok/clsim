@@ -29,7 +29,7 @@
 #endif 
 #include <inttypes.h>
 
-#include "clsim/I3ShadowedPhotonRemoverModule.h"
+#include "clsim/shadow/I3ShadowedPhotonRemoverModule.h"
 
 #include <boost/foreach.hpp>
 

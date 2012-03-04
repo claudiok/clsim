@@ -67,11 +67,11 @@ if(OPENCL_FOUND)
     private/clsim/I3CLSimSpectrumTable.cxx
     private/clsim/I3CLSimFlasherPulse.cxx
     private/clsim/I3CLSimLightSourceToStepConverterFlasher.cxx
-    private/clsim/I3MuonSlicer.cxx
+    private/clsim/util/I3MuonSlicer.cxx
     private/clsim/I3Photon.cxx
-    private/clsim/I3PhotonToMCHitConverter.cxx
-    private/clsim/I3ShadowedPhotonRemover.cxx
-    private/clsim/I3ShadowedPhotonRemoverModule.cxx
+    private/clsim/dom/I3PhotonToMCHitConverter.cxx
+    private/clsim/shadow/I3ShadowedPhotonRemover.cxx
+    private/clsim/shadow/I3ShadowedPhotonRemoverModule.cxx
 
     # tableio converters
     private/clsim/converter/I3PhotonConverter.cxx
@@ -149,7 +149,7 @@ if(OPENCL_FOUND)
   # support for 3-item OMKeys is coming soon!
   if(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3OMTypeInfo.h)
     LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
-         private/clsim/I3PhotonToMCHitConverterForMultiPMT.cxx
+         private/clsim/dom/I3PhotonToMCHitConverterForMultiPMT.cxx
          )
 
     ADD_DEFINITIONS(-DHAS_MULTIPMT_SUPPORT)

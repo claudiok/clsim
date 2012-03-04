@@ -28,7 +28,7 @@
 #include <inttypes.h>
 
 // Things from this module:
-#include "clsim/I3PhotonToMCHitConverterForMultiPMT.h"
+#include "clsim/dom/I3PhotonToMCHitConverterForMultiPMT.h"
 
 #include "clsim/I3Photon.h"
 #include "dataclasses/physics/I3MCHit.h"

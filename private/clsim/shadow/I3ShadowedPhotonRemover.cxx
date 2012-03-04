@@ -31,7 +31,7 @@
 
 #include <limits>
 
-#include "clsim/I3ShadowedPhotonRemover.h"
+#include "clsim/shadow/I3ShadowedPhotonRemover.h"
 
 #include "dataclasses/I3Constants.h"
 
