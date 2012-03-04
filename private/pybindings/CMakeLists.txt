@@ -39,7 +39,7 @@ if(BUILD_PYBINDINGS)
     I3CLSimSpectrumTable.cxx
     I3CLSimFlasherPulse.cxx
     I3Converters.cxx
-    I3HoleIceSimulator.cxx
+    I3ShadowedPhotonRemover.cxx
     module.cxx
     USE_TOOLS boost python log4cplus
     USE_PROJECTS icetray dataclasses clsim

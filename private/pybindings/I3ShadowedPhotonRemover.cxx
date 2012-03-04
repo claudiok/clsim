@@ -1,5 +1,5 @@
 //
-//   Copyright (c) 2011  Claudio Kopper
+//   Copyright (c) 2012  Claudio Kopper
 //   
 //   $Id$
 //
@@ -21,7 +21,7 @@
 
 #include <sstream>
 
-#include <clsim/I3HoleIceSimulator.h>
+#include <clsim/I3ShadowedPhotonRemover.h>
 
 #include <boost/preprocessor/seq.hpp>
 
@@ -29,28 +29,28 @@ using namespace boost::python;
 namespace bp = boost::python;
 
 
-void register_I3HoleIceSimulator()
+void register_I3ShadowedPhotonRemover()
 {
     {
-        bp::scope I3HoleIceSimulator_scope = 
-        bp::class_<I3HoleIceSimulator, boost::shared_ptr<I3HoleIceSimulator>, boost::noncopyable>
-        ("I3HoleIceSimulator", 
-         bp::init<I3RandomServicePtr, double, double, I3CLSimMediumPropertiesConstPtr, I3CLSimWlenDependentValueConstPtr, I3CLSimWlenDependentValueConstPtr>
-         (
-          (
-           bp::arg("random"),
-           bp::arg("DOMRadius"),
-           bp::arg("holeRadius"),
-           bp::arg("mediumProperties"),
-           bp::arg("holeIceAbsorptionLength"),
-           bp::arg("holeIceScatteringLength")
-          )
-         )
+        bp::scope I3ShadowedPhotonRemover_scope = 
+        bp::class_<I3ShadowedPhotonRemover, boost::shared_ptr<I3ShadowedPhotonRemover>, boost::noncopyable>
+        ("I3ShadowedPhotonRemover", 
+         bp::init<>()
+         //(
+         // (
+         //  bp::arg("random"),
+         //  bp::arg("DOMRadius"),
+         //  bp::arg("holeRadius"),
+         //  bp::arg("mediumProperties"),
+         //  bp::arg("holeIceAbsorptionLength"),
+         //  bp::arg("holeIceScatteringLength")
+         // )
+         //)
         )
 
-        .def("TrackPhoton", &I3HoleIceSimulator::TrackPhoton)
+        .def("IsPhotonShadowed", &I3ShadowedPhotonRemover::IsPhotonShadowed)
         ;
     }
     
-    bp::implicitly_convertible<shared_ptr<I3HoleIceSimulator>, shared_ptr<const I3HoleIceSimulator> >();
+    bp::implicitly_convertible<shared_ptr<I3ShadowedPhotonRemover>, shared_ptr<const I3ShadowedPhotonRemover> >();
 }

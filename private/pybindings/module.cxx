@@ -50,7 +50,7 @@ namespace bp = boost::python;
     (I3CLSimPMTPhotonSimulator)                     \
     (I3Converters)(I3CLSimOpenCLDevice)             \
     (I3CLSimLightSource)(I3CLSimSpectrumTable)      \
-    (I3CLSimFlasherPulse)(I3HoleIceSimulator)
+    (I3CLSimFlasherPulse)(I3ShadowedPhotonRemover)
 
 #define I3_REGISTRATION_FN_DECL(r, data, t) void BOOST_PP_CAT(register_,t)();
 #define I3_REGISTER(r, data, t) BOOST_PP_CAT(register_,t)();

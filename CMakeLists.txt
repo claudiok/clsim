@@ -70,8 +70,8 @@ if(OPENCL_FOUND)
     private/clsim/I3MuonSlicer.cxx
     private/clsim/I3Photon.cxx
     private/clsim/I3PhotonToMCHitConverter.cxx
-    private/clsim/I3HoleIceSimulator.cxx
-    private/clsim/I3HoleIceSimulatorModule.cxx
+    private/clsim/I3ShadowedPhotonRemover.cxx
+    private/clsim/I3ShadowedPhotonRemoverModule.cxx
 
     # tableio converters
     private/clsim/converter/I3PhotonConverter.cxx
