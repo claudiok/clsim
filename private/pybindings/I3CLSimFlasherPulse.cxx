@@ -23,7 +23,9 @@
 
 #include <clsim/I3CLSimFlasherPulse.h>
 #include <boost/preprocessor/seq.hpp>
-#include <icetray/python/std_vector_indexing_suite.hpp>
+#include <icetray/python/copy_suite.hpp>
+#include <icetray/python/boost_serializable_pickle_suite.hpp>
+#include <icetray/python/dataclass_suite.hpp>
 
 namespace bp = boost::python;
 
@@ -70,6 +72,9 @@ void register_I3CLSimFlasherPulse()
         .def("GetAngularEmissionSigmaAzimuthal", &I3CLSimFlasherPulse::GetAngularEmissionSigmaAzimuthal)
         .def("SetAngularEmissionSigmaAzimuthal", &I3CLSimFlasherPulse::SetAngularEmissionSigmaAzimuthal)
         .add_property("angularEmissionSigmaAzimuthal", &I3CLSimFlasherPulse::GetAngularEmissionSigmaAzimuthal, &I3CLSimFlasherPulse::SetAngularEmissionSigmaAzimuthal)
+
+        .def_pickle(bp::boost_serializable_pickle_suite<I3CLSimFlasherPulse>())
+        .def(bp::copy_suite<I3CLSimFlasherPulse>())
         ;
         
         
@@ -81,7 +86,8 @@ void register_I3CLSimFlasherPulse()
     }
     
     bp::class_<I3CLSimFlasherPulseSeries, bp::bases<I3FrameObject>, I3CLSimFlasherPulseSeriesPtr>("I3CLSimFlasherPulseSeries")
-    .def(bp::std_vector_indexing_suite<I3CLSimFlasherPulseSeries>())
+    .def(bp::dataclass_suite<I3CLSimFlasherPulseSeries>())
+    
     ;
 
     bp::implicitly_convertible<shared_ptr<I3CLSimFlasherPulse>, shared_ptr<const I3CLSimFlasherPulse> >();
