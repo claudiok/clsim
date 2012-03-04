@@ -51,6 +51,8 @@
 #include "clsim/I3CLSimLightSourceParameterization.h"
 
 #include "clsim/I3Photon.h"
+
+#include "clsim/I3CLSimPhotonHistory.h"
 #include "clsim/I3CLSimEventStatistics.h"
 
 #include <boost/thread.hpp>
@@ -230,6 +232,10 @@ private:
     ///   photons will be stopped once they hit a DOM. If this is false, they continue to
     ///   propagate.
     bool stopDetectedPhotons_;
+    
+    /// Parmeter: Sets the number of scattering step positions that are saved for a photon hitting
+    ///   a DOM. The last N photons are saved if there are more scattering points than available entries.
+    uint32_t photonHistoryEntries_;
 
 private:
     // default, assignment, and copy constructor declared private
@@ -252,7 +258,8 @@ private:
     
     // helper functions
     void FlushFrameCache();
-    void AddPhotonsToFrames(const I3CLSimPhotonSeries &photons);
+    void AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
+                            I3CLSimPhotonHistorySeriesConstPtr photonHistories);
     void ConvertMCTreeToLightSources(const I3MCTree &mcTree,
                                      std::deque<I3CLSimLightSource> &lightSources);
     void ConvertFlasherPulsesToLightSources(const I3CLSimFlasherPulseSeries &flasherPulses,

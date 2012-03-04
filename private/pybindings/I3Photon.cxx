@@ -52,11 +52,48 @@ i3photon_prettyprint(const I3Photon& s)
         << "     cherenkovTime : " << s.GetCherenkovTime()/I3Units::ns << "ns" << std::endl
         << "   particleMajorID : " << s.GetParticleMajorID() << std::endl
         << "   particleMinorID : " << s.GetParticleMinorID() << std::endl
-        << "]" ;
+        << " len(positionList) : " << s.GetNumPositionListEntries() << std::endl;
+
+    for (uint32_t i=0;i<s.GetNumPositionListEntries();++i)
+    {
+        I3PositionConstPtr pos = s.GetPositionListEntry(i);
+        if (i==0) {
+            oss << "         (initial) : ";
+        } else if (i==s.GetNumPositionListEntries()-1) {
+            oss << "           (final) : ";
+        } else {
+            oss << "                   : ";
+        }
+
+        if (!pos) {
+            oss << "(not saved)" << std::endl;
+        } else {
+            oss << "(" << pos->GetX()/I3Units::m << "," << pos->GetY()/I3Units::m << "," << pos->GetZ()/I3Units::m << ")m" << std::endl; 
+        }
+    }
+    
+    oss << "]" ;
     
     return oss.str();
 }
 
+
+namespace I3Photon_python_helper
+{
+    boost::python::list GetPositionList(const I3Photon &photon)
+    {
+        boost::python::list pylist;
+        
+        for (uint32_t i=0;i<photon.GetNumPositionListEntries();++i)
+        {
+            pylist.append( photon.GetPositionListEntry(i) );
+        }
+        
+        return pylist;
+    }
+}
+
+using namespace I3Photon_python_helper;
 
 void register_I3Photon()
 {
@@ -131,6 +168,13 @@ void register_I3Photon()
         .def("SetParticleMinorID", &I3Photon::SetParticleMinorID)
 
         .def("SetParticleID", &I3Photon::SetParticleID)
+
+        .add_property("numPositionListEntries", &I3Photon::GetNumPositionListEntries)
+        .def("GetNumPositionListEntries", &I3Photon::GetNumPositionListEntries)
+        .def("GetPositionListEntry", &GetPositionList)
+        .add_property("positionList", &GetPositionList)
+        .def("GetPositionList", &I3Photon::GetPositionListEntry)
+        .def("AppendToIntermediatePositionList", &I3Photon::AppendToIntermediatePositionList)
 
         .def("__str__", i3photon_prettyprint)
 

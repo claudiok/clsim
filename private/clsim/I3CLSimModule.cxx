@@ -219,7 +219,12 @@ geometryIsConfigured_(false)
                  "propagate.",
                  stopDetectedPhotons_);
 
-    
+    photonHistoryEntries_=0;
+    AddParameter("PhotonHistoryEntries",
+                 "Sets the number of scattering step positions that are saved for a photon hitting\n"
+                 "a DOM. The last N photons are saved if there are more scattering points than available entries.",
+                 photonHistoryEntries_);
+
     // add an outbox
     AddOutBox("OutBox");
 
@@ -343,6 +348,8 @@ void I3CLSimModule::Configure()
     GetParameter("EnableDoubleBuffering", enableDoubleBuffering_);
     GetParameter("DoublePrecision", doublePrecision_);
     GetParameter("StopDetectedPhotons", stopDetectedPhotons_);
+
+    GetParameter("PhotonHistoryEntries", photonHistoryEntries_);
 
     if ((flasherPulseSeriesName_=="") && (MCTreeName_==""))
         log_fatal("You need to set at least one of the \"MCTreeName\" and \"FlasherPulseSeriesName\" parameters.");
@@ -618,7 +625,8 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
                                               wavelengthGenerators_,
                                               enableDoubleBuffering_,
                                               doublePrecision_,
-                                              stopDetectedPhotons_);
+                                              stopDetectedPhotons_,
+                                              photonHistoryEntries_);
         if (!openCLStepsToPhotonsConverter)
             log_fatal("Could not initialize OpenCL!");
         
@@ -694,16 +702,27 @@ namespace {
     
 }
 
-void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons)
+void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
+                                       I3CLSimPhotonHistorySeriesConstPtr photonHistories)
 {
     if (photonsForFrameList_.size() != frameList_.size())
         log_fatal("Internal error: cache sizes differ. (1)");
     if (photonsForFrameList_.size() != currentPhotonIdForFrame_.size())
         log_fatal("Internal error: cache sizes differ. (2)");
     
+    if (photonHistories) {
+        if (photonHistories->size() != photons.size())
+        {
+            log_fatal("Error: photon history vector size (%zu) != photon vector size (%zu)",
+                      photonHistories->size(), photons.size());
+        }
+    }
     
-    BOOST_FOREACH(const I3CLSimPhoton &photon, photons)
+    
+    for (std::size_t i=0;i<photons.size();++i)
     {
+        const I3CLSimPhoton &photon = photons[i];
+        
         // find identifier in particle cache
         std::map<uint32_t, particleCacheEntry>::iterator it = particleCache_.find(photon.identifier);
         if (it == particleCache_.end())
@@ -763,6 +782,19 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons)
             outputPhoton.SetStartDir(outStartDir);
         }
 
+        if (photonHistories) {
+            const I3CLSimPhotonHistory &photonHistory = (*photonHistories)[i];
+            
+            if (photonHistory.size() > photon.GetNumScatters())
+                log_fatal("Logic error: photonHistory.size() [==%zu] > photon.GetNumScatters() [==%zu]",
+                          photonHistory.size(), photon.GetNumScatters());
+            
+            for (std::size_t j=0;j<photonHistory.size();++j)
+            {
+                outputPhoton.AppendToIntermediatePositionList(I3Position( photonHistory.GetX(j), photonHistory.GetY(j), photonHistory.GetZ(j) ));
+            }
+        }
+        
         if (collectStatistics_)
         {
             // collect statistics
@@ -816,12 +848,12 @@ void I3CLSimModule::FlushFrameCache()
         {
             I3CLSimStepToPhotonConverter::ConversionResult_t res =
             openCLStepsToPhotonsConverters_[deviceIndex]->GetConversionResult();
-            if (!res.second) log_fatal("Internal error: received NULL photon series from OpenCL.");
+            if (!res.photons) log_fatal("Internal error: received NULL photon series from OpenCL.");
 
             // convert to I3Photons and add to their respective frames
-            AddPhotonsToFrames(*(res.second));
+            AddPhotonsToFrames(*(res.photons), res.photonHistories);
             
-            totalNumOutPhotons += res.second->size();
+            totalNumOutPhotons += res.photons->size();
         }
     }
     

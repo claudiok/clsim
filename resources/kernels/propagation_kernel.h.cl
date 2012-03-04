@@ -90,6 +90,10 @@ inline void saveHit(
     __global uint* hitIndex,
     uint maxHitIndex,
     __write_only __global struct I3CLSimPhoton *outputPhotons
+#ifdef SAVE_PHOTON_HISTORY
+  , __write_only __global float4 *photonHistory,
+    float4 *currentPhotonHistory
+#endif
     );
 
 ///////////////////////// some constants

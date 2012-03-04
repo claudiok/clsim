@@ -21,6 +21,10 @@ inline void checkForCollision_OnString(
     __global uint* hitIndex,
     uint maxHitIndex,
     __write_only __global struct I3CLSimPhoton *outputPhotons,
+#ifdef SAVE_PHOTON_HISTORY
+    __write_only __global float4 *photonHistory,
+    float4 *currentPhotonHistory,
+#endif
 #endif
     __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal
     )
@@ -121,7 +125,7 @@ inline void checkForCollision_OnString(
                 *hitRecorded=true;
                 // continue searching, maybe we hit a closer OM..
                 // (in that case, no hit will be saved for this one)
-#else
+#else //STOP_PHOTONS_ON_DETECTION
                 // save the hit right here
                 saveHit(photonPosAndTime,
                         photonDirAndWlen,
@@ -137,8 +141,12 @@ inline void checkForCollision_OnString(
                         hitIndex,
                         maxHitIndex,
                         outputPhotons
+#ifdef SAVE_PHOTON_HISTORY
+                      , photonHistory,
+                        currentPhotonHistory
+#endif //SAVE_PHOTON_HISTORY
                         );
-#endif
+#endif //STOP_PHOTONS_ON_DETECTION
             }
         }
     }
@@ -165,6 +173,10 @@ inline void checkForCollision_InCell(
     __global uint* hitIndex,
     uint maxHitIndex,
     __write_only __global struct I3CLSimPhoton *outputPhotons,
+#ifdef SAVE_PHOTON_HISTORY
+    __write_only __global float4 *photonHistory,
+    float4 *currentPhotonHistory,
+#endif
 #endif
     __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal,
     
@@ -227,7 +239,7 @@ inline void checkForCollision_InCell(
                 hitRecorded,
                 hitOnString,
                 hitOnDom,
-#else
+#else // STOP_PHOTONS_ON_DETECTION
                 thisStepLength,
                 inv_groupvel,
                 photonTotalPathLength,
@@ -238,7 +250,11 @@ inline void checkForCollision_InCell(
                 hitIndex,
                 maxHitIndex,
                 outputPhotons,
-#endif
+#ifdef SAVE_PHOTON_HISTORY
+                photonHistory,
+                currentPhotonHistory,
+#endif // SAVE_PHOTON_HISTORY
+#endif // STOP_PHOTONS_ON_DETECTION
                 geoLayerToOMNumIndexPerStringSetLocal
                 );
         }
@@ -266,6 +282,10 @@ inline void checkForCollision_InCells(
     __global uint* hitIndex,
     uint maxHitIndex,
     __write_only __global struct I3CLSimPhoton *outputPhotons,
+#ifdef SAVE_PHOTON_HISTORY
+    __write_only __global float4 *photonHistory,
+    float4 *currentPhotonHistory,
+#endif
 #endif
     __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal
     )
@@ -294,7 +314,36 @@ inline void checkForCollision_InCells(
         GEO_CELL_NUM_X_ ## subdetectorNum,      \
         GEO_CELL_NUM_Y_ ## subdetectorNum       \
         );
-#else
+#else // STOP_PHOTONS_ON_DETECTION
+#ifdef SAVE_PHOTON_HISTORY
+#define DO_CHECK(subdetectorNum)                \
+    checkForCollision_InCell(                   \
+        photonDirLenXYSqr,                      \
+        photonPosAndTime,                       \
+        photonDirAndWlen,                       \
+        thisStepLength,                         \
+        inv_groupvel,                           \
+        photonTotalPathLength,                  \
+        photonNumScatters,                      \
+        photonStartPosAndTime,                  \
+        photonStartDirAndWlen,                  \
+        step,                                   \
+        hitIndex,                               \
+        maxHitIndex,                            \
+        outputPhotons,                          \
+        photonHistory,                          \
+        currentPhotonHistory,                   \
+        geoLayerToOMNumIndexPerStringSetLocal,  \
+                                                \
+        geoCellIndex_ ## subdetectorNum,        \
+        GEO_CELL_START_X_ ## subdetectorNum,    \
+        GEO_CELL_START_Y_ ## subdetectorNum,    \
+        GEO_CELL_WIDTH_X_ ## subdetectorNum,    \
+        GEO_CELL_WIDTH_Y_ ## subdetectorNum,    \
+        GEO_CELL_NUM_X_ ## subdetectorNum,      \
+        GEO_CELL_NUM_Y_ ## subdetectorNum       \
+        );
+#else //SAVE_PHOTON_HISTORY
 #define DO_CHECK(subdetectorNum)                \
     checkForCollision_InCell(                   \
         photonDirLenXYSqr,                      \
@@ -320,7 +369,8 @@ inline void checkForCollision_InCells(
         GEO_CELL_NUM_X_ ## subdetectorNum,      \
         GEO_CELL_NUM_Y_ ## subdetectorNum       \
         );
-#endif
+#endif //SAVE_PHOTON_HISTORY
+#endif // STOP_PHOTONS_ON_DETECTION
 
     // argh..
 #if GEO_CELL_NUM_SUBDETECTORS > 0
@@ -382,6 +432,10 @@ inline bool checkForCollision(const floating4_t photonPosAndTime,
     __global uint* hitIndex,
     uint maxHitIndex,
     __write_only __global struct I3CLSimPhoton *outputPhotons,
+#ifdef SAVE_PHOTON_HISTORY
+    __write_only __global float4 *photonHistory,
+   float4 *currentPhotonHistory,
+#endif
     __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal
     )
 {
@@ -400,6 +454,10 @@ inline bool checkForCollision(const floating4_t photonPosAndTime,
             hitIndex,
             maxHitIndex,
             outputPhotons
+#ifdef SAVE_PHOTON_HISTORY
+          , photonHistory,
+            currentPhotonHistory
+#endif
             );
     return true;
 #else // DEBUG_STORE_GENERATED_PHOTONS
@@ -423,7 +481,7 @@ inline bool checkForCollision(const floating4_t photonPosAndTime,
         &hitRecorded,
         &hitOnString,
         &hitOnDom,
-#else
+#else // STOP_PHOTONS_ON_DETECTION
         thisStepLength,
         inv_groupvel,
         photonTotalPathLength,
@@ -434,7 +492,11 @@ inline bool checkForCollision(const floating4_t photonPosAndTime,
         hitIndex,
         maxHitIndex,
         outputPhotons,
-#endif
+#ifdef SAVE_PHOTON_HISTORY
+        photonHistory,
+        currentPhotonHistory,
+#endif // SAVE_PHOTON_HISTORY
+#endif // STOP_PHOTONS_ON_DETECTION
         geoLayerToOMNumIndexPerStringSetLocal);
 
 #ifdef STOP_PHOTONS_ON_DETECTION
@@ -461,6 +523,10 @@ inline bool checkForCollision(const floating4_t photonPosAndTime,
                 hitIndex,
                 maxHitIndex,
                 outputPhotons
+#ifdef SAVE_PHOTON_HISTORY
+              , photonHistory,
+                currentPhotonHistory
+#endif
                 );
     }
     return hitRecorded;

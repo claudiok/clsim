@@ -91,6 +91,7 @@ def I3CLSimMakeHits(tray, name,
                     UnWeightedPhotons=False,
                     UseGeant4=False,
                     StopDetectedPhotons=True,
+                    PhotonHistoryEntries=0,
                     DoNotParallelize=False,
                     DOMOversizeFactor=5.,
                     If=lambda f: True
@@ -180,6 +181,10 @@ def I3CLSimMakeHits(tray, name,
         Configures behaviour for photons that hit a DOM. If this is true (the default)
         photons will be stopped once they hit a DOM. If this is false, they continue to
         propagate.
+    :param PhotonHistoryEntries:
+        The maximum number of scatterings points to be saved for every photon hitting a DOM.
+        Only the most recent positions are saved, older positions are overwritten if
+        the maximum size is reached.
     :param UseGeant4:
         Enabling this setting will disable all cascade and muon light yield
         parameterizations. All particles will sent to Geant4 for a full
@@ -359,6 +364,7 @@ def I3CLSimMakeHits(tray, name,
                    OpenCLDeviceList=openCLDevices,
                    UseHardcodedDeepCoreSubdetector=False, # setting this to true saves GPU constant memory but will reduce performance
                    StopDetectedPhotons=StopDetectedPhotons,
+                   PhotonHistoryEntries=PhotonHistoryEntries,
                    If=If
                    )
 

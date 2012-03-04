@@ -7,6 +7,7 @@
 
 #include "clsim/I3CLSimStep.h"
 #include "clsim/I3CLSimPhoton.h"
+#include "clsim/I3CLSimPhotonHistory.h"
 #include "clsim/I3CLSimMediumProperties.h"
 #include "clsim/I3CLSimRandomValue.h"
 #include "clsim/I3CLSimWlenDependentValue.h"
@@ -38,7 +39,23 @@ public:
 struct I3CLSimStepToPhotonConverter : private boost::noncopyable
 {
 public:
-    typedef std::pair<uint32_t, I3CLSimPhotonSeriesPtr> ConversionResult_t;
+    // simple struct that holds conversion results
+    struct ConversionResult_t 
+    {
+        ConversionResult_t() : identifier(0) {;}
+        ConversionResult_t(uint32_t identifier_,
+                           I3CLSimPhotonSeriesPtr photons_=I3CLSimPhotonSeriesPtr(),
+                           I3CLSimPhotonHistorySeriesPtr photonHistories_=I3CLSimPhotonHistorySeriesPtr())
+        :
+        identifier(identifier_),
+        photons(photons_),
+        photonHistories(photonHistories_)
+        {;}
+        
+        uint32_t identifier;
+        I3CLSimPhotonSeriesPtr photons;
+        I3CLSimPhotonHistorySeriesPtr photonHistories;
+    };
     
     //virtual ~I3CLSimStepToPhotonConverter();
 

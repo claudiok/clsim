@@ -70,31 +70,6 @@ struct I3CLSimStepToPhotonConverterOpenCLWrapper : I3CLSimStepToPhotonConverterO
 };
 
 
-namespace I3CLSimStepToPhotonConverter_utils
-{
-    template <typename T1, typename T2> 
-    struct std_pair_to_tuple 
-    { 
-        static PyObject* convert(std::pair<T1, T2> const& p) 
-        { 
-            return boost::python::incref(boost::python::make_tuple(p.first, p.second).ptr()); 
-        } 
-    }; 
-
-    template <typename T1, typename T2> 
-    struct std_pair_to_python_converter 
-    { 
-        std_pair_to_python_converter() 
-        { 
-            boost::python::to_python_converter< 
-            std::pair<T1, T2>, 
-            std_pair_to_tuple<T1, T2> >(); 
-        } 
-    };
-};
-
-using namespace I3CLSimStepToPhotonConverter_utils;
-
 void register_I3CLSimStepToPhotonConverter()
 {
     {
@@ -112,12 +87,30 @@ void register_I3CLSimStepToPhotonConverter()
         .def("MorePhotonsAvailable", bp::pure_virtual(&I3CLSimStepToPhotonConverter::MorePhotonsAvailable))
         .def("GetConversionResult", bp::pure_virtual(&I3CLSimStepToPhotonConverter::GetConversionResult))
         ;
+        
+        
+        bp::class_<I3CLSimStepToPhotonConverter::ConversionResult_t>
+        ("ConversionResult_t", 
+         bp::init<uint32_t, I3CLSimPhotonSeriesPtr, I3CLSimPhotonHistorySeriesPtr>
+         (
+          (
+           bp::arg("identifier"),
+           bp::arg("photons")=I3CLSimPhotonSeriesPtr(),
+           bp::arg("photonHistories")=I3CLSimPhotonHistorySeriesPtr()
+          )
+         )
+        )
+        .def(bp::init<>()) // add a default constructor, too
+        .def_readwrite("identifier", &I3CLSimStepToPhotonConverter::ConversionResult_t::identifier)
+        .def_readwrite("photons", &I3CLSimStepToPhotonConverter::ConversionResult_t::photons)
+        .def_readwrite("photonHistories", &I3CLSimStepToPhotonConverter::ConversionResult_t::photonHistories)
+        ;
+        
     }
     
     bp::implicitly_convertible<shared_ptr<I3CLSimStepToPhotonConverterWrapper>, shared_ptr<const I3CLSimStepToPhotonConverter> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimStepToPhotonConverterWrapper>, shared_ptr<I3CLSimStepToPhotonConverter> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimStepToPhotonConverterWrapper>, shared_ptr<const I3CLSimStepToPhotonConverterWrapper> >();
-    std_pair_to_python_converter<uint32_t, I3CLSimPhotonSeriesPtr>();
     
 
     

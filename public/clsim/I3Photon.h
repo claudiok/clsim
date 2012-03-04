@@ -27,6 +27,8 @@
 #ifndef I3PHOTON_H_INCLUDED
 #define I3PHOTON_H_INCLUDED
 
+#include <stdexcept>
+
 #include "icetray/I3FrameObject.h"
 
 #include "dataclasses/I3Vector.h"
@@ -44,7 +46,7 @@
  * direction from the OM center to the hit
  * position) and the photon's wavelength.
  */
-static const unsigned i3photon_version_ = 0;
+static const unsigned i3photon_version_ = 1;
 
 class I3Photon : public I3FrameObject
 {
@@ -204,10 +206,69 @@ public:
     /** 
      * this sets the number of times this photon was scattered.
      */
-    inline void SetNumScattered(uint32_t numScattered) {numScattered_=numScattered;}
+    inline void SetNumScattered(uint32_t numScattered) {
+        if (static_cast<std::size_t>(numScattered) < intermediatePositions_.size())
+            throw std::runtime_error("numScattered cannot be smaller than the number of intermediate positions");
+
+        numScattered_=numScattered;
+    }
     
+    /** 
+     * @return this returns the number of positions where this photon has been recorded.
+     * This will be the number of scatter events returned by GetNumScattered()+2
+     * [i.e. including the inital and final position].
+     */
+    inline uint32_t GetNumPositionListEntries() const {
+        if (intermediatePositions_.size() > static_cast<std::size_t>(numScattered_))
+            throw std::logic_error("I3Photon has inconsistent internal state.");
+        return numScattered_+2;
+    }
+
+    /** 
+     * @return this returns the position of the photon at a certain index,
+     * with index < GetNumPositionListEntries().
+     *
+     * The return value may be an invalid shared_ptr if there is no position
+     * stored for a certain index.
+     */
+    inline I3PositionConstPtr GetPositionListEntry(uint32_t index) const
+    {
+        if (intermediatePositions_.size() > static_cast<std::size_t>(numScattered_))
+            throw std::logic_error("I3Photon has inconsistent internal state.");
+        if (index >= numScattered_+2)
+            throw std::runtime_error("invalid index");
+
+        if (index==0) {
+            return I3PositionConstPtr(new I3Position(startPosition_));
+        } else if (index==numScattered_+1) {
+            return I3PositionConstPtr(new I3Position(position_));
+        } else {
+            const std::size_t num_empty_entries = static_cast<std::size_t>(numScattered_)-intermediatePositions_.size();
+            if (index-1 < num_empty_entries) {
+                return I3PositionConstPtr(); // this entry has not been saved
+            } else {
+                return I3PositionConstPtr(new I3Position(intermediatePositions_[index-1-num_empty_entries]));
+            }
+        }
+    }
+    
+    /**
+     * Appends a position to the back of the intermediate position list.
+     * The final list will be: [startPos] + intermediatePos + [finalPos].
+     *
+     * Use SetNumScattered() first to set the total number of scatters
+     * and then add at most that number of positions.
+     */
+    inline void AppendToIntermediatePositionList(const I3Position &pos)
+    {
+        if (intermediatePositions_.size() >= static_cast<std::size_t>(numScattered_))
+            throw std::runtime_error(std::string("Use SetNumScattered() first to increase the total number of scatters before adding more scatter positions. numScattered=") + boost::lexical_cast<std::string>(numScattered_) + ", intermediatePositions.size()=" + boost::lexical_cast<std::string>(intermediatePositions_.size()));
+
+        intermediatePositions_.push_back(pos);
+    }
+
     bool operator==(const I3Photon& rhs) {
-        return time_ == rhs.time_
+        if (!( time_ == rhs.time_
         && startTime_ == rhs.startTime_
         && ID_ == rhs.ID_
         && weight_ == rhs.weight_
@@ -226,7 +287,19 @@ public:
         && startPosition_.GetY() == rhs.startPosition_.GetY()
         && startPosition_.GetZ() == rhs.startPosition_.GetZ()
         && groupVelocity_ == rhs.groupVelocity_
-        && numScattered_ == rhs.numScattered_;
+        && numScattered_ == rhs.numScattered_))
+            return false;
+        
+        if (intermediatePositions_.size() != rhs.intermediatePositions_.size()) return false;
+        
+        for (std::size_t i=0;i<intermediatePositions_.size();++i)
+        {
+            if (intermediatePositions_[i].GetX() != rhs.intermediatePositions_[i].GetX()) return false;
+            if (intermediatePositions_[i].GetY() != rhs.intermediatePositions_[i].GetY()) return false;
+            if (intermediatePositions_[i].GetZ() != rhs.intermediatePositions_[i].GetZ()) return false;
+        }
+        
+        return true;
     }
     
 private:
@@ -248,6 +321,8 @@ private:
 
     uint32_t numScattered_;
 
+    std::vector<I3Position> intermediatePositions_;
+    
     friend class boost::serialization::access;
     
     template <class Archive> void serialize(Archive & ar, unsigned version);

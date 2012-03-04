@@ -37,6 +37,7 @@ namespace bp = boost::python;
 //
 #define REGISTER_THESE_THINGS                       \
     (I3CLSimStep)(I3CLSimPhoton)                    \
+    (I3CLSimPhotonHistory)                          \
     (I3CLSimWlenDependentValue)                     \
     (I3CLSimMediumProperties)(I3CLSimRandomValue)   \
     (I3CLSimLightSourceToStepConverter)             \

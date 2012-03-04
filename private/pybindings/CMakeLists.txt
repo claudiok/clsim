@@ -20,6 +20,7 @@ if(BUILD_PYBINDINGS)
   i3_add_pybindings(clsim
     I3CLSimStep.cxx
     I3CLSimPhoton.cxx
+    I3CLSimPhotonHistory.cxx
     I3CLSimWlenDependentValue.cxx
     I3CLSimRandomValue.cxx
     I3CLSimMediumProperties.cxx

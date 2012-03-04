@@ -292,7 +292,8 @@ namespace I3CLSimModuleHelper {
                                                            const std::vector<I3CLSimRandomValueConstPtr> &wavelengthGenerators,
                                                            bool enableDoubleBuffering,
                                                            bool doublePrecision,
-                                                           bool stopDetectedPhotons)
+                                                           bool stopDetectedPhotons,
+                                                           uint32_t photonHistoryEntries)
     {
         I3CLSimStepToPhotonConverterOpenCLPtr conv(new I3CLSimStepToPhotonConverterOpenCL(rng, device.GetUseNativeMath()));
 
@@ -307,6 +308,8 @@ namespace I3CLSimModuleHelper {
         conv->SetEnableDoubleBuffering(enableDoubleBuffering);
         conv->SetDoublePrecision(doublePrecision);
         conv->SetStopDetectedPhotons(stopDetectedPhotons);
+
+        conv->SetPhotonHistoryEntries(photonHistoryEntries);
 
         conv->Compile();
         //log_trace("%s", conv.GetFullSource().c_str());

@@ -20,6 +20,10 @@ inline void checkForCollision_OnString(
     __global uint* hitIndex,
     uint maxHitIndex,
     __write_only __global struct I3CLSimPhoton *outputPhotons,
+#ifdef SAVE_PHOTON_HISTORY
+    __write_only __global float4 *photonHistory,
+    float4 *currentPhotonHistory,
+#endif
 #endif
     __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal
     );
@@ -44,6 +48,10 @@ inline void checkForCollision_InCell(
     __global uint* hitIndex,
     uint maxHitIndex,
     __write_only __global struct I3CLSimPhoton *outputPhotons,
+#ifdef SAVE_PHOTON_HISTORY
+    __write_only __global float4 *photonHistory,
+    float4 *currentPhotonHistory,
+#endif
 #endif
     __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal,
     
@@ -76,6 +84,10 @@ inline void checkForCollision_InCells(
     __global uint* hitIndex,
     uint maxHitIndex,
     __write_only __global struct I3CLSimPhoton *outputPhotons,
+#ifdef SAVE_PHOTON_HISTORY
+    __write_only __global float4 *photonHistory,
+    float4 *currentPhotonHistory,
+#endif
 #endif
     __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal
     );
@@ -96,6 +108,10 @@ inline bool checkForCollision(const floating4_t photonPosAndTime,
     __global uint* hitIndex,
     uint maxHitIndex,
     __write_only __global struct I3CLSimPhoton *outputPhotons,
+#ifdef SAVE_PHOTON_HISTORY
+    __write_only __global float4 *photonHistory,
+    float4 *currentPhotonHistory,
+#endif
     __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal
     );
 

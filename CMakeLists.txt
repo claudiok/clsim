@@ -40,6 +40,7 @@ if(OPENCL_FOUND)
     private/clsim/I3CLSimLightSourceToStepConverter.cxx
     private/clsim/I3CLSimLightSourceToStepConverterUtils.cxx
     private/clsim/I3CLSimPhoton.cxx
+    private/clsim/I3CLSimPhotonHistory.cxx
     private/clsim/I3CLSimPMTPhotonSimulator.cxx
     private/clsim/I3CLSimRandomValueApplyFunction.cxx
     private/clsim/I3CLSimRandomValue.cxx

@@ -56,7 +56,8 @@ namespace I3CLSimModuleHelper {
                      const std::vector<I3CLSimRandomValueConstPtr> &wavelengthGenerators,
                      bool enableDoubleBuffering,
                      bool doublePrecision,
-                     bool stopDetectedPhotons);
+                     bool stopDetectedPhotons,
+                     uint32_t photonHistoryEntries);
     
     I3CLSimLightSourceToStepConverterGeant4Ptr
     initializeGeant4(I3RandomServicePtr rng,

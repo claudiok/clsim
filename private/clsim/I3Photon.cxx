@@ -54,6 +54,11 @@ void I3Photon::serialize (Archive &ar, unsigned version)
     ar & make_nvp("startDir", startDirection_);
     ar & make_nvp("startPos", startPosition_);
     ar & make_nvp("numScattered", numScattered_);
+    
+    if (version >= 1) {
+        ar & make_nvp("intermediatePositions", intermediatePositions_);
+    }
+        
 }     
 
 I3_SERIALIZABLE(I3Photon);

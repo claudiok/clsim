@@ -209,6 +209,10 @@ inline void saveHit(
     __global uint* hitIndex,
     uint maxHitIndex,
     __write_only __global struct I3CLSimPhoton *outputPhotons
+#ifdef SAVE_PHOTON_HISTORY
+  , __write_only __global float4 *photonHistory,
+    float4 *currentPhotonHistory
+#endif
     )
 {
     uint myIndex = atom_inc(hitIndex);
@@ -247,6 +251,12 @@ inline void saveHit(
 
         outputPhotons[myIndex].groupVelocity = my_recip(inv_groupvel);
 
+#ifdef SAVE_PHOTON_HISTORY
+        for (uint i=0;i<NUM_PHOTONS_IN_HISTORY;++i)
+        {
+            photonHistory[myIndex*NUM_PHOTONS_IN_HISTORY+i] = currentPhotonHistory[i];
+        }
+#endif
 
 #ifdef PRINTF_ENABLED
         dbg_printf("     -> stored photon: p=(%f,%f,%f), d=(%f,%f), t=%f, wlen=%fnm\n",
@@ -292,6 +302,10 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
     wait_group_events(1, &copyFinishedEvent);
     //barrier(CLK_LOCAL_MEM_FENCE);
 
+#ifdef SAVE_PHOTON_HISTORY
+    // the photon history
+    float4 currentPhotonHistory[NUM_PHOTONS_IN_HISTORY];
+#endif
 
     //download MWC RNG state
     ulong real_rnd_x = MWC_RNG_x[i];
@@ -499,6 +513,10 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             hitIndex, 
             maxHitIndex, 
             outputPhotons, 
+#ifdef SAVE_PHOTON_HISTORY
+            photonHistory,
+            currentPhotonHistory,
+#endif
             geoLayerToOMNumIndexPerStringSetLocal
             );
             
@@ -535,6 +553,11 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
         else
         {
             // photon was NOT absorbed. scatter it and re-start the loop
+            
+#ifdef SAVE_PHOTON_HISTORY
+            // save the photon scatter point
+            currentPhotonHistory[photonNumScatters%NUM_PHOTONS_IN_HISTORY] = photonPosAndTime;
+#endif
             
             // calculate a new direction
 #ifdef PRINTF_ENABLED

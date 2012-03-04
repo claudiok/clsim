@@ -181,8 +181,14 @@ void I3CLSimStepToPhotonConverterOpenCL::Initialize()
     
     Compile();
     
+    // use the maximum workgroup size (==granularity) if none has been configured
+    if (workgroupSize_==0) workgroupSize_=maxWorkgroupSize_;
+    
     if (workgroupSize_>maxWorkgroupSize_)
         throw I3CLSimStepToPhotonConverter_exception("Workgroup size too large!");
+    
+    if (maxNumWorkitems_%workgroupSize_ != 0)
+        throw I3CLSimStepToPhotonConverter_exception("The maximum number of work items (" + boost::lexical_cast<std::string>(maxNumWorkitems_) + ") must be a multiple of the workgroup size (" + boost::lexical_cast<std::string>(workgroupSize_) + ").");
     
     log_debug("basic OpenCL setup done.");
     
@@ -366,7 +372,7 @@ std::string I3CLSimStepToPhotonConverterOpenCL::GetPreambleSource()
     // should the photon history be saved?
     if (photonHistoryEntries_>0) {
         preamble = preamble + "#define SAVE_PHOTON_HISTORY\n";
-        preamble = preamble + "#define NUM_PHOTONS_IN_HISTORY" + boost::lexical_cast<std::string>(photonHistoryEntries_) + "\n";
+        preamble = preamble + "#define NUM_PHOTONS_IN_HISTORY " + boost::lexical_cast<std::string>(photonHistoryEntries_) + "\n";
     }
     
     // are we using double precision?
@@ -869,6 +875,75 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl_runKernel(unsigned in
     log_trace("[%u] kernel in queue..", bufferIndex);
 }
 
+namespace {
+    // converts from the internal photon history fromat (flat array of float4)
+    // to a vector of I3CLSimPhotonHistory objects. The output stores photons
+    // in forward order (i.e. the most recent scatter listed last)
+    I3CLSimPhotonHistorySeriesPtr ConvertPhotonHistories(const std::vector<cl_float4> &rawData,
+                                                         const I3CLSimPhotonSeries &photons,
+                                                         std::size_t photonHistoryEntries)
+    {
+        if (rawData.size() % photonHistoryEntries != 0)
+            log_fatal("Internal logic error: rawData.size() (==%zu) is not a multiple of photonHistoryEntries (==%zu)",
+                     rawData.size(), photonHistoryEntries);
+        
+        if (rawData.size()/photonHistoryEntries != photons.size())
+            log_fatal("internal logic error: rawData.size()/photonHistoryEntries [==%zu/%zu] != photons.size() [==%zu]",
+                      rawData.size(),photonHistoryEntries,photons.size());
+        
+        I3CLSimPhotonHistorySeriesPtr output(new I3CLSimPhotonHistorySeries());
+        
+        for (std::size_t i=0;i<rawData.size()/photonHistoryEntries;++i)
+        {
+            // insert a new history for the current photon
+            output->push_back(I3CLSimPhotonHistory());
+            I3CLSimPhotonHistory &current_history = output->back();
+            
+            const I3CLSimPhoton &current_photon = photons[i];
+            
+            const uint32_t numScatters = current_photon.GetNumScatters();
+            if (numScatters==0) continue; // nothing to record for this photon
+            if (photonHistoryEntries==0) continue; // no entries => nothing to record
+            
+            const uint32_t numRecordedScatters = static_cast<uint32_t>(std::min(static_cast<std::size_t>(numScatters), photonHistoryEntries));
+            // start with the most recent index
+            uint32_t currentScatterIndex = numScatters % photonHistoryEntries;
+            
+            if (numScatters<=photonHistoryEntries) {
+                currentScatterIndex=0; // start with index 0
+            } else {
+                currentScatterIndex=numScatters%photonHistoryEntries;
+            }
+            
+            float lastTime=NAN;
+            for (uint32_t j=0;j<numRecordedScatters;++j)
+            {
+                const cl_float4 &rawDataEntry = rawData[i*photonHistoryEntries + currentScatterIndex];
+                current_history.push_back(((const cl_float *)&rawDataEntry)[0], ((const cl_float *)&rawDataEntry)[1], ((const cl_float *)&rawDataEntry)[2]);
+
+                // sanity check (time is stored in field [3])
+                const float currentTime = ((const cl_float *)&rawDataEntry)[3];
+                if (isnan(lastTime)) {
+                    lastTime=currentTime;
+                } else {
+                    if (currentTime < lastTime) 
+                        log_fatal("time in photon history is not ascending! previous=%fns, this=%fns, j=%zu, initial_time=%fns, final_time=%fns",
+                                  lastTime/I3Units::ns, currentTime/I3Units::ns, static_cast<std::size_t>(j),
+                                  current_photon.GetStartTime()/I3Units::ns,
+                                  current_photon.GetTime()/I3Units::ns);
+                }
+                
+                ++currentScatterIndex;
+                if (currentScatterIndex>=static_cast<uint32_t>(photonHistoryEntries)) currentScatterIndex=0;
+            }
+        }
+
+        return output;
+    }
+    
+}
+
+
 void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl_downloadPhotons(boost::this_thread::disable_interruption &di,
                                                                            bool &shouldBreak,
                                                                            unsigned int bufferIndex,
@@ -877,6 +952,8 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl_downloadPhotons(boost
     shouldBreak=false;
    
     I3CLSimPhotonSeriesPtr photons;
+    I3CLSimPhotonHistorySeriesPtr photonHistories;
+    shared_ptr<std::vector<cl_float4> > photonHistoriesRaw;
     
     try {
         uint32_t numberOfGeneratedPhotons;
@@ -898,19 +975,35 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl_downloadPhotons(boost
         
         if (numberOfGeneratedPhotons>0)
         {
-            cl::Event copyComplete;
+            VECTOR_CLASS<cl::Event> copyComplete((photonHistoryEntries_>0)?2:1);
             
             // allocate the result vector while waiting for the mapping operation to complete
             photons = I3CLSimPhotonSeriesPtr(new I3CLSimPhotonSeries(numberOfGeneratedPhotons));
+            if (photonHistoryEntries_>0) {
+                photonHistoriesRaw = shared_ptr<std::vector<cl_float4> >(new std::vector<cl_float4>(numberOfGeneratedPhotons*static_cast<std::size_t>(photonHistoryEntries_)));
+            }
             
-            queue_[bufferIndex]->enqueueReadBuffer(*deviceBuffer_OutputPhotons[bufferIndex], CL_FALSE, 0, numberOfGeneratedPhotons*sizeof(I3CLSimPhoton), &((*photons)[0]), NULL, &copyComplete);
+            queue_[bufferIndex]->enqueueReadBuffer(*deviceBuffer_OutputPhotons[bufferIndex], CL_FALSE, 0, numberOfGeneratedPhotons*sizeof(I3CLSimPhoton), &((*photons)[0]), NULL, &copyComplete[0]);
+            
+            if (photonHistoryEntries_>0) {
+                queue_[bufferIndex]->enqueueReadBuffer(*deviceBuffer_PhotonHistory[bufferIndex], CL_FALSE, 0, numberOfGeneratedPhotons*static_cast<std::size_t>(photonHistoryEntries_)*sizeof(cl_float4), &((*photonHistoriesRaw)[0]), NULL, &copyComplete[1]);
+            }
+            
             queue_[bufferIndex]->flush(); // make sure it starts executing on the device
-            waitForOpenCLEventYield(copyComplete); // wait for the buffer to be copied
+            waitForOpenCLEventsYield(copyComplete); // wait for the buffer(s) to be copied
+
+            // convert the histories to the external representation
+            if (photonHistoriesRaw) {
+                photonHistories = ConvertPhotonHistories(*photonHistoriesRaw, *photons, photonHistoryEntries_);
+            }
         }
         else
         {
-            // empty vector
+            // empty vector(s)
             photons = I3CLSimPhotonSeriesPtr(new I3CLSimPhotonSeries());
+            if (photonHistoryEntries_>0) {
+                photonHistories = I3CLSimPhotonHistorySeriesPtr(new I3CLSimPhotonHistorySeries());
+            }
         }
         
     } catch (cl::Error &err) {
@@ -923,7 +1016,7 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl_downloadPhotons(boost
     {
         boost::this_thread::restore_interruption ri(di);
         try {
-            queueFromOpenCL_->Put(ConversionResult_t(stepsIdentifier, photons));
+            queueFromOpenCL_->Put(ConversionResult_t(stepsIdentifier, photons, photonHistories));
         } catch(boost::thread_interrupted &i) {
             log_debug("OpenCL thread was interrupted. closing.");
             shouldBreak=true;
@@ -1362,8 +1455,8 @@ I3CLSimStepToPhotonConverter::ConversionResult_t I3CLSimStepToPhotonConverterOpe
     
     ConversionResult_t result = queueFromOpenCL_->Get();
     
-    if (result.second) {
-        ReplaceStringDOMIndexWithStringDOMIDs(*result.second,
+    if (result.photons) {
+        ReplaceStringDOMIndexWithStringDOMIDs(*result.photons,
                                               stringIndexToStringIDBuffer_,
                                               domIndexToDomIDBuffer_perStringIndex_);
         
