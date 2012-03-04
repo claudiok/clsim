@@ -8,7 +8,7 @@
 #include "clsim/I3CLSimStep.h"
 #include "clsim/I3CLSimMediumProperties.h"
 #include "clsim/I3CLSimLightSourceParameterization.h"
-#include "clsim/I3CLSimFunction.h"
+#include "clsim/function/I3CLSimFunction.h"
 #include "clsim/I3CLSimLightSource.h"
 
 #include <boost/noncopyable.hpp>

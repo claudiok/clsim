@@ -2,7 +2,7 @@
 #define TrkOpticalPhysics_hh
 
 #include "G4VPhysicsConstructor.hh"
-#include "clsim/I3CLSimFunction.h"
+#include "clsim/function/I3CLSimFunction.h"
 
 class TrkCerenkov;
 

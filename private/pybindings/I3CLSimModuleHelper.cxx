@@ -22,8 +22,8 @@
 #include <sstream>
 
 #include <clsim/I3CLSimModuleHelper.h>
-#include <clsim/I3CLSimRandomValueInterpolatedDistribution.h>
-#include <clsim/I3CLSimRandomValueWlenCherenkovNoDispersion.h>
+#include <clsim/random_value/I3CLSimRandomValueInterpolatedDistribution.h>
+#include <clsim/random_value/I3CLSimRandomValueWlenCherenkovNoDispersion.h>
 
 #include <boost/preprocessor/seq.hpp>
 

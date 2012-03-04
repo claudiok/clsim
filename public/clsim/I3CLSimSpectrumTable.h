@@ -24,7 +24,7 @@
 
 #include "icetray/I3TrayHeaders.h"
 
-#include "clsim/I3CLSimFunction.h"
+#include "clsim/function/I3CLSimFunction.h"
 
 #include <vector>
 #include <stdexcept>

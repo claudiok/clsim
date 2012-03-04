@@ -11,7 +11,7 @@
 
 #include "clsim/I3CLSimLightSourceToStepConverterFlasher.h"
 
-#include "clsim/I3CLSimFunction.h"
+#include "clsim/function/I3CLSimFunction.h"
 
 #include "clsim/I3CLSimLightSourceToStepConverterUtils.h"
 using namespace I3CLSimLightSourceToStepConverterUtils;

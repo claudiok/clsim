@@ -6,7 +6,7 @@
 #include "dataclasses/I3Constants.h"
 
 #include "clsim/I3CLSimStep.h"
-#include "clsim/I3CLSimFunction.h"
+#include "clsim/function/I3CLSimFunction.h"
 
 #include <cmath>
 

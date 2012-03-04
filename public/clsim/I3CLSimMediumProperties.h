@@ -6,8 +6,8 @@
 
 #include <vector>
 
-#include "clsim/I3CLSimFunction.h"
-#include "clsim/I3CLSimRandomValue.h"
+#include "clsim/function/I3CLSimFunction.h"
+#include "clsim/random_value/I3CLSimRandomValue.h"
 
 /**
  * @brief Describes the simulation medium (i.e. water or

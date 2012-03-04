@@ -3,7 +3,7 @@
 
 #include "clsim/I3CLSimLightSourceToStepConverter.h"
 #include "clsim/I3CLSimLightSource.h"
-#include "clsim/I3CLSimFunction.h"
+#include "clsim/function/I3CLSimFunction.h"
 #include "clsim/I3CLSimSpectrumTable.h"
 
 #include <string>

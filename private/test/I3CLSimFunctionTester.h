@@ -25,7 +25,7 @@
 #include "test/I3CLSimTesterBase.h"
 
 #include "dataclasses/I3Vector.h"
-#include "clsim/I3CLSimFunction.h"
+#include "clsim/function/I3CLSimFunction.h"
 
 class I3CLSimFunctionTester : public I3CLSimTesterBase
 {

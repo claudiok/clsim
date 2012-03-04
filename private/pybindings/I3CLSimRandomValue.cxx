@@ -21,15 +21,14 @@
 
 #include <sstream>
 
-#include <clsim/I3CLSimRandomValue.h>
-#include <clsim/I3CLSimRandomValueHenyeyGreenstein.h>
-#include <clsim/I3CLSimRandomValueRayleighScatteringCosAngle.h>
-#include <clsim/I3CLSimRandomValueInterpolatedDistribution.h>
-#include <clsim/I3CLSimRandomValueSimplifiedLiu.h>
-#include <clsim/I3CLSimRandomValueMixed.h>
-#include <clsim/I3CLSimRandomValueApplyFunction.h>
-
-#include <clsim/I3CLSimRandomValueWlenCherenkovNoDispersion.h>
+#include <clsim/random_value/I3CLSimRandomValue.h>
+#include <clsim/random_value/I3CLSimRandomValueHenyeyGreenstein.h>
+#include <clsim/random_value/I3CLSimRandomValueRayleighScatteringCosAngle.h>
+#include <clsim/random_value/I3CLSimRandomValueInterpolatedDistribution.h>
+#include <clsim/random_value/I3CLSimRandomValueSimplifiedLiu.h>
+#include <clsim/random_value/I3CLSimRandomValueMixed.h>
+#include <clsim/random_value/I3CLSimRandomValueApplyFunction.h>
+#include <clsim/random_value/I3CLSimRandomValueWlenCherenkovNoDispersion.h>
 
 #include <icetray/python/std_vector_indexing_suite.hpp>
 

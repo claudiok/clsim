@@ -21,19 +21,19 @@
 
 #include <sstream>
 
-#include <clsim/I3CLSimFunction.h>
+#include <clsim/function/I3CLSimFunction.h>
 
-#include <clsim/I3CLSimFunctionConstant.h>
+#include <clsim/function/I3CLSimFunctionConstant.h>
 
-#include <clsim/I3CLSimFunctionFromTable.h>
-#include <clsim/I3CLSimFunctionRefIndexQuanFry.h>
-#include <clsim/I3CLSimFunctionScatLenPartic.h>
+#include <clsim/function/I3CLSimFunctionFromTable.h>
+#include <clsim/function/I3CLSimFunctionRefIndexQuanFry.h>
+#include <clsim/function/I3CLSimFunctionScatLenPartic.h>
 
-#include <clsim/I3CLSimFunctionRefIndexIceCube.h>
-#include <clsim/I3CLSimFunctionAbsLenIceCube.h>
-#include <clsim/I3CLSimFunctionScatLenIceCube.h>
+#include <clsim/function/I3CLSimFunctionRefIndexIceCube.h>
+#include <clsim/function/I3CLSimFunctionAbsLenIceCube.h>
+#include <clsim/function/I3CLSimFunctionScatLenIceCube.h>
 
-#include <clsim/I3CLSimFunctionPolynomial.h>
+#include <clsim/function/I3CLSimFunctionPolynomial.h>
 
 #include <boost/preprocessor/seq.hpp>
 #include "const_ptr_helpers.h"

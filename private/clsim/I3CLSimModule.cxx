@@ -39,7 +39,7 @@
 #include "dataclasses/physics/I3MCTree.h"
 #include "dataclasses/physics/I3MCTreeUtils.h"
 
-#include "clsim/I3CLSimFunctionConstant.h"
+#include "clsim/function/I3CLSimFunctionConstant.h"
 
 #include "clsim/I3CLSimLightSource.h"
 #include "clsim/I3CLSimLightSourceToStepConverterGeant4.h"

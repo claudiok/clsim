@@ -23,7 +23,7 @@
 #define I3CLSIMTESTERBASE_H_INCLUDED
 
 #include "dataclasses/I3Vector.h"
-#include "clsim/I3CLSimRandomValue.h"
+#include "clsim/random_value/I3CLSimRandomValue.h"
 
 #include "clsim/I3CLSimOpenCLDevice.h"
 

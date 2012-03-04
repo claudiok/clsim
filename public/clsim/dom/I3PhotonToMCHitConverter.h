@@ -36,7 +36,7 @@
 
 #include "phys-services/I3RandomService.h"
 
-#include "clsim/I3CLSimFunction.h"
+#include "clsim/function/I3CLSimFunction.h"
 #include "clsim/I3CLSimPMTPhotonSimulator.h"
 
 #include <string>

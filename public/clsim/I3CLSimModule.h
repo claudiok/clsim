@@ -37,8 +37,8 @@
 
 #include "clsim/I3CLSimOpenCLDevice.h"
 
-#include "clsim/I3CLSimRandomValue.h"
-#include "clsim/I3CLSimFunction.h"
+#include "clsim/random_value/I3CLSimRandomValue.h"
+#include "clsim/function/I3CLSimFunction.h"
 
 #include "clsim/I3CLSimMediumProperties.h"
 #include "clsim/I3CLSimSpectrumTable.h"

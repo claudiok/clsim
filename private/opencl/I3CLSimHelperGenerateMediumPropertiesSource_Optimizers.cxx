@@ -10,8 +10,8 @@
 
 #include "icetray/I3Units.h"
 
-#include "clsim/I3CLSimFunctionAbsLenIceCube.h"
-#include "clsim/I3CLSimFunctionScatLenIceCube.h"
+#include "clsim/function/I3CLSimFunctionAbsLenIceCube.h"
+#include "clsim/function/I3CLSimFunctionScatLenIceCube.h"
 
 #include "clsim/to_float_string.h"
 

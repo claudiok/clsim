@@ -31,10 +31,10 @@
 
 #include "clsim/I3CLSimModuleHelper.h"
 
-#include "clsim/I3CLSimFunctionConstant.h"
-#include "clsim/I3CLSimFunctionFromTable.h"
-#include "clsim/I3CLSimRandomValueInterpolatedDistribution.h"
-#include "clsim/I3CLSimRandomValueWlenCherenkovNoDispersion.h"
+#include "clsim/function/I3CLSimFunctionConstant.h"
+#include "clsim/function/I3CLSimFunctionFromTable.h"
+#include "clsim/random_value/I3CLSimRandomValueInterpolatedDistribution.h"
+#include "clsim/random_value/I3CLSimRandomValueWlenCherenkovNoDispersion.h"
 
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>

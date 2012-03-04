@@ -27,7 +27,7 @@
 #include "phys-services/I3RandomService.h"
 
 #include "dataclasses/I3Vector.h"
-#include "clsim/I3CLSimRandomValue.h"
+#include "clsim/random_value/I3CLSimRandomValue.h"
 
 class I3CLSimRandomDistributionTester : public I3CLSimTesterBase
 {

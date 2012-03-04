@@ -42,27 +42,27 @@ if(OPENCL_FOUND)
     private/clsim/I3CLSimPhoton.cxx
     private/clsim/I3CLSimPhotonHistory.cxx
     private/clsim/I3CLSimPMTPhotonSimulator.cxx
-    private/clsim/I3CLSimRandomValueApplyFunction.cxx
-    private/clsim/I3CLSimRandomValue.cxx
-    private/clsim/I3CLSimRandomValueHenyeyGreenstein.cxx
-    private/clsim/I3CLSimRandomValueInterpolatedDistribution.cxx
-    private/clsim/I3CLSimRandomValueMixed.cxx
-    private/clsim/I3CLSimRandomValueRayleighScatteringCosAngle.cxx
-    private/clsim/I3CLSimRandomValueSimplifiedLiu.cxx
-    private/clsim/I3CLSimRandomValueWlenCherenkovNoDispersion.cxx
+    private/clsim/random_value/I3CLSimRandomValueApplyFunction.cxx
+    private/clsim/random_value/I3CLSimRandomValue.cxx
+    private/clsim/random_value/I3CLSimRandomValueHenyeyGreenstein.cxx
+    private/clsim/random_value/I3CLSimRandomValueInterpolatedDistribution.cxx
+    private/clsim/random_value/I3CLSimRandomValueMixed.cxx
+    private/clsim/random_value/I3CLSimRandomValueRayleighScatteringCosAngle.cxx
+    private/clsim/random_value/I3CLSimRandomValueSimplifiedLiu.cxx
+    private/clsim/random_value/I3CLSimRandomValueWlenCherenkovNoDispersion.cxx
     private/clsim/I3CLSimSimpleGeometryFromI3Geometry.cxx
     private/clsim/I3CLSimSimpleGeometryTextFile.cxx
     private/clsim/I3CLSimSimpleGeometryUserConfigurable.cxx
     private/clsim/I3CLSimStep.cxx
-    private/clsim/I3CLSimFunctionAbsLenIceCube.cxx
-    private/clsim/I3CLSimFunctionConstant.cxx
-    private/clsim/I3CLSimFunction.cxx
-    private/clsim/I3CLSimFunctionFromTable.cxx
-    private/clsim/I3CLSimFunctionPolynomial.cxx
-    private/clsim/I3CLSimFunctionRefIndexIceCube.cxx
-    private/clsim/I3CLSimFunctionRefIndexQuanFry.cxx
-    private/clsim/I3CLSimFunctionScatLenIceCube.cxx
-    private/clsim/I3CLSimFunctionScatLenPartic.cxx
+    private/clsim/function/I3CLSimFunctionAbsLenIceCube.cxx
+    private/clsim/function/I3CLSimFunctionConstant.cxx
+    private/clsim/function/I3CLSimFunction.cxx
+    private/clsim/function/I3CLSimFunctionFromTable.cxx
+    private/clsim/function/I3CLSimFunctionPolynomial.cxx
+    private/clsim/function/I3CLSimFunctionRefIndexIceCube.cxx
+    private/clsim/function/I3CLSimFunctionRefIndexQuanFry.cxx
+    private/clsim/function/I3CLSimFunctionScatLenIceCube.cxx
+    private/clsim/function/I3CLSimFunctionScatLenPartic.cxx
     private/clsim/I3CLSimLightSource.cxx
     private/clsim/I3CLSimSpectrumTable.cxx
     private/clsim/I3CLSimFlasherPulse.cxx

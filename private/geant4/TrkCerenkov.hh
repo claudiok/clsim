@@ -58,7 +58,7 @@
 #include "G4MaterialPropertiesTable.hh"
 #include "G4PhysicsOrderedFreeVector.hh"
 
-#include "clsim/I3CLSimFunction.h"
+#include "clsim/function/I3CLSimFunction.h"
 
 // Class Description:
 // Discrete Process -- Generation of Cerenkov Photons.

@@ -1,6 +1,6 @@
 #include "clsim/I3CLSimLightSourceToStepConverterUtils.h"
 
-#include "clsim/I3CLSimFunction.h"
+#include "clsim/function/I3CLSimFunction.h"
 #include "icetray/I3Units.h"
 #include "dataclasses/I3Constants.h"
 
