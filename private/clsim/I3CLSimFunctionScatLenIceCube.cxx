@@ -1,6 +1,6 @@
 #include <icetray/serialization.h>
 #include <icetray/I3Units.h>
-#include <clsim/I3CLSimWlenDependentValueScatLenIceCube.h>
+#include <clsim/I3CLSimFunctionScatLenIceCube.h>
 
 #include <typeinfo>
 #include <cmath>
@@ -8,8 +8,8 @@
 #include "clsim/to_float_string.h"
 using namespace I3CLSimHelper;
 
-I3CLSimWlenDependentValueScatLenIceCube::
-I3CLSimWlenDependentValueScatLenIceCube(double alpha,
+I3CLSimFunctionScatLenIceCube::
+I3CLSimFunctionScatLenIceCube(double alpha,
                                         double b400
                                         )
 :
@@ -18,20 +18,20 @@ b400_(b400)
 { 
 }
 
-I3CLSimWlenDependentValueScatLenIceCube::I3CLSimWlenDependentValueScatLenIceCube() {;}
+I3CLSimFunctionScatLenIceCube::I3CLSimFunctionScatLenIceCube() {;}
 
-I3CLSimWlenDependentValueScatLenIceCube::~I3CLSimWlenDependentValueScatLenIceCube() 
+I3CLSimFunctionScatLenIceCube::~I3CLSimFunctionScatLenIceCube() 
 {;}
 
 
-double I3CLSimWlenDependentValueScatLenIceCube::GetValue(double wlen) const
+double I3CLSimFunctionScatLenIceCube::GetValue(double wlen) const
 {
     const double x = wlen/I3Units::nanometer;
     return I3Units::m/( b400_ * std::pow(x/400., -alpha_) );
 }
 
 
-std::string I3CLSimWlenDependentValueScatLenIceCube::GetOpenCLFunction(const std::string &functionName) const
+std::string I3CLSimFunctionScatLenIceCube::GetOpenCLFunction(const std::string &functionName) const
 {
     std::string funcDef = 
     std::string("inline float ") + functionName + std::string("(float wlen)\n");
@@ -56,11 +56,11 @@ std::string I3CLSimWlenDependentValueScatLenIceCube::GetOpenCLFunction(const std
     return funcDef + ";\n\n" + funcDef + funcBody;
 }
 
-bool I3CLSimWlenDependentValueScatLenIceCube::CompareTo(const I3CLSimWlenDependentValue &other) const
+bool I3CLSimFunctionScatLenIceCube::CompareTo(const I3CLSimFunction &other) const
 {
     try
     {
-        const I3CLSimWlenDependentValueScatLenIceCube &other_ = dynamic_cast<const I3CLSimWlenDependentValueScatLenIceCube &>(other);
+        const I3CLSimFunctionScatLenIceCube &other_ = dynamic_cast<const I3CLSimFunctionScatLenIceCube &>(other);
         return ((other_.alpha_ == alpha_) &&
                 (other_.b400_ == b400_));
     }
@@ -74,15 +74,15 @@ bool I3CLSimWlenDependentValueScatLenIceCube::CompareTo(const I3CLSimWlenDepende
 
 
 template <class Archive>
-void I3CLSimWlenDependentValueScatLenIceCube::serialize(Archive &ar, unsigned version)
+void I3CLSimFunctionScatLenIceCube::serialize(Archive &ar, unsigned version)
 {
-    if (version>i3clsimwlendependentvaluescatlenicecube_version_)
-        log_fatal("Attempting to read version %u from file but running version %u of I3CLSimWlenDependentValueScatLenIceCube class.",version,i3clsimwlendependentvaluescatlenicecube_version_);
+    if (version>i3clsimfunctionscatlenicecube_version_)
+        log_fatal("Attempting to read version %u from file but running version %u of I3CLSimFunctionScatLenIceCube class.",version,i3clsimfunctionscatlenicecube_version_);
 
-    ar & make_nvp("I3CLSimWlenDependentValue", base_object<I3CLSimWlenDependentValue>(*this));
+    ar & make_nvp("I3CLSimFunction", base_object<I3CLSimFunction>(*this));
     ar & make_nvp("alpha", alpha_);
     ar & make_nvp("b400", b400_);
 }
 
 
-I3_SERIALIZABLE(I3CLSimWlenDependentValueScatLenIceCube);
+I3_SERIALIZABLE(I3CLSimFunctionScatLenIceCube);

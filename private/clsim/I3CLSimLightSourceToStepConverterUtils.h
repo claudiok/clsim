@@ -6,19 +6,19 @@
 #include "dataclasses/I3Constants.h"
 
 #include "clsim/I3CLSimStep.h"
-#include "clsim/I3CLSimWlenDependentValue.h"
+#include "clsim/I3CLSimFunction.h"
 
 #include <cmath>
 
 namespace I3CLSimLightSourceToStepConverterUtils 
 {
     
-    double NumberOfPhotonsPerMeter(const I3CLSimWlenDependentValue &phaseRefIndex,
-                                   const I3CLSimWlenDependentValue &wavelengthGenerationBias,
+    double NumberOfPhotonsPerMeter(const I3CLSimFunction &phaseRefIndex,
+                                   const I3CLSimFunction &wavelengthGenerationBias,
                                    double fromWlen, double toWlen);
     
-    double PhotonNumberCorrectionFactorAfterBias(const I3CLSimWlenDependentValue &unbiasedSpectrum,
-                                                 const I3CLSimWlenDependentValue &wavelengthGenerationBias,
+    double PhotonNumberCorrectionFactorAfterBias(const I3CLSimFunction &unbiasedSpectrum,
+                                                 const I3CLSimFunction &wavelengthGenerationBias,
                                                  double fromWlen, double toWlen);
     
     inline uint64_t mwcRngInitState(I3RandomServicePtr randomService, uint32_t a)

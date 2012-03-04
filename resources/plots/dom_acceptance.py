@@ -136,7 +136,7 @@ print "    workItemsPerIteration:", workItemsPerIteration
 def applyOpenCLWlenDependentFunction(xValues, functionOpenCL, getDerivative=False, useReferenceFunction=False):
     #print "         number of values:", len(xValues)
     
-    tester = clsim.I3CLSimWlenDependentValueTester(device=openCLDevice,
+    tester = clsim.I3CLSimFunctionTester(device=openCLDevice,
                                                    workgroupSize=workgroupSize,
                                                    workItemsPerIteration=workItemsPerIteration,
                                                    wlenDependentValue=functionOpenCL)
@@ -193,7 +193,7 @@ def genMCHistogramsOpenCL(distribution, range, iterations=1000, numBins=1000):
 beta=1.
 mediumProps = clsim.MakeIceCubeMediumProperties()
 domAcceptance = clsim.GetIceCubeDOMAcceptance()
-flatAcceptance = clsim.I3CLSimWlenDependentValueConstant(1.)
+flatAcceptance = clsim.I3CLSimFunctionConstant(1.)
 phaseRefIndex = mediumProps.GetPhaseRefractiveIndex(0)
 
 wlen_range = (mediumProps.GetMinWavelength()/I3Units.nanometer, mediumProps.GetMaxWavelength()/I3Units.nanometer)

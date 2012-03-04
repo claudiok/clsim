@@ -1,6 +1,6 @@
 #include <icetray/serialization.h>
 #include <icetray/I3Units.h>
-#include <clsim/I3CLSimWlenDependentValueAbsLenIceCube.h>
+#include <clsim/I3CLSimFunctionAbsLenIceCube.h>
 
 #include <typeinfo>
 #include <cmath>
@@ -8,8 +8,8 @@
 #include "clsim/to_float_string.h"
 using namespace I3CLSimHelper;
 
-I3CLSimWlenDependentValueAbsLenIceCube::
-I3CLSimWlenDependentValueAbsLenIceCube(double kappa,
+I3CLSimFunctionAbsLenIceCube::
+I3CLSimFunctionAbsLenIceCube(double kappa,
                                        double A,
                                        double B,
                                        double D,
@@ -28,20 +28,20 @@ deltaTau_(deltaTau)
 { 
 }
 
-I3CLSimWlenDependentValueAbsLenIceCube::I3CLSimWlenDependentValueAbsLenIceCube() {;}
+I3CLSimFunctionAbsLenIceCube::I3CLSimFunctionAbsLenIceCube() {;}
 
-I3CLSimWlenDependentValueAbsLenIceCube::~I3CLSimWlenDependentValueAbsLenIceCube() 
+I3CLSimFunctionAbsLenIceCube::~I3CLSimFunctionAbsLenIceCube() 
 {;}
 
 
-double I3CLSimWlenDependentValueAbsLenIceCube::GetValue(double wlen) const
+double I3CLSimFunctionAbsLenIceCube::GetValue(double wlen) const
 {
     const double x = wlen/I3Units::nanometer;
     return I3Units::m/( (D_*aDust400_+E_) * std::pow(x, -kappa_)  +  A_*std::exp(-B_/x) * (1.f + 0.01f*deltaTau_) );
 }
 
 
-std::string I3CLSimWlenDependentValueAbsLenIceCube::GetOpenCLFunction(const std::string &functionName) const
+std::string I3CLSimFunctionAbsLenIceCube::GetOpenCLFunction(const std::string &functionName) const
 {
     std::string funcDef = 
     std::string("inline float ") + functionName + std::string("(float wlen)\n");
@@ -69,11 +69,11 @@ std::string I3CLSimWlenDependentValueAbsLenIceCube::GetOpenCLFunction(const std:
     return funcDef + ";\n\n" + funcDef + funcBody;
 }
 
-bool I3CLSimWlenDependentValueAbsLenIceCube::CompareTo(const I3CLSimWlenDependentValue &other) const
+bool I3CLSimFunctionAbsLenIceCube::CompareTo(const I3CLSimFunction &other) const
 {
     try
     {
-        const I3CLSimWlenDependentValueAbsLenIceCube &other_ = dynamic_cast<const I3CLSimWlenDependentValueAbsLenIceCube &>(other);
+        const I3CLSimFunctionAbsLenIceCube &other_ = dynamic_cast<const I3CLSimFunctionAbsLenIceCube &>(other);
         return ((other_.kappa_ == kappa_) &&
                 (other_.A_ == A_) &&
                 (other_.B_ == B_) &&
@@ -92,12 +92,12 @@ bool I3CLSimWlenDependentValueAbsLenIceCube::CompareTo(const I3CLSimWlenDependen
 
 
 template <class Archive>
-void I3CLSimWlenDependentValueAbsLenIceCube::serialize(Archive &ar, unsigned version)
+void I3CLSimFunctionAbsLenIceCube::serialize(Archive &ar, unsigned version)
 {
-    if (version>i3clsimwlendependentvalueabslenicecube_version_)
-        log_fatal("Attempting to read version %u from file but running version %u of I3CLSimWlenDependentValueAbsLenIceCube class.",version,i3clsimwlendependentvalueabslenicecube_version_);
+    if (version>i3clsimfunctionabslenicecube_version_)
+        log_fatal("Attempting to read version %u from file but running version %u of I3CLSimFunctionAbsLenIceCube class.",version,i3clsimfunctionabslenicecube_version_);
 
-    ar & make_nvp("I3CLSimWlenDependentValue", base_object<I3CLSimWlenDependentValue>(*this));
+    ar & make_nvp("I3CLSimFunction", base_object<I3CLSimFunction>(*this));
     ar & make_nvp("kappa", kappa_);
     ar & make_nvp("A", A_);
     ar & make_nvp("B", B_);
@@ -108,4 +108,4 @@ void I3CLSimWlenDependentValueAbsLenIceCube::serialize(Archive &ar, unsigned ver
 }
 
 
-I3_SERIALIZABLE(I3CLSimWlenDependentValueAbsLenIceCube);
+I3_SERIALIZABLE(I3CLSimFunctionAbsLenIceCube);

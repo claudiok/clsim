@@ -109,7 +109,7 @@ print "    workItemsPerIteration:", workItemsPerIteration
 def applyOpenCLWlenDependentFunction(xValues, functionOpenCL, getDerivative=False, useReferenceFunction=False):
     #print "         number of values:", len(xValues)
     
-    tester = clsim.I3CLSimWlenDependentValueTester(device=openCLDevice,
+    tester = clsim.I3CLSimFunctionTester(device=openCLDevice,
                                                    workgroupSize=workgroupSize,
                                                    workItemsPerIteration=workItemsPerIteration,
                                                    wlenDependentValue=functionOpenCL)
@@ -177,7 +177,7 @@ for i in range(len(flasherName)):
 
 mediumProps = clsim.MakeIceCubeMediumProperties()
 domAcceptance = clsim.GetIceCubeDOMAcceptance()
-flatAcceptance = clsim.I3CLSimWlenDependentValueConstant(1.)
+flatAcceptance = clsim.I3CLSimFunctionConstant(1.)
 vectorizedDomAcceptance = numpy.vectorize(lambda x: domAcceptance.GetValue(x))
 
 wlen_range = (mediumProps.GetMinWavelength()/I3Units.nanometer, mediumProps.GetMaxWavelength()/I3Units.nanometer)

@@ -45,10 +45,10 @@ forcedMaxWlen_(std::numeric_limits<double>::infinity())
     if (layersZStart + static_cast<double>(layersNum)*layersHeight > airZCoordinate_)
         log_fatal("layers end inside air");
 
-    absorptionLength_.assign(layersNum_, I3CLSimWlenDependentValueConstPtr());
-    scatteringLength_.assign(layersNum_, I3CLSimWlenDependentValueConstPtr());
-    phaseRefractiveIndex_.assign(layersNum_, I3CLSimWlenDependentValueConstPtr());
-    groupRefractiveIndexOverride_.assign(layersNum_, I3CLSimWlenDependentValueConstPtr());
+    absorptionLength_.assign(layersNum_, I3CLSimFunctionConstPtr());
+    scatteringLength_.assign(layersNum_, I3CLSimFunctionConstPtr());
+    phaseRefractiveIndex_.assign(layersNum_, I3CLSimFunctionConstPtr());
+    groupRefractiveIndexOverride_.assign(layersNum_, I3CLSimFunctionConstPtr());
 }
 
 I3CLSimMediumProperties::~I3CLSimMediumProperties() 
@@ -62,26 +62,26 @@ double I3CLSimMediumProperties::GetMinWavelength() const
 
     double mini=forcedMinWlen_;
     
-    BOOST_FOREACH(const I3CLSimWlenDependentValueConstPtr &ptr, absorptionLength_)
+    BOOST_FOREACH(const I3CLSimFunctionConstPtr &ptr, absorptionLength_)
     {
         if (!ptr) return NAN;
         const double wlen=ptr->GetMinWlen();
         if (wlen > mini) mini=wlen;
         
     }
-    BOOST_FOREACH(const I3CLSimWlenDependentValueConstPtr &ptr, scatteringLength_)
+    BOOST_FOREACH(const I3CLSimFunctionConstPtr &ptr, scatteringLength_)
     {
         if (!ptr) return NAN;
         const double wlen=ptr->GetMinWlen();
         if (wlen > mini) mini=wlen;
     }
-    BOOST_FOREACH(const I3CLSimWlenDependentValueConstPtr &ptr, phaseRefractiveIndex_)
+    BOOST_FOREACH(const I3CLSimFunctionConstPtr &ptr, phaseRefractiveIndex_)
     {
         if (!ptr) return NAN;
         const double wlen=ptr->GetMinWlen();
         if (wlen > mini) mini=wlen;
     }
-    BOOST_FOREACH(const I3CLSimWlenDependentValueConstPtr &ptr, groupRefractiveIndexOverride_)
+    BOOST_FOREACH(const I3CLSimFunctionConstPtr &ptr, groupRefractiveIndexOverride_)
     {
         if (!ptr) continue; // these are optional
         const double wlen=ptr->GetMinWlen();
@@ -97,26 +97,26 @@ double I3CLSimMediumProperties::GetMaxWavelength() const
 
     double maxi=forcedMaxWlen_;
 
-    BOOST_FOREACH(const I3CLSimWlenDependentValueConstPtr &ptr, absorptionLength_)
+    BOOST_FOREACH(const I3CLSimFunctionConstPtr &ptr, absorptionLength_)
     {
         if (!ptr) return NAN;
         const double wlen=ptr->GetMaxWlen();
         if (wlen < maxi) maxi=wlen;
         
     }
-    BOOST_FOREACH(const I3CLSimWlenDependentValueConstPtr &ptr, scatteringLength_)
+    BOOST_FOREACH(const I3CLSimFunctionConstPtr &ptr, scatteringLength_)
     {
         if (!ptr) return NAN;
         const double wlen=ptr->GetMaxWlen();
         if (wlen < maxi) maxi=wlen;
     }
-    BOOST_FOREACH(const I3CLSimWlenDependentValueConstPtr &ptr, phaseRefractiveIndex_)
+    BOOST_FOREACH(const I3CLSimFunctionConstPtr &ptr, phaseRefractiveIndex_)
     {
         if (!ptr) return NAN;
         const double wlen=ptr->GetMaxWlen();
         if (wlen < maxi) maxi=wlen;
     }
-    BOOST_FOREACH(const I3CLSimWlenDependentValueConstPtr &ptr, groupRefractiveIndexOverride_)
+    BOOST_FOREACH(const I3CLSimFunctionConstPtr &ptr, groupRefractiveIndexOverride_)
     {
         if (!ptr) continue; // these are optional
         const double wlen=ptr->GetMaxWlen();
@@ -128,15 +128,15 @@ double I3CLSimMediumProperties::GetMaxWavelength() const
 
 bool I3CLSimMediumProperties::IsReady() const
 {
-    BOOST_FOREACH(const I3CLSimWlenDependentValueConstPtr &ptr, absorptionLength_)
+    BOOST_FOREACH(const I3CLSimFunctionConstPtr &ptr, absorptionLength_)
     {
         if (!ptr) return false;
     }
-    BOOST_FOREACH(const I3CLSimWlenDependentValueConstPtr &ptr, scatteringLength_)
+    BOOST_FOREACH(const I3CLSimFunctionConstPtr &ptr, scatteringLength_)
     {
         if (!ptr) return false;
     }
-    BOOST_FOREACH(const I3CLSimWlenDependentValueConstPtr &ptr, phaseRefractiveIndex_)
+    BOOST_FOREACH(const I3CLSimFunctionConstPtr &ptr, phaseRefractiveIndex_)
     {
         if (!ptr) return false;
     }
@@ -147,7 +147,7 @@ bool I3CLSimMediumProperties::IsReady() const
         if (!groupRefractiveIndexOverride_[0])
         {
             // all entries have to be NULL
-            BOOST_FOREACH(const I3CLSimWlenDependentValueConstPtr &ptr, groupRefractiveIndexOverride_)
+            BOOST_FOREACH(const I3CLSimFunctionConstPtr &ptr, groupRefractiveIndexOverride_)
             {
                 if (ptr) return false;
             }
@@ -155,7 +155,7 @@ bool I3CLSimMediumProperties::IsReady() const
         else
         {
             // none of the entries must be NULL
-            BOOST_FOREACH(const I3CLSimWlenDependentValueConstPtr &ptr, groupRefractiveIndexOverride_)
+            BOOST_FOREACH(const I3CLSimFunctionConstPtr &ptr, groupRefractiveIndexOverride_)
             {
                 if (!ptr) return false;
             }
@@ -168,46 +168,46 @@ bool I3CLSimMediumProperties::IsReady() const
     return true;
 }
 
-const std::vector<I3CLSimWlenDependentValueConstPtr> &I3CLSimMediumProperties::GetAbsorptionLengths() const
+const std::vector<I3CLSimFunctionConstPtr> &I3CLSimMediumProperties::GetAbsorptionLengths() const
 {
     return absorptionLength_;
 }
 
-const std::vector<I3CLSimWlenDependentValueConstPtr> &I3CLSimMediumProperties::GetScatteringLengths() const
+const std::vector<I3CLSimFunctionConstPtr> &I3CLSimMediumProperties::GetScatteringLengths() const
 {
     return scatteringLength_;
 }
 
-const std::vector<I3CLSimWlenDependentValueConstPtr> &I3CLSimMediumProperties::GetPhaseRefractiveIndices() const
+const std::vector<I3CLSimFunctionConstPtr> &I3CLSimMediumProperties::GetPhaseRefractiveIndices() const
 {
     return phaseRefractiveIndex_;
 }
 
-const std::vector<I3CLSimWlenDependentValueConstPtr> &I3CLSimMediumProperties::GetGroupRefractiveIndicesOverride() const
+const std::vector<I3CLSimFunctionConstPtr> &I3CLSimMediumProperties::GetGroupRefractiveIndicesOverride() const
 {
     return groupRefractiveIndexOverride_;
 }
 
 
-I3CLSimWlenDependentValueConstPtr I3CLSimMediumProperties::GetAbsorptionLength(uint32_t layer) const
+I3CLSimFunctionConstPtr I3CLSimMediumProperties::GetAbsorptionLength(uint32_t layer) const
 {
     if (layer >= layersNum_) log_fatal("Invalid layer num: %" PRIu32, layer);
     return absorptionLength_[layer];
 }
 
-I3CLSimWlenDependentValueConstPtr I3CLSimMediumProperties::GetScatteringLength(uint32_t layer) const
+I3CLSimFunctionConstPtr I3CLSimMediumProperties::GetScatteringLength(uint32_t layer) const
 {
     if (layer >= layersNum_) log_fatal("Invalid layer num: %" PRIu32, layer);
     return scatteringLength_[layer];
 }
 
-I3CLSimWlenDependentValueConstPtr I3CLSimMediumProperties::GetPhaseRefractiveIndex(uint32_t layer) const
+I3CLSimFunctionConstPtr I3CLSimMediumProperties::GetPhaseRefractiveIndex(uint32_t layer) const
 {
     if (layer >= layersNum_) log_fatal("Invalid layer num: %" PRIu32, layer);
     return phaseRefractiveIndex_[layer];
 }
 
-I3CLSimWlenDependentValueConstPtr I3CLSimMediumProperties::GetGroupRefractiveIndexOverride(uint32_t layer) const
+I3CLSimFunctionConstPtr I3CLSimMediumProperties::GetGroupRefractiveIndexOverride(uint32_t layer) const
 {
     if (layer >= layersNum_) log_fatal("Invalid layer num: %" PRIu32, layer);
     return groupRefractiveIndexOverride_[layer];
@@ -218,25 +218,25 @@ I3CLSimRandomValueConstPtr I3CLSimMediumProperties::GetScatteringCosAngleDistrib
     return scatteringCosAngleDist_;
 }
 
-void I3CLSimMediumProperties::SetAbsorptionLength(uint32_t layer, I3CLSimWlenDependentValueConstPtr ptr)
+void I3CLSimMediumProperties::SetAbsorptionLength(uint32_t layer, I3CLSimFunctionConstPtr ptr)
 {
     if (layer >= layersNum_) log_fatal("Invalid layer num: %" PRIu32, layer);
     absorptionLength_[layer]=ptr;
 }
 
-void I3CLSimMediumProperties::SetScatteringLength(uint32_t layer, I3CLSimWlenDependentValueConstPtr ptr)
+void I3CLSimMediumProperties::SetScatteringLength(uint32_t layer, I3CLSimFunctionConstPtr ptr)
 {
     if (layer >= layersNum_) log_fatal("Invalid layer num: %" PRIu32, layer);
     scatteringLength_[layer]=ptr;
 }
 
-void I3CLSimMediumProperties::SetPhaseRefractiveIndex(uint32_t layer, I3CLSimWlenDependentValueConstPtr ptr)
+void I3CLSimMediumProperties::SetPhaseRefractiveIndex(uint32_t layer, I3CLSimFunctionConstPtr ptr)
 {
     if (layer >= layersNum_) log_fatal("Invalid layer num: %" PRIu32, layer);
     phaseRefractiveIndex_[layer]=ptr;
 }
 
-void I3CLSimMediumProperties::SetGroupRefractiveIndexOverride(uint32_t layer, I3CLSimWlenDependentValueConstPtr ptr)
+void I3CLSimMediumProperties::SetGroupRefractiveIndexOverride(uint32_t layer, I3CLSimFunctionConstPtr ptr)
 {
     if (layer >= layersNum_) log_fatal("Invalid layer num: %" PRIu32, layer);
     groupRefractiveIndexOverride_[layer]=ptr;

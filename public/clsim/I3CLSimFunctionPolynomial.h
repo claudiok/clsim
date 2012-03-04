@@ -1,29 +1,29 @@
-#ifndef I3CLSIMWLENDEPENDENTVALUEPOLYNOMIAL_H_INCLUDED
-#define I3CLSIMWLENDEPENDENTVALUEPOLYNOMIAL_H_INCLUDED
+#ifndef I3CLSIMFUNCTIONPOLYNOMIAL_H_INCLUDED
+#define I3CLSIMFUNCTIONPOLYNOMIAL_H_INCLUDED
 
-#include "clsim/I3CLSimWlenDependentValue.h"
+#include "clsim/I3CLSimFunction.h"
 
 #include <vector>
 
 /**
  * @brief A simple polynomial
  */
-static const unsigned i3clsimwlendependentvaluepolynomial_version_ = 0;
+static const unsigned i3clsimfunctionpolynomial_version_ = 0;
 
-struct I3CLSimWlenDependentValuePolynomial : public I3CLSimWlenDependentValue
+struct I3CLSimFunctionPolynomial : public I3CLSimFunction
 {
 public:
     /**
      * Constructor for polynomials that are defined for the whole x-range
      **/
-    I3CLSimWlenDependentValuePolynomial(const std::vector<double> &coeffs);
+    I3CLSimFunctionPolynomial(const std::vector<double> &coeffs);
     
     /**
      * Constructor for polynomials that have a limited range
      * If it is called with an x outside the range, it will return the
      * values at rangemin/rangemax.
      */
-    I3CLSimWlenDependentValuePolynomial(const std::vector<double> &coeffs,
+    I3CLSimFunctionPolynomial(const std::vector<double> &coeffs,
                                         double rangemin,
                                         double rangemax);
     
@@ -32,14 +32,14 @@ public:
      * If it is called with an x outside the range,
      * it will return the underflow/overflow value
      */
-    I3CLSimWlenDependentValuePolynomial(const std::vector<double> &coeffs,
+    I3CLSimFunctionPolynomial(const std::vector<double> &coeffs,
                                         double rangemin, double rangemax,
                                         double underflow, double overflow);
     
     /**
      * Destructor
      */
-    virtual ~I3CLSimWlenDependentValuePolynomial();
+    virtual ~I3CLSimFunctionPolynomial();
     
     /**
      * If this is true, it is assumed that GetValue() and GetDerivative() return
@@ -75,16 +75,16 @@ public:
     virtual std::string GetOpenCLFunction(const std::string &functionName) const;
     
     /**
-     * Shall compare to another I3CLSimWlenDependentValue object
+     * Shall compare to another I3CLSimFunction object
      */
-    virtual bool CompareTo(const I3CLSimWlenDependentValue &other) const;
+    virtual bool CompareTo(const I3CLSimFunction &other) const;
     
     
     // access to the internal state
     inline const std::vector<double> &GetCoefficients() const {return coefficients_;};
     
 private:
-    I3CLSimWlenDependentValuePolynomial();
+    I3CLSimFunctionPolynomial();
     
     std::vector<double> coefficients_;
     
@@ -96,8 +96,8 @@ private:
 };
 
 
-BOOST_CLASS_VERSION(I3CLSimWlenDependentValuePolynomial, i3clsimwlendependentvaluepolynomial_version_);
+BOOST_CLASS_VERSION(I3CLSimFunctionPolynomial, i3clsimfunctionpolynomial_version_);
 
-I3_POINTER_TYPEDEFS(I3CLSimWlenDependentValuePolynomial);
+I3_POINTER_TYPEDEFS(I3CLSimFunctionPolynomial);
 
-#endif //I3CLSIMWLENDEPENDENTVALUEPOLYNOMIAL_H_INCLUDED
+#endif //I3CLSIMFUNCTIONPOLYNOMIAL_H_INCLUDED

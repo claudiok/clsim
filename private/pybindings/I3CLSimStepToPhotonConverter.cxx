@@ -38,7 +38,7 @@ struct I3CLSimStepToPhotonConverterWrapper : I3CLSimStepToPhotonConverter, bp::w
 {
     // pure virtual
     virtual void SetWlenGenerators(const std::vector<I3CLSimRandomValueConstPtr> &wlenGenerators) {this->get_override("SetWlenGenerators")(wlenGenerators);}
-    virtual void SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias) {this->get_override("SetWlenBias")(wlenBias);}
+    virtual void SetWlenBias(I3CLSimFunctionConstPtr wlenBias) {this->get_override("SetWlenBias")(wlenBias);}
 
     virtual void SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties) {this->get_override("SetMediumProperties")(mediumProperties);}
     virtual void SetGeometry(I3CLSimSimpleGeometryConstPtr geometry) {this->get_override("SetGeometry")(geometry);}

@@ -27,11 +27,11 @@ namespace bp = boost::python;
 namespace {
     bp::list I3CLSimSpectrumTable_GetSpectra_python(const I3CLSimSpectrumTable &self)
     {
-        const std::vector<I3CLSimWlenDependentValueConstPtr> &spectra = self.GetSpectra();
+        const std::vector<I3CLSimFunctionConstPtr> &spectra = self.GetSpectra();
 
         bp::list t;
         
-        BOOST_FOREACH(const I3CLSimWlenDependentValueConstPtr &ptr, spectra)
+        BOOST_FOREACH(const I3CLSimFunctionConstPtr &ptr, spectra)
         {
             t.append(ptr);
         }

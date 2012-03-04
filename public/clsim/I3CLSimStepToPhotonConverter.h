@@ -10,7 +10,7 @@
 #include "clsim/I3CLSimPhotonHistory.h"
 #include "clsim/I3CLSimMediumProperties.h"
 #include "clsim/I3CLSimRandomValue.h"
-#include "clsim/I3CLSimWlenDependentValue.h"
+#include "clsim/I3CLSimFunction.h"
 
 #include <boost/noncopyable.hpp>
 
@@ -80,7 +80,7 @@ public:
      * correct weights.
      * Will throw if used after the call to Initialize().
      */
-    virtual void SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias) = 0;
+    virtual void SetWlenBias(I3CLSimFunctionConstPtr wlenBias) = 0;
 
     /**
      * Sets the medium properties.

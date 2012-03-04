@@ -23,7 +23,7 @@
 
 #include <test/I3CLSimTesterBase.h>
 #include <test/I3CLSimRandomDistributionTester.h>
-#include <test/I3CLSimWlenDependentValueTester.h>
+#include <test/I3CLSimFunctionTester.h>
 #include <test/I3CLSimMediumPropertiesTester.h>
 
 #include <boost/preprocessor/seq.hpp>
@@ -81,15 +81,15 @@ void register_I3CLSimTester()
     bp::implicitly_convertible<shared_ptr<I3CLSimRandomDistributionTester>, shared_ptr<const I3CLSimTesterBase> >();
 
     
-    // I3CLSimWlenDependentValueTester
+    // I3CLSimFunctionTester
     {
-        bp::scope I3CLSimWlenDependentValueTester_scope = 
-        bp::class_<I3CLSimWlenDependentValueTester, 
-        boost::shared_ptr<I3CLSimWlenDependentValueTester>,
+        bp::scope I3CLSimFunctionTester_scope = 
+        bp::class_<I3CLSimFunctionTester, 
+        boost::shared_ptr<I3CLSimFunctionTester>,
         bases<I3CLSimTesterBase>,
         boost::noncopyable>
-        ("I3CLSimWlenDependentValueTester",
-         bp::init<const I3CLSimOpenCLDevice &, uint64_t, uint64_t, I3CLSimWlenDependentValueConstPtr>
+        ("I3CLSimFunctionTester",
+         bp::init<const I3CLSimOpenCLDevice &, uint64_t, uint64_t, I3CLSimFunctionConstPtr>
          (
           (
            bp::arg("device"),
@@ -99,16 +99,16 @@ void register_I3CLSimTester()
            )
           )
          )
-        .def("EvaluateFunction", &I3CLSimWlenDependentValueTester::EvaluateFunction, bp::arg("xValues"))
-        .def("EvaluateDerivative", &I3CLSimWlenDependentValueTester::EvaluateDerivative, bp::arg("xValues"))
+        .def("EvaluateFunction", &I3CLSimFunctionTester::EvaluateFunction, bp::arg("xValues"))
+        .def("EvaluateDerivative", &I3CLSimFunctionTester::EvaluateDerivative, bp::arg("xValues"))
 
-        .def("EvaluateReferenceFunction", &I3CLSimWlenDependentValueTester::EvaluateReferenceFunction, bp::arg("xValues"))
-        .def("EvaluateReferenceDerivative", &I3CLSimWlenDependentValueTester::EvaluateReferenceDerivative, bp::arg("xValues"))
+        .def("EvaluateReferenceFunction", &I3CLSimFunctionTester::EvaluateReferenceFunction, bp::arg("xValues"))
+        .def("EvaluateReferenceDerivative", &I3CLSimFunctionTester::EvaluateReferenceDerivative, bp::arg("xValues"))
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueTester>, shared_ptr<const I3CLSimWlenDependentValueTester> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueTester>, shared_ptr<I3CLSimTesterBase> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimWlenDependentValueTester>, shared_ptr<const I3CLSimTesterBase> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionTester>, shared_ptr<const I3CLSimFunctionTester> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionTester>, shared_ptr<I3CLSimTesterBase> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionTester>, shared_ptr<const I3CLSimTesterBase> >();
 
     
     // I3CLSimMediumPropertiesTester

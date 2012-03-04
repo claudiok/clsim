@@ -24,7 +24,7 @@
 
 #include "icetray/I3TrayHeaders.h"
 
-#include "clsim/I3CLSimWlenDependentValue.h"
+#include "clsim/I3CLSimFunction.h"
 
 #include <vector>
 #include <stdexcept>
@@ -47,7 +47,7 @@ public:
      * Returns the vector of spectra. The first spectrum is the Cherenkov
      * spectrum and will be set to NULL.
      */
-    const std::vector<I3CLSimWlenDependentValueConstPtr> &GetSpectra() const
+    const std::vector<I3CLSimFunctionConstPtr> &GetSpectra() const
     {
         return spectra_;
     }
@@ -56,9 +56,9 @@ public:
      * Add a new spectrum. The spectrum index will be returned.
      * This can also be used to retrieve the index of an existing spectrum.
      */
-    std::size_t append(I3CLSimWlenDependentValueConstPtr newSpectrum);
+    std::size_t append(I3CLSimFunctionConstPtr newSpectrum);
 
-    I3CLSimWlenDependentValueConstPtr operator[](std::size_t index) const
+    I3CLSimFunctionConstPtr operator[](std::size_t index) const
     {
         if (index>=spectra_.size())
             throw std::out_of_range("invalid index");
@@ -69,7 +69,7 @@ public:
     std::size_t size() const {return spectra_.size();}
     
 private:
-    std::vector<I3CLSimWlenDependentValueConstPtr> spectra_;
+    std::vector<I3CLSimFunctionConstPtr> spectra_;
     
 };
 

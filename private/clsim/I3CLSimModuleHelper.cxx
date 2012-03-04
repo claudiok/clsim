@@ -31,8 +31,8 @@
 
 #include "clsim/I3CLSimModuleHelper.h"
 
-#include "clsim/I3CLSimWlenDependentValueConstant.h"
-#include "clsim/I3CLSimWlenDependentValueFromTable.h"
+#include "clsim/I3CLSimFunctionConstant.h"
+#include "clsim/I3CLSimFunctionFromTable.h"
 #include "clsim/I3CLSimRandomValueInterpolatedDistribution.h"
 #include "clsim/I3CLSimRandomValueWlenCherenkovNoDispersion.h"
 
@@ -49,7 +49,7 @@ namespace I3CLSimModuleHelper {
     namespace {
         double CherenkovYieldDistribution(double wlen, I3CLSimMediumPropertiesPtr mediumProperties, double beta=1.)
         {
-            I3CLSimWlenDependentValueConstPtr nPhaseDist =
+            I3CLSimFunctionConstPtr nPhaseDist =
             mediumProperties->GetPhaseRefractiveIndex(0); // this assumes the refractive index does not change between layers
             
             if (!nPhaseDist->HasNativeImplementation()) 
@@ -70,8 +70,8 @@ namespace I3CLSimModuleHelper {
     
     
     I3CLSimRandomValueConstPtr
-    makeWavelengthGenerator(I3CLSimWlenDependentValueConstPtr unbiasedSpectrum,
-                            I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
+    makeWavelengthGenerator(I3CLSimFunctionConstPtr unbiasedSpectrum,
+                            I3CLSimFunctionConstPtr wavelengthGenerationBias,
                             I3CLSimMediumPropertiesPtr mediumProperties)
     {
         double minWlen = unbiasedSpectrum->GetMinWlen();
@@ -79,9 +79,9 @@ namespace I3CLSimModuleHelper {
         
         // check if the spectrum is from a tabulated distribution (instead of
         // a parameterized one)
-        I3CLSimWlenDependentValueFromTableConstPtr unbiasedSpectrumFromTable;
+        I3CLSimFunctionFromTableConstPtr unbiasedSpectrumFromTable;
         unbiasedSpectrumFromTable =
-        dynamic_pointer_cast<const I3CLSimWlenDependentValueFromTable>(unbiasedSpectrum);
+        dynamic_pointer_cast<const I3CLSimFunctionFromTable>(unbiasedSpectrum);
 
         if (!unbiasedSpectrumFromTable) {
             // do not clip wavelengths if they are from a tabulated distribution. In that case,
@@ -157,7 +157,7 @@ namespace I3CLSimModuleHelper {
     }
     
     I3CLSimRandomValueConstPtr
-    makeCherenkovWavelengthGenerator(I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
+    makeCherenkovWavelengthGenerator(I3CLSimFunctionConstPtr wavelengthGenerationBias,
                                      bool generateCherenkovPhotonsWithoutDispersion,
                                      I3CLSimMediumPropertiesPtr mediumProperties)
     {
@@ -175,8 +175,8 @@ namespace I3CLSimModuleHelper {
         //bool biasIsConstant=false;
         
         {
-            I3CLSimWlenDependentValueConstantConstPtr wavelengthGenerationBiasConstant =
-            dynamic_pointer_cast<const I3CLSimWlenDependentValueConstant>(wavelengthGenerationBias);
+            I3CLSimFunctionConstantConstPtr wavelengthGenerationBiasConstant =
+            dynamic_pointer_cast<const I3CLSimFunctionConstant>(wavelengthGenerationBias);
             
             if (wavelengthGenerationBiasConstant)
             {
@@ -187,9 +187,9 @@ namespace I3CLSimModuleHelper {
             }
         }
         
-        I3CLSimWlenDependentValueFromTableConstPtr wavelengthGenerationBiasFromTable;
+        I3CLSimFunctionFromTableConstPtr wavelengthGenerationBiasFromTable;
         wavelengthGenerationBiasFromTable =
-        dynamic_pointer_cast<const I3CLSimWlenDependentValueFromTable>(wavelengthGenerationBias);
+        dynamic_pointer_cast<const I3CLSimFunctionFromTable>(wavelengthGenerationBias);
         
         
 
@@ -288,7 +288,7 @@ namespace I3CLSimModuleHelper {
                                                            I3RandomServicePtr rng,
                                                            I3CLSimSimpleGeometryFromI3GeometryPtr geometry,
                                                            I3CLSimMediumPropertiesPtr medium,
-                                                           I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
+                                                           I3CLSimFunctionConstPtr wavelengthGenerationBias,
                                                            const std::vector<I3CLSimRandomValueConstPtr> &wavelengthGenerators,
                                                            bool enableDoubleBuffering,
                                                            bool doublePrecision,
@@ -340,7 +340,7 @@ namespace I3CLSimModuleHelper {
 
     I3CLSimLightSourceToStepConverterGeant4Ptr initializeGeant4(I3RandomServicePtr rng,
                                                              I3CLSimMediumPropertiesPtr medium,
-                                                             I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
+                                                             I3CLSimFunctionConstPtr wavelengthGenerationBias,
                                                              uint64_t bunchSizeGranularity,
                                                              uint64_t maxBunchSize,
                                                              const I3CLSimLightSourceParameterizationSeries &parameterizationList,

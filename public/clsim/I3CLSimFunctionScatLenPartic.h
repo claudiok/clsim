@@ -1,23 +1,26 @@
-#ifndef I3CLSIMWLENDEPENDENTVALUESCATLENICECUBE_H_INCLUDED
-#define I3CLSIMWLENDEPENDENTVALUESCATLENICECUBE_H_INCLUDED
+#ifndef I3CLSIMFUNCTIONSCATLENPARTIC_H_INCLUDED
+#define I3CLSIMFUNCTIONSCATLENPARTIC_H_INCLUDED
 
-#include "clsim/I3CLSimWlenDependentValue.h"
+#include "clsim/I3CLSimFunction.h"
 
 #include <limits>
 
 /**
- * @brief Six-parameter ice model as fitted in the SPICE ice model.
- * (scattering length)
+ * @brief The scattering length as defined by the "partic"
+ * scattering model.
  */
-static const unsigned i3clsimwlendependentvaluescatlenicecube_version_ = 0;
+static const unsigned i3clsimfunctionscatlenpartic_version_ = 0;
 
-struct I3CLSimWlenDependentValueScatLenIceCube : public I3CLSimWlenDependentValue
+struct I3CLSimFunctionScatLenPartic : public I3CLSimFunction
 {
 public:
-    I3CLSimWlenDependentValueScatLenIceCube(double alpha,
-                                            double b400
-                                            );
-    virtual ~I3CLSimWlenDependentValueScatLenIceCube();
+    static const double default_volumeConcentrationSmallParticles;
+    static const double default_volumeConcentrationLargeParticles;
+    
+    I3CLSimFunctionScatLenPartic(double volumeConcentrationSmallParticles=default_volumeConcentrationSmallParticles,   // fraction (e.g. 0.0075*I3Units::perMillion)
+                                           double volumeConcentrationLargeParticles=default_volumeConcentrationLargeParticles    // fraction (e.g. 0.0075*I3Units::perMillion)
+                                           );
+    virtual ~I3CLSimFunctionScatLenPartic();
     
     /**
      * If this is true, it is assumed that GetValue() and GetDerivative() return
@@ -53,29 +56,21 @@ public:
     virtual std::string GetOpenCLFunction(const std::string &functionName) const;
     
     /**
-     * Shall compare to another I3CLSimWlenDependentValue object
+     * Shall compare to another I3CLSimFunction object
      */
-    virtual bool CompareTo(const I3CLSimWlenDependentValue &other) const;
-    
-    
-    // access to the internal state
-    inline double GetAlpha() const {return alpha_;}
-    inline double GetB400() const {return b400_;}
+    virtual bool CompareTo(const I3CLSimFunction &other) const;
     
 private:
-    I3CLSimWlenDependentValueScatLenIceCube();
-    
-    double alpha_;
-    double b400_;
-    
+    double volumeConcentrationSmallParticles_;
+    double volumeConcentrationLargeParticles_;
     
     friend class boost::serialization::access;
     template <class Archive> void serialize(Archive & ar, unsigned version);
 };
 
 
-BOOST_CLASS_VERSION(I3CLSimWlenDependentValueScatLenIceCube, i3clsimwlendependentvaluescatlenicecube_version_);
+BOOST_CLASS_VERSION(I3CLSimFunctionScatLenPartic, i3clsimfunctionscatlenpartic_version_);
 
-I3_POINTER_TYPEDEFS(I3CLSimWlenDependentValueScatLenIceCube);
+I3_POINTER_TYPEDEFS(I3CLSimFunctionScatLenPartic);
 
-#endif //I3CLSIMWLENDEPENDENTVALUESCATLENICECUBE_H_INCLUDED
+#endif //I3CLSIMFUNCTIONSCATLENPARTIC_H_INCLUDED

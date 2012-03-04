@@ -1,5 +1,5 @@
 #include <icetray/serialization.h>
-#include <clsim/I3CLSimWlenDependentValueFromTable.h>
+#include <clsim/I3CLSimFunctionFromTable.h>
 
 #include <typeinfo>
 #include <cmath>
@@ -12,8 +12,8 @@
 #include "clsim/to_float_string.h"
 using namespace I3CLSimHelper;
 
-I3CLSimWlenDependentValueFromTable::
-I3CLSimWlenDependentValueFromTable(const std::vector<double> &wlens,
+I3CLSimFunctionFromTable::
+I3CLSimFunctionFromTable(const std::vector<double> &wlens,
                                    const std::vector<double> &values)
 :
 wlenStep_(NAN),
@@ -28,8 +28,8 @@ equalSpacingMode_(false)
     if (startWlen_ < 0.) throw std::range_error("startWlen must not be < 0!");
 }
 
-I3CLSimWlenDependentValueFromTable::
-I3CLSimWlenDependentValueFromTable(double startWlen,
+I3CLSimFunctionFromTable::
+I3CLSimFunctionFromTable(double startWlen,
                                    double wlenStep,
                                    const std::vector<double> &values)
 :
@@ -49,9 +49,9 @@ equalSpacingMode_(true)
     }
 }
 
-I3CLSimWlenDependentValueFromTable::I3CLSimWlenDependentValueFromTable() {;}
+I3CLSimFunctionFromTable::I3CLSimFunctionFromTable() {;}
 
-I3CLSimWlenDependentValueFromTable::~I3CLSimWlenDependentValueFromTable() 
+I3CLSimFunctionFromTable::~I3CLSimFunctionFromTable() 
 {;}
 
 namespace {
@@ -67,7 +67,7 @@ namespace {
     }
 }
 
-double I3CLSimWlenDependentValueFromTable::GetValue(double wlen) const
+double I3CLSimFunctionFromTable::GetValue(double wlen) const
 {
     if (equalSpacingMode_) {
         double fbin;
@@ -110,7 +110,7 @@ double I3CLSimWlenDependentValueFromTable::GetValue(double wlen) const
     }
 }
 
-double I3CLSimWlenDependentValueFromTable::GetMinWlen() const
+double I3CLSimFunctionFromTable::GetMinWlen() const
 {
     if (equalSpacingMode_) {
         return startWlen_;
@@ -119,7 +119,7 @@ double I3CLSimWlenDependentValueFromTable::GetMinWlen() const
     }
 }
 
-double I3CLSimWlenDependentValueFromTable::GetMaxWlen() const
+double I3CLSimFunctionFromTable::GetMaxWlen() const
 {
     if (equalSpacingMode_) {
         return startWlen_ + wlenStep_ * static_cast<double>(values_.size()-1);
@@ -128,7 +128,7 @@ double I3CLSimWlenDependentValueFromTable::GetMaxWlen() const
     }
 }
 
-std::string I3CLSimWlenDependentValueFromTable::GetOpenCLFunction(const std::string &functionName) const
+std::string I3CLSimFunctionFromTable::GetOpenCLFunction(const std::string &functionName) const
 {
     if (!equalSpacingMode_)
         log_fatal("GetOpenCLFunction() has not yet been implemented for non-equal bin spacings.");
@@ -186,11 +186,11 @@ std::string I3CLSimWlenDependentValueFromTable::GetOpenCLFunction(const std::str
     return funcDef + ";\n" + interpHelperDef + ";\n" + dataDef + interpHelperDef + interpHelperBody + funcDef + funcBody;
 }
 
-bool I3CLSimWlenDependentValueFromTable::CompareTo(const I3CLSimWlenDependentValue &other) const
+bool I3CLSimFunctionFromTable::CompareTo(const I3CLSimFunction &other) const
 {
     try
     {
-        const I3CLSimWlenDependentValueFromTable &other_ = dynamic_cast<const I3CLSimWlenDependentValueFromTable &>(other);
+        const I3CLSimFunctionFromTable &other_ = dynamic_cast<const I3CLSimFunctionFromTable &>(other);
         if ((other_.equalSpacingMode_ != equalSpacingMode_) ||
             (other_.values_.size() != values_.size()))
             return false;
@@ -224,12 +224,12 @@ bool I3CLSimWlenDependentValueFromTable::CompareTo(const I3CLSimWlenDependentVal
 
 
 template <class Archive>
-void I3CLSimWlenDependentValueFromTable::serialize(Archive &ar, unsigned version)
+void I3CLSimFunctionFromTable::serialize(Archive &ar, unsigned version)
 {
-    if (version>i3clsimwlendependentvaluefromtable_version_)
-        log_fatal("Attempting to read version %u from file but running version %u of I3CLSimWlenDependentValueFromTable class.",version,i3clsimwlendependentvaluefromtable_version_);
+    if (version>i3clsimfunctionfromtable_version_)
+        log_fatal("Attempting to read version %u from file but running version %u of I3CLSimFunctionFromTable class.",version,i3clsimfunctionfromtable_version_);
 
-    ar & make_nvp("I3CLSimWlenDependentValue", base_object<I3CLSimWlenDependentValue>(*this));
+    ar & make_nvp("I3CLSimFunction", base_object<I3CLSimFunction>(*this));
     ar & make_nvp("startWlen", startWlen_);
     ar & make_nvp("wlenStep", wlenStep_);
     ar & make_nvp("wlens", wlens_);
@@ -238,4 +238,4 @@ void I3CLSimWlenDependentValueFromTable::serialize(Archive &ar, unsigned version
 }     
 
 
-I3_SERIALIZABLE(I3CLSimWlenDependentValueFromTable);
+I3_SERIALIZABLE(I3CLSimFunctionFromTable);

@@ -63,7 +63,7 @@ namespace I3CLSimHelper
     }
     
     std::string GenerateLayeredWlenDependentFunctions_WriteMainFuncCode(const std::vector<std::size_t> &outputFunctionForLayer,
-                                                                        const std::vector<I3CLSimWlenDependentValueConstPtr> &functionsToGenerate,
+                                                                        const std::vector<I3CLSimFunctionConstPtr> &functionsToGenerate,
                                                                         const std::string &fullName,
                                                                         const std::string &functionName)
     {
@@ -99,7 +99,7 @@ namespace I3CLSimHelper
     }
                                                                         
     
-    std::string GenerateLayeredWlenDependentFunctions(const std::vector<I3CLSimWlenDependentValueConstPtr> &layeredFunction,
+    std::string GenerateLayeredWlenDependentFunctions(const std::vector<I3CLSimFunctionConstPtr> &layeredFunction,
                                                       const std::string &fullName,
                                                       const std::string &functionName,
                                                       std::string derivativeFunctionName="")
@@ -110,13 +110,13 @@ namespace I3CLSimHelper
             bool worked;
             std::string ret;
             
-            ret = GenerateOptimizedCodeFor_I3CLSimWlenDependentValueAbsLenIceCube(layeredFunction,
+            ret = GenerateOptimizedCodeFor_I3CLSimFunctionAbsLenIceCube(layeredFunction,
                                                                                   fullName,
                                                                                   functionName,
                                                                                   worked);
             if (worked) return ret;
 
-            ret = GenerateOptimizedCodeFor_I3CLSimWlenDependentValueScatLenIceCube(layeredFunction,
+            ret = GenerateOptimizedCodeFor_I3CLSimFunctionScatLenIceCube(layeredFunction,
                                                                                    fullName,
                                                                                    functionName,
                                                                                    worked);
@@ -130,7 +130,7 @@ namespace I3CLSimHelper
         code << "///////////////// START " << fullName << " ////////////////\n";
         code << "\n";
         
-        std::vector<I3CLSimWlenDependentValueConstPtr> functionsToGenerate;
+        std::vector<I3CLSimFunctionConstPtr> functionsToGenerate;
         std::vector<std::size_t> outputFunctionForLayer;
         
         OptimizeLayeredValue(layeredFunction,
@@ -139,7 +139,7 @@ namespace I3CLSimHelper
         
         for (uint32_t i=0;i<functionsToGenerate.size();++i)
         {
-            I3CLSimWlenDependentValueConstPtr currentValues = functionsToGenerate[i];
+            I3CLSimFunctionConstPtr currentValues = functionsToGenerate[i];
             if (!currentValues) log_fatal("%s function %u is (null)", fullName.c_str(), static_cast<unsigned int>(i));
             
             code << currentValues->GetOpenCLFunction(functionName+"_func"+boost::lexical_cast<std::string>(i));

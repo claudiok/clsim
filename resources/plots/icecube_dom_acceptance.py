@@ -14,7 +14,7 @@ matplotlib.use("PDF")
 import matplotlib.pylab as plt
 
 from icecube import icetray, dataclasses
-from icecube.clsim import I3CLSimWlenDependentValueFromTable
+from icecube.clsim import I3CLSimFunctionFromTable
 from icecube.clsim.GetIceCubeDOMAcceptance import *
 
 params = {'backend': 'pdf',

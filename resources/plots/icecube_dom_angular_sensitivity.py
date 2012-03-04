@@ -13,7 +13,7 @@ matplotlib.use("PDF")
 import matplotlib.pylab as plt
 
 from icecube import icetray, dataclasses
-from icecube.clsim import I3CLSimWlenDependentValuePolynomial
+from icecube.clsim import I3CLSimFunctionPolynomial
 from icecube.clsim.GetIceCubeDOMAngularSensitivity import *
 
 params = {'backend': 'pdf',

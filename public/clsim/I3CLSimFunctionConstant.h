@@ -1,21 +1,21 @@
-#ifndef I3CLSimWlenDependentValueConstant_H_INCLUDED
-#define I3CLSimWlenDependentValueConstant_H_INCLUDED
+#ifndef I3CLSIMFUNCTIONCONSTANT_H_INCLUDED
+#define I3CLSIMFUNCTIONCONSTANT_H_INCLUDED
 
-#include "clsim/I3CLSimWlenDependentValue.h"
+#include "clsim/I3CLSimFunction.h"
 
 #include <vector>
 
 /**
  * @brief A constant value.
  */
-static const unsigned i3clsimwlendependentvalueconstant_version_ = 0;
+static const unsigned i3clsimfunctionconstant_version_ = 0;
 
-struct I3CLSimWlenDependentValueConstant : public I3CLSimWlenDependentValue
+struct I3CLSimFunctionConstant : public I3CLSimFunction
 {
 public:
     
-    I3CLSimWlenDependentValueConstant(double value);
-    virtual ~I3CLSimWlenDependentValueConstant();
+    I3CLSimFunctionConstant(double value);
+    virtual ~I3CLSimFunctionConstant();
     
     /**
      * If this is true, it is assumed that GetValue() and GetDerivative() return
@@ -62,12 +62,12 @@ public:
     virtual std::string GetOpenCLFunctionDerivative(const std::string &functionName) const;
 
     /**
-     * Shall compare to another I3CLSimWlenDependentValue object
+     * Shall compare to another I3CLSimFunction object
      */
-    virtual bool CompareTo(const I3CLSimWlenDependentValue &other) const;
+    virtual bool CompareTo(const I3CLSimFunction &other) const;
     
 private:
-    I3CLSimWlenDependentValueConstant();
+    I3CLSimFunctionConstant();
     
     double value_;
     
@@ -76,8 +76,8 @@ private:
 };
 
 
-BOOST_CLASS_VERSION(I3CLSimWlenDependentValueConstant, i3clsimwlendependentvalueconstant_version_);
+BOOST_CLASS_VERSION(I3CLSimFunctionConstant, i3clsimfunctionconstant_version_);
 
-I3_POINTER_TYPEDEFS(I3CLSimWlenDependentValueConstant);
+I3_POINTER_TYPEDEFS(I3CLSimFunctionConstant);
 
-#endif //I3CLSimWlenDependentValueConstant_H_INCLUDED
+#endif //I3CLSIMFUNCTIONCONSTANT_H_INCLUDED

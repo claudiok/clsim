@@ -25,7 +25,7 @@ def setup_converter(useGeant4=False):
     #DOMRadius = 0.16510*icetray.I3Units.m # 13" diameter
     #RadiusOverSizeFactor = 5.
     #domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius = DOMRadius*RadiusOverSizeFactor)
-    domAcceptance = clsim.I3CLSimWlenDependentValueConstant(1.)
+    domAcceptance = clsim.I3CLSimFunctionConstant(1.)
 
     # lets set it up
     ppcConverter.SetMediumProperties(mediumProperties)

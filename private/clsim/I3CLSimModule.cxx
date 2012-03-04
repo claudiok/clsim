@@ -39,7 +39,7 @@
 #include "dataclasses/physics/I3MCTree.h"
 #include "dataclasses/physics/I3MCTreeUtils.h"
 
-#include "clsim/I3CLSimWlenDependentValueConstant.h"
+#include "clsim/I3CLSimFunctionConstant.h"
 
 #include "clsim/I3CLSimLightSource.h"
 #include "clsim/I3CLSimLightSourceToStepConverterGeant4.h"
@@ -80,7 +80,7 @@ geometryIsConfigured_(false)
                  generateCherenkovPhotonsWithoutDispersion_);
 
     AddParameter("WavelengthGenerationBias",
-                 "An instance of I3CLSimWlenDependentValue describing the reciprocal weight a photon gets assigned as a function of its wavelength.\n"
+                 "An instance of I3CLSimFunction describing the reciprocal weight a photon gets assigned as a function of its wavelength.\n"
                  "You can set this to the wavelength depended acceptance of your DOM to pre-scale the number of generated photons.",
                  wavelengthGenerationBias_);
 
@@ -355,7 +355,7 @@ void I3CLSimModule::Configure()
         log_fatal("You need to set at least one of the \"MCTreeName\" and \"FlasherPulseSeriesName\" parameters.");
     
     if (!wavelengthGenerationBias_) {
-        wavelengthGenerationBias_ = I3CLSimWlenDependentValueConstantConstPtr(new I3CLSimWlenDependentValueConstant(1.));
+        wavelengthGenerationBias_ = I3CLSimFunctionConstantConstPtr(new I3CLSimFunctionConstant(1.));
     }
 
     if (!mediumProperties_) log_fatal("You have to specify the \"MediumProperties\" parameter!");

@@ -25,22 +25,22 @@
 #include "test/I3CLSimTesterBase.h"
 
 #include "dataclasses/I3Vector.h"
-#include "clsim/I3CLSimWlenDependentValue.h"
+#include "clsim/I3CLSimFunction.h"
 
-class I3CLSimWlenDependentValueTester : public I3CLSimTesterBase
+class I3CLSimFunctionTester : public I3CLSimTesterBase
 {
 public:
-    I3CLSimWlenDependentValueTester(const I3CLSimOpenCLDevice &device,
+    I3CLSimFunctionTester(const I3CLSimOpenCLDevice &device,
                                     uint64_t workgroupSize_,
                                     uint64_t workItemsPerIteration_,
-                                    I3CLSimWlenDependentValueConstPtr wlenDependentValue);
+                                    I3CLSimFunctionConstPtr wlenDependentValue);
 
     // evaluates the function using an OpenCL kernel
     I3VectorFloatPtr EvaluateFunction(I3VectorFloatConstPtr xValues);
     I3VectorFloatPtr EvaluateDerivative(I3VectorFloatConstPtr xValues);
 
     // evaluates the function using compiled code (i.e. using the 
-    // I3CLSimWlenDependentValue object)
+    // I3CLSimFunction object)
     I3VectorFloatPtr EvaluateReferenceFunction(I3VectorFloatConstPtr xValues);
     I3VectorFloatPtr EvaluateReferenceDerivative(I3VectorFloatConstPtr xValues);
 
@@ -49,16 +49,16 @@ private:
 
     
     void FillSource(std::vector<std::string> &source,
-                    I3CLSimWlenDependentValueConstPtr wlenDependentValue);
+                    I3CLSimFunctionConstPtr wlenDependentValue);
 
     void InitBuffers();
 
     shared_ptr<cl::Buffer> deviceBuffer_results;
     shared_ptr<cl::Buffer> deviceBuffer_inputs;
 
-    I3CLSimWlenDependentValueConstPtr wlenDependentValue_;
+    I3CLSimFunctionConstPtr wlenDependentValue_;
     
-    SET_LOGGER("I3CLSimWlenDependentValueTester");
+    SET_LOGGER("I3CLSimFunctionTester");
 };
 
 

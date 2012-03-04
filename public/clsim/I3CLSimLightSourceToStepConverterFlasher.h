@@ -3,7 +3,7 @@
 
 #include "clsim/I3CLSimLightSourceToStepConverter.h"
 #include "clsim/I3CLSimLightSource.h"
-#include "clsim/I3CLSimWlenDependentValue.h"
+#include "clsim/I3CLSimFunction.h"
 #include "clsim/I3CLSimSpectrumTable.h"
 
 #include <string>
@@ -20,7 +20,7 @@ struct I3CLSimLightSourceToStepConverterFlasher : public I3CLSimLightSourceToSte
 public:
     static const uint32_t default_photonsPerStep;
 
-    I3CLSimLightSourceToStepConverterFlasher(I3CLSimWlenDependentValueConstPtr flasherSpectrumNoBias,
+    I3CLSimLightSourceToStepConverterFlasher(I3CLSimFunctionConstPtr flasherSpectrumNoBias,
                                              I3CLSimSpectrumTablePtr spectrumTable,
                                              uint32_t photonsPerStep=default_photonsPerStep);
 
@@ -34,7 +34,7 @@ public:
 
     virtual void SetRandomService(I3RandomServicePtr random);
 
-    virtual void SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias);
+    virtual void SetWlenBias(I3CLSimFunctionConstPtr wlenBias);
 
     virtual void SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties);
     
@@ -84,8 +84,8 @@ private:
     uint32_t photonsPerStep_;
     uint8_t spectrumSourceTypeIndex_;
     
-    I3CLSimWlenDependentValueConstPtr flasherSpectrumNoBias_;
-    I3CLSimWlenDependentValueConstPtr wlenBias_;
+    I3CLSimFunctionConstPtr flasherSpectrumNoBias_;
+    I3CLSimFunctionConstPtr wlenBias_;
     I3CLSimMediumPropertiesConstPtr mediumProperties_;
     
     double photonNumberCorrectionFactorForBias_;

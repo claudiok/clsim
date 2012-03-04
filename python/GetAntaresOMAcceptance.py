@@ -28,7 +28,7 @@
 
 
 from icecube import icetray, dataclasses
-from icecube.clsim import I3CLSimWlenDependentValueFromTable
+from icecube.clsim import I3CLSimFunctionFromTable
 
 from I3Tray import I3Units
 
@@ -57,7 +57,7 @@ def GetAntaresPMTDiameter():
     
 #################################################################
 # A function to return the quantum efficiency as instance of
-# I3CLSimWlenDependentValueFromTable
+# I3CLSimFunctionFromTable
 #################################################################
 def GetAntaresOMQuantumEfficiency():
     # Data copied from the km3 file hit-ini_optic.f
@@ -100,7 +100,7 @@ def GetAntaresOMQuantumEfficiency():
     q_eff_reverse = [ (q_eff_0 * i) for i in q_eff_reverse ]
     q_eff_reverse.reverse() # reverse the list (in-place)
     
-    return I3CLSimWlenDependentValueFromTable(300.*I3Units.nanometer, 10.*I3Units.nanometer, q_eff_reverse)
+    return I3CLSimFunctionFromTable(300.*I3Units.nanometer, 10.*I3Units.nanometer, q_eff_reverse)
 
 
 
@@ -155,7 +155,7 @@ def GetAntaresOMGlassAbsorptionLength():
     al_glass_reverse = [ (i * I3Units.cm) for i in al_glass_reverse]
     al_glass_reverse.reverse() # reverse the list (in-place)
 
-    return I3CLSimWlenDependentValueFromTable(300.*I3Units.nanometer, 10.*I3Units.nanometer, al_glass_reverse)            
+    return I3CLSimFunctionFromTable(300.*I3Units.nanometer, 10.*I3Units.nanometer, al_glass_reverse)            
 
 
 
@@ -212,7 +212,7 @@ def GetAntaresOMGelAbsorptionLength():
     al_gel_default_reverse = [ (i * I3Units.cm) for i in al_gel_default_reverse]
     al_gel_default_reverse.reverse() # reverse the list (in-place)
     
-    return I3CLSimWlenDependentValueFromTable(300.*I3Units.nanometer, 10.*I3Units.nanometer, al_gel_default_reverse)
+    return I3CLSimFunctionFromTable(300.*I3Units.nanometer, 10.*I3Units.nanometer, al_gel_default_reverse)
 
 
 
@@ -265,7 +265,7 @@ def GetAntaresOMAcceptance(domRadius = 0.2159*I3Units.m): # 17 inch diameter
     
     
     
-    return I3CLSimWlenDependentValueFromTable(290.*I3Units.nanometer, 10.*I3Units.nanometer, numpy.array(om_eff_area)/om_area)
+    return I3CLSimFunctionFromTable(290.*I3Units.nanometer, 10.*I3Units.nanometer, numpy.array(om_eff_area)/om_area)
 
 
 

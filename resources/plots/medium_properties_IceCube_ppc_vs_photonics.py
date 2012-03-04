@@ -54,7 +54,7 @@ print "    workItemsPerIteration:", workItemsPerIteration
 def applyOpenCLWlenDependentFunction(xValues, functionOpenCL, getDerivative=False, useReferenceFunction=False):
     print "         number of values:", len(xValues)
     
-    tester = clsim.I3CLSimWlenDependentValueTester(device=openCLDevice,
+    tester = clsim.I3CLSimFunctionTester(device=openCLDevice,
                                                    workgroupSize=workgroupSize,
                                                    workItemsPerIteration=workItemsPerIteration,
                                                    wlenDependentValue=functionOpenCL)

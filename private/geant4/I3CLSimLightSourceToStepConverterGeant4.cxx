@@ -238,7 +238,7 @@ namespace {
         
         for (uint32_t i=0;i<mProp->GetLayersNum();++i)
         {
-            I3CLSimWlenDependentValueConstPtr refIndFunc = mProp->GetPhaseRefractiveIndex(i);
+            I3CLSimFunctionConstPtr refIndFunc = mProp->GetPhaseRefractiveIndex(i);
             if (!refIndFunc) continue;
             
             for (unsigned int point=0;point<points;++point)
@@ -743,7 +743,7 @@ void I3CLSimLightSourceToStepConverterGeant4::SetRandomService(I3RandomServicePt
     randomSeed_ = randomService_->Integer(900000000);
 }
 
-void I3CLSimLightSourceToStepConverterGeant4::SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias)
+void I3CLSimLightSourceToStepConverterGeant4::SetWlenBias(I3CLSimFunctionConstPtr wlenBias)
 {
     LogGeant4Messages();
     

@@ -183,7 +183,7 @@ public:
      * correct weights.
      * Will throw if used after the call to Initialize().
      */
-    virtual void SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias);
+    virtual void SetWlenBias(I3CLSimFunctionConstPtr wlenBias);
 
     /**
      * Sets the medium properties.
@@ -316,7 +316,7 @@ private:
     bool initialized_;
     bool compiled_;
     std::vector<I3CLSimRandomValueConstPtr> wlenGenerators_;
-    I3CLSimWlenDependentValueConstPtr wlenBias_;
+    I3CLSimFunctionConstPtr wlenBias_;
     I3CLSimMediumPropertiesConstPtr mediumProperties_;
     I3CLSimSimpleGeometryConstPtr geometry_;
     

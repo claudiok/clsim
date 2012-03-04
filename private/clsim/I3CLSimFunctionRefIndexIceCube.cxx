@@ -1,6 +1,6 @@
 #include <icetray/serialization.h>
 #include <icetray/I3Units.h>
-#include <clsim/I3CLSimWlenDependentValueRefIndexIceCube.h>
+#include <clsim/I3CLSimFunctionRefIndexIceCube.h>
 
 #include <typeinfo>
 #include <cmath>
@@ -8,21 +8,21 @@
 #include "clsim/to_float_string.h"
 using namespace I3CLSimHelper;
 
-const std::string I3CLSimWlenDependentValueRefIndexIceCube::default_mode = "phase";
-const double I3CLSimWlenDependentValueRefIndexIceCube::default_n0= 1.55749;
-const double I3CLSimWlenDependentValueRefIndexIceCube::default_n1=-1.57988;
-const double I3CLSimWlenDependentValueRefIndexIceCube::default_n2= 3.99993;
-const double I3CLSimWlenDependentValueRefIndexIceCube::default_n3=-4.68271;
-const double I3CLSimWlenDependentValueRefIndexIceCube::default_n4= 2.09354;
-const double I3CLSimWlenDependentValueRefIndexIceCube::default_g0= 1.227106;
-const double I3CLSimWlenDependentValueRefIndexIceCube::default_g1=-0.954648;
-const double I3CLSimWlenDependentValueRefIndexIceCube::default_g2= 1.42568;
-const double I3CLSimWlenDependentValueRefIndexIceCube::default_g3=-0.711832;
-const double I3CLSimWlenDependentValueRefIndexIceCube::default_g4= 0.00000;
+const std::string I3CLSimFunctionRefIndexIceCube::default_mode = "phase";
+const double I3CLSimFunctionRefIndexIceCube::default_n0= 1.55749;
+const double I3CLSimFunctionRefIndexIceCube::default_n1=-1.57988;
+const double I3CLSimFunctionRefIndexIceCube::default_n2= 3.99993;
+const double I3CLSimFunctionRefIndexIceCube::default_n3=-4.68271;
+const double I3CLSimFunctionRefIndexIceCube::default_n4= 2.09354;
+const double I3CLSimFunctionRefIndexIceCube::default_g0= 1.227106;
+const double I3CLSimFunctionRefIndexIceCube::default_g1=-0.954648;
+const double I3CLSimFunctionRefIndexIceCube::default_g2= 1.42568;
+const double I3CLSimFunctionRefIndexIceCube::default_g3=-0.711832;
+const double I3CLSimFunctionRefIndexIceCube::default_g4= 0.00000;
 
 
-I3CLSimWlenDependentValueRefIndexIceCube::
-I3CLSimWlenDependentValueRefIndexIceCube(std::string mode,
+I3CLSimFunctionRefIndexIceCube::
+I3CLSimFunctionRefIndexIceCube(std::string mode,
                                          double n0,
                                          double n1,
                                          double n2,
@@ -48,14 +48,14 @@ g3_(g3),
 g4_(g4)
 { 
     if ((mode_!="phase") && (mode_!="group"))
-        log_fatal("In I3CLSimWlenDependentValueRefIndexIceCube(): \"mode\" argument has to be either \"phase\" or \"group\".");
+        log_fatal("In I3CLSimFunctionRefIndexIceCube(): \"mode\" argument has to be either \"phase\" or \"group\".");
 }
 
-I3CLSimWlenDependentValueRefIndexIceCube::~I3CLSimWlenDependentValueRefIndexIceCube() 
+I3CLSimFunctionRefIndexIceCube::~I3CLSimFunctionRefIndexIceCube() 
 {;}
 
 
-double I3CLSimWlenDependentValueRefIndexIceCube::GetValue(double wlen) const
+double I3CLSimFunctionRefIndexIceCube::GetValue(double wlen) const
 {
     const double x = wlen/I3Units::micrometer;
     const double np = n0_ + x*(n1_ + x*(n2_ + x*(n3_ + x*n4_)));
@@ -75,7 +75,7 @@ double I3CLSimWlenDependentValueRefIndexIceCube::GetValue(double wlen) const
     }
 }
 
-double I3CLSimWlenDependentValueRefIndexIceCube::GetDerivative(double wlen) const
+double I3CLSimFunctionRefIndexIceCube::GetDerivative(double wlen) const
 {
     const double x = wlen/I3Units::micrometer;
 
@@ -99,7 +99,7 @@ double I3CLSimWlenDependentValueRefIndexIceCube::GetDerivative(double wlen) cons
     }
 }
 
-std::string I3CLSimWlenDependentValueRefIndexIceCube::GetOpenCLFunction(const std::string &functionName) const
+std::string I3CLSimFunctionRefIndexIceCube::GetOpenCLFunction(const std::string &functionName) const
 {
     std::string funcDef = 
     std::string("inline float ") + functionName + std::string("(float wlen)\n");
@@ -153,7 +153,7 @@ std::string I3CLSimWlenDependentValueRefIndexIceCube::GetOpenCLFunction(const st
     return funcDef + ";\n\n" + funcDef + funcBody;
 }
 
-std::string I3CLSimWlenDependentValueRefIndexIceCube::GetOpenCLFunctionDerivative(const std::string &functionName) const
+std::string I3CLSimFunctionRefIndexIceCube::GetOpenCLFunctionDerivative(const std::string &functionName) const
 {
     std::string funcDef = 
     std::string("inline float ") + functionName + std::string("(float wlen)\n");
@@ -217,11 +217,11 @@ std::string I3CLSimWlenDependentValueRefIndexIceCube::GetOpenCLFunctionDerivativ
     return funcDef + ";\n\n" + funcDef + funcBody;
 }
 
-bool I3CLSimWlenDependentValueRefIndexIceCube::CompareTo(const I3CLSimWlenDependentValue &other) const
+bool I3CLSimFunctionRefIndexIceCube::CompareTo(const I3CLSimFunction &other) const
 {
     try
     {
-        const I3CLSimWlenDependentValueRefIndexIceCube &other_ = dynamic_cast<const I3CLSimWlenDependentValueRefIndexIceCube &>(other);
+        const I3CLSimFunctionRefIndexIceCube &other_ = dynamic_cast<const I3CLSimFunctionRefIndexIceCube &>(other);
         return ((other_.n0_ == n0_) &&
                 (other_.n1_ == n1_) &&
                 (other_.n2_ == n2_) &&
@@ -244,12 +244,12 @@ bool I3CLSimWlenDependentValueRefIndexIceCube::CompareTo(const I3CLSimWlenDepend
 
 
 template <class Archive>
-void I3CLSimWlenDependentValueRefIndexIceCube::serialize(Archive &ar, unsigned version)
+void I3CLSimFunctionRefIndexIceCube::serialize(Archive &ar, unsigned version)
 {
-    if (version>i3clsimwlendependentvaluerefindexicecube_version_)
-        log_fatal("Attempting to read version %u from file but running version %u of I3CLSimWlenDependentValueRefIndexIceCube class.",version,i3clsimwlendependentvaluerefindexicecube_version_);
+    if (version>i3clsimfunctionrefindexicecube_version_)
+        log_fatal("Attempting to read version %u from file but running version %u of I3CLSimFunctionRefIndexIceCube class.",version,i3clsimfunctionrefindexicecube_version_);
 
-    ar & make_nvp("I3CLSimWlenDependentValue", base_object<I3CLSimWlenDependentValue>(*this));
+    ar & make_nvp("I3CLSimFunction", base_object<I3CLSimFunction>(*this));
     ar & make_nvp("mode", mode_);
     ar & make_nvp("n0", n0_);
     ar & make_nvp("n1", n1_);
@@ -264,4 +264,4 @@ void I3CLSimWlenDependentValueRefIndexIceCube::serialize(Archive &ar, unsigned v
 }
 
 
-I3_SERIALIZABLE(I3CLSimWlenDependentValueRefIndexIceCube);
+I3_SERIALIZABLE(I3CLSimFunctionRefIndexIceCube);

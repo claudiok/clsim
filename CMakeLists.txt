@@ -54,15 +54,15 @@ if(OPENCL_FOUND)
     private/clsim/I3CLSimSimpleGeometryTextFile.cxx
     private/clsim/I3CLSimSimpleGeometryUserConfigurable.cxx
     private/clsim/I3CLSimStep.cxx
-    private/clsim/I3CLSimWlenDependentValueAbsLenIceCube.cxx
-    private/clsim/I3CLSimWlenDependentValueConstant.cxx
-    private/clsim/I3CLSimWlenDependentValue.cxx
-    private/clsim/I3CLSimWlenDependentValueFromTable.cxx
-    private/clsim/I3CLSimWlenDependentValuePolynomial.cxx
-    private/clsim/I3CLSimWlenDependentValueRefIndexIceCube.cxx
-    private/clsim/I3CLSimWlenDependentValueRefIndexQuanFry.cxx
-    private/clsim/I3CLSimWlenDependentValueScatLenIceCube.cxx
-    private/clsim/I3CLSimWlenDependentValueScatLenPartic.cxx
+    private/clsim/I3CLSimFunctionAbsLenIceCube.cxx
+    private/clsim/I3CLSimFunctionConstant.cxx
+    private/clsim/I3CLSimFunction.cxx
+    private/clsim/I3CLSimFunctionFromTable.cxx
+    private/clsim/I3CLSimFunctionPolynomial.cxx
+    private/clsim/I3CLSimFunctionRefIndexIceCube.cxx
+    private/clsim/I3CLSimFunctionRefIndexQuanFry.cxx
+    private/clsim/I3CLSimFunctionScatLenIceCube.cxx
+    private/clsim/I3CLSimFunctionScatLenPartic.cxx
     private/clsim/I3CLSimLightSource.cxx
     private/clsim/I3CLSimSpectrumTable.cxx
     private/clsim/I3CLSimFlasherPulse.cxx
@@ -101,7 +101,7 @@ if(OPENCL_FOUND)
     private/test/I3CLSimMediumPropertiesTester.cxx
     private/test/I3CLSimRandomDistributionTester.cxx
     private/test/I3CLSimTesterBase.cxx
-    private/test/I3CLSimWlenDependentValueTester.cxx
+    private/test/I3CLSimFunctionTester.cxx
   )
   SET(LIB_${PROJECT_NAME}_PROJECTS icetray dataio dataclasses phys-services tableio simclasses)
   SET(LIB_${PROJECT_NAME}_TOOLS python boost log4cplus gsl clhep geant4 opencl)

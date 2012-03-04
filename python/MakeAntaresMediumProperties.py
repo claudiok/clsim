@@ -3,9 +3,9 @@ from icecube.clsim import I3CLSimMediumProperties, \
                           I3CLSimRandomValueApplyFunction, \
                           I3CLSimRandomValueInterpolatedDistribution, \
                           I3CLSimRandomValueRayleighScatteringCosAngle, \
-                          I3CLSimWlenDependentValueScatLenPartic, \
-                          I3CLSimWlenDependentValueRefIndexQuanFry, \
-                          I3CLSimWlenDependentValueFromTable, \
+                          I3CLSimFunctionScatLenPartic, \
+                          I3CLSimFunctionRefIndexQuanFry, \
+                          I3CLSimFunctionFromTable, \
                           I3CLSimRandomValueMixed
 
 from I3Tray import I3Units
@@ -76,8 +76,8 @@ def MakeAntaresMediumProperties():
     antaresScatModel = GetAntaresScatteringCosAngleDistribution()
     m.SetScatteringCosAngleDistribution(antaresScatModel)
     
-    antaresScattering = I3CLSimWlenDependentValueScatLenPartic(volumeConcentrationSmallParticles=0.0075*I3Units.perMillion, volumeConcentrationLargeParticles=0.0075*I3Units.perMillion)
-    antaresPhaseRefIndex = I3CLSimWlenDependentValueRefIndexQuanFry(pressure=215.82225*I3Units.bar, temperature=13.1, salinity=38.44*I3Units.perThousand)
+    antaresScattering = I3CLSimFunctionScatLenPartic(volumeConcentrationSmallParticles=0.0075*I3Units.perMillion, volumeConcentrationLargeParticles=0.0075*I3Units.perMillion)
+    antaresPhaseRefIndex = I3CLSimFunctionRefIndexQuanFry(pressure=215.82225*I3Units.bar, temperature=13.1, salinity=38.44*I3Units.perThousand)
     
     # these are for ANTARES (mix of Smith&Baker water and Antares site measurements)
     # absorption lengths starting from 290nm in 10nm increments
@@ -88,7 +88,7 @@ def MakeAntaresMediumProperties():
                     28.01120448,  20.96436059,  19.72386588,  17.92114695,  15.67398119,
                     14.12429379,  12.51564456,   9.25925926,   6.36942675,   4.09836066,
                      3.46020761]
-    antaresAbsorption = I3CLSimWlenDependentValueFromTable(290.*I3Units.nanometer, 10.*I3Units.nanometer, absLenTable)
+    antaresAbsorption = I3CLSimFunctionFromTable(290.*I3Units.nanometer, 10.*I3Units.nanometer, absLenTable)
     
     m.SetAbsorptionLength(0, antaresAbsorption)
     m.SetScatteringLength(0, antaresScattering)

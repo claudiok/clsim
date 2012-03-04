@@ -47,7 +47,7 @@ public:
 
     virtual void SetRandomService(I3RandomServicePtr random);
 
-    virtual void SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias);
+    virtual void SetWlenBias(I3CLSimFunctionConstPtr wlenBias);
 
     virtual void SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties);
     
@@ -132,7 +132,7 @@ private:
     uint32_t highPhotonsPerStep_;
     double useHighPhotonsPerStepStartingFromNumPhotons_;
     
-    I3CLSimWlenDependentValueConstPtr wlenBias_;
+    I3CLSimFunctionConstPtr wlenBias_;
     I3CLSimMediumPropertiesConstPtr mediumProperties_;
     
     std::vector<double> meanPhotonsPerMeterInLayer_;

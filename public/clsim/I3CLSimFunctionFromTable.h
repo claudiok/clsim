@@ -1,7 +1,7 @@
-#ifndef I3CLSIMWLENDEPENDENTVALUEFROMTABLE_H_INCLUDED
-#define I3CLSIMWLENDEPENDENTVALUEFROMTABLE_H_INCLUDED
+#ifndef I3CLSIMFUNCTIONFROMTABLE_H_INCLUDED
+#define I3CLSIMFUNCTIONFROMTABLE_H_INCLUDED
 
-#include "clsim/I3CLSimWlenDependentValue.h"
+#include "clsim/I3CLSimFunction.h"
 
 #include <vector>
 
@@ -9,21 +9,21 @@
  * @brief An arbitrary value interpolated from a uniformly distributed number
  * of values.
  */
-static const unsigned i3clsimwlendependentvaluefromtable_version_ = 0;
+static const unsigned i3clsimfunctionfromtable_version_ = 0;
 
-struct I3CLSimWlenDependentValueFromTable : public I3CLSimWlenDependentValue
+struct I3CLSimFunctionFromTable : public I3CLSimFunction
 {
 public:
     
     // arbitrary wavelength values
-    I3CLSimWlenDependentValueFromTable(const std::vector<double> &wlens,
+    I3CLSimFunctionFromTable(const std::vector<double> &wlens,
                                        const std::vector<double> &values);
     
     // wavelengths with constant spacing (more efficient)
-    I3CLSimWlenDependentValueFromTable(double startWlen,
+    I3CLSimFunctionFromTable(double startWlen,
                                        double wlenStep,
                                        const std::vector<double> &values);
-    virtual ~I3CLSimWlenDependentValueFromTable();
+    virtual ~I3CLSimFunctionFromTable();
     
     /**
      * If this is true, it is assumed that GetValue() and GetDerivative() return
@@ -89,12 +89,12 @@ public:
     virtual std::string GetOpenCLFunction(const std::string &functionName) const;
     
     /**
-     * Shall compare to another I3CLSimWlenDependentValue object
+     * Shall compare to another I3CLSimFunction object
      */
-    virtual bool CompareTo(const I3CLSimWlenDependentValue &other) const;
+    virtual bool CompareTo(const I3CLSimFunction &other) const;
     
 private:
-    I3CLSimWlenDependentValueFromTable();
+    I3CLSimFunctionFromTable();
     
     double startWlen_;
     double wlenStep_;
@@ -108,8 +108,8 @@ private:
 };
 
 
-BOOST_CLASS_VERSION(I3CLSimWlenDependentValueFromTable, i3clsimwlendependentvaluefromtable_version_);
+BOOST_CLASS_VERSION(I3CLSimFunctionFromTable, i3clsimfunctionfromtable_version_);
 
-I3_POINTER_TYPEDEFS(I3CLSimWlenDependentValueFromTable);
+I3_POINTER_TYPEDEFS(I3CLSimFunctionFromTable);
 
-#endif //I3CLSIMWLENDEPENDENTVALUEFROMTABLE_H_INCLUDED
+#endif //I3CLSIMFUNCTIONFROMTABLE_H_INCLUDED

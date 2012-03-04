@@ -1,6 +1,6 @@
 #include <icetray/serialization.h>
 #include <icetray/I3Units.h>
-#include <clsim/I3CLSimWlenDependentValueScatLenPartic.h>
+#include <clsim/I3CLSimFunctionScatLenPartic.h>
 
 #include <typeinfo>
 #include <cmath>
@@ -8,10 +8,10 @@
 #include "clsim/to_float_string.h"
 using namespace I3CLSimHelper;
 
-const double I3CLSimWlenDependentValueScatLenPartic::default_volumeConcentrationSmallParticles=0.0075f*I3Units::perMillion; 
-const double I3CLSimWlenDependentValueScatLenPartic::default_volumeConcentrationLargeParticles=0.0075f*I3Units::perMillion; 
+const double I3CLSimFunctionScatLenPartic::default_volumeConcentrationSmallParticles=0.0075f*I3Units::perMillion; 
+const double I3CLSimFunctionScatLenPartic::default_volumeConcentrationLargeParticles=0.0075f*I3Units::perMillion; 
 
-I3CLSimWlenDependentValueScatLenPartic::I3CLSimWlenDependentValueScatLenPartic(double volumeConcentrationSmallParticles,
+I3CLSimFunctionScatLenPartic::I3CLSimFunctionScatLenPartic(double volumeConcentrationSmallParticles,
                                                                                double volumeConcentrationLargeParticles)
 :
 volumeConcentrationSmallParticles_(volumeConcentrationSmallParticles/I3Units::perMillion), // in ppm
@@ -20,11 +20,11 @@ volumeConcentrationLargeParticles_(volumeConcentrationLargeParticles/I3Units::pe
     
 }
 
-I3CLSimWlenDependentValueScatLenPartic::~I3CLSimWlenDependentValueScatLenPartic() 
+I3CLSimFunctionScatLenPartic::~I3CLSimFunctionScatLenPartic() 
 {;}
 
 
-double I3CLSimWlenDependentValueScatLenPartic::GetValue(double wlen) const
+double I3CLSimFunctionScatLenPartic::GetValue(double wlen) const
 {
     const double refWlen = 550.f*I3Units::nanometer;
     const double x = refWlen/wlen;
@@ -37,7 +37,7 @@ double I3CLSimWlenDependentValueScatLenPartic::GetValue(double wlen) const
     return 1./scatCoeff;
 }
 
-std::string I3CLSimWlenDependentValueScatLenPartic::GetOpenCLFunction(const std::string &functionName) const
+std::string I3CLSimFunctionScatLenPartic::GetOpenCLFunction(const std::string &functionName) const
 {
     std::string funcDef = 
     std::string("inline float ") + functionName + std::string("(float wavelength)\n");
@@ -67,11 +67,11 @@ std::string I3CLSimWlenDependentValueScatLenPartic::GetOpenCLFunction(const std:
     return funcDef + ";\n\n" + funcDef + funcBody;
 }
 
-bool I3CLSimWlenDependentValueScatLenPartic::CompareTo(const I3CLSimWlenDependentValue &other) const
+bool I3CLSimFunctionScatLenPartic::CompareTo(const I3CLSimFunction &other) const
 {
     try
     {
-        const I3CLSimWlenDependentValueScatLenPartic &other_ = dynamic_cast<const I3CLSimWlenDependentValueScatLenPartic &>(other);
+        const I3CLSimFunctionScatLenPartic &other_ = dynamic_cast<const I3CLSimFunctionScatLenPartic &>(other);
         return ((other_.volumeConcentrationSmallParticles_ == volumeConcentrationSmallParticles_) &&
                 (other_.volumeConcentrationLargeParticles_ == volumeConcentrationLargeParticles_));
     }
@@ -87,15 +87,15 @@ bool I3CLSimWlenDependentValueScatLenPartic::CompareTo(const I3CLSimWlenDependen
 
 
 template <class Archive>
-void I3CLSimWlenDependentValueScatLenPartic::serialize(Archive &ar, unsigned version)
+void I3CLSimFunctionScatLenPartic::serialize(Archive &ar, unsigned version)
 {
-    if (version>i3clsimwlendependentvaluescatlenpartic_version_)
-        log_fatal("Attempting to read version %u from file but running version %u of I3CLSimWlenDependentValueScatLenPartic class.",version,i3clsimwlendependentvaluescatlenpartic_version_);
+    if (version>i3clsimfunctionscatlenpartic_version_)
+        log_fatal("Attempting to read version %u from file but running version %u of I3CLSimFunctionScatLenPartic class.",version,i3clsimfunctionscatlenpartic_version_);
 
-    ar & make_nvp("I3CLSimWlenDependentValue", base_object<I3CLSimWlenDependentValue>(*this));
+    ar & make_nvp("I3CLSimFunction", base_object<I3CLSimFunction>(*this));
     ar & make_nvp("volumeConcentrationSmallParticles", volumeConcentrationSmallParticles_);
     ar & make_nvp("volumeConcentrationLargeParticles", volumeConcentrationLargeParticles_);
 }     
 
 
-I3_SERIALIZABLE(I3CLSimWlenDependentValueScatLenPartic);
+I3_SERIALIZABLE(I3CLSimFunctionScatLenPartic);

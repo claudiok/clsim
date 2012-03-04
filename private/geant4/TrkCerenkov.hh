@@ -58,7 +58,7 @@
 #include "G4MaterialPropertiesTable.hh"
 #include "G4PhysicsOrderedFreeVector.hh"
 
-#include "clsim/I3CLSimWlenDependentValue.h"
+#include "clsim/I3CLSimFunction.h"
 
 // Class Description:
 // Discrete Process -- Generation of Cerenkov Photons.
@@ -161,7 +161,7 @@ public: // With description
     // If not called, the step is not limited by the number of 
     // photons generated.
     
-    void SetWlenBiasFunction(I3CLSimWlenDependentValueConstPtr wlenBias);
+    void SetWlenBiasFunction(I3CLSimFunctionConstPtr wlenBias);
     
     G4PhysicsTable* GetPhysicsTable() const;
     // Returns the address of the physics table.
@@ -196,7 +196,7 @@ private:
     //G4bool fTrackSecondariesFirst;
     G4double fMaxBetaChange;
     G4int  fMaxPhotons;
-    I3CLSimWlenDependentValueConstPtr fWlenBias;
+    I3CLSimFunctionConstPtr fWlenBias;
 };
 
 ////////////////////
@@ -231,7 +231,7 @@ void TrkCerenkov::SetMaxNumPhotonsPerStep(const G4int NumPhotons)
 }
 
 inline
-void TrkCerenkov::SetWlenBiasFunction(I3CLSimWlenDependentValueConstPtr wlenBias)
+void TrkCerenkov::SetWlenBiasFunction(I3CLSimFunctionConstPtr wlenBias)
 { 
     fWlenBias = wlenBias;
     BuildThePhysicsTable(); // rebuild the table

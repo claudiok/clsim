@@ -1,6 +1,6 @@
 #include "clsim/I3CLSimLightSourceToStepConverterUtils.h"
 
-#include "clsim/I3CLSimWlenDependentValue.h"
+#include "clsim/I3CLSimFunction.h"
 #include "icetray/I3Units.h"
 #include "dataclasses/I3Constants.h"
 
@@ -10,16 +10,16 @@ namespace I3CLSimLightSourceToStepConverterUtils {
 #define H_TIMES_C 1.
     
     struct f_params_t {
-        const I3CLSimWlenDependentValue *phaseRefIndex;
-        const I3CLSimWlenDependentValue *wavelengthGenerationBias;
+        const I3CLSimFunction *phaseRefIndex;
+        const I3CLSimFunction *wavelengthGenerationBias;
     };
     
     static double f(double energy, void *params)
     {
         f_params_t *f_params = static_cast<f_params_t *>(params);
         
-        const I3CLSimWlenDependentValue &phaseRefIndex = *(f_params->phaseRefIndex);
-        const I3CLSimWlenDependentValue &wavelengthGenerationBias = *(f_params->wavelengthGenerationBias);
+        const I3CLSimFunction &phaseRefIndex = *(f_params->phaseRefIndex);
+        const I3CLSimFunction &wavelengthGenerationBias = *(f_params->wavelengthGenerationBias);
         
         const double beta=1.;
         const double wlen = H_TIMES_C/energy;
@@ -41,8 +41,8 @@ namespace I3CLSimLightSourceToStepConverterUtils {
         return retval;
     }
     
-    double NumberOfPhotonsPerMeter(const I3CLSimWlenDependentValue &phaseRefIndex,
-                                   const I3CLSimWlenDependentValue &wavelengthGenerationBias,
+    double NumberOfPhotonsPerMeter(const I3CLSimFunction &phaseRefIndex,
+                                   const I3CLSimFunction &wavelengthGenerationBias,
                                    double fromWlen, double toWlen)
     {
         log_trace("integrating in range [%f;%f]nm",
@@ -84,8 +84,8 @@ namespace I3CLSimLightSourceToStepConverterUtils {
     
     
     struct f2_params_t {
-        const I3CLSimWlenDependentValue *unbiasedSpectrum;
-        const I3CLSimWlenDependentValue *wavelengthGenerationBias; // can be NULL
+        const I3CLSimFunction *unbiasedSpectrum;
+        const I3CLSimFunction *wavelengthGenerationBias; // can be NULL
     };
     
     static double f2(double wlen, void *params)
@@ -94,11 +94,11 @@ namespace I3CLSimLightSourceToStepConverterUtils {
         
         double bias = 1.; // no bias by default
         if (f2_params->wavelengthGenerationBias) {
-            const I3CLSimWlenDependentValue &wavelengthGenerationBias = *(f2_params->wavelengthGenerationBias);
+            const I3CLSimFunction &wavelengthGenerationBias = *(f2_params->wavelengthGenerationBias);
             bias = wavelengthGenerationBias.GetValue(wlen);
         }
 
-        const I3CLSimWlenDependentValue &unbiasedSpectrum = *(f2_params->unbiasedSpectrum);
+        const I3CLSimFunction &unbiasedSpectrum = *(f2_params->unbiasedSpectrum);
         double spectrumValue = unbiasedSpectrum.GetValue(wlen);
         
         const double retval = bias*spectrumValue;
@@ -114,8 +114,8 @@ namespace I3CLSimLightSourceToStepConverterUtils {
         return retval;
     }
     
-    double PhotonNumberCorrectionFactorAfterBias(const I3CLSimWlenDependentValue &unbiasedSpectrum,
-                                                 const I3CLSimWlenDependentValue &wavelengthGenerationBias,
+    double PhotonNumberCorrectionFactorAfterBias(const I3CLSimFunction &unbiasedSpectrum,
+                                                 const I3CLSimFunction &wavelengthGenerationBias,
                                                  double fromWlen, double toWlen)
     {
         log_trace("integrating in range [%f;%f]nm",

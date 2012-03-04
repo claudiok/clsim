@@ -1,5 +1,5 @@
 from icecube import icetray, dataclasses
-from icecube.clsim import I3CLSimWlenDependentValuePolynomial
+from icecube.clsim import I3CLSimFunctionPolynomial
 
 from I3Tray import I3Units
 
@@ -35,4 +35,4 @@ def GetIceCubeDOMAngularSensitivity(holeIce=True):
                          0.81569,
                        ]
     
-    return I3CLSimWlenDependentValuePolynomial(coefficients)
+    return I3CLSimFunctionPolynomial(coefficients)

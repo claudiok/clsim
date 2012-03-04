@@ -11,7 +11,7 @@
 
 #include "clsim/I3CLSimLightSourceToStepConverterFlasher.h"
 
-#include "clsim/I3CLSimWlenDependentValue.h"
+#include "clsim/I3CLSimFunction.h"
 
 #include "clsim/I3CLSimLightSourceToStepConverterUtils.h"
 using namespace I3CLSimLightSourceToStepConverterUtils;
@@ -21,7 +21,7 @@ const uint32_t I3CLSimLightSourceToStepConverterFlasher::default_photonsPerStep=
 
 
 I3CLSimLightSourceToStepConverterFlasher::I3CLSimLightSourceToStepConverterFlasher
-(I3CLSimWlenDependentValueConstPtr flasherSpectrumNoBias,
+(I3CLSimFunctionConstPtr flasherSpectrumNoBias,
  I3CLSimSpectrumTablePtr spectrumTable,
  uint32_t photonsPerStep)
 :
@@ -130,7 +130,7 @@ void I3CLSimLightSourceToStepConverterFlasher::SetMaxBunchSize(uint64_t num)
     maxBunchSize_=num;
 }
 
-void I3CLSimLightSourceToStepConverterFlasher::SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias)
+void I3CLSimLightSourceToStepConverterFlasher::SetWlenBias(I3CLSimFunctionConstPtr wlenBias)
 {
     if (initialized_)
         throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterFlasher already initialized!");

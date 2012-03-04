@@ -1,7 +1,7 @@
-#ifndef I3CLSIMWLENDEPENDENTVALUEABSLENICECUBE_H_INCLUDED
-#define I3CLSIMWLENDEPENDENTVALUEABSLENICECUBE_H_INCLUDED
+#ifndef I3CLSIMFUNCTIONABSLENICECUBE_H_INCLUDED
+#define I3CLSIMFUNCTIONABSLENICECUBE_H_INCLUDED
 
-#include "clsim/I3CLSimWlenDependentValue.h"
+#include "clsim/I3CLSimFunction.h"
 
 #include <limits>
 
@@ -9,12 +9,12 @@
  * @brief Six-parameter ice model as fitted in the SPICE ice model.
  * (Absorption length)
  */
-static const unsigned i3clsimwlendependentvalueabslenicecube_version_ = 0;
+static const unsigned i3clsimfunctionabslenicecube_version_ = 0;
 
-struct I3CLSimWlenDependentValueAbsLenIceCube : public I3CLSimWlenDependentValue
+struct I3CLSimFunctionAbsLenIceCube : public I3CLSimFunction
 {
 public:
-    I3CLSimWlenDependentValueAbsLenIceCube(double kappa,
+    I3CLSimFunctionAbsLenIceCube(double kappa,
                                            double A,
                                            double B,
                                            double D,
@@ -22,7 +22,7 @@ public:
                                            double aDust400,
                                            double deltaTau
                                            );
-    virtual ~I3CLSimWlenDependentValueAbsLenIceCube();
+    virtual ~I3CLSimFunctionAbsLenIceCube();
     
     /**
      * If this is true, it is assumed that GetValue() and GetDerivative() return
@@ -58,9 +58,9 @@ public:
     virtual std::string GetOpenCLFunction(const std::string &functionName) const;
     
     /**
-     * Shall compare to another I3CLSimWlenDependentValue object
+     * Shall compare to another I3CLSimFunction object
      */
-    virtual bool CompareTo(const I3CLSimWlenDependentValue &other) const;
+    virtual bool CompareTo(const I3CLSimFunction &other) const;
     
     
     // access to the internal state
@@ -73,7 +73,7 @@ public:
     inline double GetDeltaTau() const {return deltaTau_;}
     
 private:
-    I3CLSimWlenDependentValueAbsLenIceCube();
+    I3CLSimFunctionAbsLenIceCube();
     
     double kappa_;
     double A_;
@@ -89,8 +89,8 @@ private:
 };
 
 
-BOOST_CLASS_VERSION(I3CLSimWlenDependentValueAbsLenIceCube, i3clsimwlendependentvalueabslenicecube_version_);
+BOOST_CLASS_VERSION(I3CLSimFunctionAbsLenIceCube, i3clsimfunctionabslenicecube_version_);
 
-I3_POINTER_TYPEDEFS(I3CLSimWlenDependentValueAbsLenIceCube);
+I3_POINTER_TYPEDEFS(I3CLSimFunctionAbsLenIceCube);
 
-#endif //I3CLSIMWLENDEPENDENTVALUEABSLENICECUBE_H_INCLUDED
+#endif //I3CLSIMFUNCTIONABSLENICECUBE_H_INCLUDED

@@ -1333,7 +1333,7 @@ void I3CLSimStepToPhotonConverterOpenCL::SetWlenGenerators(const std::vector<I3C
     wlenGenerators_=wlenGenerators;
 }
 
-void I3CLSimStepToPhotonConverterOpenCL::SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias)
+void I3CLSimStepToPhotonConverterOpenCL::SetWlenBias(I3CLSimFunctionConstPtr wlenBias)
 {
     if (initialized_)
         throw I3CLSimStepToPhotonConverter_exception("I3CLSimStepToPhotonConverterOpenCL already initialized!");

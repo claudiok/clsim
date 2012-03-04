@@ -36,7 +36,7 @@
 
 #include "phys-services/I3RandomService.h"
 
-#include "clsim/I3CLSimWlenDependentValue.h"
+#include "clsim/I3CLSimFunction.h"
 #include "clsim/I3CLSimPMTPhotonSimulator.h"
 
 #include <string>
@@ -105,10 +105,10 @@ private:
     std::string MCTreeName_;
 
     /// Parameter: Wavelength acceptance of the (D)OM as a I3WlenDependedValue object.
-    I3CLSimWlenDependentValueConstPtr wavelengthAcceptance_;
+    I3CLSimFunctionConstPtr wavelengthAcceptance_;
 
     /// Parameter: Angular acceptance of the (D)OM as a I3WlenDependedValue object.
-    I3CLSimWlenDependentValueConstPtr angularAcceptance_;
+    I3CLSimFunctionConstPtr angularAcceptance_;
 
     /// Parameter: Specifiy the \"oversize factor\" (i.e. DOM radius scaling factor) you used during the
     ///            CLSim run. The photon arrival times will be corrected. In practice this means your

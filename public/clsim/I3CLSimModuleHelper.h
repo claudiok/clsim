@@ -31,7 +31,7 @@
 #include "phys-services/I3RandomService.h"
 
 #include "clsim/I3CLSimRandomValue.h"
-#include "clsim/I3CLSimWlenDependentValue.h"
+#include "clsim/I3CLSimFunction.h"
 
 #include "clsim/I3CLSimMediumProperties.h"
 #include "clsim/I3CLSimSimpleGeometryFromI3Geometry.h"
@@ -52,7 +52,7 @@ namespace I3CLSimModuleHelper {
                      I3RandomServicePtr rng,
                      I3CLSimSimpleGeometryFromI3GeometryPtr geometry,
                      I3CLSimMediumPropertiesPtr medium,
-                     I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
+                     I3CLSimFunctionConstPtr wavelengthGenerationBias,
                      const std::vector<I3CLSimRandomValueConstPtr> &wavelengthGenerators,
                      bool enableDoubleBuffering,
                      bool doublePrecision,
@@ -62,7 +62,7 @@ namespace I3CLSimModuleHelper {
     I3CLSimLightSourceToStepConverterGeant4Ptr
     initializeGeant4(I3RandomServicePtr rng,
                      I3CLSimMediumPropertiesPtr medium,
-                     I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
+                     I3CLSimFunctionConstPtr wavelengthGenerationBias,
                      uint64_t bunchSizeGranularity,
                      uint64_t maxBunchSize,
                      const I3CLSimLightSourceParameterizationSeries &parameterizationList,
@@ -72,13 +72,13 @@ namespace I3CLSimModuleHelper {
                      bool multiprocessor=false);
 
     I3CLSimRandomValueConstPtr
-    makeCherenkovWavelengthGenerator(I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
+    makeCherenkovWavelengthGenerator(I3CLSimFunctionConstPtr wavelengthGenerationBias,
                                      bool generateCherenkovPhotonsWithoutDispersion,
                                      I3CLSimMediumPropertiesPtr mediumProperties);
 
     I3CLSimRandomValueConstPtr
-    makeWavelengthGenerator(I3CLSimWlenDependentValueConstPtr unbiasedSpectrum,
-                            I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias,
+    makeWavelengthGenerator(I3CLSimFunctionConstPtr unbiasedSpectrum,
+                            I3CLSimFunctionConstPtr wavelengthGenerationBias,
                             I3CLSimMediumPropertiesPtr mediumProperties);
 
 };

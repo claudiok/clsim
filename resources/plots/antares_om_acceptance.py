@@ -21,7 +21,7 @@ import matplotlib.pylab as plt
 import numpy
 
 from icecube import icetray, dataclasses
-from icecube.clsim import I3CLSimWlenDependentValueFromTable
+from icecube.clsim import I3CLSimFunctionFromTable
 from icecube.clsim.GetAntaresOMAcceptance import *
 
 params = {'backend': 'pdf',

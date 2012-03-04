@@ -1,6 +1,6 @@
 #include <icetray/serialization.h>
 #include <icetray/I3Units.h>
-#include <clsim/I3CLSimWlenDependentValuePolynomial.h>
+#include <clsim/I3CLSimFunctionPolynomial.h>
 
 #include <typeinfo>
 #include <cmath>
@@ -8,8 +8,8 @@
 #include "clsim/to_float_string.h"
 using namespace I3CLSimHelper;
 
-I3CLSimWlenDependentValuePolynomial::
-I3CLSimWlenDependentValuePolynomial(const std::vector<double> &coeffs)
+I3CLSimFunctionPolynomial::
+I3CLSimFunctionPolynomial(const std::vector<double> &coeffs)
 :
 coefficients_(coeffs),
 rangemin_(-std::numeric_limits<double>::infinity()),
@@ -19,8 +19,8 @@ overflow_(NAN)
 { 
 }
 
-I3CLSimWlenDependentValuePolynomial::
-I3CLSimWlenDependentValuePolynomial(const std::vector<double> &coeffs,
+I3CLSimFunctionPolynomial::
+I3CLSimFunctionPolynomial(const std::vector<double> &coeffs,
                                     double rangemin, double rangemax)
 :
 coefficients_(coeffs),
@@ -34,8 +34,8 @@ overflow_(GetValue(rangemax))
 
 
 
-I3CLSimWlenDependentValuePolynomial::
-I3CLSimWlenDependentValuePolynomial(const std::vector<double> &coeffs,
+I3CLSimFunctionPolynomial::
+I3CLSimFunctionPolynomial(const std::vector<double> &coeffs,
                                     double rangemin, double rangemax,
                                     double underflow, double overflow)
 :
@@ -49,14 +49,14 @@ overflow_(overflow)
 }
 
 
-I3CLSimWlenDependentValuePolynomial::I3CLSimWlenDependentValuePolynomial()
+I3CLSimFunctionPolynomial::I3CLSimFunctionPolynomial()
 {;}
 
-I3CLSimWlenDependentValuePolynomial::~I3CLSimWlenDependentValuePolynomial() 
+I3CLSimFunctionPolynomial::~I3CLSimFunctionPolynomial() 
 {;}
 
 
-double I3CLSimWlenDependentValuePolynomial::GetValue(double wlen) const
+double I3CLSimFunctionPolynomial::GetValue(double wlen) const
 {
     if (coefficients_.size()==0) return 0.;
     if (wlen < rangemin_) return underflow_;
@@ -75,7 +75,7 @@ double I3CLSimWlenDependentValuePolynomial::GetValue(double wlen) const
 }
 
 
-std::string I3CLSimWlenDependentValuePolynomial::GetOpenCLFunction(const std::string &functionName) const
+std::string I3CLSimFunctionPolynomial::GetOpenCLFunction(const std::string &functionName) const
 {
     std::ostringstream output(std::ostringstream::out);
     output.setf(std::ios::scientific,std::ios::floatfield);
@@ -131,11 +131,11 @@ std::string I3CLSimWlenDependentValuePolynomial::GetOpenCLFunction(const std::st
     return output.str();
 }
 
-bool I3CLSimWlenDependentValuePolynomial::CompareTo(const I3CLSimWlenDependentValue &other) const
+bool I3CLSimFunctionPolynomial::CompareTo(const I3CLSimFunction &other) const
 {
     try
     {
-        const I3CLSimWlenDependentValuePolynomial &other_ = dynamic_cast<const I3CLSimWlenDependentValuePolynomial &>(other);
+        const I3CLSimFunctionPolynomial &other_ = dynamic_cast<const I3CLSimFunctionPolynomial &>(other);
         
         if (other_.coefficients_.size() != coefficients_.size()) return false;
         if (other_.rangemin_ != rangemin_) return false;
@@ -160,13 +160,13 @@ bool I3CLSimWlenDependentValuePolynomial::CompareTo(const I3CLSimWlenDependentVa
 
 
 template <class Archive>
-void I3CLSimWlenDependentValuePolynomial::serialize(Archive &ar, unsigned version)
+void I3CLSimFunctionPolynomial::serialize(Archive &ar, unsigned version)
 {
-    if (version>i3clsimwlendependentvaluepolynomial_version_)
-        log_fatal("Attempting to read version %u from file but running version %u of I3CLSimWlenDependentValuePolynomial class.",
-                  version,i3clsimwlendependentvaluepolynomial_version_);
+    if (version>i3clsimfunctionpolynomial_version_)
+        log_fatal("Attempting to read version %u from file but running version %u of I3CLSimFunctionPolynomial class.",
+                  version,i3clsimfunctionpolynomial_version_);
 
-    ar & make_nvp("I3CLSimWlenDependentValue", base_object<I3CLSimWlenDependentValue>(*this));
+    ar & make_nvp("I3CLSimFunction", base_object<I3CLSimFunction>(*this));
     ar & make_nvp("coefficients", coefficients_);
     ar & make_nvp("rangemin", rangemin_);
     ar & make_nvp("rangemax", rangemax_);
@@ -175,4 +175,4 @@ void I3CLSimWlenDependentValuePolynomial::serialize(Archive &ar, unsigned versio
 }
 
 
-I3_SERIALIZABLE(I3CLSimWlenDependentValuePolynomial);
+I3_SERIALIZABLE(I3CLSimFunctionPolynomial);

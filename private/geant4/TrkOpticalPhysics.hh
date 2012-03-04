@@ -2,7 +2,7 @@
 #define TrkOpticalPhysics_hh
 
 #include "G4VPhysicsConstructor.hh"
-#include "clsim/I3CLSimWlenDependentValue.h"
+#include "clsim/I3CLSimFunction.h"
 
 class TrkCerenkov;
 
@@ -12,7 +12,7 @@ public:
     TrkOpticalPhysics(const G4String& name,
                       double maxBetaChangePerStep,
                       uint32_t maxNumPhotonsPerStep,
-                      I3CLSimWlenDependentValueConstPtr wlenBias);
+                      I3CLSimFunctionConstPtr wlenBias);
     virtual ~TrkOpticalPhysics();
     
     virtual void ConstructParticle();
@@ -24,7 +24,7 @@ protected:
 private:
     double maxBetaChangePerStep_;
     uint32_t maxNumPhotonsPerStep_;
-    I3CLSimWlenDependentValueConstPtr wlenBias_;
+    I3CLSimFunctionConstPtr wlenBias_;
 };
 
 #endif

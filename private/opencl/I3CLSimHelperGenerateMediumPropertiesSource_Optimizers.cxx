@@ -10,8 +10,8 @@
 
 #include "icetray/I3Units.h"
 
-#include "clsim/I3CLSimWlenDependentValueAbsLenIceCube.h"
-#include "clsim/I3CLSimWlenDependentValueScatLenIceCube.h"
+#include "clsim/I3CLSimFunctionAbsLenIceCube.h"
+#include "clsim/I3CLSimFunctionScatLenIceCube.h"
 
 #include "clsim/to_float_string.h"
 
@@ -94,14 +94,14 @@ namespace I3CLSimHelper
     // optimizers (special converters for functions
     // where we can generate more optimized code
     // for layered values)
-    std::string GenerateOptimizedCodeFor_I3CLSimWlenDependentValueAbsLenIceCube(const std::vector<I3CLSimWlenDependentValueConstPtr> &layeredFunction,
+    std::string GenerateOptimizedCodeFor_I3CLSimFunctionAbsLenIceCube(const std::vector<I3CLSimFunctionConstPtr> &layeredFunction,
                                                                                 const std::string &fullName,
                                                                                 const std::string &functionName,
                                                                                 bool &worked)
     {
-        // are all of them of type I3CLSimWlenDependentValueAbsLenIceCube?
-        const std::vector<I3CLSimWlenDependentValueAbsLenIceCubeConstPtr> layeredFunctionIceCube =
-        dynamic_vector_contents_cast<I3CLSimWlenDependentValueAbsLenIceCube>(layeredFunction, worked);
+        // are all of them of type I3CLSimFunctionAbsLenIceCube?
+        const std::vector<I3CLSimFunctionAbsLenIceCubeConstPtr> layeredFunctionIceCube =
+        dynamic_vector_contents_cast<I3CLSimFunctionAbsLenIceCube>(layeredFunction, worked);
         if (layeredFunctionIceCube.size() <= 1) worked=false;
         if (!worked) return std::string("");
 
@@ -120,7 +120,7 @@ namespace I3CLSimHelper
         code << "\n";
 
         code << "__constant float " << functionName << "_aDust400[" << layeredFunctionIceCube.size() << "] = {\n";
-        BOOST_FOREACH(const I3CLSimWlenDependentValueAbsLenIceCubeConstPtr &function, layeredFunctionIceCube)
+        BOOST_FOREACH(const I3CLSimFunctionAbsLenIceCubeConstPtr &function, layeredFunctionIceCube)
         {
             code << "    " << to_float_string(function->GetADust400()) << ",\n";
         }
@@ -128,7 +128,7 @@ namespace I3CLSimHelper
         code << "\n";
 
         code << "__constant float " << functionName << "_deltaTau[" << layeredFunctionIceCube.size() << "] = {\n";
-        BOOST_FOREACH(const I3CLSimWlenDependentValueAbsLenIceCubeConstPtr &function, layeredFunctionIceCube)
+        BOOST_FOREACH(const I3CLSimFunctionAbsLenIceCubeConstPtr &function, layeredFunctionIceCube)
         {
             code << "    " << to_float_string(function->GetDeltaTau()) << ",\n";
         }
@@ -166,14 +166,14 @@ namespace I3CLSimHelper
     
     
     
-    std::string GenerateOptimizedCodeFor_I3CLSimWlenDependentValueScatLenIceCube(const std::vector<I3CLSimWlenDependentValueConstPtr> &layeredFunction,
+    std::string GenerateOptimizedCodeFor_I3CLSimFunctionScatLenIceCube(const std::vector<I3CLSimFunctionConstPtr> &layeredFunction,
                                                                                  const std::string &fullName,
                                                                                  const std::string &functionName,
                                                                                  bool &worked)
     {
-        // are all of them of type I3CLSimWlenDependentValueScatLenIceCube?
-        const std::vector<I3CLSimWlenDependentValueScatLenIceCubeConstPtr> layeredFunctionIceCube =
-        dynamic_vector_contents_cast<I3CLSimWlenDependentValueScatLenIceCube>(layeredFunction, worked);
+        // are all of them of type I3CLSimFunctionScatLenIceCube?
+        const std::vector<I3CLSimFunctionScatLenIceCubeConstPtr> layeredFunctionIceCube =
+        dynamic_vector_contents_cast<I3CLSimFunctionScatLenIceCube>(layeredFunction, worked);
         if (layeredFunctionIceCube.size() <= 1) worked=false;
         if (!worked) return std::string("");
         
@@ -192,7 +192,7 @@ namespace I3CLSimHelper
         code << "\n";
         
         code << "__constant float " << functionName << "_b400[" << layeredFunctionIceCube.size() << "] = {\n";
-        BOOST_FOREACH(const I3CLSimWlenDependentValueScatLenIceCubeConstPtr &function, layeredFunctionIceCube)
+        BOOST_FOREACH(const I3CLSimFunctionScatLenIceCubeConstPtr &function, layeredFunctionIceCube)
         {
             code << "    " << to_float_string(function->GetB400()) << ",\n";
         }

@@ -2,7 +2,7 @@
 
 I3CLSimSpectrumTable::I3CLSimSpectrumTable()
 :
-spectra_(1, I3CLSimWlenDependentValueConstPtr()) // add a NULL pointer at index #0 (the Cherenkov spectrum)
+spectra_(1, I3CLSimFunctionConstPtr()) // add a NULL pointer at index #0 (the Cherenkov spectrum)
 { 
     
 }
@@ -12,7 +12,7 @@ I3CLSimSpectrumTable::~I3CLSimSpectrumTable()
 
 }
 
-std::size_t I3CLSimSpectrumTable::append(I3CLSimWlenDependentValueConstPtr newSpectrum)
+std::size_t I3CLSimSpectrumTable::append(I3CLSimFunctionConstPtr newSpectrum)
 {
     if (!newSpectrum)
         log_fatal("Cannot add a NULL spectrum.");

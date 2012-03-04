@@ -24,17 +24,17 @@
 #endif
 #include <inttypes.h>
 
-#include "test/I3CLSimWlenDependentValueTester.h"
+#include "test/I3CLSimFunctionTester.h"
 
 #include <string>
 
 #include "opencl/I3CLSimHelperLoadProgramSource.h"
 
-I3CLSimWlenDependentValueTester::I3CLSimWlenDependentValueTester
+I3CLSimFunctionTester::I3CLSimFunctionTester
 (const I3CLSimOpenCLDevice &device,
  uint64_t workgroupSize_,
  uint64_t workItemsPerIteration_,
- I3CLSimWlenDependentValueConstPtr wlenDependentValue):
+ I3CLSimFunctionConstPtr wlenDependentValue):
 I3CLSimTesterBase(),
 wlenDependentValue_(wlenDependentValue)
 {
@@ -49,8 +49,8 @@ wlenDependentValue_(wlenDependentValue)
     InitBuffers();
 }
 
-void I3CLSimWlenDependentValueTester::FillSource(std::vector<std::string> &source,
-                                                 I3CLSimWlenDependentValueConstPtr wlenDependentValue)
+void I3CLSimFunctionTester::FillSource(std::vector<std::string> &source,
+                                                 I3CLSimFunctionConstPtr wlenDependentValue)
 {
     source.clear();
     
@@ -75,7 +75,7 @@ void I3CLSimWlenDependentValueTester::FillSource(std::vector<std::string> &sourc
     source.push_back(testKernelSource);
 }
 
-void I3CLSimWlenDependentValueTester::InitBuffers()
+void I3CLSimFunctionTester::InitBuffers()
 {
     log_debug("Setting up device buffers.");
     // allocate empty buffers on the device
@@ -92,12 +92,12 @@ void I3CLSimWlenDependentValueTester::InitBuffers()
 }
 
 
-I3VectorFloatPtr I3CLSimWlenDependentValueTester::EvaluateFunction(I3VectorFloatConstPtr xValues)
+I3VectorFloatPtr I3CLSimFunctionTester::EvaluateFunction(I3VectorFloatConstPtr xValues)
 {
     return EvaluateIt(xValues, false);
 }
 
-I3VectorFloatPtr I3CLSimWlenDependentValueTester::EvaluateDerivative(I3VectorFloatConstPtr xValues)
+I3VectorFloatPtr I3CLSimFunctionTester::EvaluateDerivative(I3VectorFloatConstPtr xValues)
 {
     if (!wlenDependentValue_) log_fatal("Internal error: wlenDependentValue_ is NULL");
     
@@ -108,7 +108,7 @@ I3VectorFloatPtr I3CLSimWlenDependentValueTester::EvaluateDerivative(I3VectorFlo
 }
 
 
-I3VectorFloatPtr I3CLSimWlenDependentValueTester::EvaluateReferenceFunction(I3VectorFloatConstPtr xValues)
+I3VectorFloatPtr I3CLSimFunctionTester::EvaluateReferenceFunction(I3VectorFloatConstPtr xValues)
 {
     if (!xValues) log_fatal("NULL pointer passed to EvaluateReferenceFunction.");
     if (!wlenDependentValue_) log_fatal("Internal error: wlenDependentValue_ is NULL");
@@ -125,7 +125,7 @@ I3VectorFloatPtr I3CLSimWlenDependentValueTester::EvaluateReferenceFunction(I3Ve
     return results;
 }
 
-I3VectorFloatPtr I3CLSimWlenDependentValueTester::EvaluateReferenceDerivative(I3VectorFloatConstPtr xValues)
+I3VectorFloatPtr I3CLSimFunctionTester::EvaluateReferenceDerivative(I3VectorFloatConstPtr xValues)
 {
     if (!xValues) log_fatal("NULL pointer passed to EvaluateReferenceDerivative.");
     if (!wlenDependentValue_) log_fatal("Internal error: wlenDependentValue_ is NULL");
@@ -145,7 +145,7 @@ I3VectorFloatPtr I3CLSimWlenDependentValueTester::EvaluateReferenceDerivative(I3
 }
 
 
-I3VectorFloatPtr I3CLSimWlenDependentValueTester::EvaluateIt(I3VectorFloatConstPtr xValues, bool derivative)
+I3VectorFloatPtr I3CLSimFunctionTester::EvaluateIt(I3VectorFloatConstPtr xValues, bool derivative)
 {
     if (!xValues) log_fatal("NULL pointer passed to EvaluateIt.");
 

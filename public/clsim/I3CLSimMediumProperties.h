@@ -6,7 +6,7 @@
 
 #include <vector>
 
-#include "clsim/I3CLSimWlenDependentValue.h"
+#include "clsim/I3CLSimFunction.h"
 #include "clsim/I3CLSimRandomValue.h"
 
 /**
@@ -40,21 +40,21 @@ public:
      */
     bool IsReady() const;
     
-    const std::vector<I3CLSimWlenDependentValueConstPtr> &GetAbsorptionLengths() const;
-    const std::vector<I3CLSimWlenDependentValueConstPtr> &GetScatteringLengths() const;
-    const std::vector<I3CLSimWlenDependentValueConstPtr> &GetPhaseRefractiveIndices() const;
-    const std::vector<I3CLSimWlenDependentValueConstPtr> &GetGroupRefractiveIndicesOverride() const;
+    const std::vector<I3CLSimFunctionConstPtr> &GetAbsorptionLengths() const;
+    const std::vector<I3CLSimFunctionConstPtr> &GetScatteringLengths() const;
+    const std::vector<I3CLSimFunctionConstPtr> &GetPhaseRefractiveIndices() const;
+    const std::vector<I3CLSimFunctionConstPtr> &GetGroupRefractiveIndicesOverride() const;
     
-    I3CLSimWlenDependentValueConstPtr GetAbsorptionLength(uint32_t layer) const;
-    I3CLSimWlenDependentValueConstPtr GetScatteringLength(uint32_t layer) const;
-    I3CLSimWlenDependentValueConstPtr GetPhaseRefractiveIndex(uint32_t layer) const;
-    I3CLSimWlenDependentValueConstPtr GetGroupRefractiveIndexOverride(uint32_t layer) const;
+    I3CLSimFunctionConstPtr GetAbsorptionLength(uint32_t layer) const;
+    I3CLSimFunctionConstPtr GetScatteringLength(uint32_t layer) const;
+    I3CLSimFunctionConstPtr GetPhaseRefractiveIndex(uint32_t layer) const;
+    I3CLSimFunctionConstPtr GetGroupRefractiveIndexOverride(uint32_t layer) const;
     I3CLSimRandomValueConstPtr GetScatteringCosAngleDistribution() const;
 
-    void SetAbsorptionLength(uint32_t layer, I3CLSimWlenDependentValueConstPtr ptr);
-    void SetScatteringLength(uint32_t layer, I3CLSimWlenDependentValueConstPtr ptr);
-    void SetPhaseRefractiveIndex(uint32_t layer, I3CLSimWlenDependentValueConstPtr ptr);
-    void SetGroupRefractiveIndexOverride(uint32_t layer, I3CLSimWlenDependentValueConstPtr ptr);
+    void SetAbsorptionLength(uint32_t layer, I3CLSimFunctionConstPtr ptr);
+    void SetScatteringLength(uint32_t layer, I3CLSimFunctionConstPtr ptr);
+    void SetPhaseRefractiveIndex(uint32_t layer, I3CLSimFunctionConstPtr ptr);
+    void SetGroupRefractiveIndexOverride(uint32_t layer, I3CLSimFunctionConstPtr ptr);
     void SetScatteringCosAngleDistribution(I3CLSimRandomValueConstPtr ptr);
 
     double GetMinWavelength() const;
@@ -69,7 +69,7 @@ public:
     inline double GetAirZCoord() const {return airZCoordinate_;}
     
     // The user can specify a minimum and maximum wavelength.
-    // This is necessary if none of the I3CLSimWlenDependentValues
+    // This is necessary if none of the I3CLSimFunctions
     // specifies any.
     inline double GetForcedMinWlen() const {return forcedMinWlen_;}
     inline double GetForcedMaxWlen() const {return forcedMaxWlen_;}
@@ -89,10 +89,10 @@ private:
     double forcedMinWlen_;
     double forcedMaxWlen_;
     
-    std::vector<I3CLSimWlenDependentValueConstPtr> absorptionLength_;
-    std::vector<I3CLSimWlenDependentValueConstPtr> scatteringLength_;
-    std::vector<I3CLSimWlenDependentValueConstPtr> phaseRefractiveIndex_;
-    std::vector<I3CLSimWlenDependentValueConstPtr> groupRefractiveIndexOverride_;
+    std::vector<I3CLSimFunctionConstPtr> absorptionLength_;
+    std::vector<I3CLSimFunctionConstPtr> scatteringLength_;
+    std::vector<I3CLSimFunctionConstPtr> phaseRefractiveIndex_;
+    std::vector<I3CLSimFunctionConstPtr> groupRefractiveIndexOverride_;
     I3CLSimRandomValueConstPtr scatteringCosAngleDist_;
     
 private:

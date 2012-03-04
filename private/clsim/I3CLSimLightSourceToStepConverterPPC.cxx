@@ -7,7 +7,7 @@
 
 #include "clsim/I3CLSimLightSourceToStepConverterPPC.h"
 
-#include "clsim/I3CLSimWlenDependentValue.h"
+#include "clsim/I3CLSimFunction.h"
 
 #include "clsim/I3CLSimLightSourceToStepConverterUtils.h"
 using namespace I3CLSimLightSourceToStepConverterUtils;
@@ -135,7 +135,7 @@ void I3CLSimLightSourceToStepConverterPPC::SetMaxBunchSize(uint64_t num)
     maxBunchSize_=num;
 }
 
-void I3CLSimLightSourceToStepConverterPPC::SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias)
+void I3CLSimLightSourceToStepConverterPPC::SetWlenBias(I3CLSimFunctionConstPtr wlenBias)
 {
     if (initialized_)
         throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterPPC already initialized!");

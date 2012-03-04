@@ -3,7 +3,7 @@ from icecube.clsim import I3CLSimMediumProperties, \
                           I3CLSimRandomValueMixed, \
                           I3CLSimRandomValueHenyeyGreenstein, \
                           I3CLSimRandomValueSimplifiedLiu, \
-                          I3CLSimWlenDependentValueFromTable
+                          I3CLSimFunctionFromTable
 
 from I3Tray import I3Units
 
@@ -165,10 +165,10 @@ def MakeIceCubeMediumPropertiesPhotonics(tableFile,
     iceCubeScatModel = I3CLSimRandomValueHenyeyGreenstein(meanCosine=meanCos)
     m.SetScatteringCosAngleDistribution(iceCubeScatModel)
     
-    #phaseRefIndex = I3CLSimWlenDependentValueFromTable(startWavelength, stepWavelength, layers[0]['N_PHASE'])
-    #groupRefIndex = I3CLSimWlenDependentValueFromTable(startWavelength, stepWavelength, layers[0]['N_GROUP'])
-    phaseRefIndex = I3CLSimWlenDependentValueRefIndexIceCube(mode="phase")
-    groupRefIndex = I3CLSimWlenDependentValueRefIndexIceCube(mode="group")
+    #phaseRefIndex = I3CLSimFunctionFromTable(startWavelength, stepWavelength, layers[0]['N_PHASE'])
+    #groupRefIndex = I3CLSimFunctionFromTable(startWavelength, stepWavelength, layers[0]['N_GROUP'])
+    phaseRefIndex = I3CLSimFunctionRefIndexIceCube(mode="phase")
+    groupRefIndex = I3CLSimFunctionRefIndexIceCube(mode="group")
 
     for i in range(len(layers)):
         #print "layer {0}: depth at bottom is {1} (z_bottom={2}), b_400={3}".format(i, depthAtBottomOfLayer[i], layerZStart[i], b_400[i])
@@ -177,11 +177,11 @@ def MakeIceCubeMediumPropertiesPhotonics(tableFile,
         m.SetGroupRefractiveIndexOverride(i, groupRefIndex)
         
         absLenTable = [1./absCoeff for absCoeff in layers[i]['ABS']]
-        absLen = I3CLSimWlenDependentValueFromTable(startWavelength, stepWavelength, absLenTable)
+        absLen = I3CLSimFunctionFromTable(startWavelength, stepWavelength, absLenTable)
         m.SetAbsorptionLength(i, absLen)
 
         scatLenTable = [(1./scatCoeff)*(1.-meanCos) for scatCoeff in layers[i]['SCAT']]
-        scatLen = I3CLSimWlenDependentValueFromTable(startWavelength, stepWavelength, scatLenTable)
+        scatLen = I3CLSimFunctionFromTable(startWavelength, stepWavelength, scatLenTable)
         m.SetScatteringLength(i, scatLen)
 
     return m

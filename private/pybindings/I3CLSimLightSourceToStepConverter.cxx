@@ -38,7 +38,7 @@ struct I3CLSimLightSourceToStepConverterWrapper : I3CLSimLightSourceToStepConver
     virtual void SetBunchSizeGranularity(uint64_t num) {this->get_override("SetBunchSizeGranularity")(num);}
     virtual void SetMaxBunchSize(uint64_t num) {this->get_override("SetMaxBunchSize")(num);}
     virtual void SetRandomService(I3RandomServicePtr random) {this->get_override("SetRandomService")(random);}
-    virtual void SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias) {this->get_override("SetWlenBias")(wlenBias);}
+    virtual void SetWlenBias(I3CLSimFunctionConstPtr wlenBias) {this->get_override("SetWlenBias")(wlenBias);}
     virtual void SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties) {this->get_override("SetMediumProperties")(mediumProperties);}
     virtual void Initialize() {this->get_override("Initialize")();}
     virtual bool IsInitialized() const {return this->get_override("IsInitialized")();}
@@ -240,7 +240,7 @@ void register_I3CLSimLightSourceToStepConverter()
         (
          "I3CLSimLightSourceToStepConverterFlasher",
          bp::init<
-         I3CLSimWlenDependentValueConstPtr, I3CLSimSpectrumTablePtr, uint32_t
+         I3CLSimFunctionConstPtr, I3CLSimSpectrumTablePtr, uint32_t
          >(
            (
             bp::arg("flasherSpectrumNoBias"),

@@ -1,5 +1,5 @@
-#ifndef I3CLSIMWLENDEPENDENTVALUE_H_INCLUDED
-#define I3CLSIMWLENDEPENDENTVALUE_H_INCLUDED
+#ifndef I3CLSIMFUNCTION_H_INCLUDED
+#define I3CLSIMFUNCTION_H_INCLUDED
 
 #include "icetray/serialization.h"
 #include "icetray/I3TrayHeaders.h"
@@ -9,14 +9,14 @@
 /**
  * @brief A value dependent on photon wavelength
  */
-static const unsigned i3clsimwlendependentvalue_version_ = 0;
+static const unsigned i3clsimfunction_version_ = 0;
 
-struct I3CLSimWlenDependentValue 
+struct I3CLSimFunction 
 {
 public:
     
-    I3CLSimWlenDependentValue();
-    virtual ~I3CLSimWlenDependentValue();
+    I3CLSimFunction();
+    virtual ~I3CLSimFunction();
 
     /**
      * If this is true, it is assumed that GetValue() and GetDerivative() return
@@ -63,28 +63,28 @@ public:
     virtual std::string GetOpenCLFunctionDerivative(const std::string &functionName) const {return std::string();}
     
     /**
-     * Shall compare to another I3CLSimWlenDependentValue object
+     * Shall compare to another I3CLSimFunction object
      */
-    virtual bool CompareTo(const I3CLSimWlenDependentValue &other) const = 0;
+    virtual bool CompareTo(const I3CLSimFunction &other) const = 0;
     
 private:
     friend class boost::serialization::access;
     template <class Archive> void serialize(Archive & ar, unsigned version);
 };
 
-inline bool operator==(const I3CLSimWlenDependentValue& a, const I3CLSimWlenDependentValue& b)
+inline bool operator==(const I3CLSimFunction& a, const I3CLSimFunction& b)
 {
     return a.CompareTo(b);
 }
 
-inline bool operator!=(const I3CLSimWlenDependentValue& a, const I3CLSimWlenDependentValue& b)
+inline bool operator!=(const I3CLSimFunction& a, const I3CLSimFunction& b)
 {
     return (!a.CompareTo(b));
 }
 
 
-BOOST_CLASS_VERSION(I3CLSimWlenDependentValue, i3clsimwlendependentvalue_version_);
+BOOST_CLASS_VERSION(I3CLSimFunction, i3clsimfunction_version_);
 
-I3_POINTER_TYPEDEFS(I3CLSimWlenDependentValue);
+I3_POINTER_TYPEDEFS(I3CLSimFunction);
 
-#endif //I3CLSIMWLENDEPENDENTVALUE_H_INCLUDED
+#endif //I3CLSIMFUNCTION_H_INCLUDED

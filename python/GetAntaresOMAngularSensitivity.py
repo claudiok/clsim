@@ -10,7 +10,7 @@ import numpy, math, sys
 from os.path import expandvars
 
 from icecube import icetray, dataclasses
-from icecube.clsim import I3CLSimWlenDependentValuePolynomial
+from icecube.clsim import I3CLSimFunctionPolynomial
 
 from I3Tray import I3Units
 
@@ -37,7 +37,7 @@ def GetAntaresOMAngularSensitivity(name='NotSet'):
                         -0.1422
                        ]
     
-        return I3CLSimWlenDependentValuePolynomial(coefficients, -0.65, 1., 0., 1.)
+        return I3CLSimFunctionPolynomial(coefficients, -0.65, 1., 0., 1.)
 
     elif name == 'Genova':
         # Genova parameterisation of angular acceptance
@@ -53,7 +53,7 @@ def GetAntaresOMAngularSensitivity(name='NotSet'):
                          0.077
                        ]
                        
-        return I3CLSimWlenDependentValuePolynomial(coefficients, -0.80, 1., 0., 1.)
+        return I3CLSimFunctionPolynomial(coefficients, -0.80, 1., 0., 1.)
         
     elif name == 'NIM':
         # NIM parameterisation of angular acceptance
@@ -67,7 +67,7 @@ def GetAntaresOMAngularSensitivity(name='NotSet'):
                         -0.1231
                        ]
                        
-        return I3CLSimWlenDependentValuePolynomial(coefficients, -0.65, 1., 0., 1.)
+        return I3CLSimFunctionPolynomial(coefficients, -0.65, 1., 0., 1.)
 
     elif name == 'old':
         # calculate weight for photon which hits PM under
@@ -123,7 +123,7 @@ def GetAntaresOMAngularSensitivity(name='NotSet'):
                         ]
                         
 
-        return I3CLSimWlenDependentValuePolynomial(coefficients, -0.36, 1., 0., 1.)
+        return I3CLSimFunctionPolynomial(coefficients, -0.36, 1., 0., 1.)
     
     else:
         print "GetAntaresOMAngularSensitivity ERROR: '"+name+"' does not name an angulare sensitivity type! Possible are 'Spring09', 'Genova', 'NIM' and 'old'."

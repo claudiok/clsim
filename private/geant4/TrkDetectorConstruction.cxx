@@ -93,11 +93,11 @@ void TrkDetectorConstruction::DefineMaterials(){
         const uint32_t numLayers = mediumProperties_->GetLayersNum();
         if (numLayers==0) log_fatal("numLayers==0");
         
-        I3CLSimWlenDependentValueConstPtr firstLayer = mediumProperties_->GetPhaseRefractiveIndex(0);
+        I3CLSimFunctionConstPtr firstLayer = mediumProperties_->GetPhaseRefractiveIndex(0);
         
         for (uint32_t i=1;i<numLayers;++i)
         {
-            I3CLSimWlenDependentValueConstPtr thisLayer = mediumProperties_->GetPhaseRefractiveIndex(i);
+            I3CLSimFunctionConstPtr thisLayer = mediumProperties_->GetPhaseRefractiveIndex(i);
             
             if (*firstLayer != *thisLayer)
                 log_fatal("The current version of the Geant4 detector constructor can only handle media with un-layered refractie indices..");
@@ -106,7 +106,7 @@ void TrkDetectorConstruction::DefineMaterials(){
     }
     
     // fill the refractive index map for a fixed number of wavelengths
-    I3CLSimWlenDependentValueConstPtr refractiveIndexFunc = mediumProperties_->GetPhaseRefractiveIndex(0);
+    I3CLSimFunctionConstPtr refractiveIndexFunc = mediumProperties_->GetPhaseRefractiveIndex(0);
     
     const unsigned int initialPoints=20;
     const double fromWlen = mediumProperties_->GetMinWavelength();

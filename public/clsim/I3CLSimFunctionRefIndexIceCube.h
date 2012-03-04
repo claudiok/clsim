@@ -1,7 +1,7 @@
-#ifndef I3CLSIMWLENDEPENDENTVALUEREFINDEXICECUBE_H_INCLUDED
-#define I3CLSIMWLENDEPENDENTVALUEREFINDEXICECUBE_H_INCLUDED
+#ifndef I3CLSIMFUNCTIONREFINDEXICECUBE_H_INCLUDED
+#define I3CLSIMFUNCTIONREFINDEXICECUBE_H_INCLUDED
 
-#include "clsim/I3CLSimWlenDependentValue.h"
+#include "clsim/I3CLSimFunction.h"
 
 #include <limits>
 #include <string>
@@ -11,9 +11,9 @@
  * "Role of Group and Phase Velocity in High-Energy Neutrino Observatories",
  * P.B. Price and K. Woschnagg, Astropart. Phys. 15 (2001) 97
  */
-static const unsigned i3clsimwlendependentvaluerefindexicecube_version_ = 0;
+static const unsigned i3clsimfunctionrefindexicecube_version_ = 0;
 
-struct I3CLSimWlenDependentValueRefIndexIceCube : public I3CLSimWlenDependentValue
+struct I3CLSimFunctionRefIndexIceCube : public I3CLSimFunction
 {
 public:
     static const std::string default_mode;
@@ -29,7 +29,7 @@ public:
     static const double default_g4;
     
     
-    I3CLSimWlenDependentValueRefIndexIceCube(std::string mode = default_mode,
+    I3CLSimFunctionRefIndexIceCube(std::string mode = default_mode,
                                              double n0 = default_n0,  // coefficients 0-4 (for phase ref index)
                                              double n1 = default_n1,
                                              double n2 = default_n2,
@@ -41,7 +41,7 @@ public:
                                              double g3 = default_g3,
                                              double g4 = default_g4
                                              );
-    virtual ~I3CLSimWlenDependentValueRefIndexIceCube();
+    virtual ~I3CLSimFunctionRefIndexIceCube();
     
     /**
      * If this is true, it is assumed that GetValue() and GetDerivative() return
@@ -88,9 +88,9 @@ public:
     virtual std::string GetOpenCLFunctionDerivative(const std::string &functionName) const;
     
     /**
-     * Shall compare to another I3CLSimWlenDependentValue object
+     * Shall compare to another I3CLSimFunction object
      */
-    virtual bool CompareTo(const I3CLSimWlenDependentValue &other) const;
+    virtual bool CompareTo(const I3CLSimFunction &other) const;
     
 private:
     std::string mode_;
@@ -111,8 +111,8 @@ private:
 };
 
 
-BOOST_CLASS_VERSION(I3CLSimWlenDependentValueRefIndexIceCube, i3clsimwlendependentvaluerefindexicecube_version_);
+BOOST_CLASS_VERSION(I3CLSimFunctionRefIndexIceCube, i3clsimfunctionrefindexicecube_version_);
 
-I3_POINTER_TYPEDEFS(I3CLSimWlenDependentValueRefIndexIceCube);
+I3_POINTER_TYPEDEFS(I3CLSimFunctionRefIndexIceCube);
 
-#endif //I3CLSIMWLENDEPENDENTVALUEREFINDEXICECUBE_H_INCLUDED
+#endif //I3CLSIMFUNCTIONREFINDEXICECUBE_H_INCLUDED

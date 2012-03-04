@@ -1,5 +1,5 @@
 #include <icetray/serialization.h>
-#include <clsim/I3CLSimWlenDependentValueConstant.h>
+#include <clsim/I3CLSimFunctionConstant.h>
 
 #include <typeinfo>
 #include <cmath>
@@ -10,49 +10,49 @@
 #include "clsim/to_float_string.h"
 using namespace I3CLSimHelper;
 
-I3CLSimWlenDependentValueConstant::
-I3CLSimWlenDependentValueConstant(double value)
+I3CLSimFunctionConstant::
+I3CLSimFunctionConstant(double value)
 :
 value_(value)
 {
 }
 
-I3CLSimWlenDependentValueConstant::I3CLSimWlenDependentValueConstant() {;}
+I3CLSimFunctionConstant::I3CLSimFunctionConstant() {;}
 
-I3CLSimWlenDependentValueConstant::~I3CLSimWlenDependentValueConstant() 
+I3CLSimFunctionConstant::~I3CLSimFunctionConstant() 
 {;}
 
-bool I3CLSimWlenDependentValueConstant::HasNativeImplementation() const 
+bool I3CLSimFunctionConstant::HasNativeImplementation() const 
 {
     return true;
 }
 
-bool I3CLSimWlenDependentValueConstant::HasDerivative() const 
+bool I3CLSimFunctionConstant::HasDerivative() const 
 {
     return true;
 }
 
-double I3CLSimWlenDependentValueConstant::GetValue(double wlen) const
+double I3CLSimFunctionConstant::GetValue(double wlen) const
 {
     return value_;
 }
 
-double I3CLSimWlenDependentValueConstant::GetDerivative(double wlen) const
+double I3CLSimFunctionConstant::GetDerivative(double wlen) const
 {
     return 0.;
 }
 
-double I3CLSimWlenDependentValueConstant::GetMinWlen() const
+double I3CLSimFunctionConstant::GetMinWlen() const
 {
     return -std::numeric_limits<double>::infinity();
 }
 
-double I3CLSimWlenDependentValueConstant::GetMaxWlen() const
+double I3CLSimFunctionConstant::GetMaxWlen() const
 {
     return std::numeric_limits<double>::infinity();
 }
 
-std::string I3CLSimWlenDependentValueConstant::GetOpenCLFunction(const std::string &functionName) const
+std::string I3CLSimFunctionConstant::GetOpenCLFunction(const std::string &functionName) const
 {
     std::string funcDef = 
     std::string("inline float ") + functionName + std::string("(float wavelength)\n");
@@ -73,7 +73,7 @@ std::string I3CLSimWlenDependentValueConstant::GetOpenCLFunction(const std::stri
     return funcDef + ";\n\n" + funcDef + funcBody;
 }
 
-std::string I3CLSimWlenDependentValueConstant::GetOpenCLFunctionDerivative(const std::string &functionName) const
+std::string I3CLSimFunctionConstant::GetOpenCLFunctionDerivative(const std::string &functionName) const
 {
     std::string funcDef = 
     std::string("inline float ") + functionName + std::string("(float wavelength)\n");
@@ -87,11 +87,11 @@ std::string I3CLSimWlenDependentValueConstant::GetOpenCLFunctionDerivative(const
     return funcDef + ";\n\n" + funcDef + funcBody;
 }
 
-bool I3CLSimWlenDependentValueConstant::CompareTo(const I3CLSimWlenDependentValue &other) const
+bool I3CLSimFunctionConstant::CompareTo(const I3CLSimFunction &other) const
 {
     try
     {
-        const I3CLSimWlenDependentValueConstant &other_ = dynamic_cast<const I3CLSimWlenDependentValueConstant &>(other);
+        const I3CLSimFunctionConstant &other_ = dynamic_cast<const I3CLSimFunctionConstant &>(other);
         if ((other_.value_ != value_))
             return false;
         
@@ -108,14 +108,14 @@ bool I3CLSimWlenDependentValueConstant::CompareTo(const I3CLSimWlenDependentValu
 
 
 template <class Archive>
-void I3CLSimWlenDependentValueConstant::serialize(Archive &ar, unsigned version)
+void I3CLSimFunctionConstant::serialize(Archive &ar, unsigned version)
 {
-    if (version>i3clsimwlendependentvalueconstant_version_)
-        log_fatal("Attempting to read version %u from file but running version %u of I3CLSimWlenDependentValueConstant class.",version,i3clsimwlendependentvalueconstant_version_);
+    if (version>i3clsimfunctionconstant_version_)
+        log_fatal("Attempting to read version %u from file but running version %u of I3CLSimFunctionConstant class.",version,i3clsimfunctionconstant_version_);
 
-    ar & make_nvp("I3CLSimWlenDependentValue", base_object<I3CLSimWlenDependentValue>(*this));
+    ar & make_nvp("I3CLSimFunction", base_object<I3CLSimFunction>(*this));
     ar & make_nvp("value", value_);
 }     
 
 
-I3_SERIALIZABLE(I3CLSimWlenDependentValueConstant);
+I3_SERIALIZABLE(I3CLSimFunctionConstant);

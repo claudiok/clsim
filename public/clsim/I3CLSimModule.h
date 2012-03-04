@@ -38,7 +38,7 @@
 #include "clsim/I3CLSimOpenCLDevice.h"
 
 #include "clsim/I3CLSimRandomValue.h"
-#include "clsim/I3CLSimWlenDependentValue.h"
+#include "clsim/I3CLSimFunction.h"
 
 #include "clsim/I3CLSimMediumProperties.h"
 #include "clsim/I3CLSimSpectrumTable.h"
@@ -138,9 +138,9 @@ private:
     ///            the total number of photons, only the distribution of wavelengths.
     bool generateCherenkovPhotonsWithoutDispersion_;
     
-    /// Parameter: An instance of I3CLSimWlenDependentValue describing the reciprocal weight a photon gets assigned as a function of its wavelength.
+    /// Parameter: An instance of I3CLSimFunction describing the reciprocal weight a photon gets assigned as a function of its wavelength.
     ///            You can set this to the wavelength depended acceptance of your DOM to pre-scale the number of generated photons.
-    I3CLSimWlenDependentValueConstPtr wavelengthGenerationBias_;
+    I3CLSimFunctionConstPtr wavelengthGenerationBias_;
 
     /// Parameter: An instance of I3CLSimMediumProperties describing the ice/water properties.
     I3CLSimMediumPropertiesPtr mediumProperties_;

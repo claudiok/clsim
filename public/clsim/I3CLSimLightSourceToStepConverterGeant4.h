@@ -64,7 +64,7 @@ public:
      * This will influence the number of photons produced.
      * Will throw if used after the call to Initialize().
      */
-    virtual void SetWlenBias(I3CLSimWlenDependentValueConstPtr wlenBias);
+    virtual void SetWlenBias(I3CLSimFunctionConstPtr wlenBias);
 
     /**
      * Sets the medium properties.
@@ -171,7 +171,7 @@ private:
     uint64_t bunchSizeGranularity_;
     uint64_t maxBunchSize_;
     
-    I3CLSimWlenDependentValueConstPtr wlenBias_;
+    I3CLSimFunctionConstPtr wlenBias_;
     I3CLSimMediumPropertiesConstPtr mediumProperties_;
     
     SET_LOGGER("I3CLSimLightSourceToStepConverterGeant4");

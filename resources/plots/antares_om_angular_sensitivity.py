@@ -11,7 +11,7 @@
 # 'old' acceptance. In this case a Taylor expansion
 # was neccessairy as the acceptance has been
 # parametrized as polynomial of arccos, that can not
-# be stored in the I3CLSimWlenDependentValuePolynomial class 
+# be stored in the I3CLSimFunctionPolynomial class 
 #--------------------------------------------
 
 import matplotlib
@@ -20,7 +20,7 @@ matplotlib.use("PDF")
 import matplotlib.pylab as plt
 
 from icecube import icetray, dataclasses
-from icecube.clsim import I3CLSimWlenDependentValuePolynomial
+from icecube.clsim import I3CLSimFunctionPolynomial
 from icecube.clsim.GetAntaresOMAngularSensitivity import *
 
 params = {'backend': 'pdf',

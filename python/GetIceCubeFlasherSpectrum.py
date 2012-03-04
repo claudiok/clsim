@@ -1,6 +1,6 @@
 from icecube import icetray, dataclasses
 
-from . import I3CLSimWlenDependentValueFromTable
+from . import I3CLSimFunctionFromTable
 from . import I3CLSimFlasherPulse
 
 from I3Tray import I3Units
@@ -44,5 +44,5 @@ def GetIceCubeFlasherSpectrumData(spectrumType):
 
 def GetIceCubeFlasherSpectrum(spectrumType = I3CLSimFlasherPulse.FlasherPulseType.LED405nm):
     data = GetIceCubeFlasherSpectrumData(spectrumType)
-    spectrum = I3CLSimWlenDependentValueFromTable(data[0], data[1])
+    spectrum = I3CLSimFunctionFromTable(data[0], data[1])
     return spectrum

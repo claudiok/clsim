@@ -1,5 +1,5 @@
 from icecube import icetray, dataclasses
-from icecube.clsim import I3CLSimWlenDependentValueFromTable
+from icecube.clsim import I3CLSimFunctionFromTable
 
 from I3Tray import I3Units
 
@@ -79,6 +79,6 @@ def GetIceCubeDOMAcceptance(domRadius = 0.16510*I3Units.m):
     domArea = math.pi*domRadius**2.
     dom2007a_efficiency = dom2007a_eff_area/domArea
     
-    domEfficiency = I3CLSimWlenDependentValueFromTable(260.*I3Units.nanometer, 10.*I3Units.nanometer, dom2007a_efficiency)
+    domEfficiency = I3CLSimFunctionFromTable(260.*I3Units.nanometer, 10.*I3Units.nanometer, dom2007a_efficiency)
     
     return domEfficiency

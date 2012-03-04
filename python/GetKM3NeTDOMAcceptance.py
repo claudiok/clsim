@@ -18,7 +18,7 @@
 
 
 from icecube import icetray, dataclasses
-from icecube.clsim import I3CLSimWlenDependentValueFromTable
+from icecube.clsim import I3CLSimFunctionFromTable
 
 from I3Tray import I3Units
 
@@ -43,7 +43,7 @@ def GetKM3NeTOMGelThickness():
     
 #################################################################
 # A function to return the quantum efficiency as instance of
-# I3CLSimWlenDependentValueFromTable
+# I3CLSimFunctionFromTable
 #################################################################
 def GetKM3NeTOMQuantumEfficiency(peakQE=None, wpdQE=False):
     if peakQE is None:
@@ -60,7 +60,7 @@ def GetKM3NeTOMQuantumEfficiency(peakQE=None, wpdQE=False):
                    4.6,  3.6,  2.8,  2.1,  1.3,  0.8,  0.5,  0.3,  0.0,  0.0]
         QEvals = numpy.array(QEvals)*0.01 * QEscale
         
-        return I3CLSimWlenDependentValueFromTable(260.*I3Units.nanometer, 10.*I3Units.nanometer, QEvals)
+        return I3CLSimFunctionFromTable(260.*I3Units.nanometer, 10.*I3Units.nanometer, QEvals)
         
     else:
         # this is the version we used before the WPD document
@@ -69,7 +69,7 @@ def GetKM3NeTOMQuantumEfficiency(peakQE=None, wpdQE=False):
         QEvals = [0.00, 0.87, 1.00, 0.94, 0.78, 0.49, 0.24, 0.09, 0.02, 0.00]
         QEvals = numpy.array(QEvals)*QEscale
         
-        return I3CLSimWlenDependentValueFromTable(250.*I3Units.nanometer, 50.*I3Units.nanometer, QEvals)
+        return I3CLSimFunctionFromTable(250.*I3Units.nanometer, 50.*I3Units.nanometer, QEvals)
 
 
 
@@ -121,7 +121,7 @@ def GetKM3NeTOMGlassAbsorptionLength():
     al_glass_reverse = [ (i * I3Units.cm) for i in al_glass_reverse]
     al_glass_reverse.reverse() # reverse the list (in-place)
 
-    return I3CLSimWlenDependentValueFromTable(300.*I3Units.nanometer, 10.*I3Units.nanometer, al_glass_reverse)            
+    return I3CLSimFunctionFromTable(300.*I3Units.nanometer, 10.*I3Units.nanometer, al_glass_reverse)            
 
 
 
@@ -178,7 +178,7 @@ def GetKM3NeTOMGelAbsorptionLength():
     al_gel_default_reverse = [ (i * I3Units.cm) for i in al_gel_default_reverse]
     al_gel_default_reverse.reverse() # reverse the list (in-place)
     
-    return I3CLSimWlenDependentValueFromTable(300.*I3Units.nanometer, 10.*I3Units.nanometer, al_gel_default_reverse)
+    return I3CLSimFunctionFromTable(300.*I3Units.nanometer, 10.*I3Units.nanometer, al_gel_default_reverse)
 
 
 
@@ -239,7 +239,7 @@ def GetKM3NeTDOMAcceptance(domRadius = (17./2.) * 0.0254*I3Units.m, peakQE=None,
     
     
     
-    return I3CLSimWlenDependentValueFromTable(290.*I3Units.nanometer, 10.*I3Units.nanometer, numpy.array(om_eff_area))
+    return I3CLSimFunctionFromTable(290.*I3Units.nanometer, 10.*I3Units.nanometer, numpy.array(om_eff_area))
 
 
 

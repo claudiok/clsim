@@ -21,7 +21,7 @@
 
 #include <sstream>
 
-#include <clsim/I3ShadowedPhotonRemover.h>
+#include <clsim/shadow/I3ShadowedPhotonRemover.h>
 
 #include <boost/preprocessor/seq.hpp>
 

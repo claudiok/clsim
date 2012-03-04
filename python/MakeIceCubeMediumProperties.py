@@ -3,9 +3,9 @@ from icecube.clsim import I3CLSimMediumProperties, \
                           I3CLSimRandomValueMixed, \
                           I3CLSimRandomValueHenyeyGreenstein, \
                           I3CLSimRandomValueSimplifiedLiu, \
-                          I3CLSimWlenDependentValueRefIndexIceCube, \
-                          I3CLSimWlenDependentValueAbsLenIceCube, \
-                          I3CLSimWlenDependentValueScatLenIceCube
+                          I3CLSimFunctionRefIndexIceCube, \
+                          I3CLSimFunctionAbsLenIceCube, \
+                          I3CLSimFunctionScatLenIceCube
 
 from I3Tray import I3Units
 
@@ -110,8 +110,8 @@ def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m,
         fractionOfFirstDistribution=liuScatteringFraction)
     m.SetScatteringCosAngleDistribution(iceCubeScatModel)
     
-    phaseRefIndex = I3CLSimWlenDependentValueRefIndexIceCube(mode="phase")
-    groupRefIndex = I3CLSimWlenDependentValueRefIndexIceCube(mode="group")
+    phaseRefIndex = I3CLSimFunctionRefIndexIceCube(mode="phase")
+    groupRefIndex = I3CLSimFunctionRefIndexIceCube(mode="group")
     for i in range(len(layerZStart)):
         #print "layer {0}: depth at bottom is {1} (z_bottom={2}), b_400={3}".format(i, depthAtBottomOfLayer[i], layerZStart[i], b_400[i])
         
@@ -123,12 +123,12 @@ def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m,
         # just comment this line:
         m.SetGroupRefractiveIndexOverride(i, groupRefIndex)
         
-        absLen = I3CLSimWlenDependentValueAbsLenIceCube(kappa=kappa, A=A, B=B, D=D, E=E,
+        absLen = I3CLSimFunctionAbsLenIceCube(kappa=kappa, A=A, B=B, D=D, E=E,
                                                         aDust400=a_dust400[i],
                                                         deltaTau=delta_tau[i])
         m.SetAbsorptionLength(i, absLen)
 
-        scatLen = I3CLSimWlenDependentValueScatLenIceCube(alpha=alpha,
+        scatLen = I3CLSimFunctionScatLenIceCube(alpha=alpha,
                                                           b400=b_400[i])
         m.SetScatteringLength(i, scatLen)
 

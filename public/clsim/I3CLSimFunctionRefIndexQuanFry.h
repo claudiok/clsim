@@ -1,7 +1,7 @@
-#ifndef I3CLSIMWLENDEPENDENTVALUEREFINDEXQUANFRY_H_INCLUDED
-#define I3CLSIMWLENDEPENDENTVALUEREFINDEXQUANFRY_H_INCLUDED
+#ifndef I3CLSIMFUNCTIONREFINDEXQUANFRY_H_INCLUDED
+#define I3CLSIMFUNCTIONREFINDEXQUANFRY_H_INCLUDED
 
-#include "clsim/I3CLSimWlenDependentValue.h"
+#include "clsim/I3CLSimFunction.h"
 
 #include <limits>
 
@@ -16,9 +16,9 @@
  * PhD thesis (2002), St. Catherine's College, Oxford
  * downloaded Jan 2011 from: http://www.physics.ox.ac.uk/Users/schuster/thesis0098mmjhuyynh/thesis.ps
  */
-static const unsigned i3clsimwlendependentvaluerefindexquanfry_version_ = 0;
+static const unsigned i3clsimfunctionrefindexquanfry_version_ = 0;
 
-struct I3CLSimWlenDependentValueRefIndexQuanFry : public I3CLSimWlenDependentValue
+struct I3CLSimFunctionRefIndexQuanFry : public I3CLSimFunction
 {
 public:
     static const double default_salinity;
@@ -37,7 +37,7 @@ public:
     static const double default_n10;
     
     
-    I3CLSimWlenDependentValueRefIndexQuanFry(double salinity=default_salinity,       // fraction (e.g. 38*I3Units::perThousand)
+    I3CLSimFunctionRefIndexQuanFry(double salinity=default_salinity,       // fraction (e.g. 38*I3Units::perThousand)
                                              double temperature=default_temperature, // in degC
                                              double pressure=default_pressure,       // use I3Units (e.g. I3Units::bar)
                                              double n0  = default_n0,                // coefficients 0-10
@@ -52,7 +52,7 @@ public:
                                              double n9  = default_n9,
                                              double n10 = default_n10
                                              );
-    virtual ~I3CLSimWlenDependentValueRefIndexQuanFry();
+    virtual ~I3CLSimFunctionRefIndexQuanFry();
     
     /**
      * If this is true, it is assumed that GetValue() and GetDerivative() return
@@ -99,9 +99,9 @@ public:
     virtual std::string GetOpenCLFunctionDerivative(const std::string &functionName) const;
     
     /**
-     * Shall compare to another I3CLSimWlenDependentValue object
+     * Shall compare to another I3CLSimFunction object
      */
-    virtual bool CompareTo(const I3CLSimWlenDependentValue &other) const;
+    virtual bool CompareTo(const I3CLSimFunction &other) const;
     
 private:
     double salinity_;
@@ -132,8 +132,8 @@ private:
 };
 
 
-BOOST_CLASS_VERSION(I3CLSimWlenDependentValueRefIndexQuanFry, i3clsimwlendependentvaluerefindexquanfry_version_);
+BOOST_CLASS_VERSION(I3CLSimFunctionRefIndexQuanFry, i3clsimfunctionrefindexquanfry_version_);
 
-I3_POINTER_TYPEDEFS(I3CLSimWlenDependentValueRefIndexQuanFry);
+I3_POINTER_TYPEDEFS(I3CLSimFunctionRefIndexQuanFry);
 
-#endif //I3CLSIMWLENDEPENDENTVALUEREFINDEXQUANFRY_H_INCLUDED
+#endif //I3CLSIMFUNCTIONREFINDEXQUANFRY_H_INCLUDED
