@@ -40,6 +40,7 @@ if(BUILD_PYBINDINGS)
     I3CLSimFlasherPulse.cxx
     I3Converters.cxx
     I3ShadowedPhotonRemover.cxx
+    I3ExtraGeometryItem.cxx
     module.cxx
     USE_TOOLS boost python log4cplus
     USE_PROJECTS icetray dataclasses clsim

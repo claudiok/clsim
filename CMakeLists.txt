@@ -22,7 +22,7 @@
 
 # do not build clsim if there is no OpenCL on this system
 if(OPENCL_FOUND)
-    
+
   # the IceTray project definition
   i3_project(clsim
     PYTHON_DIR python
@@ -72,6 +72,8 @@ if(OPENCL_FOUND)
     private/clsim/dom/I3PhotonToMCHitConverter.cxx
     private/clsim/shadow/I3ShadowedPhotonRemover.cxx
     private/clsim/shadow/I3ShadowedPhotonRemoverModule.cxx
+    private/clsim/shadow/I3ExtraGeometryItem.cxx
+    private/clsim/shadow/I3ExtraGeometryItemUnion.cxx
 
     # tableio converters
     private/clsim/converter/I3PhotonConverter.cxx
