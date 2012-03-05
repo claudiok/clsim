@@ -3,7 +3,7 @@
  * Claudio Kopper <claudio.kopper@icecube.wisc.edu>
  * $Id$
  *
- * @file I3ExtraGeometryItemUnion.h
+ * @file I3ExtraGeometryItemMove.h
  * @version $Revision$
  * @date $Date$
  * @author Claudio Kopper
@@ -24,8 +24,8 @@
  *  
  */
 
-#ifndef I3EXTRAGEOMETRYITEMUNION_H_INCLUDED
-#define I3EXTRAGEOMETRYITEMUNION_H_INCLUDED
+#ifndef I3EXTRAGEOMETRYITEMMOVE_H_INCLUDED
+#define I3EXTRAGEOMETRYITEMMOVE_H_INCLUDED
 
 #include <vector>
 
@@ -34,15 +34,15 @@
 /**
  * @brief Describes a union af a list of items.
  */
-static const unsigned i3extrageometryitemunion_version_ = 0;
+static const unsigned i3extrageometryitemmove_version_ = 0;
 
-struct I3ExtraGeometryItemUnion : public I3ExtraGeometryItem
+struct I3ExtraGeometryItemMove : public I3ExtraGeometryItem
 {
 public:
-    virtual ~I3ExtraGeometryItemUnion();
+    virtual ~I3ExtraGeometryItemMove();
 
-    I3ExtraGeometryItemUnion(const std::vector<I3ExtraGeometryItemConstPtr> &elements);
-    I3ExtraGeometryItemUnion();
+    I3ExtraGeometryItemMove(I3ExtraGeometryItemConstPtr element, const I3Position &offset);
+    I3ExtraGeometryItemMove();
     
     virtual bool DoesLineIntersect(const I3Position &lineStart,
                            const I3Position &lineEnd) const;
@@ -51,10 +51,11 @@ public:
     virtual std::ostream& operator<<(std::ostream& oss) const;
 
 private:
+
+    I3ExtraGeometryItemConstPtr element_;
+    I3Position offset_;
+    
     void CalculateBoundingBox() const;
-
-    std::vector<I3ExtraGeometryItemConstPtr> elements_;
-
     mutable bool boundingBoxCalculated_;
     mutable I3Position boundingBoxLower_;
     mutable I3Position boundingBoxUpper_;
@@ -66,8 +67,8 @@ private:
     BOOST_SERIALIZATION_SPLIT_MEMBER();
 };
 
-BOOST_CLASS_VERSION(I3ExtraGeometryItemUnion, i3extrageometryitemunion_version_);
+BOOST_CLASS_VERSION(I3ExtraGeometryItemMove, i3extrageometryitemmove_version_);
 
-I3_POINTER_TYPEDEFS(I3ExtraGeometryItemUnion);
+I3_POINTER_TYPEDEFS(I3ExtraGeometryItemMove);
 
-#endif //I3EXTRAGEOMETRYITEMUNION_H_INCLUDED
+#endif //I3ExtraGeometryItemMove_H_INCLUDED

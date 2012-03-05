@@ -23,6 +23,7 @@
 
 #include <clsim/shadow/I3ExtraGeometryItem.h>
 #include <clsim/shadow/I3ExtraGeometryItemUnion.h>
+#include <clsim/shadow/I3ExtraGeometryItemMove.h>
 
 #include <icetray/python/std_vector_indexing_suite.hpp>
 #include <icetray/python/dataclass_suite.hpp>
@@ -142,6 +143,34 @@ void register_I3ExtraGeometryItem()
     bp::implicitly_convertible<shared_ptr<I3ExtraGeometryItemUnion>, shared_ptr<I3ExtraGeometryItem> >();
     bp::implicitly_convertible<shared_ptr<I3ExtraGeometryItemUnion>, shared_ptr<const I3ExtraGeometryItem> >();
     utils::register_const_ptr<I3ExtraGeometryItemUnion>();
+
+    
+    // move
+    {
+        bp::class_<
+        I3ExtraGeometryItemMove,
+        boost::shared_ptr<I3ExtraGeometryItemMove>,
+        bases<I3ExtraGeometryItem>
+        >
+        (
+         "I3ExtraGeometryItemMove",
+         bp::init<
+         I3ExtraGeometryItemConstPtr, const I3Position &
+         >(
+           (
+            bp::arg("element"),
+            bp::arg("offset")
+            )
+           )
+         )
+        .def(bp::init<>())
+        .def(bp::dataclass_suite<I3ExtraGeometryItemMove>())
+        ;
+    }
+    bp::implicitly_convertible<shared_ptr<I3ExtraGeometryItemMove>, shared_ptr<const I3ExtraGeometryItemMove> >();
+    bp::implicitly_convertible<shared_ptr<I3ExtraGeometryItemMove>, shared_ptr<I3ExtraGeometryItem> >();
+    bp::implicitly_convertible<shared_ptr<I3ExtraGeometryItemMove>, shared_ptr<const I3ExtraGeometryItem> >();
+    utils::register_const_ptr<I3ExtraGeometryItemMove>();
 
 
 }
