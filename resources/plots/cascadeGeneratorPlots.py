@@ -231,7 +231,7 @@ cx.legend()
 cx.grid(True)
 
 
-pylab.savefig("PPCCascadeGeneratorPlots.pdf")
+pylab.savefig("cascadeGeneratorPlots.pdf")
 
 
 
