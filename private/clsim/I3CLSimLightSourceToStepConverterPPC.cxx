@@ -285,6 +285,7 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLight
         
         CascadeStepData_t cascadeStepGenInfo;
         cascadeStepGenInfo.particle=particle;
+        cascadeStepGenInfo.particle=particle;
         cascadeStepGenInfo.particleIdentifier=identifier;
         cascadeStepGenInfo.photonsPerStep=usePhotonsPerStep;
         cascadeStepGenInfo.numSteps=numSteps;
@@ -525,11 +526,13 @@ preCalc_(preCalc)
 void I3CLSimLightSourceToStepConverterPPC::MakeSteps_visitor::FillStep
 (I3CLSimLightSourceToStepConverterPPC::CascadeStepData_t &data,
  I3CLSimStep &newStep,
- uint64_t photonsPerStep) const
+ uint64_t photonsPerStep,
+ double particleDir_x, double particleDir_y, double particleDir_z) const
 {
     const double longitudinalPos = data.pb*I3CLSimLightSourceToStepConverterUtils::gammaDistributedNumber(data.pa, rngState_, rngA_)*I3Units::m;
     GenerateStep(newStep,
                  data.particle,
+                 particleDir_x, particleDir_y, particleDir_z,
                  data.particleIdentifier,
                  photonsPerStep,
                  longitudinalPos,
@@ -539,12 +542,14 @@ void I3CLSimLightSourceToStepConverterPPC::MakeSteps_visitor::FillStep
 void I3CLSimLightSourceToStepConverterPPC::MakeSteps_visitor::FillStep
 (I3CLSimLightSourceToStepConverterPPC::MuonStepData_t &data,
  I3CLSimStep &newStep,
- uint64_t photonsPerStep) const
+ uint64_t photonsPerStep,
+ double particleDir_x, double particleDir_y, double particleDir_z) const
 {
     if (data.stepIsCascadeLike) {
         const double longitudinalPos = mwcRngRandomNumber_co(rngState_, rngA_)*data.length;
         GenerateStep(newStep,
                      data.particle,
+                     particleDir_x, particleDir_y, particleDir_z,
                      data.particleIdentifier,
                      photonsPerStep,
                      longitudinalPos,
@@ -552,6 +557,7 @@ void I3CLSimLightSourceToStepConverterPPC::MakeSteps_visitor::FillStep
     } else {
         GenerateStepForMuon(newStep,
                             data.particle,
+                            particleDir_x, particleDir_y, particleDir_z,
                             data.particleIdentifier,
                             photonsPerStep,
                             data.length);
@@ -568,12 +574,16 @@ I3CLSimLightSourceToStepConverterPPC::MakeSteps_visitor::operator()
     uint64_t useNumSteps = data.numSteps;
     if (useNumSteps > maxNumStepsPerStepSeries_) useNumSteps=maxNumStepsPerStepSeries_;
     
+    const double particleDir_x = data.particle.GetDir().GetX();
+    const double particleDir_y = data.particle.GetDir().GetY();
+    const double particleDir_z = data.particle.GetDir().GetZ();
+    
     // make useNumSteps steps
     for (uint64_t i=0; i<useNumSteps; ++i)
     {
         currentStepSeries->push_back(I3CLSimStep());
         I3CLSimStep &newStep = currentStepSeries->back();
-        FillStep(data, newStep, data.photonsPerStep);
+        FillStep(data, newStep, data.photonsPerStep, particleDir_x, particleDir_y, particleDir_z);
     }
     
     // reduce the number of steps that have still to be processed
@@ -587,7 +597,7 @@ I3CLSimLightSourceToStepConverterPPC::MakeSteps_visitor::operator()
         {
             currentStepSeries->push_back(I3CLSimStep());
             I3CLSimStep &newStep = currentStepSeries->back();
-            FillStep(data, newStep, data.numPhotonsInLastStep);
+            FillStep(data, newStep, data.numPhotonsInLastStep, particleDir_x, particleDir_y, particleDir_z);
         }
         
         // we are finished with this entry, it can be removed (signal this using the return value's .second entry)
@@ -770,11 +780,12 @@ void I3CLSimLightSourceToStepConverterPPC::GenerateStepPreCalculator::Regenerate
 
 
 void I3CLSimLightSourceToStepConverterPPC::GenerateStep(I3CLSimStep &newStep,
-                         const I3Particle &p,
-                         uint32_t identifier,
-                         uint32_t photonsPerStep,
-                         const double &longitudinalPos,
-                         GenerateStepPreCalculator &preCalc)
+                                                        const I3Particle &p,
+                                                        double particleDir_x, double particleDir_y, double particleDir_z,
+                                                        uint32_t identifier,
+                                                        uint32_t photonsPerStep,
+                                                        const double &longitudinalPos,
+                                                        GenerateStepPreCalculator &preCalc)
 {
     /*
      const double angularDist_a=0.39;
@@ -789,9 +800,9 @@ void I3CLSimLightSourceToStepConverterPPC::GenerateStep(I3CLSimStep &newStep,
     double angular_cos, angular_sin, random_value;
     preCalc.GetAngularCosSinValue(angular_cos, angular_sin, random_value);
     
-    double step_dx = p.GetDir().GetX();
-    double step_dy = p.GetDir().GetY();
-    double step_dz = p.GetDir().GetZ();
+    double step_dx = particleDir_x;
+    double step_dy = particleDir_y;
+    double step_dz = particleDir_z;
     
     // set all values
     newStep.SetPosX(p.GetX() + longitudinalPos*step_dx);
@@ -815,16 +826,17 @@ void I3CLSimLightSourceToStepConverterPPC::GenerateStep(I3CLSimStep &newStep,
 }
 
 void I3CLSimLightSourceToStepConverterPPC::GenerateStepForMuon(I3CLSimStep &newStep,
-                                const I3Particle &p,
-                                uint32_t identifier,
-                                uint32_t photonsPerStep,
-                                double length)
+                                                               const I3Particle &p,
+                                                               double particleDir_x, double particleDir_y, double particleDir_z,
+                                                               uint32_t identifier,
+                                                               uint32_t photonsPerStep,
+                                                               double length)
 {
     // set all values
     newStep.SetPosX(p.GetX());
     newStep.SetPosY(p.GetY());
     newStep.SetPosZ(p.GetZ());
-    newStep.SetDir(p.GetDir().GetX(), p.GetDir().GetY(), p.GetDir().GetZ());
+    newStep.SetDir(particleDir_x, particleDir_y, particleDir_z);
     newStep.SetTime(p.GetTime());
     
     newStep.SetLength(length);

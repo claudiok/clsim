@@ -109,8 +109,16 @@ private:
         std::pair<I3CLSimStepSeriesConstPtr, bool> operator()(T &data) const;
         
     private:
-        void FillStep(I3CLSimLightSourceToStepConverterPPC::CascadeStepData_t &data, I3CLSimStep &newStep, uint64_t photonsPerStep) const;
-        void FillStep(I3CLSimLightSourceToStepConverterPPC::MuonStepData_t &data, I3CLSimStep &newStep, uint64_t photonsPerStep) const;
+        void FillStep(I3CLSimLightSourceToStepConverterPPC::CascadeStepData_t &data,
+                      I3CLSimStep &newStep,
+                      uint64_t photonsPerStep,
+                      double particleDir_x, double particleDir_y, double particleDir_z
+                     ) const;
+        void FillStep(I3CLSimLightSourceToStepConverterPPC::MuonStepData_t &data,
+                      I3CLSimStep &newStep,
+                      uint64_t photonsPerStep,
+                      double particleDir_x, double particleDir_y, double particleDir_z
+                     ) const;
         
         uint64_t &rngState_;
         uint32_t rngA_;
@@ -189,6 +197,7 @@ private:
     
     static void GenerateStep(I3CLSimStep &newStep,
                              const I3Particle &p,
+                             double particleDir_x, double particleDir_y, double particleDir_z,
                              uint32_t identifier,
                              uint32_t photonsPerStep,
                              const double &longitudinalPos,
@@ -196,6 +205,7 @@ private:
 
     static void GenerateStepForMuon(I3CLSimStep &newStep,
                                     const I3Particle &p,
+                                    double particleDir_x, double particleDir_y, double particleDir_z,
                                     uint32_t identifier,
                                     uint32_t photonsPerStep,
                                     double length);
