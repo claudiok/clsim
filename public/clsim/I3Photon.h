@@ -267,7 +267,7 @@ public:
         intermediatePositions_.push_back(pos);
     }
 
-    bool operator==(const I3Photon& rhs) {
+    bool operator==(const I3Photon& rhs) const {
         if (!( time_ == rhs.time_
         && startTime_ == rhs.startTime_
         && ID_ == rhs.ID_
