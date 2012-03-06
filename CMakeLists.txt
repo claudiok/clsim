@@ -75,6 +75,7 @@ if(OPENCL_FOUND)
     private/clsim/shadow/I3ExtraGeometryItem.cxx
     private/clsim/shadow/I3ExtraGeometryItemUnion.cxx
     private/clsim/shadow/I3ExtraGeometryItemMove.cxx
+    private/clsim/shadow/I3ExtraGeometryItemCylinder.cxx
 
     # tableio converters
     private/clsim/converter/I3PhotonConverter.cxx

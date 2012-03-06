@@ -24,6 +24,7 @@
 #include <clsim/shadow/I3ExtraGeometryItem.h>
 #include <clsim/shadow/I3ExtraGeometryItemUnion.h>
 #include <clsim/shadow/I3ExtraGeometryItemMove.h>
+#include <clsim/shadow/I3ExtraGeometryItemCylinder.h>
 
 #include <icetray/python/std_vector_indexing_suite.hpp>
 #include <icetray/python/dataclass_suite.hpp>
@@ -171,6 +172,35 @@ void register_I3ExtraGeometryItem()
     bp::implicitly_convertible<shared_ptr<I3ExtraGeometryItemMove>, shared_ptr<I3ExtraGeometryItem> >();
     bp::implicitly_convertible<shared_ptr<I3ExtraGeometryItemMove>, shared_ptr<const I3ExtraGeometryItem> >();
     utils::register_const_ptr<I3ExtraGeometryItemMove>();
+
+    
+    // cylinder
+    {
+        bp::class_<
+        I3ExtraGeometryItemCylinder,
+        boost::shared_ptr<I3ExtraGeometryItemCylinder>,
+        bases<I3ExtraGeometryItem>
+        >
+        (
+         "I3ExtraGeometryItemCylinder",
+         bp::init<
+         const I3Position &, const I3Position &, double
+         >(
+           (
+            bp::arg("from"),
+            bp::arg("to"),
+            bp::arg("radius")
+            )
+           )
+         )
+        .def(bp::init<>())
+        .def(bp::dataclass_suite<I3ExtraGeometryItemCylinder>())
+        ;
+    }
+    bp::implicitly_convertible<shared_ptr<I3ExtraGeometryItemCylinder>, shared_ptr<const I3ExtraGeometryItemCylinder> >();
+    bp::implicitly_convertible<shared_ptr<I3ExtraGeometryItemCylinder>, shared_ptr<I3ExtraGeometryItem> >();
+    bp::implicitly_convertible<shared_ptr<I3ExtraGeometryItemCylinder>, shared_ptr<const I3ExtraGeometryItem> >();
+    utils::register_const_ptr<I3ExtraGeometryItemCylinder>();
 
 
 }
