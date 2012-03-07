@@ -232,7 +232,14 @@ private:
     ///   photons will be stopped once they hit a DOM. If this is false, they continue to
     ///   propagate.
     bool stopDetectedPhotons_;
-    
+
+    /// Parmeter: Saves all photons, even if they don't hit a DOM. Cannot be used with "StopDetectedPhotons".
+    bool saveAllPhotons_;
+
+    /// Parmeter: Sets the prescale factor of photons being generated in "saveAllPhotons" mode.
+    ///   Only this fraction of photons is actually generated.
+    double saveAllPhotonsPrescale_;
+
     /// Parmeter: Sets the number of scattering step positions that are saved for a photon hitting
     ///   a DOM. The last N photons are saved if there are more scattering points than available entries.
     uint32_t photonHistoryEntries_;

@@ -145,6 +145,37 @@ public:
     bool GetStopDetectedPhotons() const;
 
     /**
+     * Tell the propagator to save all photons,
+     * regardless of detection. All photons will
+     * be assigned to DOM(0,0).
+     *
+     * Will throw if already initialized.
+     */
+    void SetSaveAllPhotons(bool value);
+    
+    /**
+     * Returns true if all photons are saved,
+     * regardless of detection.
+     */
+    bool GetSaveAllPhotons() const;
+
+    /**
+     * Sets the prescale factor of photons
+     * being generated in "saveAllPhotons" mode.
+     * Only this fraction of photons is actually
+     * generated.
+     *
+     * Will throw if already initialized.
+     */
+    void SetSaveAllPhotonsPrescale(double value);
+    
+    /**
+     * Returns true if all photons are saved,
+     * regardless of detection.
+     */
+    double GetSaveAllPhotonsPrescale() const;
+
+    /**
      * Sets the maximum number of entries in the photon
      * history table. Each point in the table
      * will store the position of the photon
@@ -328,6 +359,8 @@ private:
     bool disableDoubleBuffering_;
     bool doublePrecision_;
     bool stopDetectedPhotons_;
+    bool saveAllPhotons_;
+    double saveAllPhotonsPrescale_;
     
     uint32_t photonHistoryEntries_;
     

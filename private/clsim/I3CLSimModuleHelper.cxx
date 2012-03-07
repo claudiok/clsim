@@ -293,6 +293,8 @@ namespace I3CLSimModuleHelper {
                                                            bool enableDoubleBuffering,
                                                            bool doublePrecision,
                                                            bool stopDetectedPhotons,
+                                                           bool saveAllPhotons,
+                                                           double saveAllPhotonsPrescale,
                                                            uint32_t photonHistoryEntries)
     {
         I3CLSimStepToPhotonConverterOpenCLPtr conv(new I3CLSimStepToPhotonConverterOpenCL(rng, device.GetUseNativeMath()));
@@ -308,7 +310,9 @@ namespace I3CLSimModuleHelper {
         conv->SetEnableDoubleBuffering(enableDoubleBuffering);
         conv->SetDoublePrecision(doublePrecision);
         conv->SetStopDetectedPhotons(stopDetectedPhotons);
-
+        conv->SetSaveAllPhotons(saveAllPhotons);
+        conv->SetSaveAllPhotonsPrescale(saveAllPhotonsPrescale);
+        
         conv->SetPhotonHistoryEntries(photonHistoryEntries);
 
         conv->Compile();

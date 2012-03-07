@@ -45,7 +45,9 @@ selectedDeviceIndex_(0),
 deviceIsSelected_(false),
 disableDoubleBuffering_(true),
 doublePrecision_(false),
-stopDetectedPhotons_(true),
+stopDetectedPhotons_(false),
+saveAllPhotons_(false),
+saveAllPhotonsPrescale_(0.001), // only save .1% of all photons when in "AllPhotons" mode
 photonHistoryEntries_(0),
 maxWorkgroupSize_(0),
 workgroupSize_(0),
@@ -192,9 +194,17 @@ void I3CLSimStepToPhotonConverterOpenCL::Initialize()
     
     log_debug("basic OpenCL setup done.");
     
-    // start with a maximum number of output photons of the same size as the number of
-    // input steps. Should be plenty..
-    maxNumOutputPhotons_ = static_cast<uint32_t>(std::min(maxNumWorkitems_*10, static_cast<std::size_t>(std::numeric_limits<uint32_t>::max())));
+    if (!saveAllPhotons_) {
+        // start with a maximum number of output photons of the same size as the number of
+        // input steps. Should be plenty..
+        maxNumOutputPhotons_ = static_cast<uint32_t>(std::min(maxNumWorkitems_*10, static_cast<std::size_t>(std::numeric_limits<uint32_t>::max())));
+    } else {
+        // we need a lot more space for photon storage in case all photons are to be saved
+        std::size_t sizeIncreaseFactor = 10000.*saveAllPhotonsPrescale_;
+        if (sizeIncreaseFactor < 1) sizeIncreaseFactor=1;
+        
+        maxNumOutputPhotons_ = static_cast<uint32_t>(std::min(maxNumWorkitems_*sizeIncreaseFactor, static_cast<std::size_t>(std::numeric_limits<uint32_t>::max())));
+    }
     
     // set up rng
     log_debug("Setting up RNG for %zu workitems.", maxNumWorkitems_);
@@ -227,9 +237,12 @@ void I3CLSimStepToPhotonConverterOpenCL::Initialize()
     deviceBuffer_MWC_RNG_a = shared_ptr<cl::Buffer>
     (new cl::Buffer(*context_, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, MWC_RNG_a.size() * sizeof(uint32_t), &(MWC_RNG_a[0])));
     
-    deviceBuffer_GeoLayerToOMNumIndexPerStringSet = shared_ptr<cl::Buffer>
-    (new cl::Buffer(*context_, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, geoLayerToOMNumIndexPerStringSetInfo_.size() * sizeof(unsigned short), &(geoLayerToOMNumIndexPerStringSetInfo_[0])));
-    
+    if (!saveAllPhotons_) {
+        // no need for a geometry buffer if all photons are saved and no
+        // geometry is necessary.
+        deviceBuffer_GeoLayerToOMNumIndexPerStringSet = shared_ptr<cl::Buffer>
+        (new cl::Buffer(*context_, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, geoLayerToOMNumIndexPerStringSetInfo_.size() * sizeof(unsigned short), &(geoLayerToOMNumIndexPerStringSetInfo_[0])));
+    }
     
     const unsigned int numBuffers = disableDoubleBuffering_?1:2;
     
@@ -263,24 +276,24 @@ void I3CLSimStepToPhotonConverterOpenCL::Initialize()
     log_debug("Configuring kernel.");
     for (unsigned int i=0;i<numBuffers;++i)
     {
-        kernel_[i]->setArg(0, *(deviceBuffer_CurrentNumOutputPhotons[i]));     // hit counter
-        kernel_[i]->setArg(1, maxNumOutputPhotons_);                           // maximum number of possible hits
+        unsigned argN=0;
         
-        kernel_[i]->setArg(2, *deviceBuffer_GeoLayerToOMNumIndexPerStringSet); // additional geometry information (did not fit into constant memory)
+        kernel_[i]->setArg(argN++, *(deviceBuffer_CurrentNumOutputPhotons[i]));     // hit counter
+        kernel_[i]->setArg(argN++, maxNumOutputPhotons_);                           // maximum number of possible hits
         
-        kernel_[i]->setArg(3, *(deviceBuffer_InputSteps[i]));                  // the input steps
-        kernel_[i]->setArg(4, *(deviceBuffer_OutputPhotons[i]));               // the output photons
+        if (!saveAllPhotons_) {
+            kernel_[i]->setArg(argN++, *deviceBuffer_GeoLayerToOMNumIndexPerStringSet); // additional geometry information (did not fit into constant memory)
+        }
+        
+        kernel_[i]->setArg(argN++, *(deviceBuffer_InputSteps[i]));                  // the input steps
+        kernel_[i]->setArg(argN++, *(deviceBuffer_OutputPhotons[i]));               // the output photons
 
         if (photonHistoryEntries_>0) {
-            kernel_[i]->setArg(5, *(deviceBuffer_PhotonHistory[i]));           // the photon history (the last N points where the photon scattered)
-
-            kernel_[i]->setArg(6, *deviceBuffer_MWC_RNG_x);                    // rng state
-            kernel_[i]->setArg(7, *deviceBuffer_MWC_RNG_a);                    // rng state
-        } else {
-            kernel_[i]->setArg(5, *deviceBuffer_MWC_RNG_x);                    // rng state
-            kernel_[i]->setArg(6, *deviceBuffer_MWC_RNG_a);                    // rng state
+            kernel_[i]->setArg(argN++, *(deviceBuffer_PhotonHistory[i]));           // the photon history (the last N points where the photon scattered)
         }
 
+        kernel_[i]->setArg(argN++, *deviceBuffer_MWC_RNG_x);                    // rng state
+        kernel_[i]->setArg(argN++, *deviceBuffer_MWC_RNG_a);                    // rng state
 
     }
     log_debug("Kernel configured.");
@@ -368,6 +381,15 @@ std::string I3CLSimStepToPhotonConverterOpenCL::GetPreambleSource()
     } else {
         log_info("detected photons continue to propagate");
     }
+
+    // Tell the kernel that all photons should be saved.
+    // This also turns off all collision detection in the kernel.
+    if (saveAllPhotons_) {
+        preamble = preamble + "#define SAVE_ALL_PHOTONS\n";
+        preamble = preamble + "#define SAVE_ALL_PHOTONS_PRESCALE " + boost::lexical_cast<std::string>(saveAllPhotonsPrescale_) + "\n";
+        
+    }
+    
     
     // should the photon history be saved?
     if (photonHistoryEntries_>0) {
@@ -487,17 +509,26 @@ void I3CLSimStepToPhotonConverterOpenCL::Compile()
     if (!deviceIsSelected_)
         throw I3CLSimStepToPhotonConverter_exception("Device not selected!");
     
+    if ((saveAllPhotons_) && (stopDetectedPhotons_))
+        throw I3CLSimStepToPhotonConverter_exception("Internal error: both the saveAllPhotons and stopDetectedPhotons options are set at the same time.");
     
     prependSource_ = this->GetPreambleSource();
     wlenGeneratorSource_ = this->GetWlenGeneratorSource();
     wlenBiasSource_ = this->GetWlenBiasSource();
     
     mediumPropertiesSource_ = this->GetMediumPropertiesSource();
-    geometrySource_ = this->GetGeometrySource();
+    
+    if (!saveAllPhotons_) {
+        geometrySource_ = this->GetGeometrySource();
+    } else {
+        geometrySource_ = "";
+    }
     
     propagationKernelSource_  = loadKernel("propagation_kernel", true);
-    propagationKernelSource_ += this->GetCollisionDetectionSource(true);
-    propagationKernelSource_ += this->GetCollisionDetectionSource(false);
+    if (!saveAllPhotons_) {
+        propagationKernelSource_ += this->GetCollisionDetectionSource(true);
+        propagationKernelSource_ += this->GetCollisionDetectionSource(false);
+    }
     propagationKernelSource_ += loadKernel("propagation_kernel", false);
     
     SetupQueueAndKernel(*(device_->GetPlatformHandle()),
@@ -628,7 +659,9 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
         source.push_back(std::make_pair(wlenGeneratorSource_.c_str(),wlenGeneratorSource_.size()));
         source.push_back(std::make_pair(wlenBiasSource_.c_str(),wlenBiasSource_.size()));
         source.push_back(std::make_pair(mediumPropertiesSource_.c_str(),mediumPropertiesSource_.size()));
-        source.push_back(std::make_pair(geometrySource_.c_str(),geometrySource_.size()));
+        if (!saveAllPhotons_) {
+            source.push_back(std::make_pair(geometrySource_.c_str(),geometrySource_.size()));
+        }
         source.push_back(std::make_pair(propagationKernelSource_.c_str(),propagationKernelSource_.size()));
         
         program = cl::Program(*context_, source);
@@ -1112,7 +1145,9 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
         }
     }
 
-    if (!deviceBuffer_GeoLayerToOMNumIndexPerStringSet) log_fatal("Internal error: deviceBuffer_GeoLayerToOMNumIndexPerStringSet is (null)");
+    if (!saveAllPhotons_) {
+        if (!deviceBuffer_GeoLayerToOMNumIndexPerStringSet) log_fatal("Internal error: deviceBuffer_GeoLayerToOMNumIndexPerStringSet is (null)");
+    }
     if (!deviceBuffer_MWC_RNG_x) log_fatal("Internal error: deviceBuffer_MWC_RNG_x is (null)");
     if (!deviceBuffer_MWC_RNG_a) log_fatal("Internal error: deviceBuffer_MWC_RNG_a is (null)");
     
@@ -1267,6 +1302,8 @@ bool I3CLSimStepToPhotonConverterOpenCL::GetEnableDoubleBuffering() const
     return (!disableDoubleBuffering_);
 }
 
+
+
 void I3CLSimStepToPhotonConverterOpenCL::SetDoublePrecision(bool value)
 {
     if (initialized_)
@@ -1290,6 +1327,9 @@ void I3CLSimStepToPhotonConverterOpenCL::SetStopDetectedPhotons(bool value)
     if (initialized_)
         throw I3CLSimStepToPhotonConverter_exception("I3CLSimStepToPhotonConverterOpenCL already initialized!");
     
+    if ((value) && (saveAllPhotons_))
+        throw I3CLSimStepToPhotonConverter_exception("You cannot set stopDetectedPhotons, because saveAllPhotons is set. The options are mutually exclusive.");
+
     compiled_=false;
     kernel_.clear();
     queue_.clear();
@@ -1301,6 +1341,48 @@ bool I3CLSimStepToPhotonConverterOpenCL::GetStopDetectedPhotons() const
 {
     return stopDetectedPhotons_;
 }
+
+
+
+void I3CLSimStepToPhotonConverterOpenCL::SetSaveAllPhotons(bool value)
+{
+    if (initialized_)
+        throw I3CLSimStepToPhotonConverter_exception("I3CLSimStepToPhotonConverterOpenCL already initialized!");
+    
+    if ((value) && (stopDetectedPhotons_))
+        throw I3CLSimStepToPhotonConverter_exception("You cannot set saveAllPhotons, because stopDetectedPhotons is set. The options are mutually exclusive.");
+    
+    compiled_=false;
+    kernel_.clear();
+    queue_.clear();
+    
+    saveAllPhotons_=value;
+}
+
+bool I3CLSimStepToPhotonConverterOpenCL::GetSaveAllPhotons() const
+{
+    return saveAllPhotons_;
+}
+
+
+
+void I3CLSimStepToPhotonConverterOpenCL::SetSaveAllPhotonsPrescale(double value)
+{
+    if (initialized_)
+        throw I3CLSimStepToPhotonConverter_exception("I3CLSimStepToPhotonConverterOpenCL already initialized!");
+    
+    compiled_=false;
+    kernel_.clear();
+    queue_.clear();
+    
+    saveAllPhotonsPrescale_=value;
+}
+
+double I3CLSimStepToPhotonConverterOpenCL::GetSaveAllPhotonsPrescale() const
+{
+    return saveAllPhotonsPrescale_;
+}
+
 
 
 void I3CLSimStepToPhotonConverterOpenCL::SetPhotonHistoryEntries(uint32_t value)
@@ -1455,7 +1537,7 @@ I3CLSimStepToPhotonConverter::ConversionResult_t I3CLSimStepToPhotonConverterOpe
     
     ConversionResult_t result = queueFromOpenCL_->Get();
     
-    if (result.photons) {
+    if ((result.photons) && (!saveAllPhotons_)) {
         ReplaceStringDOMIndexWithStringDOMIDs(*result.photons,
                                               stringIndexToStringIDBuffer_,
                                               domIndexToDomIDBuffer_perStringIndex_);

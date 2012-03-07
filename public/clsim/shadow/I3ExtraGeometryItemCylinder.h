@@ -51,6 +51,11 @@ public:
     virtual std::ostream& operator<<(std::ostream& oss) const;
 
 private:
+    unsigned int FindIntersections(const I3Position &lineStart,
+                                   const I3Position &lineEnd,
+                                   double &p0, double &p1,
+                                   double &line_segment_length
+                                   ) const;
 
     I3Position from_, to_;
     double radius_;

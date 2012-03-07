@@ -1,4 +1,9 @@
 
+#ifdef SAVE_ALL_PHOTONS
+#ifdef STOP_PHOTONS_ON_DETECTION
+#error The SAVE_ALL_PHOTONS and STOP_PHOTONS_ON_DETECTION options cannot be used at the same time.
+#endif
+#endif
 
 
 #ifdef DOUBLE_PRECISION
@@ -272,7 +277,9 @@ inline void saveHit(
 
 __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOutputPhotons
     const uint maxHitIndex,    // maxNumOutputPhotons_
+#ifndef SAVE_ALL_PHOTONS
     __read_only __global unsigned short *geoLayerToOMNumIndexPerStringSet,
+#endif
 
     __read_only __global struct I3CLSimStep *inputSteps, // deviceBuffer_InputSteps
     __write_only __global struct I3CLSimPhoton *outputPhotons, // deviceBuffer_OutputPhotons
@@ -291,6 +298,7 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
     dbg_printf("Start kernel... (work item %u of %u)\n", i, global_size);
 #endif
 
+#ifndef SAVE_ALL_PHOTONS
     __local unsigned short geoLayerToOMNumIndexPerStringSetLocal[GEO_geoLayerToOMNumIndexPerStringSet_BUFFER_SIZE];
 
     // copy the geo data to our local memory (this is done by a whole work group in parallel)
@@ -301,6 +309,7 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
         0);
     wait_group_events(1, &copyFinishedEvent);
     //barrier(CLK_LOCAL_MEM_FENCE);
+#endif
 
 #ifdef SAVE_PHOTON_HISTORY
     // the photon history
@@ -486,17 +495,21 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             }
         }
 
+
+#ifndef SAVE_ALL_PHOTONS
+        // no photon collission detection in case all photons should be saved
+        
         // the photon is now either being absorbed or scattered.
         // Check for collisions in its way
 #ifdef STOP_PHOTONS_ON_DETECTION
 #ifdef DEBUG_STORE_GENERATED_PHOTONS
         bool collided;
         if (RNG_CALL_UNIFORM_OC > 0.9)  // prescale: 10%
-#else
+#else //DEBUG_STORE_GENERATED_PHOTONS
         bool
-#endif
+#endif //DEBUG_STORE_GENERATED_PHOTONS
         collided = 
-#endif
+#endif //STOP_PHOTONS_ON_DETECTION
         checkForCollision(photonPosAndTime, 
             photonDirAndWlen, 
             inv_groupvel,
@@ -507,23 +520,23 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             &step,
 #ifdef STOP_PHOTONS_ON_DETECTION
             &distancePropagated, 
-#else
+#else //STOP_PHOTONS_ON_DETECTION
             distancePropagated, 
-#endif
+#endif //STOP_PHOTONS_ON_DETECTION
             hitIndex, 
             maxHitIndex, 
             outputPhotons, 
 #ifdef SAVE_PHOTON_HISTORY
             photonHistory,
             currentPhotonHistory,
-#endif
+#endif //SAVE_PHOTON_HISTORY
             geoLayerToOMNumIndexPerStringSetLocal
             );
             
 #ifdef STOP_PHOTONS_ON_DETECTION
 #ifdef DEBUG_STORE_GENERATED_PHOTONS
         collided = true;
-#endif
+#endif //DEBUG_STORE_GENERATED_PHOTONS
         if (collided) {
             // get rid of the photon if we detected it
             abs_lens_left = ZERO;
@@ -531,9 +544,11 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
 #ifdef PRINTF_ENABLED
             dbg_printf("    . colission detected, step limited to thisStepLength=%f!\n", 
                 distancePropagated);
-#endif
+#endif //PRINTF_ENABLED
         }
-#endif
+#endif //STOP_PHOTONS_ON_DETECTION
+        
+#endif //not SAVE_ALL_PHOTONS
         
         // update the track to its next position
         photonPosAndTime.x += photonDirAndWlen.x*distancePropagated;
@@ -549,6 +564,34 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             // photon was absorbed.
             // a new one will be generated at the begin of the loop.
             --photonsLeftToPropagate;
+            
+#ifdef SAVE_ALL_PHOTONS
+            // save every. single. photon.
+            
+            if (RNG_CALL_UNIFORM_CO < SAVE_ALL_PHOTONS_PRESCALE) {  
+                saveHit(
+                    photonPosAndTime,
+                    photonDirAndWlen,
+                    0., // photon has already been propagated to the next position
+                    inv_groupvel,
+                    photonTotalPathLength,
+                    photonNumScatters,
+                    photonStartPosAndTime,
+                    photonStartDirAndWlen,
+                    &step,
+                    0, // string id (not used in this case)
+                    0, // dom id (not used in this case)
+                    hitIndex,
+                    maxHitIndex,
+                    outputPhotons
+#ifdef SAVE_PHOTON_HISTORY
+                  , photonHistory,
+                    currentPhotonHistory
+#endif //SAVE_PHOTON_HISTORY
+                    );
+            }            
+#endif //SAVE_ALL_PHOTONS
+            
         }
         else
         {

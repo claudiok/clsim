@@ -219,6 +219,17 @@ geometryIsConfigured_(false)
                  "propagate.",
                  stopDetectedPhotons_);
 
+    saveAllPhotons_=false;
+    AddParameter("SaveAllPhotons",
+                 "Saves all photons, even if they don't hit a DOM. Cannot be used with \"StopDetectedPhotons\".",
+                 saveAllPhotons_);
+
+    saveAllPhotonsPrescale_=0.01;
+    AddParameter("SaveAllPhotonsPrescale",
+                 "Sets the prescale factor of photons being generated in \"saveAllPhotons\" mode.\n"
+                 "Only this fraction of photons is actually generated.",
+                 saveAllPhotonsPrescale_);
+
     photonHistoryEntries_=0;
     AddParameter("PhotonHistoryEntries",
                  "Sets the number of scattering step positions that are saved for a photon hitting\n"
@@ -348,9 +359,15 @@ void I3CLSimModule::Configure()
     GetParameter("EnableDoubleBuffering", enableDoubleBuffering_);
     GetParameter("DoublePrecision", doublePrecision_);
     GetParameter("StopDetectedPhotons", stopDetectedPhotons_);
+    GetParameter("SaveAllPhotons", saveAllPhotons_);
+    GetParameter("SaveAllPhotonsPrescale", saveAllPhotonsPrescale_);
 
     GetParameter("PhotonHistoryEntries", photonHistoryEntries_);
 
+    if ((saveAllPhotons_) && (stopDetectedPhotons_)) {
+        log_fatal("The \"SaveAllPhotons\" option cannot be used when \"StopDetectedPhotons\" is active.");
+    }
+    
     if ((flasherPulseSeriesName_=="") && (MCTreeName_==""))
         log_fatal("You need to set at least one of the \"MCTreeName\" and \"FlasherPulseSeriesName\" parameters.");
     
@@ -626,6 +643,8 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
                                               enableDoubleBuffering_,
                                               doublePrecision_,
                                               stopDetectedPhotons_,
+                                              saveAllPhotons_,
+                                              saveAllPhotonsPrescale_,
                                               photonHistoryEntries_);
         if (!openCLStepsToPhotonsConverter)
             log_fatal("Could not initialize OpenCL!");

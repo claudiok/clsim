@@ -159,6 +159,12 @@ void register_I3CLSimStepToPhotonConverter()
         .def("SetStopDetectedPhotons", &I3CLSimStepToPhotonConverterOpenCLWrapper::SetStopDetectedPhotons)
         .def("GetStopDetectedPhotons", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetStopDetectedPhotons)
 
+        .def("SetSaveAllPhotons", &I3CLSimStepToPhotonConverterOpenCLWrapper::SetSaveAllPhotons)
+        .def("GetSaveAllPhotons", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetSaveAllPhotons)
+
+        .def("SetSaveAllPhotonsPrescale", &I3CLSimStepToPhotonConverterOpenCLWrapper::SetSaveAllPhotonsPrescale)
+        .def("GetSaveAllPhotonsPrescale", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetSaveAllPhotonsPrescale)
+
         .def("SetPhotonHistoryEntries", &I3CLSimStepToPhotonConverterOpenCLWrapper::SetPhotonHistoryEntries)
         .def("GetPhotonHistoryEntries", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetPhotonHistoryEntries)
 
@@ -167,6 +173,8 @@ void register_I3CLSimStepToPhotonConverter()
         .add_property("enableDoubleBuffering", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetEnableDoubleBuffering, &I3CLSimStepToPhotonConverterOpenCLWrapper::SetEnableDoubleBuffering)
         .add_property("doublePrecision", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetDoublePrecision, &I3CLSimStepToPhotonConverterOpenCLWrapper::SetDoublePrecision)
         .add_property("stopDetectedPhotons", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetStopDetectedPhotons, &I3CLSimStepToPhotonConverterOpenCLWrapper::SetStopDetectedPhotons)
+        .add_property("saveAllPhotons", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetSaveAllPhotons, &I3CLSimStepToPhotonConverterOpenCLWrapper::SetSaveAllPhotons)
+        .add_property("saveAllPhotonsPrescale", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetSaveAllPhotonsPrescale, &I3CLSimStepToPhotonConverterOpenCLWrapper::SetSaveAllPhotonsPrescale)
         .add_property("photonHistoryEntries", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetPhotonHistoryEntries, &I3CLSimStepToPhotonConverterOpenCLWrapper::SetPhotonHistoryEntries)
         ;
     }
