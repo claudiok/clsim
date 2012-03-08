@@ -200,7 +200,7 @@ def I3CLSimMakeHits(tray, name,
                         )
 
     if PhotonSeriesName is None:
-        tray.AddModule("Delete", "delete_photons",
+        tray.AddModule("Delete", name + "_deletePhotons",
             Keys = [photonsName],
             If=If)
 
