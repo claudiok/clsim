@@ -8,7 +8,7 @@ echo "************** running PPC.."
 time $I3_SRC/clsim/resources/scripts/compareToPPC/applyPPC.py -i test_muons.i3 -o test_muons_ppc.i3
 
 echo "************** running CLSim.."
-time $I3_SRC/clsim/resources/scripts/applyCLSim_traysegments.py -i test_muons_ppc.i3 -o test_muons_ppc_clsim.i3 -p100
+time $I3_SRC/clsim/resources/scripts/applyCLSim.py -i test_muons_ppc.i3 -o test_muons_ppc_clsim.i3 -p100
 
 echo "************** booking.."
 $I3_SRC/clsim/resources/scripts/compareToPPC/bookThings.py test_muons_ppc_clsim.i3
