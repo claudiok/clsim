@@ -18,9 +18,11 @@ from GetKM3NeTDOMAcceptance import GetKM3NeTDOMAcceptance
 from FlasherInfoVectToFlasherPulseSeriesConverter import FlasherInfoVectToFlasherPulseSeriesConverter
 from FakeFlasherInfoGenerator import FakeFlasherInfoGenerator
 
+from GetDefaultParameterizationList import GetDefaultParameterizationList
+from GetFlasherParameterizationList import GetFlasherParameterizationList
+
 # import tray segments (if available)
-if hasattr(icetray, "traysegment"):
-    from traysegments import I3CLSimMakeHits, genDefaultParameterizationList, genFlasherParameterizationList
+from traysegments import I3CLSimMakeHits
 
 # clean up the clsim namespace
 del icetray

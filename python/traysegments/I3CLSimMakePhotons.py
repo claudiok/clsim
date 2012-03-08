@@ -1,106 +1,35 @@
 import string
 from os.path import expandvars, exists, isdir, isfile
 
-from .. import icetray, dataclasses
-from . import I3CLSimLightSourceParameterization
-from . import I3CLSimFlasherPulse, I3CLSimLightSourceToStepConverterFlasher
-from . import GetIceCubeFlasherSpectrum
+from icecube import icetray, dataclasses
 
-def genFlasherParameterizationList(spectrumTable):
-    spectrumTypes = [I3CLSimFlasherPulse.FlasherPulseType.LED340nm,
-                     I3CLSimFlasherPulse.FlasherPulseType.LED370nm,
-                     I3CLSimFlasherPulse.FlasherPulseType.LED405nm,
-                     I3CLSimFlasherPulse.FlasherPulseType.LED450nm,
-                     I3CLSimFlasherPulse.FlasherPulseType.LED505nm]
-    
-    parameterizations = []
-    for flasherSpectrumType in spectrumTypes:
-        theSpectrum = GetIceCubeFlasherSpectrum(spectrumType=flasherSpectrumType)
-        theConverter = I3CLSimLightSourceToStepConverterFlasher(flasherSpectrumNoBias=theSpectrum, spectrumTable=spectrumTable)
-        parameterization = I3CLSimLightSourceParameterization(converter=theConverter, forFlasherPulseType=flasherSpectrumType)
-        parameterizations.append(parameterization)
-        
-    return parameterizations
-
-def genDefaultParameterizationList(theConverter, muonOnly=False):
-    fromEnergy=0.
-    toEnergy=float('Inf')
-
-    muons    = [dataclasses.I3Particle.MuMinus,
-                dataclasses.I3Particle.MuPlus]
-
-    cascades = [dataclasses.I3Particle.Neutron,
-                dataclasses.I3Particle.Hadrons,
-                dataclasses.I3Particle.Pi0,
-                dataclasses.I3Particle.PiPlus,
-                dataclasses.I3Particle.PiMinus,
-                dataclasses.I3Particle.K0_Long,
-                dataclasses.I3Particle.KPlus,
-                dataclasses.I3Particle.KMinus,
-                dataclasses.I3Particle.PPlus,
-                dataclasses.I3Particle.PMinus,
-                dataclasses.I3Particle.K0_Short,
-                dataclasses.I3Particle.EMinus,
-                dataclasses.I3Particle.EPlus,
-                dataclasses.I3Particle.Gamma,
-                dataclasses.I3Particle.Brems,
-                dataclasses.I3Particle.DeltaE,
-                dataclasses.I3Particle.PairProd,
-                dataclasses.I3Particle.NuclInt]
-
-    parameterizationsMuon = []
-    for type in muons:
-        converter = \
-          I3CLSimLightSourceParameterization(
-            converter=theConverter,
-            forParticleType=type,
-            fromEnergy=fromEnergy,
-            toEnergy=toEnergy, 
-            needsLength=True)
-        parameterizationsMuon.append(converter)
-
-    if muonOnly:
-        return parameterizationsMuon
-
-    parameterizationsOther = []
-    for type in cascades:
-        converter = \
-          I3CLSimLightSourceParameterization(
-            converter=theConverter,
-            forParticleType=type,
-            fromEnergy=fromEnergy,
-            toEnergy=toEnergy, 
-            needsLength=False)
-        parameterizationsOther.append(converter)
-
-    return parameterizationsMuon+parameterizationsOther
+from icecube.clsim import GetDefaultParameterizationList
+from icecube.clsim import GetFlasherParameterizationList
 
 @icetray.traysegment
-def I3CLSimMakeHits(tray, name,
-                    UseCPUs=False,
-                    UseGPUs=True,
-                    MCTreeName="I3MCTree",
-                    FlasherInfoVectName=None,
-                    MMCTrackListName="MMCTrackList",
-                    MCHitSeriesName="MCHitSeriesMap",
-                    PhotonSeriesName=None,
-                    SimulateAfterPulses=False,
-                    ParallelEvents=1000,
-                    RandomService=None,
-                    IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
-                    UnWeightedPhotons=False,
-                    UseGeant4=False,
-                    StopDetectedPhotons=True,
-                    PhotonHistoryEntries=0,
-                    DoNotParallelize=False,
-                    DOMOversizeFactor=5.,
-                    If=lambda f: True
-                    ):
-    """Do standard clsim processing, compatible to hit-maker/PPC.
-    Reads its particles from an I3MCTree and writes an I3MCHitSeriesMap.
-
-    Only the PPC-compatible parameterizations are used,
-    Geant4 is not.
+def I3CLSimMakePhotons(tray, name,
+                       UseCPUs=False,
+                       UseGPUs=True,
+                       MCTreeName="I3MCTree",
+                       OutputMCTreeName=None,
+                       FlasherInfoVectName=None,
+                       MMCTrackListName="MMCTrackList",
+                       PhotonSeriesName="PhotonSeriesMap",
+                       ParallelEvents=1000,
+                       RandomService=None,
+                       IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
+                       UnWeightedPhotons=False,
+                       UseGeant4=False,
+                       StopDetectedPhotons=True,
+                       PhotonHistoryEntries=0,
+                       DoNotParallelize=False,
+                       DOMOversizeFactor=5.,
+                       If=lambda f: True
+                       ):
+    """Do standard clsim processing up to the I3Photon level.
+    These photons still need to be converted to I3MCHits to be usable
+    for further steps in the standard IceCube MC processing chain.
+    Reads its particles from an I3MCTree and writes an I3PhotonSeriesMap.
 
     All available OpenCL GPUs (and optionally CPUs) will
     be used. This will take over your entire machine,
@@ -128,6 +57,8 @@ def I3CLSimMakeHits(tray, name,
         purposes and you don't want it to slow down.
     :param MCTreeName:
         The name of the I3MCTree containing the particles to propagate.
+    :param OutputMCTreeName:
+        A copy of the (possibly sliced) MCTree will be stored as this name.
     :param FlasherPulseSeriesName:
         Set this to the name of I3FlasherInfoVect objects in the frame to
         enable flasher simulation. The module will read I3FlasherInfoVect objects
@@ -136,18 +67,9 @@ def I3CLSimMakeHits(tray, name,
         Only used if *ChopMuons* is active. Set it to the name
         of the I3MMCTrackList object that contains additional
         muon energy loss information.
-    :param MCHitSeriesName:
-        Name of the output I3MCHitSeriesMap written by the module.
-        Set this to None to prevent generating MCHits from
-        Photons.
     :param PhotonSeriesName:
         Configure this to enable writing an I3PhotonSeriesMap containing
         all photons that reached the DOM surface.
-    :param SimulateAfterPulses:
-        Use an algorithm from hit-maker to simulate after-pulses.
-        Turn this on to be compatble to hit-maker with afer-pulse
-        simulation. This also includes PMT jitter simulation (2ns).
-        Do not use this when using external after-pulse simulation modules.
     :param ParallelEvents:
         clsim will work on a couple of events in parallel in order
         not to starve the GPU. Setting this too high will result
@@ -203,10 +125,6 @@ def I3CLSimMakeHits(tray, name,
 
     from icecube import icetray, dataclasses, clsim
 
-    # simple sanity check
-    if (PhotonSeriesName is None) and (MCHitSeriesName is None):
-        raise RuntimeError("You need to set at least one of the \"PhotonSeriesName\" or \"MCHitSeriesName\" arguments to something other than None!")
-
     # warn the user in case they might have done something they probably don't want
     if UnWeightedPhotons and (DOMOversizeFactor != 1.):
         print "********************"
@@ -233,11 +151,6 @@ def I3CLSimMakeHits(tray, name,
     else:
         clSimMCTreeName=MCTreeName
 
-    if PhotonSeriesName is not None:
-        photonsName=PhotonSeriesName
-    else:
-        photonsName=name + "____intermediatePhotons"
-
     if FlasherInfoVectName is None or FlasherInfoVectName=="":
         SimulateFlashers=False
         clSimFlasherPulseSeriesName = ""
@@ -257,14 +170,30 @@ def I3CLSimMakeHits(tray, name,
 
     # (optional) pre-processing
     if ChopMuons:
+        if OutputMCTreeName is not None:
+            clSimMCTreeName_new = OutputMCTreeName
+        else:
+            clSimMCTreeName_new = clSimMCTreeName + "_sliced"
+        
         tray.AddModule("I3MuonSlicer", name + "_chopMuons",
                        InputMCTreeName=clSimMCTreeName,
                        MMCTrackListName=MMCTrackListName,
-                       OutputMCTreeName=clSimMCTreeName + "_sliced",
+                       OutputMCTreeName=clSimMCTreeName_new,
                        If=If)
-        clSimMCTreeName = clSimMCTreeName + "_sliced"
+        clSimMCTreeName = clSimMCTreeName_new
     else:
-        clSimMCTreeName = clSimMCTreeName
+        if OutputMCTreeName is not None:
+            # copy the MCTree to the requested output name
+            def copyMCTree(frame, inputName, outputName):
+                frame[outputName] = frame[inputName]
+            tray.AddModule(copyMCTree, name + "_copyMCTree",
+                           inputName=clSimMCTreeName,
+                           outputName=OutputMCTreeName,
+                           Streams=[icetray.I3Frame.DAQ],
+                           If=If)
+            clSimMCTreeName = OutputMCTreeName
+        else:
+            clSimMCTreeName = clSimMCTreeName
 
     # ice properties
     # Did the user configure a diretory or a file?
@@ -283,7 +212,6 @@ def I3CLSimMakeHits(tray, name,
 
     # detector properties
     domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius = DOMRadius*DOMOversizeFactor)
-    domAngularSensitivity = clsim.GetIceCubeDOMAngularSensitivity(holeIce=True)
 
     # photon generation wavelength bias
     if not UnWeightedPhotons:
@@ -294,40 +222,25 @@ def I3CLSimMakeHits(tray, name,
     # muon&cascade parameterizations
     ppcConverter = clsim.I3CLSimLightSourceToStepConverterPPC(photonsPerStep=200)
     if not UseGeant4:
-        particleParameterizations = clsim.genDefaultParameterizationList(ppcConverter, muonOnly=False)
+        particleParameterizations = GetDefaultParameterizationList(ppcConverter, muonOnly=False)
     else:
         if MMCTrackListName is None or MMCTrackListName=="":
             particleParameterizations = [] # make sure absolutely **no** parameterizations are used
         else:
             # use no parameterizations except for muons with lengths assigned to them
             # (those are assumed to have been generated by MMC)
-            particleParameterizations = clsim.genDefaultParameterizationList(ppcConverter, muonOnly=True)
+            particleParameterizations = GetDefaultParameterizationList(ppcConverter, muonOnly=True)
 
     # flasher parameterizations
     if SimulateFlashers:
         # this needs a spectrum table in order to pass spectra to OpenCL
         spectrumTable = clsim.I3CLSimSpectrumTable()
-        particleParameterizations += clsim.genFlasherParameterizationList(spectrumTable)
+        particleParameterizations += GetFlasherParameterizationList(spectrumTable)
         
         print "number of spectra (1x Cherenkov + Nx flasher):", len(spectrumTable)
     else:
         # no spectrum table is necessary when only using the Cherenkov spectrum
         spectrumTable = None
-
-    # after-pulse simulation
-    has_I3CLSimPMTPhotonSimulatorIceCube = "I3CLSimPMTPhotonSimulatorIceCube" in clsim.__dict__
-    if SimulateAfterPulses:
-        if not has_I3CLSimPMTPhotonSimulatorIceCube:
-            raise RuntimeError("cannot simulate jitter/after-pulses because hit-maker is not installed")
-        pmtPhotonSimulator = clsim.I3CLSimPMTPhotonSimulatorIceCube(jitter=Jitter)
-    else:
-        if has_I3CLSimPMTPhotonSimulatorIceCube:
-            pmtPhotonSimulator = clsim.I3CLSimPMTPhotonSimulatorIceCube(jitter=0.,
-                                                                        pre_pulse_probability=0.,
-                                                                        late_pulse_probability=0.,
-                                                                        after_pulse_probability=0.)
-        else:
-            pmtPhotonSimulator = None
 
     # get OpenCL devices
     openCLDevices = [device for device in clsim.I3CLSimOpenCLDevice.GetAllDevices() if (device.gpu and UseGPUs) or (device.cpu and UseCPUs)]
@@ -347,7 +260,7 @@ def I3CLSimMakeHits(tray, name,
 
     tray.AddModule("I3CLSimModule", name + "_clsim",
                    MCTreeName=clSimMCTreeName,
-                   PhotonSeriesMapName=photonsName,
+                   PhotonSeriesMapName=PhotonSeriesName,
                    DOMRadius = DOMRadius*DOMOversizeFactor, 
                    RandomService=RandomService,
                    MediumProperties=mediumProperties,
@@ -367,23 +280,4 @@ def I3CLSimMakeHits(tray, name,
                    PhotonHistoryEntries=PhotonHistoryEntries,
                    If=If
                    )
-
-    if MCHitSeriesName is not None:
-        tray.AddModule("I3PhotonToMCHitConverter", name + "_clsim_make_hits",
-                       RandomService = RandomService,
-                       MCTreeName = clSimMCTreeName,
-                       InputPhotonSeriesMapName = photonsName,
-                       OutputMCHitSeriesMapName = MCHitSeriesName,
-                       DOMRadiusWithoutOversize=DOMRadius,
-                       DOMOversizeFactor = DOMOversizeFactor,
-                       WavelengthAcceptance = domAcceptance,
-                       AngularAcceptance = domAngularSensitivity,
-                       PMTPhotonSimulator = pmtPhotonSimulator,
-                       IgnoreDOMsWithoutDetectorStatusEntry = True,
-                       If=If)
-
-    if PhotonSeriesName is None:
-        tray.AddModule("Delete", "delete_photons",
-            Keys = [photonsName])
-
 
