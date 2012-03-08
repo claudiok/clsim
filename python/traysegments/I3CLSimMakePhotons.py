@@ -1,10 +1,50 @@
 import string
+import os
 from os.path import expandvars, exists, isdir, isfile
+import pickle
 
 from icecube import icetray, dataclasses
 
 from icecube.clsim import GetDefaultParameterizationList
 from icecube.clsim import GetFlasherParameterizationList
+
+def AutoSetGeant4Environment():
+    Geant4Variables = set(["G4ABLADATA", "G4LEDATA", "G4LEVELGAMMADATA", "G4NEUTRONHPDATA", "G4NEUTRONXSDATA", "G4PIIDATA", "G4RADIOACTIVEDATA", "G4REALSURFACEDATA"])
+        
+    Geant4Variables_unset = set()
+    for var in Geant4Variables:
+        if var not in os.environ:
+            Geant4Variables_unset.add(var)
+        
+    Geant4Variables_set = Geant4Variables.difference(Geant4Variables_unset)
+    if len(Geant4Variables_unset)>0:
+        print "Not all Geant4 environment variables are set. Trying to get some of them from $I3_PORTS/bin/geant4.sh.."
+            
+        print "already set:"
+        for var in Geant4Variables_set:
+            print "  *", var, "->", os.environ[var]
+
+        print "missing:"
+        for var in Geant4Variables_unset:
+            print "  *", var
+                
+        if not os.path.isfile(expandvars("$I3_PORTS/bin/geant4.sh")):
+            raise RuntimeError("Cannot automatically set missing environment variables. ($I3_PORTS/bin/geant4.sh is missing.) Please set them yourself.")
+
+        # get the environment after loading geant4.sh
+        source = expandvars("source $I3_PORTS/bin/geant4.sh")
+        dump = '/usr/bin/python -c "import os,pickle;print pickle.dumps(os.environ)"'
+        penv = os.popen('%s && %s' %(source,dump))
+        geant4env = pickle.loads(penv.read())
+
+        print "setting from geant4.sh:"
+        for var in Geant4Variables_unset:
+            if var not in geant4env:
+                raise RuntimeError("Cannot find the %s environment variable in the geant4.sh script." % var)
+            os.environ[var] = geant4env[var]
+            print "  *", var, "->", os.environ[var]
+
+    
 
 @icetray.traysegment
 def I3CLSimMakePhotons(tray, name,
@@ -124,6 +164,9 @@ def I3CLSimMakePhotons(tray, name,
     """
 
     from icecube import icetray, dataclasses, clsim
+
+    if UseGeant4:
+        AutoSetGeant4Environment()
 
     # warn the user in case they might have done something they probably don't want
     if UnWeightedPhotons and (DOMOversizeFactor != 1.):

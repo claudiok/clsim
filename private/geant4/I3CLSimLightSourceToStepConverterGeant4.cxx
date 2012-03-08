@@ -92,12 +92,12 @@ maxBunchSize_(512000)
     if (!dummy) {
         G4cout << "The $I3_PORTS variable is not set! You have to provide the Geant4 data directories using their respective environment variables!" << G4endl;
     } else {
-        // this does overwrite already existing variables!
-        setenv("G4LEVELGAMMADATA", (I3_PORTS + "/" + DATA_BASEDIR + "/PhotonEvaporation2.0").c_str(), 1);
-        setenv("G4RADIOACTIVEDATA", (I3_PORTS + "/" + DATA_BASEDIR + "/RadioactiveDecay3.2").c_str(), 1);
-        setenv("G4LEDATA", (I3_PORTS + "/" + DATA_BASEDIR + "/G4EMLOW6.9").c_str(), 1);
-        setenv("G4NEUTRONHPDATA", (I3_PORTS + "/" + DATA_BASEDIR + "/G4NDL3.13").c_str(), 1);
-        setenv("G4ABLADATA", (I3_PORTS + "/" + DATA_BASEDIR + "/G4ABLA3.0").c_str(), 1);
+        // this does NOT overwrite already existing variables!
+        setenv("G4LEVELGAMMADATA", (I3_PORTS + "/" + DATA_BASEDIR + "/PhotonEvaporation2.0").c_str(), 0);
+        setenv("G4RADIOACTIVEDATA", (I3_PORTS + "/" + DATA_BASEDIR + "/RadioactiveDecay3.2").c_str(), 0);
+        setenv("G4LEDATA", (I3_PORTS + "/" + DATA_BASEDIR + "/G4EMLOW6.9").c_str(), 0);
+        setenv("G4NEUTRONHPDATA", (I3_PORTS + "/" + DATA_BASEDIR + "/G4NDL3.13").c_str(), 0);
+        setenv("G4ABLADATA", (I3_PORTS + "/" + DATA_BASEDIR + "/G4ABLA3.0").c_str(), 0);
     }
     
     /*
