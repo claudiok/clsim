@@ -169,8 +169,8 @@ void TrkDetectorConstruction::DefineMaterials(){
     std::vector<double> rindex_ppckov;
 
     //G4cout << "map<wlen,rindex>:" << G4endl;
-    for (std::map<double, double>::iterator it=wlenToRindexMap.begin();
-         it!=wlenToRindexMap.end();++it)
+    for (std::map<double, double>::reverse_iterator it=wlenToRindexMap.rbegin();
+         it!=wlenToRindexMap.rend();++it)
     {
         //G4cout << " " << it->first/I3Units::nanometer << "nm -> " << it->second << G4endl;
         
