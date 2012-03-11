@@ -64,6 +64,7 @@ def I3CLSimMakePhotons(tray, name,
                        PhotonHistoryEntries=0,
                        DoNotParallelize=False,
                        DOMOversizeFactor=5.,
+                       ExtraArgumentsToI3CLSimModule=dict(),
                        If=lambda f: True
                        ):
     """Do standard clsim processing up to the I3Photon level.
@@ -314,15 +315,16 @@ def I3CLSimMakePhotons(tray, name,
                    OMKeyMaskName=clSimOMKeyMaskName,
                    # ignore IceTop
                    IgnoreSubdetectors = ["IceTop"],
-                   IgnoreNonIceCubeOMNumbers=False, 
+                   #IgnoreNonIceCubeOMNumbers=False, 
                    GenerateCherenkovPhotonsWithoutDispersion=False,
                    WavelengthGenerationBias=wavelengthGenerationBias,
                    ParameterizationList=particleParameterizations,
                    MaxNumParallelEvents=ParallelEvents,
                    OpenCLDeviceList=openCLDevices,
-                   UseHardcodedDeepCoreSubdetector=False, # setting this to true saves GPU constant memory but will reduce performance
+                   #UseHardcodedDeepCoreSubdetector=False, # setting this to true saves GPU constant memory but will reduce performance
                    StopDetectedPhotons=StopDetectedPhotons,
                    PhotonHistoryEntries=PhotonHistoryEntries,
-                   If=If
+                   If=If,
+                   **ExtraArgumentsToI3CLSimModule
                    )
 

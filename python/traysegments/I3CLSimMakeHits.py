@@ -28,6 +28,7 @@ def I3CLSimMakeHits(tray, name,
                     PhotonHistoryEntries=0,
                     DoNotParallelize=False,
                     DOMOversizeFactor=5.,
+                    ExtraArgumentsToI3CLSimModule=dict(),
                     If=lambda f: True
                     ):
     """Do standard clsim processing, compatible to hit-maker/PPC.
@@ -185,6 +186,7 @@ def I3CLSimMakeHits(tray, name,
                     PhotonHistoryEntries=PhotonHistoryEntries,
                     DoNotParallelize=DoNotParallelize,
                     DOMOversizeFactor=DOMOversizeFactor,
+                    ExtraArgumentsToI3CLSimModule=ExtraArgumentsToI3CLSimModule,
                     If=If
                     )
 
