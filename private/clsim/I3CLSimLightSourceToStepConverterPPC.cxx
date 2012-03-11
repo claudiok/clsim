@@ -726,8 +726,15 @@ I3CLSimLightSourceToStepConverterPPC::GenerateStepPreCalculator::~GenerateStepPr
 
         log_debug("Stopping the worker thread #%zu", i);
         feederThreads_[i]->interrupt();
-        feederThreads_[i]->join(); // wait for it indefinitely
-        log_debug("Worker thread #%zu stopped.", i);
+        
+        // wait for the thread to stop (not indefinitely, just to be sure)
+        const bool did_join = feederThreads_[i]->timed_join(boost::posix_time::seconds(10));
+        
+        if (did_join) {
+            log_debug("Worker thread #%zu stopped.", i);
+        } else {
+            log_warn("Worker thread #%zu did not stop. leaking memory.", i);
+        }
     }
 
     feederThreads_.clear();
