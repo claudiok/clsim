@@ -20,6 +20,7 @@ from FakeFlasherInfoGenerator import FakeFlasherInfoGenerator
 
 from GetDefaultParameterizationList import GetDefaultParameterizationList
 from GetFlasherParameterizationList import GetFlasherParameterizationList
+from AsyncTap import AsyncTap
 
 # import tray segments (if available)
 from traysegments import I3CLSimMakeHits
