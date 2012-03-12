@@ -23,7 +23,7 @@ from GetFlasherParameterizationList import GetFlasherParameterizationList
 from AsyncTap import AsyncTap
 
 # import tray segments (if available)
-from traysegments import I3CLSimMakeHits
+from traysegments import I3CLSimMakeHits, I3CLSimMakePhotons, I3CLSimMakeHitsFromPhotons
 
 # clean up the clsim namespace
 del icetray
