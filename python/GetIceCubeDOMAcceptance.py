@@ -7,7 +7,7 @@ import numpy, math
 from os.path import expandvars
 
 
-def GetIceCubeDOMAcceptance(domRadius = 0.16510*I3Units.m):
+def GetIceCubeDOMAcceptance(domRadius = 0.16510*I3Units.m, efficiency=1.0):
     # this is taken from photonics/lib/efficiency.h:
     #
     #################################################################
@@ -77,8 +77,8 @@ def GetIceCubeDOMAcceptance(domRadius = 0.16510*I3Units.m):
     0.0000509155]
     dom2007a_eff_area = numpy.array(dom2007a_eff_area)*I3Units.meter2 # apply units (this is an effective area)
     domArea = math.pi*domRadius**2.
-    dom2007a_efficiency = dom2007a_eff_area/domArea
-    
+    dom2007a_efficiency = efficiency*(dom2007a_eff_area/domArea)
+
     domEfficiency = I3CLSimFunctionFromTable(260.*I3Units.nanometer, 10.*I3Units.nanometer, dom2007a_efficiency)
-    
+
     return domEfficiency

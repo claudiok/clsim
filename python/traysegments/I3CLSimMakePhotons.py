@@ -64,6 +64,8 @@ def I3CLSimMakePhotons(tray, name,
                        PhotonHistoryEntries=0,
                        DoNotParallelize=False,
                        DOMOversizeFactor=5.,
+                       UnshadowedFraction=0.9,
+                       UseHoleIceParameterization=True,
                        ExtraArgumentsToI3CLSimModule=dict(),
                        If=lambda f: True
                        ):
@@ -160,6 +162,10 @@ def I3CLSimMakePhotons(tray, name,
         in parallel on a batch system.
     :param DOMOversizeFactor:
         Set the DOM oversize factor. To disable oversizing, set this to 1.
+    :param UnshadowedFraction:
+        Fraction of photocathode available to receive light (e.g. unshadowed by the cable)
+    :param UseHoleIceParameterization:
+        Use an angular acceptance correction for hole ice scattering.
     :param If:
         Python function to use as conditional execution test for segment modules.        
     """
@@ -257,7 +263,12 @@ def I3CLSimMakePhotons(tray, name,
 
 
     # detector properties
-    domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius = DOMRadius*DOMOversizeFactor)
+    if UseHoleIceParameterization:
+        # the hole ice acceptance curve peaks at 0.75 instead of 1
+        domEfficiencyCorrection = UnshadowedFraction*0.75*1.35 * 1.01 # DeepCore DOMs have a relative efficiency of 1.35 plus security margin of +1%
+    else:
+        domEfficiencyCorrection = UnshadowedFraction*1.35      * 1.01 # security margin of +1%
+    domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius = DOMRadius*DOMOversizeFactor, efficiency=domEfficiencyCorrection)
 
     # photon generation wavelength bias
     if not UnWeightedPhotons:
@@ -315,7 +326,7 @@ def I3CLSimMakePhotons(tray, name,
                    OMKeyMaskName=clSimOMKeyMaskName,
                    # ignore IceTop
                    IgnoreSubdetectors = ["IceTop"],
-                   #IgnoreNonIceCubeOMNumbers=False, 
+                   #IgnoreNonIceCubeOMNumbers=False,
                    GenerateCherenkovPhotonsWithoutDispersion=False,
                    WavelengthGenerationBias=wavelengthGenerationBias,
                    ParameterizationList=particleParameterizations,

@@ -11,6 +11,8 @@ def I3CLSimMakeHitsFromPhotons(tray, name,
                                SimulateAfterPulses=False,
                                RandomService=None,
                                DOMOversizeFactor=5.,
+                               UnshadowedFraction=0.9,
+                               UseHoleIceParameterization=True,
                                If=lambda f: True
                                ):
     """
@@ -38,6 +40,10 @@ def I3CLSimMakeHitsFromPhotons(tray, name,
         this, the default I3RandomServiceFactory will be used.
     :param DOMOversizeFactor:
         Set the DOM oversize factor. To disable oversizing, set this to 1.
+    :param UnshadowedFraction:
+        Fraction of photocathode available to receive light (e.g. unshadowed by the cable)
+    :param UseHoleIceParameterization:
+        Use an angular acceptance correction for hole ice scattering.
     :param If:
         Python function to use as conditional execution test for segment modules.        
     """
@@ -49,8 +55,8 @@ def I3CLSimMakeHitsFromPhotons(tray, name,
     Jitter = 2.*icetray.I3Units.ns
 
     # detector properties
-    domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius = DOMRadius*DOMOversizeFactor)
-    domAngularSensitivity = clsim.GetIceCubeDOMAngularSensitivity(holeIce=True)
+    domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius = DOMRadius*DOMOversizeFactor, efficiency=UnshadowedFraction)
+    domAngularSensitivity = clsim.GetIceCubeDOMAngularSensitivity(holeIce=UseHoleIceParameterization)
 
     # after-pulse simulation
     has_I3CLSimPMTPhotonSimulatorIceCube = "I3CLSimPMTPhotonSimulatorIceCube" in clsim.__dict__

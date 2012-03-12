@@ -467,8 +467,33 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
             log_trace("After efficiency from calibration: prob=%g (efficiency_from_calibration=%f)",
                       hitProbability, efficiency_from_calibration);
 
-            if (hitProbability > 1.)
-                log_fatal("hitProbability > 1: cannot continue. your hit weights are too high.");
+            if (hitProbability > 1.) {
+                log_warn("hitProbability==%f > 1: your hit weights are too high. (hitProbability-1=%f)", hitProbability, hitProbability-1.);
+
+                double hitProbability = photon.GetWeight();
+
+                const double photonAngle = std::acos(photonCosAngle);
+                log_warn("Photon (lambda=%fnm, angle=%fdeg, dist=%fm) has weight %g, 1/weight %g",
+                         photon.GetWavelength()/I3Units::nanometer,
+                         photonAngle/I3Units::deg,
+                         distFromDOMCenter/I3Units::m,
+                         hitProbability,
+                         1./hitProbability);
+
+                hitProbability *= wavelengthAcceptance_->GetValue(photon.GetWavelength());
+                log_warn("After wlen acceptance: prob=%g (wlen acceptance is %f)",
+                         hitProbability, wavelengthAcceptance_->GetValue(photon.GetWavelength()));
+
+                hitProbability *= angularAcceptance_->GetValue(photonCosAngle);
+                log_warn("After wlen&angular acceptance: prob=%g (angular acceptance is %f)",
+                          hitProbability, angularAcceptance_->GetValue(photonCosAngle));
+
+                hitProbability *= efficiency_from_calibration;
+                log_warn("After efficiency from calibration: prob=%g (efficiency_from_calibration=%f)",
+                          hitProbability, efficiency_from_calibration);
+                
+                log_fatal("cannot continue.");
+            }
             
             // does it survive?
             if (hitProbability <= randomService_->Uniform()) continue;

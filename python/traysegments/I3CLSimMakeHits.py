@@ -28,6 +28,8 @@ def I3CLSimMakeHits(tray, name,
                     PhotonHistoryEntries=0,
                     DoNotParallelize=False,
                     DOMOversizeFactor=5.,
+                    UnshadowedFraction=0.9,
+                    UseHoleIceParameterization=True,
                     ExtraArgumentsToI3CLSimModule=dict(),
                     If=lambda f: True
                     ):
@@ -129,6 +131,10 @@ def I3CLSimMakeHits(tray, name,
         in parallel on a batch system.
     :param DOMOversizeFactor:
         Set the DOM oversize factor. To disable oversizing, set this to 1.
+    :param UnshadowedFraction:
+        Fraction of photocathode available to receive light (e.g. unshadowed by the cable)
+    :param UseHoleIceParameterization:
+        Use an angular acceptance correction for hole ice scattering.
     :param If:
         Python function to use as conditional execution test for segment modules.        
     """
@@ -186,6 +192,8 @@ def I3CLSimMakeHits(tray, name,
                     PhotonHistoryEntries=PhotonHistoryEntries,
                     DoNotParallelize=DoNotParallelize,
                     DOMOversizeFactor=DOMOversizeFactor,
+                    UnshadowedFraction=UnshadowedFraction,
+                    UseHoleIceParameterization=UseHoleIceParameterization,
                     ExtraArgumentsToI3CLSimModule=ExtraArgumentsToI3CLSimModule,
                     If=If
                     )
@@ -198,6 +206,8 @@ def I3CLSimMakeHits(tray, name,
                         SimulateAfterPulses=SimulateAfterPulses,
                         RandomService=RandomService,
                         DOMOversizeFactor=DOMOversizeFactor,
+                        UnshadowedFraction=UnshadowedFraction,
+                        UseHoleIceParameterization=UseHoleIceParameterization,
                         If=If
                         )
 
