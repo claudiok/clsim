@@ -1040,8 +1040,9 @@ namespace I3CLSimHelper
                                 ++counter;
                             }
                             
-                            log_fatal("There does not seem to be a possible layer division for your string %i on subdetector %i (\"%s\").",
-                                      stringNum, strings[stringNum].subdetectorNum, subdetectorNameList[strings[stringNum].subdetectorNum].c_str());
+                            log_fatal("There does not seem to be a possible layer division for your string %i on subdetector %i (\"%s\"). minZ=%fm, maxZ=%fm, meandZ=%fm, omRadius=%fm",
+                                      stringNum, strings[stringNum].subdetectorNum, subdetectorNameList[strings[stringNum].subdetectorNum].c_str(),
+                                      strings[stringNum].minZ/I3Units::m, strings[stringNum].maxZ/I3Units::m, strings[stringNum].meandZ/I3Units::m, omRadius/I3Units::m);
                         }
                     }
                 }
