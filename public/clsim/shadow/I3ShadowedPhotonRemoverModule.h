@@ -40,7 +40,7 @@
 /**
  * @brief This module removes photons that have paths intersecting 
  *   with any shadowing part of the detecor (such as cables).
- *
+ *   This code is NOT functional at the moment.
  */
 class I3ShadowedPhotonRemoverModule : public I3ConditionalModule
 {

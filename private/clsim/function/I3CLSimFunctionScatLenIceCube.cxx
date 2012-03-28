@@ -5,7 +5,7 @@
 #include <typeinfo>
 #include <cmath>
 
-#include "clsim/to_float_string.h"
+#include "clsim/I3CLSimHelperToFloatString.h"
 using namespace I3CLSimHelper;
 
 I3CLSimFunctionScatLenIceCube::
@@ -36,19 +36,19 @@ std::string I3CLSimFunctionScatLenIceCube::GetOpenCLFunction(const std::string &
     std::string funcDef = 
     std::string("inline float ") + functionName + std::string("(float wlen)\n");
 
-    const std::string meterAsString = to_float_string(I3Units::m);
-    const std::string refWlenAsString = to_float_string(1./(400.*I3Units::nanometer));
+    const std::string meterAsString = ToFloatString(I3Units::m);
+    const std::string refWlenAsString = ToFloatString(1./(400.*I3Units::nanometer));
     
     
     std::string funcBody = std::string() + 
     "{\n"
-    "    const float alpha = " + to_float_string(alpha_) + ";\n"
-    "    const float b400 = " + to_float_string(b400_) + ";\n"
+    "    const float alpha = " + ToFloatString(alpha_) + ";\n"
+    "    const float b400 = " + ToFloatString(b400_) + ";\n"
     "    \n"
     "#ifdef USE_NATIVE_MATH\n"
-    "    return " + to_float_string(I3Units::m) + "*native_recip( b400 * native_powr(wlen*" + refWlenAsString + ", -alpha) );\n"
+    "    return " + ToFloatString(I3Units::m) + "*native_recip( b400 * native_powr(wlen*" + refWlenAsString + ", -alpha) );\n"
     "#else\n"
-    "    return " + to_float_string(I3Units::m) + "/( b400 * powr(wlen*" + refWlenAsString + ", -alpha) );\n"
+    "    return " + ToFloatString(I3Units::m) + "/( b400 * powr(wlen*" + refWlenAsString + ", -alpha) );\n"
     "#endif\n"
     "}\n"
     ;

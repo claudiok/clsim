@@ -56,7 +56,7 @@ class I3PhotonToMCHitConverterForMultiPMT : public I3ConditionalModule
         /**
          * @brief Destructor
          */
-        ~I3PhotonToMCHitConverterForMultiPMT();
+        virtual ~I3PhotonToMCHitConverterForMultiPMT();
         
         /**
          * @brief Configure this module

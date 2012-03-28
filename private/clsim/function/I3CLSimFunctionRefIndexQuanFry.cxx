@@ -5,7 +5,7 @@
 #include <typeinfo>
 #include <cmath>
 
-#include "clsim/to_float_string.h"
+#include "clsim/I3CLSimHelperToFloatString.h"
 using namespace I3CLSimHelper;
 
 const double I3CLSimFunctionRefIndexQuanFry::default_salinity=38.44*I3Units::perThousand;       // in ppt
@@ -89,12 +89,12 @@ std::string I3CLSimFunctionRefIndexQuanFry::GetOpenCLFunction(const std::string 
 
     std::string funcBody = std::string() + 
     "{\n"
-    "    const float a01 = " + to_float_string(a01) + ";\n"
-    "    const float a2 = "  + to_float_string(a2) + ";\n"
-    "    const float a3 = "  + to_float_string(a3) + ";\n"
-    "    const float a4 = "  + to_float_string(a4) + ";\n"
+    "    const float a01 = " + ToFloatString(a01) + ";\n"
+    "    const float a2 = "  + ToFloatString(a2) + ";\n"
+    "    const float a3 = "  + ToFloatString(a3) + ";\n"
+    "    const float a4 = "  + ToFloatString(a4) + ";\n"
     "    \n"
-    "    const float x = " + to_float_string(I3Units::nanometer) + "/wavelength;\n"
+    "    const float x = " + ToFloatString(I3Units::nanometer) + "/wavelength;\n"
     "    return a01 + x*(a2 + x*(a3 + x*a4));\n"
     "}\n"
     ;
@@ -109,12 +109,12 @@ std::string I3CLSimFunctionRefIndexQuanFry::GetOpenCLFunctionDerivative(const st
     
     std::string funcBody = std::string() + 
     "{\n"
-    "    const float a2 = " + to_float_string(a2) + ";\n"
-    "    const float a3 = " + to_float_string(a3) + ";\n"
-    "    const float a4 = " + to_float_string(a4) + ";\n"
+    "    const float a2 = " + ToFloatString(a2) + ";\n"
+    "    const float a3 = " + ToFloatString(a3) + ";\n"
+    "    const float a4 = " + ToFloatString(a4) + ";\n"
     "    \n"
-    "    const float x = " + to_float_string(I3Units::nanometer) + "/wavelength;\n"
-    "    return -x*x*(a2 + x*(2.0f*a3 + x*3.0f*a4))/" + to_float_string(I3Units::nanometer) + ";\n"
+    "    const float x = " + ToFloatString(I3Units::nanometer) + "/wavelength;\n"
+    "    return -x*x*(a2 + x*(2.0f*a3 + x*3.0f*a4))/" + ToFloatString(I3Units::nanometer) + ";\n"
     "}\n"
     ;
     

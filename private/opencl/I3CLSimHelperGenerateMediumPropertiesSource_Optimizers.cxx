@@ -13,7 +13,7 @@
 #include "clsim/function/I3CLSimFunctionAbsLenIceCube.h"
 #include "clsim/function/I3CLSimFunctionScatLenIceCube.h"
 
-#include "clsim/to_float_string.h"
+#include "clsim/I3CLSimHelperToFloatString.h"
 
 
 namespace I3CLSimHelper
@@ -122,7 +122,7 @@ namespace I3CLSimHelper
         code << "__constant float " << functionName << "_aDust400[" << layeredFunctionIceCube.size() << "] = {\n";
         BOOST_FOREACH(const I3CLSimFunctionAbsLenIceCubeConstPtr &function, layeredFunctionIceCube)
         {
-            code << "    " << to_float_string(function->GetADust400()) << ",\n";
+            code << "    " << ToFloatString(function->GetADust400()) << ",\n";
         }
         code << "};\n";
         code << "\n";
@@ -130,7 +130,7 @@ namespace I3CLSimHelper
         code << "__constant float " << functionName << "_deltaTau[" << layeredFunctionIceCube.size() << "] = {\n";
         BOOST_FOREACH(const I3CLSimFunctionAbsLenIceCubeConstPtr &function, layeredFunctionIceCube)
         {
-            code << "    " << to_float_string(function->GetDeltaTau()) << ",\n";
+            code << "    " << ToFloatString(function->GetDeltaTau()) << ",\n";
         }
         code << "};\n";
         code << "\n";
@@ -139,18 +139,18 @@ namespace I3CLSimHelper
         code << "inline float " << functionName << "(unsigned int layer, float wlen)\n";
         code << "{\n";
         
-        code << "    const float kappa = " << to_float_string(layeredFunctionIceCube[0]->GetKappa()) << ";\n";
-        code << "    const float A = " << to_float_string(layeredFunctionIceCube[0]->GetA()) << ";\n";
-        code << "    const float B = " << to_float_string(layeredFunctionIceCube[0]->GetB()) << ";\n";
-        code << "    const float D = " << to_float_string(layeredFunctionIceCube[0]->GetD()) << ";\n";
-        code << "    const float E = " << to_float_string(layeredFunctionIceCube[0]->GetE()) << ";\n";
+        code << "    const float kappa = " << ToFloatString(layeredFunctionIceCube[0]->GetKappa()) << ";\n";
+        code << "    const float A = " << ToFloatString(layeredFunctionIceCube[0]->GetA()) << ";\n";
+        code << "    const float B = " << ToFloatString(layeredFunctionIceCube[0]->GetB()) << ";\n";
+        code << "    const float D = " << ToFloatString(layeredFunctionIceCube[0]->GetD()) << ";\n";
+        code << "    const float E = " << ToFloatString(layeredFunctionIceCube[0]->GetE()) << ";\n";
         code << "    \n";
-        code << "    const float x = wlen/" << to_float_string(I3Units::nanometer) << ";\n";
+        code << "    const float x = wlen/" << ToFloatString(I3Units::nanometer) << ";\n";
         code << "    \n";
         code << "#ifdef USE_NATIVE_MATH\n";
-        code << "    return " << to_float_string(I3Units::meter) << "*native_recip( (D*" << functionName << "_aDust400[layer]+E) * native_powr(x, -kappa)  +  A*native_exp(-B/x) * (1.f + 0.01f*" << functionName << "_deltaTau[layer]) );\n";
+        code << "    return " << ToFloatString(I3Units::meter) << "*native_recip( (D*" << functionName << "_aDust400[layer]+E) * native_powr(x, -kappa)  +  A*native_exp(-B/x) * (1.f + 0.01f*" << functionName << "_deltaTau[layer]) );\n";
         code << "#else\n";
-        code << "    return " << to_float_string(I3Units::meter) << "/( (D*" << functionName << "_aDust400[layer]+E) * powr(x, -kappa)  +  A*exp(-B/x) * (1.f + 0.01f*" << functionName << "_deltaTau[layer]) );\n";
+        code << "    return " << ToFloatString(I3Units::meter) << "/( (D*" << functionName << "_aDust400[layer]+E) * powr(x, -kappa)  +  A*exp(-B/x) * (1.f + 0.01f*" << functionName << "_deltaTau[layer]) );\n";
         code << "#endif\n";
         
         code << "}\n";
@@ -194,7 +194,7 @@ namespace I3CLSimHelper
         code << "__constant float " << functionName << "_b400[" << layeredFunctionIceCube.size() << "] = {\n";
         BOOST_FOREACH(const I3CLSimFunctionScatLenIceCubeConstPtr &function, layeredFunctionIceCube)
         {
-            code << "    " << to_float_string(function->GetB400()) << ",\n";
+            code << "    " << ToFloatString(function->GetB400()) << ",\n";
         }
         code << "};\n";
         code << "\n";
@@ -203,14 +203,14 @@ namespace I3CLSimHelper
         code << "inline float " << functionName << "(unsigned int layer, float wlen)\n";
         code << "{\n";
         
-        const std::string refWlenAsString = to_float_string(1./(400.*I3Units::nanometer));
+        const std::string refWlenAsString = ToFloatString(1./(400.*I3Units::nanometer));
 
-        code << "    const float alpha = " << to_float_string(layeredFunctionIceCube[0]->GetAlpha()) << ";\n";
+        code << "    const float alpha = " << ToFloatString(layeredFunctionIceCube[0]->GetAlpha()) << ";\n";
         code << "    \n";
         code << "#ifdef USE_NATIVE_MATH\n";
-        code << "    return " << to_float_string(I3Units::meter) << "*native_recip( " << functionName << "_b400[layer] * native_powr(wlen*" + refWlenAsString + ", -alpha) );\n";
+        code << "    return " << ToFloatString(I3Units::meter) << "*native_recip( " << functionName << "_b400[layer] * native_powr(wlen*" + refWlenAsString + ", -alpha) );\n";
         code << "#else\n";
-        code << "    return " << to_float_string(I3Units::meter) << "/( " << functionName << "_b400[layer] * powr(wlen*" + refWlenAsString + ", -alpha) );\n";
+        code << "    return " << ToFloatString(I3Units::meter) << "/( " << functionName << "_b400[layer] * powr(wlen*" + refWlenAsString + ", -alpha) );\n";
         code << "#endif\n";
         
         code << "}\n";

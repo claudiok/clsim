@@ -10,7 +10,7 @@
 #include <cmath>
 #include <limits>
 
-#include "clsim/to_float_string.h"
+#include "clsim/I3CLSimHelperToFloatString.h"
 
 I3CLSimRandomValueWlenCherenkovNoDispersion::
 I3CLSimRandomValueWlenCherenkovNoDispersion(double fromWlen,
@@ -51,9 +51,9 @@ std::string I3CLSimRandomValueWlenCherenkovNoDispersion::GetOpenCLFunction
     "{\n"
     "    const float r = " + uniformRandomCall_oc + ";\n"
     "#ifdef USE_NATIVE_MATH\n"
-    "    return native_recip(" + I3CLSimHelper::to_float_string(minVal) + " + r * " + I3CLSimHelper::to_float_string(range) + ");\n"
+    "    return native_recip(" + I3CLSimHelper::ToFloatString(minVal) + " + r * " + I3CLSimHelper::ToFloatString(range) + ");\n"
     "#else\n"
-    "    return 1.f/(" + I3CLSimHelper::to_float_string(minVal) + " + r * " + I3CLSimHelper::to_float_string(range) + ");\n"
+    "    return 1.f/(" + I3CLSimHelper::ToFloatString(minVal) + " + r * " + I3CLSimHelper::ToFloatString(range) + ");\n"
     "#endif\n"
     "}\n"
     ;

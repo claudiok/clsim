@@ -14,7 +14,7 @@
 
 #include "clsim/cl.hpp"
 
-#include "clsim/to_float_string.h"
+#include "clsim/I3CLSimHelperToFloatString.h"
 
 
 namespace I3CLSimHelper

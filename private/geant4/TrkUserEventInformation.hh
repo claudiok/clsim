@@ -34,7 +34,7 @@ public:
                             boost::this_thread::disable_interruption &threadDisabledInterruptionState_,
                             uint32_t currentExternalParticleID_,
                             double maxRefractiveIndex_);
-    ~TrkUserEventInformation();
+    virtual ~TrkUserEventInformation();
 
     
     bool abortRequested;

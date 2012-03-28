@@ -34,18 +34,18 @@
 
 #include "dataclasses/physics/I3Particle.h"
 
+static const unsigned i3clsimeventstatistics_version_ = 0;
+
 /**
  * @brief This class collects statistics/information
  * on simulated events (for example the total number
  * of generated photons).
  */
-static const unsigned i3clsimeventstatistics_version_ = 0;
-
 class I3CLSimEventStatistics : public I3FrameObject
 {
 public:
     I3CLSimEventStatistics();
-    ~I3CLSimEventStatistics();
+    virtual ~I3CLSimEventStatistics();
 
     
     //// NUMBER OF GENERATED PHOTONS

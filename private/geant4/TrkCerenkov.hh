@@ -91,7 +91,7 @@ public: // Without description
     
     // TrkCerenkov(const TrkCerenkov &right);
     
-    ~TrkCerenkov();
+    virtual ~TrkCerenkov();
     
     ////////////
     // Methods

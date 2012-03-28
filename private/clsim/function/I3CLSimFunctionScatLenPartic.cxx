@@ -5,7 +5,7 @@
 #include <typeinfo>
 #include <cmath>
 
-#include "clsim/to_float_string.h"
+#include "clsim/I3CLSimHelperToFloatString.h"
 using namespace I3CLSimHelper;
 
 const double I3CLSimFunctionScatLenPartic::default_volumeConcentrationSmallParticles=0.0075f*I3Units::perMillion; 
@@ -44,9 +44,9 @@ std::string I3CLSimFunctionScatLenPartic::GetOpenCLFunction(const std::string &f
 
     std::string funcBody = std::string() + 
     "{\n"
-    "    const float volumeConcentrationSmallParticles=" + to_float_string(volumeConcentrationSmallParticles_) + ";   // in ppm\n"
-    "    const float volumeConcentrationLargeParticles=" + to_float_string(volumeConcentrationLargeParticles_) + ";   // in ppm\n"
-    "    const float refWlen = " + to_float_string(550.*I3Units::nanometer) + ";\n"
+    "    const float volumeConcentrationSmallParticles=" + ToFloatString(volumeConcentrationSmallParticles_) + ";   // in ppm\n"
+    "    const float volumeConcentrationLargeParticles=" + ToFloatString(volumeConcentrationLargeParticles_) + ";   // in ppm\n"
+    "    const float refWlen = " + ToFloatString(550.*I3Units::nanometer) + ";\n"
     "    \n"
     "#ifdef USE_NATIVE_MATH\n"
     "    const float x = native_divide(refWlen,wavelength);\n"

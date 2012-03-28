@@ -8,7 +8,7 @@
 
 namespace I3CLSimHelper
 {
-    inline std::string to_float_string(double val)
+    inline std::string ToFloatString(double val)
     {
         if (val==1e-9) return "1e-9f";
         else if (val==1e-6) return "1e-6f";

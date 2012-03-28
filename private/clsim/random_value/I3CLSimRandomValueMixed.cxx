@@ -2,7 +2,7 @@
 #include <icetray/I3Logging.h>
 #include <clsim/random_value/I3CLSimRandomValueMixed.h>
 
-#include "clsim/to_float_string.h"
+#include "clsim/I3CLSimHelperToFloatString.h"
 using namespace I3CLSimHelper;
 
 I3CLSimRandomValueMixed::I3CLSimRandomValueMixed(double fractionOfFirstDistribution,
@@ -67,13 +67,13 @@ std::string I3CLSimRandomValueMixed::GetOpenCLFunction
         mainFunc = functionDecl + ";\n\n" + functionDecl + "\n"
         "{\n"    
         "    const float rr = " + uniformRandomCall_co + ";\n"
-        "    if (rr < " + to_float_string(fractionOfFirstDistribution_) + ")\n"
+        "    if (rr < " + ToFloatString(fractionOfFirstDistribution_) + ")\n"
         "    {\n"
-        "        return " + functionName + "_mix1(rr/" + to_float_string(fractionOfFirstDistribution_) + ");\n"
+        "        return " + functionName + "_mix1(rr/" + ToFloatString(fractionOfFirstDistribution_) + ");\n"
         "    }\n"
         "    else\n"
         "    {\n"
-        "        return " + functionName + "_mix2((1.f-rr)/" + to_float_string(1.-fractionOfFirstDistribution_) + ");\n"
+        "        return " + functionName + "_mix2((1.f-rr)/" + ToFloatString(1.-fractionOfFirstDistribution_) + ");\n"
         "    }\n"
         "}\n"
         ;
@@ -98,7 +98,7 @@ std::string I3CLSimRandomValueMixed::GetOpenCLFunction
         mainFunc = functionDecl + ";\n\n" + functionDecl + "\n"
         "{\n"    
         "    const float rr = " + uniformRandomCall_co + ";\n"
-        "    if (rr < " + to_float_string(fractionOfFirstDistribution_) + ")\n"
+        "    if (rr < " + ToFloatString(fractionOfFirstDistribution_) + ")\n"
         "    {\n"
         "        return " + functionName + "_mix1(" + functionArgsToCall + ");\n"
         "    }\n"

@@ -143,7 +143,7 @@ void I3CLSimTesterBase::DoSetup(const I3CLSimOpenCLDevice &device,
     try {
         //queue_ = shared_ptr<cl::CommandQueue>(new cl::CommandQueue(*context_, device.GetDeviceHandle(), CL_QUEUE_PROFILING_ENABLE));
         queue = shared_ptr<cl::CommandQueue>(new cl::CommandQueue(*context, *deviceHandle, 0));
-    } catch (cl::Error err) {
+    } catch (cl::Error &err) {
         log_error("OpenCL ERROR: %s (%i)", err.what(), err.err());
         throw std::runtime_error("OpenCL error: could not set up command queue!");
     }
@@ -158,7 +158,7 @@ void I3CLSimTesterBase::DoSetup(const I3CLSimOpenCLDevice &device,
         maxWorkgroupSize = kernel->getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(*deviceHandle);
         
         log_debug("Maximum workgroup sizes for the kernel is %" PRIu64, maxWorkgroupSize);
-    } catch (cl::Error err) {
+    } catch (cl::Error &err) {
         log_error("OpenCL ERROR: %s (%i)", err.what(), err.err());
         throw std::runtime_error("OpenCL error: could not create kernel!");
     }

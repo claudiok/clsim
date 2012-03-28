@@ -64,7 +64,7 @@ public:
     /**
      * Destroys an instance of this class
      */
-    ~I3MuonSlicer();
+    virtual ~I3MuonSlicer();
     
     /**
      * This module takes a configuration parameter and so it must be configured.

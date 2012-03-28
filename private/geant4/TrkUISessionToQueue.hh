@@ -12,7 +12,7 @@ class TrkUISessionToQueue : public G4UIsession
 {
 public:
     TrkUISessionToQueue(boost::shared_ptr<I3CLSimQueue<boost::shared_ptr<std::pair<const std::string, bool> > > > queueFromGeant4Messages);
-    ~TrkUISessionToQueue();
+    virtual ~TrkUISessionToQueue();
 
     // These two methods will be invoked by G4strstreambuf.
     virtual G4int ReceiveG4cout(G4String coutString);

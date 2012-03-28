@@ -35,7 +35,7 @@
 /**
  * @brief This class checks if a photon path intersects with 
  *   any shadowing part of the detecor (such as cables).
- *
+ *   This code is NOT functional at the moment.
  */
 class I3ShadowedPhotonRemover
 {

@@ -30,7 +30,7 @@ public:
                    boost::shared_ptr<I3CLSimQueue<I3CLSimLightSourceToStepConverterGeant4::FromGeant4Pair_t> > queueFromGeant4,
                    boost::this_thread::disable_interruption &threadDisabledInterruptionState,
                    double maxRefractiveIndex);
-    ~TrkEventAction();
+    virtual ~TrkEventAction();
     
 public:
     void BeginOfEventAction(const G4Event*);

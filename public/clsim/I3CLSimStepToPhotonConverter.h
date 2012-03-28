@@ -31,6 +31,8 @@
 class I3CLSimStepToPhotonConverter_exception : public std::runtime_error
 {
 public:
+    virtual ~I3CLSimStepToPhotonConverter_exception() throw() {;}
+
     I3CLSimStepToPhotonConverter_exception(const std::string &msg)
     :std::runtime_error(msg)
     {;}

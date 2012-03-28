@@ -5,7 +5,7 @@
 #include <typeinfo>
 #include <cmath>
 
-#include "clsim/to_float_string.h"
+#include "clsim/I3CLSimHelperToFloatString.h"
 using namespace I3CLSimHelper;
 
 const std::string I3CLSimFunctionRefIndexIceCube::default_mode = "phase";
@@ -106,26 +106,26 @@ std::string I3CLSimFunctionRefIndexIceCube::GetOpenCLFunction(const std::string 
 
     std::string funcBody = std::string() + 
     "{\n"
-    "    const float n0 = " + to_float_string(n0_) + ";\n"
-    "    const float n1 = " + to_float_string(n1_) + ";\n"
-    "    const float n2 = " + to_float_string(n2_) + ";\n"
-    "    const float n3 = " + to_float_string(n3_) + ";\n"
-    "    const float n4 = " + to_float_string(n4_) + ";\n";
+    "    const float n0 = " + ToFloatString(n0_) + ";\n"
+    "    const float n1 = " + ToFloatString(n1_) + ";\n"
+    "    const float n2 = " + ToFloatString(n2_) + ";\n"
+    "    const float n3 = " + ToFloatString(n3_) + ";\n"
+    "    const float n4 = " + ToFloatString(n4_) + ";\n";
     
     if (mode_=="group")
     {
         funcBody = funcBody +
         "    \n"
-        "    const float g0 = " + to_float_string(g0_) + ";\n"
-        "    const float g1 = " + to_float_string(g1_) + ";\n"
-        "    const float g2 = " + to_float_string(g2_) + ";\n"
-        "    const float g3 = " + to_float_string(g3_) + ";\n"
-        "    const float g4 = " + to_float_string(g4_) + ";\n";
+        "    const float g0 = " + ToFloatString(g0_) + ";\n"
+        "    const float g1 = " + ToFloatString(g1_) + ";\n"
+        "    const float g2 = " + ToFloatString(g2_) + ";\n"
+        "    const float g3 = " + ToFloatString(g3_) + ";\n"
+        "    const float g4 = " + ToFloatString(g4_) + ";\n";
     }
     
     funcBody = funcBody +
     "    \n"
-    "    const float x = wlen/" + to_float_string(I3Units::micrometer) + ";\n"
+    "    const float x = wlen/" + ToFloatString(I3Units::micrometer) + ";\n"
     "    const float np = n0 + x*(n1 + x*(n2 + x*(n3 + x*n4)));\n";
 
     if (mode_=="phase")
@@ -164,31 +164,31 @@ std::string I3CLSimFunctionRefIndexIceCube::GetOpenCLFunctionDerivative(const st
     if (mode_=="group")
     {
         funcBody = funcBody +
-        "    const float n0 = " + to_float_string(n0_) + ";\n";
+        "    const float n0 = " + ToFloatString(n0_) + ";\n";
     }
     
     funcBody = funcBody +
-    "    const float n1 = " + to_float_string(n1_) + ";\n"
-    "    const float n2 = " + to_float_string(n2_) + ";\n"
-    "    const float n3 = " + to_float_string(n3_) + ";\n"
-    "    const float n4 = " + to_float_string(n4_) + ";\n";
+    "    const float n1 = " + ToFloatString(n1_) + ";\n"
+    "    const float n2 = " + ToFloatString(n2_) + ";\n"
+    "    const float n3 = " + ToFloatString(n3_) + ";\n"
+    "    const float n4 = " + ToFloatString(n4_) + ";\n";
     
     if (mode_=="group")
     {
         funcBody = funcBody +
         "    \n"
-        "    const float g0 = " + to_float_string(g0_) + ";\n"
-        "    const float g1 = " + to_float_string(g1_) + ";\n"
-        "    const float g2 = " + to_float_string(g2_) + ";\n"
-        "    const float g3 = " + to_float_string(g3_) + ";\n"
-        "    const float g4 = " + to_float_string(g4_) + ";\n";
+        "    const float g0 = " + ToFloatString(g0_) + ";\n"
+        "    const float g1 = " + ToFloatString(g1_) + ";\n"
+        "    const float g2 = " + ToFloatString(g2_) + ";\n"
+        "    const float g3 = " + ToFloatString(g3_) + ";\n"
+        "    const float g4 = " + ToFloatString(g4_) + ";\n";
     }
 
     funcBody = funcBody +
     "    \n"
-    "    const float x = wlen/" + to_float_string(I3Units::micrometer) + ";\n"
+    "    const float x = wlen/" + ToFloatString(I3Units::micrometer) + ";\n"
     "    \n"
-    "    const float dnp = (n1 + x*(2.f*n2 + x*(3.f*n3 + x*4.f*n4)))/" + to_float_string(I3Units::micrometer) + ";\n";
+    "    const float dnp = (n1 + x*(2.f*n2 + x*(3.f*n3 + x*4.f*n4)))/" + ToFloatString(I3Units::micrometer) + ";\n";
     
     if (mode_=="phase")
     {
@@ -201,7 +201,7 @@ std::string I3CLSimFunctionRefIndexIceCube::GetOpenCLFunctionDerivative(const st
         funcBody = funcBody +
         "    const float np = n0 + x*(n1 + x*(n2 + x*(n3 + x*n4)));\n"
         "    const float np_corr = g0 + x*(g1 + x*(g2 + x*(g3 + x*g4)));\n"
-        "    const float dnp_corr = (g1 + x*(2.f*g2 + x*(3.f*g3 + x*4.f*g4)))/" + to_float_string(I3Units::micrometer) + ";\n"
+        "    const float dnp_corr = (g1 + x*(2.f*g2 + x*(3.f*g3 + x*4.f*g4)))/" + ToFloatString(I3Units::micrometer) + ";\n"
         "    \n"
         "    return dnp*np_corr + np*dnp_corr;\n";
     }

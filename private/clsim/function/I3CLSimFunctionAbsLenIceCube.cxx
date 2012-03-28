@@ -5,7 +5,7 @@
 #include <typeinfo>
 #include <cmath>
 
-#include "clsim/to_float_string.h"
+#include "clsim/I3CLSimHelperToFloatString.h"
 using namespace I3CLSimHelper;
 
 I3CLSimFunctionAbsLenIceCube::
@@ -48,20 +48,20 @@ std::string I3CLSimFunctionAbsLenIceCube::GetOpenCLFunction(const std::string &f
 
     std::string funcBody = std::string() + 
     "{\n"
-    "    const float kappa = " + to_float_string(kappa_) + ";\n"
-    "    const float A = " + to_float_string(A_) + ";\n"
-    "    const float B = " + to_float_string(B_) + ";\n"
-    "    const float D = " + to_float_string(D_) + ";\n"
-    "    const float E = " + to_float_string(E_) + ";\n"
-    "    const float aDust400 = " + to_float_string(aDust400_) + ";\n"
-    "    const float deltaTau = " + to_float_string(deltaTau_) + ";\n"
+    "    const float kappa = " + ToFloatString(kappa_) + ";\n"
+    "    const float A = " + ToFloatString(A_) + ";\n"
+    "    const float B = " + ToFloatString(B_) + ";\n"
+    "    const float D = " + ToFloatString(D_) + ";\n"
+    "    const float E = " + ToFloatString(E_) + ";\n"
+    "    const float aDust400 = " + ToFloatString(aDust400_) + ";\n"
+    "    const float deltaTau = " + ToFloatString(deltaTau_) + ";\n"
     "    \n"
-    "    const float x = wlen/" + to_float_string(I3Units::nanometer) + ";\n"
+    "    const float x = wlen/" + ToFloatString(I3Units::nanometer) + ";\n"
     "    \n"
     "#ifdef USE_NATIVE_MATH\n"
-    "    return " + to_float_string(I3Units::m) + "*native_recip( (D*aDust400+E) * native_powr(x, -kappa)  +  A*native_exp(-B/x) * (1.f + 0.01f*deltaTau) );\n"
+    "    return " + ToFloatString(I3Units::m) + "*native_recip( (D*aDust400+E) * native_powr(x, -kappa)  +  A*native_exp(-B/x) * (1.f + 0.01f*deltaTau) );\n"
     "#else\n"
-    "    return " + to_float_string(I3Units::m) + "/( (D*aDust400+E) * powr(x, -kappa)  +  A*exp(-B/x) * (1.f + 0.01f*deltaTau) );\n"
+    "    return " + ToFloatString(I3Units::m) + "/( (D*aDust400+E) * powr(x, -kappa)  +  A*exp(-B/x) * (1.f + 0.01f*deltaTau) );\n"
     "#endif\n"
     "}\n"
     ;

@@ -17,7 +17,7 @@
 
 #include "opencl/I3CLSimHelperGenerateMediumPropertiesSource_Optimizers.h"
 
-#include "clsim/to_float_string.h"
+#include "clsim/I3CLSimHelperToFloatString.h"
 
 
 namespace I3CLSimHelper
@@ -189,15 +189,15 @@ namespace I3CLSimHelper
         
         code << "#define MEDIUM_LAYERS " << mediumProperties.GetLayersNum() << "\n";
         code << "\n";
-        code << "#define MEDIUM_MIN_WLEN " << to_float_string(mediumProperties.GetMinWavelength()) << "\n";
-        code << "#define MEDIUM_MAX_WLEN " << to_float_string(mediumProperties.GetMaxWavelength()) << "\n";
+        code << "#define MEDIUM_MIN_WLEN " << ToFloatString(mediumProperties.GetMinWavelength()) << "\n";
+        code << "#define MEDIUM_MAX_WLEN " << ToFloatString(mediumProperties.GetMaxWavelength()) << "\n";
         code << "\n";
-        code << "#define MEDIUM_MIN_RECIP_WLEN " << to_float_string(1./mediumProperties.GetMaxWavelength()) << "\n";
-        code << "#define MEDIUM_MAX_RECIP_WLEN " << to_float_string(1./mediumProperties.GetMinWavelength()) << "\n";
+        code << "#define MEDIUM_MIN_RECIP_WLEN " << ToFloatString(1./mediumProperties.GetMaxWavelength()) << "\n";
+        code << "#define MEDIUM_MAX_RECIP_WLEN " << ToFloatString(1./mediumProperties.GetMinWavelength()) << "\n";
         code << "\n";
         code << "// medium layer structure:\n";
-        code << "#define MEDIUM_LAYER_BOTTOM_POS " << to_float_string(mediumProperties.GetLayersZStart()) << "\n";
-        code << "#define MEDIUM_LAYER_THICKNESS  " << to_float_string(mediumProperties.GetLayersHeight()) << "\n";
+        code << "#define MEDIUM_LAYER_BOTTOM_POS " << ToFloatString(mediumProperties.GetLayersZStart()) << "\n";
+        code << "#define MEDIUM_LAYER_THICKNESS  " << ToFloatString(mediumProperties.GetLayersHeight()) << "\n";
         code << "\n";
 
         // phase refractive index
@@ -238,7 +238,7 @@ namespace I3CLSimHelper
             code << "inline float getGroupVelocity(unsigned int layer, float wavelength);\n\n";
             code << "inline float getGroupVelocity(unsigned int layer, float wavelength)\n";
             code << "{\n";
-            code << "    const float c_light = " << to_float_string(I3Constants::c) << ";\n";
+            code << "    const float c_light = " << ToFloatString(I3Constants::c) << ";\n";
             code << "    const float n_group = getGroupRefIndex(layer, wavelength);\n";
             code << "    \n";
             code << "    return c_light / n_group;\n";
@@ -257,7 +257,7 @@ namespace I3CLSimHelper
             code << "inline float getGroupVelocity(unsigned int layer, float wavelength);\n\n";
             code << "inline float getGroupVelocity(unsigned int layer, float wavelength)\n";
             code << "{\n";
-            code << "    const float c_light = " << to_float_string(I3Constants::c) << ";\n";
+            code << "    const float c_light = " << ToFloatString(I3Constants::c) << ";\n";
             code << "    \n";
             code << "#ifdef USE_NATIVE_MATH\n";
             code << "    const float n_inv = native_recip(getPhaseRefIndex(layer, wavelength));\n";
@@ -273,7 +273,7 @@ namespace I3CLSimHelper
             code << "inline float getGroupRefIndex(unsigned int layer, float wavelength);\n\n";
             code << "inline float getGroupRefIndex(unsigned int layer, float wavelength)\n";
             code << "{\n";
-            code << "    const float c_light = " << to_float_string(I3Constants::c) << ";\n";
+            code << "    const float c_light = " << ToFloatString(I3Constants::c) << ";\n";
             code << "    const float groupvel = getGroupVelocity(layer, wavelength);\n";
             code << "    \n";
             code << "    return c_light / groupvel;\n";

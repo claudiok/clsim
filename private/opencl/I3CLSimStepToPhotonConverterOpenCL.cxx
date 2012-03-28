@@ -696,7 +696,7 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
             queue_.push_back(shared_ptr<cl::CommandQueue>(new cl::CommandQueue(*context_, device, 0)));
 #endif
         }
-    } catch (cl::Error err) {
+    } catch (cl::Error &err) {
         queue_.clear(); // throw away command queue.
         log_error("OpenCL ERROR: %s (%i)", err.what(), err.err());
         throw I3CLSimStepToPhotonConverter_exception("OpenCL error: could not set up command queue!");
@@ -721,7 +721,7 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
         }
         
         log_debug("Maximum workgroup sizes for the kernel is %" PRIu64, maxWorkgroupSize_);
-    } catch (cl::Error err) {
+    } catch (cl::Error &err) {
         kernel_.clear(); // throw away command queue.
         queue_.clear(); // throw away command queue.
         log_error("OpenCL ERROR: %s (%i)", err.what(), err.err());

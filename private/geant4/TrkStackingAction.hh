@@ -8,7 +8,7 @@ class TrkStackingAction : public G4UserStackingAction
 {
 public:
     TrkStackingAction();
-    ~TrkStackingAction();
+    virtual ~TrkStackingAction();
 
     virtual G4ClassificationOfNewTrack ClassifyNewTrack(const G4Track* aTrack);
     virtual void NewStage();

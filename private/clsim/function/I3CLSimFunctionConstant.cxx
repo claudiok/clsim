@@ -7,7 +7,7 @@
 #include <sstream>
 #include <stdexcept>
 
-#include "clsim/to_float_string.h"
+#include "clsim/I3CLSimHelperToFloatString.h"
 using namespace I3CLSimHelper;
 
 I3CLSimFunctionConstant::

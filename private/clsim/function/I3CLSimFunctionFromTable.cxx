@@ -9,7 +9,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
 
-#include "clsim/to_float_string.h"
+#include "clsim/I3CLSimHelperToFloatString.h"
 using namespace I3CLSimHelper;
 
 I3CLSimFunctionFromTable::
@@ -142,7 +142,7 @@ std::string I3CLSimFunctionFromTable::GetOpenCLFunction(const std::string &funct
     "__constant float " + dataName + "[" + boost::lexical_cast<std::string>(values_.size()) + "] = {\n";
     BOOST_FOREACH(const double &val, values_)
     {
-        dataDef += to_float_string(val) + ", ";
+        dataDef += ToFloatString(val) + ", ";
     }
     dataDef += "\n";
     dataDef += "};\n\n";
@@ -153,7 +153,7 @@ std::string I3CLSimFunctionFromTable::GetOpenCLFunction(const std::string &funct
     std::string interpHelperBody =
     "{\n"
     "    float fbin;\n"
-    "    *fraction = modf((wavelength-" + to_float_string(startWlen_) + ")/" + to_float_string(wlenStep_) + ", &fbin);\n"
+    "    *fraction = modf((wavelength-" + ToFloatString(startWlen_) + ")/" + ToFloatString(wlenStep_) + ", &fbin);\n"
     "    \n"
     "    int ibin=(int)fbin;\n"
     "    \n"

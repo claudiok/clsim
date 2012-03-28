@@ -2,7 +2,7 @@
 #include <icetray/I3Logging.h>
 #include <clsim/random_value/I3CLSimRandomValueHenyeyGreenstein.h>
 
-#include "clsim/to_float_string.h"
+#include "clsim/I3CLSimHelperToFloatString.h"
 using namespace I3CLSimHelper;
 
 I3CLSimRandomValueHenyeyGreenstein::I3CLSimRandomValueHenyeyGreenstein(double meanCosine)
@@ -33,8 +33,8 @@ std::string I3CLSimRandomValueHenyeyGreenstein::GetOpenCLFunction
     
     return functionDecl + ";\n\n" + functionDecl + "\n"
     "{\n"
-    "    const float g = " + to_float_string(meanCosine_) + ";\n"
-    "    const float g2 = " + to_float_string(meanCosine_*meanCosine_) + ";\n"
+    "    const float g = " + ToFloatString(meanCosine_) + ";\n"
+    "    const float g2 = " + ToFloatString(meanCosine_*meanCosine_) + ";\n"
     "    \n"
     "    // a random number [-1;+1]\n"
     "    const float s = 2.f*(" + uniformRandomCall_co + ")-1.f;\n"

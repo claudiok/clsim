@@ -2,7 +2,7 @@
 #include <icetray/I3Logging.h>
 #include <clsim/random_value/I3CLSimRandomValueSimplifiedLiu.h>
 
-#include "clsim/to_float_string.h"
+#include "clsim/I3CLSimHelperToFloatString.h"
 using namespace I3CLSimHelper;
 
 I3CLSimRandomValueSimplifiedLiu::I3CLSimRandomValueSimplifiedLiu(double meanCosine)
@@ -33,9 +33,9 @@ std::string I3CLSimRandomValueSimplifiedLiu::GetOpenCLFunction
 
     return functionDecl + ";\n\n" + functionDecl + "\n"
     "{\n"
-    "    //const float g = " + to_float_string(meanCosine_) + ";\n"
+    "    //const float g = " + ToFloatString(meanCosine_) + ";\n"
     "    //const float beta = (1.f-g)/(1.f+g);\n"
-    "    const float beta = " + to_float_string((1.-meanCosine_)/(1.+meanCosine_)) + ";\n"
+    "    const float beta = " + ToFloatString((1.-meanCosine_)/(1.+meanCosine_)) + ";\n"
     "    \n"
     "#ifdef USE_NATIVE_MATH\n"
     "    return clamp(2.f * native_powr((" + uniformRandomCall_co + "), beta) - 1.f, -1.f, 1.f);\n"

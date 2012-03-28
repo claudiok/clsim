@@ -5,7 +5,7 @@
 #include <typeinfo>
 #include <cmath>
 
-#include "clsim/to_float_string.h"
+#include "clsim/I3CLSimHelperToFloatString.h"
 using namespace I3CLSimHelper;
 
 I3CLSimFunctionPolynomial::
@@ -87,16 +87,16 @@ std::string I3CLSimFunctionPolynomial::GetOpenCLFunction(const std::string &func
     
     // check the range
     if (!std::isinf(rangemin_)) {
-        output << "if (x < " << to_float_string(rangemin_) << ")" << std::endl;
+        output << "if (x < " << ToFloatString(rangemin_) << ")" << std::endl;
         output << "{" << std::endl;
-        output << "    return " << to_float_string(underflow_) << ";" << std::endl;
+        output << "    return " << ToFloatString(underflow_) << ";" << std::endl;
         output << "}" << std::endl;
     }
     
     if (!std::isinf(rangemax_)) {
-        output << "if (x > " << to_float_string(rangemax_) << ")" << std::endl;
+        output << "if (x > " << ToFloatString(rangemax_) << ")" << std::endl;
         output << "{" << std::endl;
-        output << "    return " << to_float_string(overflow_) << ";" << std::endl;
+        output << "    return " << ToFloatString(overflow_) << ";" << std::endl;
         output << "}" << std::endl;
     }
 
@@ -106,7 +106,7 @@ std::string I3CLSimFunctionPolynomial::GetOpenCLFunction(const std::string &func
     }
     else if (coefficients_.size()==1)
     {
-        output << "return " << to_float_string(coefficients_[0]) << "f;" << std::endl;
+        output << "return " << ToFloatString(coefficients_[0]) << "f;" << std::endl;
     }
     else // 2 or more coefficients
     {
@@ -114,10 +114,10 @@ std::string I3CLSimFunctionPolynomial::GetOpenCLFunction(const std::string &func
         
         for (std::size_t i=0;i<coefficients_.size()-1;++i)
         {
-            output << to_float_string(coefficients_[i]) << " + x*(";
+            output << ToFloatString(coefficients_[i]) << " + x*(";
         }
 
-        output << to_float_string(coefficients_[coefficients_.size()-1]);
+        output << ToFloatString(coefficients_[coefficients_.size()-1]);
         
         for (std::size_t i=0;i<coefficients_.size()-1;++i)
         {

@@ -270,7 +270,7 @@ class UserHookForAbortState : public G4VStateDependent
 {
 public:
     UserHookForAbortState() {;}
-    ~UserHookForAbortState() {;}
+    virtual ~UserHookForAbortState() {;}
     
     virtual G4bool Notify(G4ApplicationState requiredState)
     {

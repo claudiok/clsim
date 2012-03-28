@@ -2,7 +2,7 @@
 #include <icetray/I3Logging.h>
 #include <clsim/random_value/I3CLSimRandomValueRayleighScatteringCosAngle.h>
 
-#include "clsim/to_float_string.h"
+#include "clsim/I3CLSimHelperToFloatString.h"
 using namespace I3CLSimHelper;
 
 I3CLSimRandomValueRayleighScatteringCosAngle::I3CLSimRandomValueRayleighScatteringCosAngle()

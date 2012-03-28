@@ -17,7 +17,7 @@ class TrkDetectorConstruction : public G4VUserDetectorConstruction
 {
 public:
     TrkDetectorConstruction(I3CLSimMediumPropertiesConstPtr mediumProperties);
-    ~TrkDetectorConstruction();
+    virtual ~TrkDetectorConstruction();
     
     G4VPhysicalVolume* Construct();
     

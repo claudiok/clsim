@@ -11,7 +11,7 @@ class TrkPrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
 {
 public:
     TrkPrimaryGeneratorAction();
-    ~TrkPrimaryGeneratorAction();
+    virtual ~TrkPrimaryGeneratorAction();
 
 public:
     void GeneratePrimaries(G4Event* anEvent);
