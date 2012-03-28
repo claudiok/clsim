@@ -1292,13 +1292,20 @@ void I3CLSimModule::ConvertMCTreeToLightSources(const I3MCTree &mcTree,
          it != mcTree.end(); ++it)
     {
         const I3Particle &particle_ref = *it;
-        
+
         // In-ice particles only
         if (particle_ref.GetLocationType() != I3Particle::InIce) continue;
         
         // ignore particles with shape "Dark"
         if (particle_ref.GetShape() == I3Particle::Dark) continue;
-        
+
+        // skip primaries that are clearly outside the ice 
+        // (those are probably cosmic rays that get marked as "InIce"
+        // by ucr-icetray)
+        if (particle_ref.GetShape() == I3Particle::Primary) {
+            if (particle_ref.GetZ() >= mediumProperties_->GetAirZCoord()) continue;
+        }
+
         // check particle type
         const bool isMuon = (particle_ref.GetType() == I3Particle::MuMinus) || (particle_ref.GetType() == I3Particle::MuPlus);
         const bool isNeutrino = particle_ref.IsNeutrino();
