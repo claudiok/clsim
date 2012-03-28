@@ -9,6 +9,20 @@ from icecube.clsim import GetDefaultParameterizationList
 from icecube.clsim import GetFlasherParameterizationList
 
 def AutoSetGeant4Environment():
+    # older versions used these hard-coded locations:
+    hardCodedForGeant4_9_3and4 = \
+        {"G4LEVELGAMMADATA" : expandvars("$I3_PORTS/share/geant4/data/PhotonEvaporation2.0"),
+         "G4RADIOACTIVEDATA" : expandvars("$I3_PORTS/share/geant4/data/RadioactiveDecay3.2"),
+         "G4LEDATA" : expandvars("$I3_PORTS/share/geant4/data/G4EMLOW6.9"),
+         "G4NEUTRONHPDATA" : expandvars("$I3_PORTS/share/geant4/data/G4NDL3.13"),
+         "G4ABLADATA" : expandvars("$I3_PORTS/share/geant4/data/G4ABLA3.0"),
+         "G4NEUTRONXSDATA" : "(none)", # geant 4.9.3/4 does not have these
+         "G4PIIDATA" : "(none)",       # geant 4.9.3/4 does not have these
+         "G4REALSURFACEDATA" : "(none)"# geant 4.9.3/4 does not have these
+        }
+    hasOldGeant4 = (os.path.isdir(expandvars("$I3_PORTS/lib/geant4_4.9.4")) or os.path.isdir(expandvars("$I3_PORTS/lib/geant4_4.9.3"))) and (not os.path.isfile(expandvars("$I3_PORTS/bin/geant4.sh")))
+
+    
     Geant4Variables = set(["G4ABLADATA", "G4LEDATA", "G4LEVELGAMMADATA", "G4NEUTRONHPDATA", "G4NEUTRONXSDATA", "G4PIIDATA", "G4RADIOACTIVEDATA", "G4REALSURFACEDATA"])
         
     Geant4Variables_unset = set()
@@ -18,7 +32,10 @@ def AutoSetGeant4Environment():
         
     Geant4Variables_set = Geant4Variables.difference(Geant4Variables_unset)
     if len(Geant4Variables_unset)>0:
-        print "Not all Geant4 environment variables are set. Trying to get some of them from $I3_PORTS/bin/geant4.sh.."
+        if hasOldGeant4:
+            print "Not all Geant4 environment variables are set. Trying to get some of them from $I3_PORTS/bin/geant4.sh.."
+        else:
+            print "Not all Geant4 environment variables are set. Trying to use defaults for geant4.9.3/4.9.4.."
             
         print "already set:"
         for var in Geant4Variables_set:
@@ -28,14 +45,17 @@ def AutoSetGeant4Environment():
         for var in Geant4Variables_unset:
             print "  *", var
                 
-        if not os.path.isfile(expandvars("$I3_PORTS/bin/geant4.sh")):
-            raise RuntimeError("Cannot automatically set missing environment variables. ($I3_PORTS/bin/geant4.sh is missing.) Please set them yourself.")
+        if hasOldGeant4:
+            geant4env = hardCodedForGeant4_9_3and4
+        else:
+            if not os.path.isfile(expandvars("$I3_PORTS/bin/geant4.sh")):
+                raise RuntimeError("Cannot automatically set missing environment variables. ($I3_PORTS/bin/geant4.sh is missing.) Please set them yourself.")
 
-        # get the environment after loading geant4.sh
-        source = expandvars("source $I3_PORTS/bin/geant4.sh")
-        dump = '/usr/bin/python -c "import os,pickle;print pickle.dumps(os.environ)"'
-        penv = os.popen('%s && %s' %(source,dump))
-        geant4env = pickle.loads(penv.read())
+            # get the environment after loading geant4.sh
+            source = expandvars("source $I3_PORTS/bin/geant4.sh")
+            dump = '/usr/bin/python -c "import os,pickle;print pickle.dumps(os.environ)"'
+            penv = os.popen('%s && %s' %(source,dump))
+            geant4env = pickle.loads(penv.read())
 
         print "setting from geant4.sh:"
         for var in Geant4Variables_unset:
@@ -172,8 +192,7 @@ def I3CLSimMakePhotons(tray, name,
 
     from icecube import icetray, dataclasses, clsim
 
-    if UseGeant4:
-        AutoSetGeant4Environment()
+    AutoSetGeant4Environment()
 
     # warn the user in case they might have done something they probably don't want
     if UnWeightedPhotons and (DOMOversizeFactor != 1.):

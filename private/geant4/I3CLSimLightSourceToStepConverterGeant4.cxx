@@ -18,6 +18,8 @@
 #include "G4PhysListFactory.hh"
 #include "G4ParticleGun.hh"
 
+#include "G4Version.hh"
+
 #include "TrkEMPhysicsUHE.hh"
 #include "TrkOpticalPhysics.hh"
 #include "TrkEnergyCut.hh"
@@ -84,21 +86,26 @@ maxBunchSize_(512000)
     if ((maxNumPhotonsPerStep_<=0.))
         throw I3CLSimLightSourceToStepConverter_exception("Invalid maxNumPhotonsPerStep.");
 
-    // set up stupid environment variables
-    char *dummy = getenv("I3_PORTS");
-    const std::string I3_PORTS = dummy?dummy:"";    
-    const std::string DATA_BASEDIR = "share/geant4/data";
-    
-    if (!dummy) {
-        G4cout << "The $I3_PORTS variable is not set! You have to provide the Geant4 data directories using their respective environment variables!" << G4endl;
-    } else {
-        // this does NOT overwrite already existing variables!
-        setenv("G4LEVELGAMMADATA", (I3_PORTS + "/" + DATA_BASEDIR + "/PhotonEvaporation2.0").c_str(), 0);
-        setenv("G4RADIOACTIVEDATA", (I3_PORTS + "/" + DATA_BASEDIR + "/RadioactiveDecay3.2").c_str(), 0);
-        setenv("G4LEDATA", (I3_PORTS + "/" + DATA_BASEDIR + "/G4EMLOW6.9").c_str(), 0);
-        setenv("G4NEUTRONHPDATA", (I3_PORTS + "/" + DATA_BASEDIR + "/G4NDL3.13").c_str(), 0);
-        setenv("G4ABLADATA", (I3_PORTS + "/" + DATA_BASEDIR + "/G4ABLA3.0").c_str(), 0);
+    // check for the braindead Geant4 environment variables
+    if ((!getenv("G4LEVELGAMMADATA")) ||
+        (!getenv("G4RADIOACTIVEDATA")) ||
+        (!getenv("G4LEDATA")) ||
+        (!getenv("G4NEUTRONHPDATA")) ||
+        (!getenv("G4ABLADATA")))
+    {
+        log_warn("Geant4 requires the following environment variables to be set: \"G4LEVELGAMMADATA\", \"G4RADIOACTIVEDATA\", \"G4LEDATA\", \"G4NEUTRONHPDATA\" and \"G4ABLADATA\"");
     }
+
+    // geant 4.9.5 needs some more
+#if G4VERSION_NUMBER >= 950
+    if ((!getenv("G4NEUTRONXSDATA")) ||
+        (!getenv("G4PIIDATA")) ||
+        (!getenv("G4REALSURFACEDATA")))
+    {
+        log_warn("Geant4.9.5 requires the following environment variables to be set: \"G4NEUTRONXSDATA\", \"G4PIIDATA\", \"G4REALSURFACEDATA\"");
+    }
+#endif
+    
     
     /*
     // check physics list
