@@ -36,7 +36,6 @@ std::string I3CLSimFunctionScatLenIceCube::GetOpenCLFunction(const std::string &
     std::string funcDef = 
     std::string("inline float ") + functionName + std::string("(float wlen)\n");
 
-    const std::string meterAsString = ToFloatString(I3Units::m);
     const std::string refWlenAsString = ToFloatString(1./(400.*I3Units::nanometer));
     
     

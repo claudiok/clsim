@@ -106,18 +106,6 @@ maxBunchSize_(512000)
     }
 #endif
     
-    
-    /*
-    // check physics list
-    {
-        G4PhysListFactory *factory = new G4PhysListFactory();
-        G4VModularPhysicsList *physics = factory->GetReferencePhysList(physicsListName_.c_str());
-        delete factory;
-        if (!physics)
-            throw I3CLSimLightSourceToStepConverter_exception("Invalid Physics List name.");
-        delete physics;
-    } 
-     */
 }
 
 I3CLSimLightSourceToStepConverterGeant4::~I3CLSimLightSourceToStepConverterGeant4()

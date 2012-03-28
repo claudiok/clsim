@@ -212,12 +212,6 @@ G4bool TrkCerenkov::IsApplicable(const G4ParticleDefinition& aParticleType)
     return (aParticleType.GetPDGCharge() != 0);
 }
 
-//inline 
-//void TrkCerenkov::SetTrackSecondariesFirst(const G4bool state) 
-//{ 
-//    fTrackSecondariesFirst = state;
-//}
-
 inline
 void TrkCerenkov::SetMaxBetaChangePerStep(const G4double value)
 {

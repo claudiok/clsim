@@ -149,12 +149,6 @@ namespace {
         
         log_trace("OM orientation=(%f,%f,%f)", omOrientation.GetX(), omOrientation.GetY(), omOrientation.GetZ());
         
-        //log_info("photon pos=(%f,%f,%f)m, dir=(%f,%f,%f), omRadius=%fm, PMTRadius=%fcm",
-        //        px/I3Units::m, py/I3Units::m, pz/I3Units::m,
-        //        dx, dy, dz,
-        //        omRadius/I3Units::m,
-        //        PMTRadius/I3Units::cm);
-        
         int foundIntersection=-1;
         unsigned int numPMTs = om_typeinfo.GetNumPMTs();
         for (unsigned int pmtNum=0; pmtNum<numPMTs; ++pmtNum)
@@ -180,8 +174,6 @@ namespace {
             // find the intersection of the PMT's surface plane and the photon's path
             const double denom = dx*nx + dy*ny + dz*nz; // should be < 0., test that:
             
-            //log_info("  * PMT %u, n=(%f,%f,%f), denom=%f", pmtNum, nx, ny, nz, denom);
-            
             if (denom>=1e-8) continue; // no intersection, photon is moving towards the PMT's back
             
             double ax = pmt_info.GetPosition().GetX();
@@ -200,8 +192,6 @@ namespace {
             
             const double mu = ((ax-px)*nx + (ay-py)*ny + (az-pz)*nz)/denom;
             
-            //log_info("    a=(%f,%f,%f)m, mu=%fm", ax/I3Units::m, ay/I3Units::m, az/I3Units::m, mu/I3Units::m);
-            
             if (mu < 0.) continue; // no intersection, photon is moving away from PMT
             
             // calculate the distance of the point of intersection
@@ -210,8 +200,6 @@ namespace {
             (ax-px-mu*dx)*(ax-px-mu*dx) + 
             (ay-py-mu*dy)*(ay-py-mu*dy) + 
             (az-pz-mu*dz)*(az-pz-mu*dz);
-            
-            //log_info("    sqrt(distFromPMTCenterSquared=%fm^2)=%fm", distFromPMTCenterSquared/I3Units::m2, sqrt(distFromPMTCenterSquared)/I3Units::m);
             
             if (distFromPMTCenterSquared > pmtRadiusSquared) continue; // photon outside the PMT radius
             
@@ -229,8 +217,6 @@ namespace {
                 }
                 
             }
-            
-            //log_info("      => INTERSECTION FOUND");
             
             foundIntersection = pmtNum;
             pathLengthInOM = mu;

@@ -794,16 +794,6 @@ void I3CLSimLightSourceToStepConverterPPC::GenerateStep(I3CLSimStep &newStep,
                                                         const double &longitudinalPos,
                                                         GenerateStepPreCalculator &preCalc)
 {
-    /*
-     const double angularDist_a=0.39;
-     const double angularDist_b=2.61;
-     const double angularDist_I=1.-std::exp(-angularDist_b*std::pow(2., angularDist_a));
-     
-     const double rndVal = randomService.Uniform();
-     const double angular_cos=std::max(1.-std::pow(-std::log(1.-rndVal*angularDist_I)/angularDist_b, 1./angularDist_a), -1.0);
-     const double angular_sin=std::sqrt(1.-angular_cos*angular_cos);
-     */
-    
     double angular_cos, angular_sin, random_value;
     preCalc.GetAngularCosSinValue(angular_cos, angular_sin, random_value);
     

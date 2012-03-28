@@ -38,31 +38,6 @@ G4ClassificationOfNewTrack TrkStackingAction::ClassifyNewTrack(const G4Track * a
             return fKill;
     }
 
-    /*
-    // is it the primary particle?
-    if (aTrack->GetParentID()!=0)
-    {
-        // it's NOT the primary! check if this new particle is inside the (extended) can
-        
-        const double canHeight = 1000.*m;
-        const double canRadius = 750.*m;
-        
-        G4ThreeVector particlePosRelToCan = aTrack->GetPosition(); // - SSimDetectorConstruction::canPosition;
-        
-        if (fabs(particlePosRelToCan.z()) > canHeight/2.) {
-            // we are above or below the can
-            return fKill;
-        } else {
-            G4double posRadius = std::sqrt(particlePosRelToCan.x()*particlePosRelToCan.x() + particlePosRelToCan.y()*particlePosRelToCan.y());
-            if (posRadius > canRadius) {
-                return fKill;
-            }
-        }
-        
-        //return fUrgent;
-    }
-    */
-
     // see if there are eny parameterizations available for this particle
     const I3CLSimLightSourceParameterizationSeries &parameterizations = eventInformation->parameterizationAvailable;
 
@@ -113,8 +88,6 @@ G4ClassificationOfNewTrack TrkStackingAction::ClassifyNewTrack(const G4Track * a
             particle.SetTime(trackTime*I3Units::ns/ns);
             particle.SetEnergy(trackEnergy*I3Units::GeV/GeV);
 
-            //G4cout << "Geant4: sending a " << particle.GetTypeString() << " with id " << eventInformation->currentExternalParticleID << " and E=" << particle.GetEnergy()/I3Units::GeV << "GeV to a parameterization handler." << G4endl;
-
             I3CLSimLightSourcePtr lightSource(new I3CLSimLightSource(particle));
             sendToParameterizationQueue->push_back(boost::make_tuple(lightSource, eventInformation->currentExternalParticleID, parameterization));
 
@@ -128,11 +101,9 @@ G4ClassificationOfNewTrack TrkStackingAction::ClassifyNewTrack(const G4Track * a
 
 void TrkStackingAction::NewStage()
 {
-    //G4cout << "New stage!" << G4endl;
 }
 
 void TrkStackingAction::PrepareNewEvent()
 {
-    //G4cout << "Prepare new event!" << G4endl;
 }
 

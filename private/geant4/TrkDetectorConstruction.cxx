@@ -223,15 +223,6 @@ G4VPhysicalVolume* TrkDetectorConstruction::ConstructDetector()
                                     //,0,0,0,false
                                     );
     
-    //world_log->SetUserLimits
-    //(
-    // new G4UserLimits(uStepMax = DBL_MAX,
-    //                  uTrakMax = DBL_MAX,
-    //                  uTimeMax = DBL_MAX,
-    //                  uEkinMin = 0.,
-    //                  uRangMin = 0. )
-    //);
-    
     world_phys = new G4PVPlacement(0,G4ThreeVector(),
                                   world_log,"world_phys",NULL,false,0,false);
 

@@ -183,19 +183,6 @@ TrkCerenkov::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
 
     G4int NumPhotons = (G4int) G4Poisson(MeanNumberOfPhotons);
 
-//    const double canHeight = 1000.*m;
-//    const double canRadius = 750.*m;
-//    if (fabs(x0.z()) > canHeight/2.) {
-//        // we are above or below the can
-//        NumPhotons=0;
-//    } else {
-//        G4double posRadius = std::sqrt(x0.x()*x0.x() + x0.y()*x0.y());
-//        if (posRadius > canRadius) {
-//            NumPhotons=0;
-//        }
-//    }
-    
-    
     if (NumPhotons <= 0) 
     {
         // return unchanged particle and no secondaries  
@@ -279,152 +266,6 @@ TrkCerenkov::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
     {
         aParticleChange.ProposeTrackStatus(fStopAndKill);
     }
-    
-    /*
-    ////////////////////////////////////////////////////////////////
-    
-    aParticleChange.SetNumberOfSecondaries(NumPhotons);
-    
-    //if (fTrackSecondariesFirst) {
-    //    if (aTrack.GetTrackStatus() == fAlive )
-    //        aParticleChange.ProposeTrackStatus(fSuspend);
-    //}
-    
-    ////////////////////////////////////////////////////////////////
-    
-    G4double Pmin = Rindex->GetMinPhotonEnergy();
-    G4double Pmax = Rindex->GetMaxPhotonEnergy();
-    G4double dp = Pmax - Pmin;
-    
-    G4double nMax = Rindex->GetMaxProperty();
-    
-    G4double BetaInverse = 1./beta;
-    
-    G4double maxCos = BetaInverse / nMax; 
-    G4double maxSin2 = (1.0 - maxCos) * (1.0 + maxCos);
-    
-    const G4double beta1 = pPreStepPoint ->GetBeta();
-    const G4double beta2 = pPostStepPoint->GetBeta();
-    
-    G4double MeanNumberOfPhotons1 =
-    GetAverageNumberOfPhotons(charge,beta1,aMaterial,Rindex);
-    G4double MeanNumberOfPhotons2 =
-    GetAverageNumberOfPhotons(charge,beta2,aMaterial,Rindex);
-    
-    for (G4int i = 0; i < NumPhotons; i++) {
-        
-        // Determine photon energy
-        
-        G4double rand;
-        G4double sampledEnergy, sampledRI; 
-        G4double cosTheta, sin2Theta;
-        
-        // sample an energy
-        
-        do {
-            rand = G4UniformRand(); 
-            sampledEnergy = Pmin + rand * dp; 
-            sampledRI = Rindex->GetProperty(sampledEnergy);
-            cosTheta = BetaInverse / sampledRI;  
-            
-            sin2Theta = (1.0 - cosTheta)*(1.0 + cosTheta);
-            rand = G4UniformRand(); 
-            
-        } while (rand*maxSin2 > sin2Theta);
-        
-        // Generate random position of photon on cone surface 
-        // defined by Theta 
-        
-        rand = G4UniformRand();
-        
-        G4double phi = twopi*rand;
-        G4double sinPhi = std::sin(phi);
-        G4double cosPhi = std::cos(phi);
-        
-        // calculate x,y, and z components of photon energy
-        // (in coord system with primary particle direction 
-        //  aligned with the z axis)
-        
-        G4double sinTheta = std::sqrt(sin2Theta); 
-        G4double px = sinTheta*cosPhi;
-        G4double py = sinTheta*sinPhi;
-        G4double pz = cosTheta;
-        
-        // Create photon momentum direction vector 
-        // The momentum direction is still with respect
-        // to the coordinate system where the primary
-        // particle direction is aligned with the z axis  
-        
-        G4ParticleMomentum photonMomentum(px, py, pz);
-        
-        // Rotate momentum direction back to global reference
-        // system 
-        
-        photonMomentum.rotateUz(p0);
-        
-        // Determine polarization of new photon 
-        
-        G4double sx = cosTheta*cosPhi;
-        G4double sy = cosTheta*sinPhi; 
-        G4double sz = -sinTheta;
-        
-        G4ThreeVector photonPolarization(sx, sy, sz);
-        
-        // Rotate back to original coord system 
-        
-        photonPolarization.rotateUz(p0);
-        
-        // Generate a new photon:
-        
-        G4DynamicParticle* aCerenkovPhoton =
-        new G4DynamicParticle(G4OpticalPhoton::OpticalPhoton(), 
-                              photonMomentum);
-        aCerenkovPhoton->SetPolarization
-        (photonPolarization.x(),
-         photonPolarization.y(),
-         photonPolarization.z());
-        
-        aCerenkovPhoton->SetKineticEnergy(sampledEnergy);
-        
-        // Generate new G4Track object:
-        
-        G4double delta, NumberOfPhotons, N;
-        
-        do {
-            rand = G4UniformRand();
-            delta = rand * aStep.GetStepLength();
-            NumberOfPhotons = MeanNumberOfPhotons1 - delta *
-            (MeanNumberOfPhotons1-MeanNumberOfPhotons2)/
-            aStep.GetStepLength();
-            N = G4UniformRand() *
-            std::max(MeanNumberOfPhotons1,MeanNumberOfPhotons2);
-        } while (N > NumberOfPhotons);
-        
-        G4double deltaTime = delta /
-        ((pPreStepPoint->GetVelocity()+
-          pPostStepPoint->GetVelocity())/2.);
-        
-        G4double aSecondaryTime = t0 + deltaTime;
-        
-        G4ThreeVector aSecondaryPosition =
-        x0 + rand * aStep.GetDeltaPosition();
-        
-        G4Track* aSecondaryTrack = 
-        new G4Track(aCerenkovPhoton,aSecondaryTime,aSecondaryPosition);
-        
-        aSecondaryTrack->SetTouchableHandle(
-                                            aStep.GetPreStepPoint()->GetTouchableHandle());
-        
-        aSecondaryTrack->SetParentID(aTrack.GetTrackID());
-        
-        aParticleChange.AddSecondary(aSecondaryTrack);
-    }
-    
-    if (verboseLevel>0) {
-        G4cout << "\n Exiting from TrkCerenkov::DoIt -- NumberOfSecondaries = " 
-        << aParticleChange.GetNumberOfSecondaries() << G4endl;
-    }
-    */
     
     return pParticleChange;
 }
@@ -762,11 +603,7 @@ TrkCerenkov::GetAverageNumberOfPhotons(const G4double charge,
     
     // If n(Pmax) < 1/Beta -- no photons generated 
     
-    int kind=-1;
-    
     if (nMax < BetaInverse) {
-        kind=0;
-
         dp = 0;
         ge = 0;
     } 
@@ -774,8 +611,6 @@ TrkCerenkov::GetAverageNumberOfPhotons(const G4double charge,
     // otherwise if n(Pmin) >= 1/Beta -- photons generated  
     
     else if (nMin > BetaInverse) {
-        kind=1;
-        
         dp = CAImax1; // Pmax-Pmin for unbiased production
         ge = CAImax2; 
     } 
@@ -787,8 +622,6 @@ TrkCerenkov::GetAverageNumberOfPhotons(const G4double charge,
     // the GetValue() method of G4PhysicsVector.  
     
     else {
-        kind=2;
-        
 #ifdef MATERIAL_PROPERTY_VECTOR_IS_PHYSICS_VECTOR
         Pmin = Rindex->GetEnergy(BetaInverse);
 #else
@@ -818,9 +651,5 @@ TrkCerenkov::GetAverageNumberOfPhotons(const G4double charge,
     G4double NumPhotons = Rfact * charge/eplus * charge/eplus *
     (dp - ge * BetaInverse*BetaInverse);
 
-    //std::cout << "NumPhotons/m=" << NumPhotons/(charge/eplus * charge/eplus)/(1./m) << " @ beta=" << beta << ", kind=" << kind << std::endl;
-    //std::cout << "CAImax1=" << CAImax1 << ", CAImax2=" << CAImax2 << ", Pmax=" << Pmax << ", Pmin=" << Pmin << std::endl;
-    //std::cout << "Wmax=" << (h_Planck*c_light/Pmin)/nm << ", Wmin=" << (h_Planck*c_light/Pmax)/nm << std::endl;
-    
     return NumPhotons;      
 }

@@ -1049,14 +1049,6 @@ namespace I3CLSimHelper
                 
                 if (geoLayerNum.back()>maxLayerNum) maxLayerNum=geoLayerNum.back();
                 
-                //std::cout << "   new layering created! Contains " << geoLayerNum.back() << " layers." << std::endl;
-                //for (unsigned int l=0;l<geoLayerNum.back();++l)
-                //{
-                //if (layerToOMNumIndexPerStringSet.back()[l] == 0xFF) continue;
-                //std::cout << "    layer " << l << " -> OM " << (int)(layerToOMNumIndexPerStringSet.back()[l]) << std::endl;
-                
-                //}
-                
             } // end if (matchfound)
             
         } // for (stringNum)
@@ -1247,24 +1239,6 @@ namespace I3CLSimHelper
         output << "};" << std::endl;
         
         output << "#define GEO_geoLayerToOMNumIndexPerStringSet_BUFFER_SIZE " << geoLayerToOMNumIndexPerStringSetBuffer_size << std::endl;
-        
-        // this goes to local/shared memory, not constant memory..
-        
-        //output << "__constant unsigned short geoLayerToOMNumIndexPerStringSet[GEO_LAYER_STRINGSET_NUM*GEO_LAYER_STRINGSET_MAX_NUM_LAYERS] = {" << std::endl;
-        //for (unsigned int j=0;j<numStringSets;++j)
-        //{
-        //    for (unsigned int i=0;i<maxLayerNum;++i)
-        //    {
-        //        unsigned int value = geoLayerToOMNumIndex[j*maxLayerNum+i];
-        //        if (value == 0xFFFF) {
-        //            output << "  " << "0xFFFF" << ", ";
-        //        } else {
-        //            output << "  " << value << ", ";
-        //        }
-        //    }
-        //    output << std::endl;
-        //}
-        //output << "};" << std::endl;
         
         // return the code we just wrote to the caller
         code = output.str();
