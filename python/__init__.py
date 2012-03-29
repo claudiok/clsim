@@ -21,6 +21,7 @@ from FakeFlasherInfoGenerator import FakeFlasherInfoGenerator
 from GetDefaultParameterizationList import GetDefaultParameterizationList
 from GetFlasherParameterizationList import GetFlasherParameterizationList
 from AsyncTap import AsyncTap
+from AutoSetGeant4Environment import AutoSetGeant4Environment
 
 # import tray segments (if available)
 from traysegments import I3CLSimMakeHits, I3CLSimMakePhotons, I3CLSimMakeHitsFromPhotons
