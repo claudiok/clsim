@@ -147,7 +147,8 @@ def I3CLSimMakePhotons(tray, name,
     :param DoNotParallelize:
         Try only using a single work item in parallel when running the
         OpenCL simulation. This might be useful if you want to run jobs
-        in parallel on a batch system.
+        in parallel on a batch system. This will only affect CPUs and
+        will be a no-op for GPUs.
     :param DOMOversizeFactor:
         Set the DOM oversize factor. To disable oversizing, set this to 1.
     :param UnshadowedFraction:
@@ -299,7 +300,7 @@ def I3CLSimMakePhotons(tray, name,
             device.useNativeMath=False
             device.approximateNumberOfWorkItems=10240
 
-        if DoNotParallelize:
+        if DoNotParallelize and device.gpu:
             device.approximateNumberOfWorkItems=1
 
     tray.AddModule("I3CLSimModule", name + "_clsim",
