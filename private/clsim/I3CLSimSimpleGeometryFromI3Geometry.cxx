@@ -38,7 +38,6 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
-// TODO: these defaults are IceCube-specific!
 const std::set<int> I3CLSimSimpleGeometryFromI3Geometry::default_ignoreStrings;
 const std::set<unsigned int> I3CLSimSimpleGeometryFromI3Geometry::default_ignoreDomIDs;
 const std::set<std::string> I3CLSimSimpleGeometryFromI3Geometry::default_ignoreSubdetectors;

@@ -130,7 +130,7 @@ namespace I3CLSimHelper
                                                       const std::string &functionName,
                                                       std::string derivativeFunctionName="")
     {
-        // first, check if one of the optimizers work (TODO: take them from a registry of some kind)
+        // first, check if one of the optimizers work
         if (derivativeFunctionName=="")
         {
             bool worked;

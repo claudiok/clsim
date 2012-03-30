@@ -98,7 +98,7 @@ void TrkDetectorConstruction::DefineMaterials(){
     Air->AddElement(N, 70*perCent);
     Air->AddElement(O, 30*perCent);
 
-    // Sea Water (with salt) TODO: check composition, include ice properties!
+    // Sea Water (with salt)
     const double mediumDensity = (mediumProperties_->GetMediumDensity()/( I3Units::g/I3Units::cm3 )) * (g/cm3);
     
     H2O = new G4Material("H2O", density=mediumDensity, 5, kStateLiquid,286.35*kelvin,1.*atmosphere);
@@ -231,7 +231,8 @@ G4VPhysicalVolume* TrkDetectorConstruction::ConstructDetector()
     // Set up the world volume. It is a box filled with water.
     const double simvolume_x = 5.*km; // a rather arbitrary safety margin
     const double simvolume_y = 5.*km; // a rather arbitrary safety margin
-    // add 1km of rock and 1km of air // TODO: enough for high-energy simulations?
+    // add 1km of rock and 1km of air // this, together with the simulation volume should
+    // be enough for high-energy input that ran through MMC/PROPOSAL
     const double simvolume_z = std::max(fabs(seaFloorZCoordinate)+1.*km, fabs(airZCoordinate)+1.*km);
     
     

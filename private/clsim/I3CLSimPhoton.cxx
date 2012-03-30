@@ -130,7 +130,10 @@ void I3CLSimPhoton::load(portable_binary_iarchive &ar, unsigned version)
     ar >> make_nvp("blob", boost::serialization::make_binary_object(this, blobSizeV0));
 }     
 
-// TODO: make it work on big-endian systems!
+// this serialization is endian-dependent (i.e. if you serializae on a big-endian system, you will
+// not be able to read this on a little-endian system). This should not matter since these objects
+// are not meant to be trnamsitted over a network. TODO: To be extremely safe, an endianess flag
+// should be included in the serialized output.
 
 template<>
 template<>

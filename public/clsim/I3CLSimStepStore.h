@@ -41,7 +41,9 @@
 
 #include <vector>
 #include <deque>
+#include <limits>
 
+#include <boost/static_assert.hpp>
 #include <boost/foreach.hpp>
 #include <boost/pool/pool_alloc.hpp> 
 
@@ -49,14 +51,18 @@ template <typename U, class T>
 class I3CLSimTemplateStore 
 {
 private:
-    //typedef std::deque<T, boost::fast_pool_allocator<T> > TDequeType;
     typedef std::deque<T> TDequeType;
     
+    // static_assert: U==unsigned integer (8,16,32 or 64 bit)
+    BOOST_STATIC_ASSERT((std::numeric_limits<U>::digits >= 8)
+                        && std::numeric_limits<U>::is_specialized
+                        && std::numeric_limits<U>::is_integer
+                        && !std::numeric_limits<U>::is_signed);
+
+    // static_assert: max<U> <= max<std::size_t>
+    BOOST_STATIC_ASSERT((std::numeric_limits<U>::digits <= std::numeric_limits<std::size_t>::digits));
+    
 public:
-    
-    // TODO: static_assert: U==unsigned integer (8,16,32 or 64 bit)
-    // TODO: static_assert: max<U> <= max<std::size_t>
-    
     I3CLSimTemplateStore(std::size_t initialSize):
     bins_(initialSize, NULL),
     currentSize_(0)
@@ -108,9 +114,6 @@ public:
                 bins_[i] = new TDequeType();
             }
         }
-        
-        //if (!bins_[index])
-        //    log_fatal("Internal logic error, index=%lu", static_cast<unsigned long int>(index));
         
         bins_[index]->push_back(T());
         ++currentSize_;

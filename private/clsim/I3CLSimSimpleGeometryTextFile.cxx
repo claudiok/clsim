@@ -32,7 +32,6 @@
 
 #include <boost/lexical_cast.hpp>
 
-// TODO: these defaults are IceCube-specific!
 const int32_t I3CLSimSimpleGeometryTextFile::default_ignoreStringIDsSmallerThan = 1;
 const int32_t I3CLSimSimpleGeometryTextFile::default_ignoreStringIDsLargerThan = std::numeric_limits<int32_t>::max();
 const uint32_t I3CLSimSimpleGeometryTextFile::default_ignoreDomIDsSmallerThan = 1;
