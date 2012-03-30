@@ -2,7 +2,7 @@
 set -e
 
 echo "************** generating muons.."
-time $I3_SRC/clsim/resources/scripts/compareToPPC/generateTestMuons.py -o test_muons.i3 --gcd=$I3_SRC/clsim/resources/GeoCalibDetectorStatus_IC86.55697_corrected.i3.gz -n1000
+time $I3_SRC/clsim/resources/scripts/compareToPPC/generateTestMuons.py -o test_muons.i3 --gcd=$I3_PORTS/test-data/sim/GeoCalibDetectorStatus_IC86.55697_corrected.i3.gz -n1000
 
 echo "************** running PPC.."
 time $I3_SRC/clsim/resources/scripts/compareToPPC/applyPPC.py -i test_muons.i3 -o test_muons_ppc.i3
