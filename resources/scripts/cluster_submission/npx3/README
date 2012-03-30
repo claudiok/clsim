@@ -1,0 +1,40 @@
+This is an exmaple of how to submit jobs to npx3 (condor) using dagman to take care of
+the scheduling.
+
+Jobs are defined in a .dag file that contains settings for each job to be sent to the cluster.
+You will need to modify the example .dag file "job*" blocks to correspond to what you want to
+send to the cluster. (Using a script to generate these files for large datasets might be a good idea.)
+Note that jobs are defined using a "JOB" line specifying the a generic condor submit script
+and several "VARS" lines per job that define variables. These variables are then used in the
+submit script ("applyCLSim.submit" in this example) to customize the individual jobs.
+
+In order to run on the GPU nodes of npx3 (and only on those), you need the following line(s)
+in the .submit script:
+
++GPU_JOB      = true
+requirements  = TARGET.GPUTESLA   # there are more GPU targets defined, see http://wiki.icecube.wisc.edu/index.php/GPGPU_cluster
+                                  # TARGET.GPUTESLA will use the new Tesla cards in the "GZK 9000" nodes.
+
+
+
+You will also need to force clsim to only use the GPU that corresponds to your job's "condor slot".
+This can be done by adding the following lines to your python script (before any of the icetray stuff):
+
+import os
+if "_CONDOR_SLOT" in os.environ:
+    if "CUDA_VISIBLE_DEVICES" in os.environ:
+        print "running in CONDOR, but CUDA_VISIBLE_DEVICES is already set. no further configuration necessary."
+    else:
+        condorSlotNumber = int(os.environ["_CONDOR_SLOT"])
+        print "script seems to be running in condor (slot %u). auto-configuring CUDA_VISIBLE_DEVICES!" % condorSlotNumber
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(condorSlotNumber-1)
+
+
+
+Note that these submit files will *not* work out-of the box, you will need to modify all paths and
+input file names!
+
+
+
+# TODO: change all inputs to run on some MC existing IceCube MC data, instead of PINGU files
+

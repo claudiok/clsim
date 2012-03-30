@@ -1,0 +1,18 @@
+# you will need to change all paths in this file!
+
+Executable    = /net/user/ckopper/icesim/trunk/build.release.gpu/env-shell.sh
+Universe      = vanilla
+Initialdir    = /net/user/ckopper/genie_clsim  # point this to your work directory [where applyCLSim.GPU.py lives]
+Notification  = never
+
+Output        = $(outputpath)/log/$(outputfile).out
+Error         = $(outputpath)/log/$(outputfile).err
+Log           = $(outputpath)/log/$(outputfile).log
+
+Getenv        = true
+Arguments     = ./applyCLSim.GPU.py --qify --clean-input -p10000 -i $(inputpath)/$(inputfile) -g $(inputpath)/$(gcdfile) -o $(outputpath)/$(outputfile)
+
++GPU_JOB      = true
+requirements  = TARGET.GPUTESLA
+
+Queue
