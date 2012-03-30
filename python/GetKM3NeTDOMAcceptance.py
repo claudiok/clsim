@@ -1,20 +1,42 @@
-#################################################################
-# A python script to return the wavelength-dependant acceptance
-# of the KM3NeT DOM. 
 #
-# To get the whole acceptance, call the function
-# GetKM3NeTDOMAcceptance(omRadius) that calls all other 
-# implemented function in this file.
+# Copyright (c) 2011, 2012
+# Claudio Kopper <claudio.kopper@icecube.wisc.edu>
+# and the IceCube Collaboration <http://www.icecube.wisc.edu>
+# 
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+# OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+# CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+# 
+# 
+# $Id$
+# 
+# @file GetKM3NeTDOMAcceptance.py
+# @version $Revision$
+# @date $Date$
+# @author Claudio Kopper
 #
-# The angular acceptance is not taken into account here.
-#
-# The table of photo-electron acceptance of the OM is 
-# calculated at an injection angle of 0 deg.
-#
-# June 2011
-# Claudio Kopper
-# claudio.kopper@nikhef.nl
-#################################################################
+
+"""
+A python script to return the wavelength-dependant acceptance
+of the KM3NeT DOM. 
+
+To get the whole acceptance, call the function
+GetKM3NeTDOMAcceptance(omRadius) that calls all other 
+implemented function in this file.
+
+The angular acceptance is not taken into account here.
+
+The table of photo-electron acceptance of the OM is 
+calculated at an injection angle of 0 deg.
+"""
 
 
 from icecube import icetray, dataclasses
@@ -41,11 +63,11 @@ def GetKM3NeTOMGelThickness():
     
     
     
-#################################################################
-# A function to return the quantum efficiency as instance of
-# I3CLSimFunctionFromTable
-#################################################################
 def GetKM3NeTOMQuantumEfficiency(peakQE=None, wpdQE=False):
+    """
+    A function to return the quantum efficiency as instance of
+    I3CLSimFunctionFromTable
+    """
     if peakQE is None:
         if wpdQE: peakQE = 0.304
         else: peakQE = 0.32
@@ -74,11 +96,11 @@ def GetKM3NeTOMQuantumEfficiency(peakQE=None, wpdQE=False):
 
 
 
-#################################################################
-# A function to return the absoprtion length of
-# the glass sphere of an KM3NeT OM
-#################################################################
 def GetKM3NeTOMGlassAbsorptionLength():
+    """
+    A function to return the absoprtion length of
+    the glass sphere of an KM3NeT OM
+    """
 
     # Data copied from the km3 file hit-ini_optic.f
     # as measured by Pavel
@@ -127,17 +149,16 @@ def GetKM3NeTOMGlassAbsorptionLength():
 
 
 
-
-
-#################################################################
-# A function to return the absorption length
-# the gel of an KM3NeT OM
-# Note: The file hit-ini_optic.f has three different 
-# datasets for this absorption length!
-# However in the file hit.f it always is initialized with the
-# same (gel_id=1). Thus this one is implemented here.
-#################################################################
 def GetKM3NeTOMGelAbsorptionLength():
+    """
+    A function to return the absorption length
+    the gel of an KM3NeT OM
+    Note: The file hit-ini_optic.f has three different 
+    datasets for this absorption length!
+    However in the file hit.f it always is initialized with the
+    same (gel_id=1). Thus this one is implemented here.
+    """
+    
     # Data copied from the km3 file hit-ini_optic.f
     # GEL WACKER (default)
     al_gel_default_reverse = [100.81, # at 610 nm
@@ -191,6 +212,10 @@ def GetKM3NeTOMGelAbsorptionLength():
 # of the KM3NeT DOM
 #################################################################
 def GetKM3NeTDOMAcceptance(domRadius = (17./2.) * 0.0254*I3Units.m, peakQE=None, wpdQE=False, withWinstonCone=False): # 17 inch diameter
+    """
+    The main function to return the effective area
+    of the KM3NeT DOM
+    """
     
     # the multiPMT simulation expects photons on a sphere of 17" diameter.
     # The result of this function is supposed to be used for emission

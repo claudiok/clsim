@@ -1,31 +1,51 @@
-#################################################################
-# A python script to return the wavelength-dependant acceptance
-# of the ANTARES OM. 
 #
-# To get the whole acceptance, call the function
-# GetAntaresOMAcceptance(omRadius) that calls all other 
-# implemented function in this file.
+# Copyright (c) 2011, 2012
+# Claudio Kopper <claudio.kopper@icecube.wisc.edu>
+# and the IceCube Collaboration <http://www.icecube.wisc.edu>
+# 
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+# OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+# CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+# 
+# 
+# $Id$
+# 
+# @file GetAntaresOMAcceptance.py
+# @version $Revision$
+# @date $Date$
+# @author Claudio Kopper
 #
-# The angular acceptance is not taken into account here.
-# That purpose is evaluated by the script
-# GetAntaresOMAngularSensitivity.py
-#
-# The following code has been ported from the Fortran code
-# of km3 version v4r0
-#
-# The table of photo-electron acceptance of the OM is 
-# calculated at an injection angle of 0 deg.
-#
-# The acceptance is calculated the following way
-# eff_area = PM collection efficiency
-#            * PM quantum efficiency (lambda)
-#            * glass + gel transmission probability (lambda)
-#
-# May 2011
-# Florian Folger
-# florian.folger@physik.uni-erlangen.de
-#################################################################
+"""
+A python script to return the wavelength-dependant acceptance
+of the ANTARES OM. 
 
+To get the whole acceptance, call the function
+GetAntaresOMAcceptance(omRadius) that calls all other 
+implemented function in this file.
+
+The angular acceptance is not taken into account here.
+That purpose is evaluated by the script
+GetAntaresOMAngularSensitivity.py
+
+The following code has been ported from the Fortran code
+of km3 version v4r0
+
+The table of photo-electron acceptance of the OM is 
+calculated at an injection angle of 0 deg.
+
+The acceptance is calculated the following way
+eff_area = PM collection efficiency
+           * PM quantum efficiency (lambda)
+           * glass + gel transmission probability (lambda)
+"""
 
 from icecube import icetray, dataclasses
 from icecube.clsim import I3CLSimFunctionFromTable
@@ -35,10 +55,10 @@ from I3Tray import I3Units
 import numpy, math
 from os.path import expandvars
 
-    #################################################################
-    # Some getters to store ANTARES specific constants
-    # copied from km3 (hit-eff_area_pmt.f and hit-transmit.f)
-    #################################################################
+#################################################################
+# Some getters to store ANTARES specific constants
+# copied from km3 (hit-eff_area_pmt.f and hit-transmit.f)
+#################################################################
 def GetAntaresPMTCollectionEfficiency():
     return 0.9
 
@@ -55,11 +75,11 @@ def GetAntaresPMTDiameter():
     
     
     
-#################################################################
-# A function to return the quantum efficiency as instance of
-# I3CLSimFunctionFromTable
-#################################################################
 def GetAntaresOMQuantumEfficiency():
+    """
+    A function to return the quantum efficiency as instance of
+    I3CLSimFunctionFromTable
+    """
     # Data copied from the km3 file hit-ini_optic.f
     # BB5912 from Hamamatsu
     q_eff_0 = 0.01
@@ -107,12 +127,11 @@ def GetAntaresOMQuantumEfficiency():
 
 
 
-
-#################################################################
-# A function to return the absoprtion length of
-# the glass sphere of an ANTARES OM
-#################################################################
 def GetAntaresOMGlassAbsorptionLength():
+    """
+    A function to return the absoprtion length of
+    the glass sphere of an ANTARES OM
+    """
 
     # Data copied from the km3 file hit-ini_optic.f
     # as measured by Pavel
@@ -161,17 +180,16 @@ def GetAntaresOMGlassAbsorptionLength():
 
 
 
-
-
-#################################################################
-# A function to return the absorption length
-# the gel of an ANTARES OM
-# Note: The file hit-ini_optic.f has three different 
-# datasets for this absorption length!
-# However in the file hit.f it always is initialized with the
-# same (gel_id=1). Thus this one is implemented here.
-#################################################################
 def GetAntaresOMGelAbsorptionLength():
+    """
+    A function to return the absorption length
+    the gel of an ANTARES OM
+    Note: The file hit-ini_optic.f has three different 
+    datasets for this absorption length!
+    However in the file hit.f it always is initialized with the
+    same (gel_id=1). Thus this one is implemented here.
+    """
+    
     # Data copied from the km3 file hit-ini_optic.f
     # GEL WACKER (default)
     al_gel_default_reverse = [100.81, # at 610 nm
@@ -219,12 +237,11 @@ def GetAntaresOMGelAbsorptionLength():
 
 
 
-
-#################################################################
-# The main function to return the effective area
-# of the Antares OM
-#################################################################
 def GetAntaresOMAcceptance(domRadius = 0.2159*I3Units.m): # 17 inch diameter
+    """
+    The main function to return the effective area
+    of the Antares OM
+    """
     
     # Load the constants
     glass_width = GetAntaresOMGlassThickness()
