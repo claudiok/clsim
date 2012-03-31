@@ -24,13 +24,14 @@
  * @author Claudio Kopper
  */
 
+#include <glshovel/render/PhotonPaths.h>
+
 #include <limits>
 #include <deque>
 
 #include <glshovel/Renderer.h>
 #include <glshovel/ConfigurableColor.h>
 #include <clsim/I3Photon.h>
-#include <glshovel/render/PhotonPaths.h>
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
 

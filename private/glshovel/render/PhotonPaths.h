@@ -27,7 +27,18 @@
 #ifndef GLSHOVEL_RENDER_PHOTONPATHS_H_INCLUDED
 #define GLSHOVEL_RENDER_PHOTONPATHS_H_INCLUDED
 
+// Qt defines signal as "protected" using the preprocessor.
+// This breaks boost::signal, so we need to include it first here
+// in order to have everything defined before including Qt.
+#include <boost/signals.hpp>
+
+#include "clsim/I3Photon.h"
+
 #include <QWidget>
+#ifdef signals
+#undef signals
+#endif
+
 #include <glshovel/gl.h>
 #include <glshovel/util.h>
 #include <glshovel/render_dispatch.h>
