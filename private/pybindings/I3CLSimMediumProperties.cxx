@@ -29,8 +29,14 @@
 #include <clsim/I3CLSimMediumProperties.h>
 
 #include <boost/preprocessor/seq.hpp>
+
+#ifdef NO_PYTHON_DATACLASS_SUITE
+#include "icetray_python_backports/std_vector_indexing_suite.hpp"
+#include "icetray_python_backports/boost_serializable_pickle_suite.hpp"
+#else
 #include <icetray/python/std_vector_indexing_suite.hpp>
 #include <icetray/python/boost_serializable_pickle_suite.hpp>
+#endif
 
 using namespace boost::python;
 namespace bp = boost::python;

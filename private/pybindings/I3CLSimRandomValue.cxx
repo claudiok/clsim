@@ -35,7 +35,11 @@
 #include <clsim/random_value/I3CLSimRandomValueApplyFunction.h>
 #include <clsim/random_value/I3CLSimRandomValueWlenCherenkovNoDispersion.h>
 
+#ifdef NO_PYTHON_DATACLASS_SUITE
+#include "icetray_python_backports/std_vector_indexing_suite.hpp"
+#else
 #include <icetray/python/std_vector_indexing_suite.hpp>
+#endif
 
 #include <boost/preprocessor/seq.hpp>
 #include "const_ptr_helpers.h"

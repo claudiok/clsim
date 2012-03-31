@@ -45,6 +45,8 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include <icetray/I3Units.h>
+
 #include "opencl/I3CLSimHelperLoadProgramSource.h"
 #include "opencl/I3CLSimHelperGenerateMediumPropertiesSource.h"
 #include "opencl/I3CLSimHelperGenerateGeometrySource.h"

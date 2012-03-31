@@ -28,9 +28,14 @@
 
 #include "clsim/I3CLSimOpenCLDevice.h"
 
+#ifdef NO_PYTHON_DATACLASS_SUITE
+#include "icetray_python_backports/std_vector_indexing_suite.hpp"
+#include "icetray_python_backports/copy_suite.hpp"
+#else
 #include <icetray/python/std_vector_indexing_suite.hpp>
 #include <icetray/python/copy_suite.hpp>
-
+#endif
+     
 using namespace boost::python;
 namespace bp = boost::python;
 

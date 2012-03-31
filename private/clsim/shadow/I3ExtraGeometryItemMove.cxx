@@ -130,5 +130,7 @@ std::ostream& I3ExtraGeometryItemMove::operator<<(std::ostream& oss) const
     return oss;
 }
 
+// TODO: the following line needs to go away once a more recent version of icetray makes it into a release:
+#include "split_serializable_backport.h"
 
 I3_SPLIT_SERIALIZABLE(I3ExtraGeometryItemMove);
