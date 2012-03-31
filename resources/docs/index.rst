@@ -139,6 +139,21 @@ already have a length assigned to them. (You should make sure that this is what 
 really want, as MMC might already have added cascades to the muon track that would
 be added a second time by Geant4.)
 
+Low-Energy simulations
+----------------------
+
+In order to simulate low energies in a more correct way, you might want to
+consider disabling the DOM oversizing optimization. It is set to an oversize
+factor of 5 (in radius), which gives you a 25-fold increase in simulation
+speed at the expense of accuracy in timing and for tracks very close to DOMs.
+
+To disable DOM oversizing (which might be a good idea especially when using Geant4)
+use the DOMOversizeFactor switch::
+
+   tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
+                   DOMOversizeFactor=1., # disables oversizing (default is 5.)
+                   UseGeant4=True)       # enable or disable Geant4 as needed
+
 Ice Models
 ----------
 
@@ -162,7 +177,7 @@ This is a short example script that reads an input ``.i3`` file,
 applies *MMC* and *clsim* and writes the result to a second file.
 It also uses Geant4 for photon generation and is configured to run
 on the CPU only. In addition, adding a random number generator using
-a photon object (instead of a I3Service) is demonstrated.
+a python object (instead of a I3Service) is demonstrated.
 
 .. highlight:: python
 
@@ -224,5 +239,4 @@ Table of Contents:
 .. toctree::
    :maxdepth: 3
 
-   howto
    faq
