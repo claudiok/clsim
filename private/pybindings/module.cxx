@@ -32,31 +32,45 @@ namespace bp = boost::python;
 #include <boost/preprocessor.hpp>
 
 #define REGISTER_THESE_THINGS                       \
+    (I3Photon)(I3CLSimEventStatistics)              \
+    (I3CLSimPMTPhotonSimulator)(I3Converters)       \
+    (I3CLSimFlasherPulse)(I3ShadowedPhotonRemover)  \
+    (I3ExtraGeometryItem)
+
+#ifndef BUILD_CLSIM_DATACLASSES_ONLY
+// all these do depend on either OpenCL and/or Geant4
+// so they may not be compiled if these tools are missing:
+#define REGISTER_THESE_THINGS_TOO                   \
     (I3CLSimStep)(I3CLSimPhoton)                    \
     (I3CLSimPhotonHistory)                          \
-    (I3CLSimFunction)                     \
+    (I3CLSimFunction)                               \
     (I3CLSimMediumProperties)(I3CLSimRandomValue)   \
     (I3CLSimLightSourceToStepConverter)             \
     (I3CLSimStepToPhotonConverter)                  \
     (I3CLSimSimpleGeometry)                         \
-    (I3Photon)(I3CLSimLightSourceParameterization)  \
+    (I3CLSimLightSourceParameterization)            \
     (I3CLSimTester)(I3ModuleHelper)                 \
     (I3CLSimLightSourceToStepConverterUtils)        \
-    (I3CLSimEventStatistics)                        \
-    (I3CLSimPMTPhotonSimulator)                     \
-    (I3Converters)(I3CLSimOpenCLDevice)             \
-    (I3CLSimLightSource)(I3CLSimSpectrumTable)      \
-    (I3CLSimFlasherPulse)(I3ShadowedPhotonRemover)  \
-    (I3ExtraGeometryItem)
+    (I3CLSimOpenCLDevice)(I3CLSimLightSource)       \
+    (I3CLSimSpectrumTable)
+#endif
 
 #define I3_REGISTRATION_FN_DECL(r, data, t) void BOOST_PP_CAT(register_,t)();
 #define I3_REGISTER(r, data, t) BOOST_PP_CAT(register_,t)();
+
+
 BOOST_PP_SEQ_FOR_EACH(I3_REGISTRATION_FN_DECL, ~, REGISTER_THESE_THINGS)
+#ifndef BUILD_CLSIM_DATACLASSES_ONLY
+BOOST_PP_SEQ_FOR_EACH(I3_REGISTRATION_FN_DECL, ~, REGISTER_THESE_THINGS_TOO)
+#endif
 
 BOOST_PYTHON_MODULE(clsim)
 {
   load_project("libclsim", false);
 
   BOOST_PP_SEQ_FOR_EACH(I3_REGISTER, ~, REGISTER_THESE_THINGS);
+#ifndef BUILD_CLSIM_DATACLASSES_ONLY
+  BOOST_PP_SEQ_FOR_EACH(I3_REGISTER, ~, REGISTER_THESE_THINGS_TOO);
+#endif
 }
 

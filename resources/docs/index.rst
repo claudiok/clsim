@@ -135,7 +135,9 @@ and Corsika generate muons without lengths, so the module should generally
 do the right thing. To make absolutely sure that no parameterizations are used,
 also set the ``MMCTrackListName`` option to ``None``. This will apply *Geant4* to all
 particles in the I3MCTree (which are ``InIce`` and not ``Dark``), even if they
-already have a length assigned to them.
+already have a length assigned to them. (You should make sure that this is what you
+really want, as MMC might already have added cascades to the muon track that would
+be added a second time by Geant4.)
 
 Ice Models
 ----------

@@ -25,31 +25,44 @@
 #
 
 if(BUILD_PYBINDINGS)
-  i3_add_pybindings(clsim
-    I3CLSimStep.cxx
-    I3CLSimPhoton.cxx
-    I3CLSimPhotonHistory.cxx
-    I3CLSimFunction.cxx
-    I3CLSimRandomValue.cxx
-    I3CLSimMediumProperties.cxx
-    I3CLSimLightSourceToStepConverter.cxx
-    I3CLSimStepToPhotonConverter.cxx
-    I3CLSimSimpleGeometry.cxx
-    I3CLSimLightSourceParameterization.cxx
-    I3CLSimTester.cxx
-    I3CLSimModuleHelper.cxx
-    I3CLSimLightSourceToStepConverterUtils.cxx
+  # these files will be compiled in any case (with or without OpenCL/Geant4)
+  SET(LIB_${PROJECT_NAME}_PYBINDINGS_SOURCEFILES
     I3Photon.cxx
     I3CLSimEventStatistics.cxx
     I3CLSimPMTPhotonSimulator.cxx
-    I3CLSimOpenCLDevice.cxx
-    I3CLSimLightSource.cxx
-    I3CLSimSpectrumTable.cxx
     I3CLSimFlasherPulse.cxx
     I3Converters.cxx
     I3ShadowedPhotonRemover.cxx
     I3ExtraGeometryItem.cxx
     module.cxx
+  )
+
+  if(BUILD_CLSIM_DATACLASSES_ONLY)
+    ADD_DEFINITIONS(-DBUILD_CLSIM_DATACLASSES_ONLY)
+  else(BUILD_CLSIM_DATACLASSES_ONLY)
+    # add all extra source files that do depend on OpenCL and/or Geant4
+    LIST(APPEND LIB_${PROJECT_NAME}_PYBINDINGS_SOURCEFILES
+      I3CLSimStep.cxx
+      I3CLSimPhoton.cxx
+      I3CLSimPhotonHistory.cxx
+      I3CLSimFunction.cxx
+      I3CLSimRandomValue.cxx
+      I3CLSimMediumProperties.cxx
+      I3CLSimLightSourceToStepConverter.cxx
+      I3CLSimStepToPhotonConverter.cxx
+      I3CLSimSimpleGeometry.cxx
+      I3CLSimLightSourceParameterization.cxx
+      I3CLSimTester.cxx
+      I3CLSimModuleHelper.cxx
+      I3CLSimLightSourceToStepConverterUtils.cxx
+      I3CLSimOpenCLDevice.cxx
+      I3CLSimLightSource.cxx
+      I3CLSimSpectrumTable.cxx
+    )
+  endif(BUILD_CLSIM_DATACLASSES_ONLY)
+
+  i3_add_pybindings(clsim
+    ${LIB_${PROJECT_NAME}_PYBINDINGS_SOURCEFILES}
     USE_TOOLS boost python log4cplus
     USE_PROJECTS icetray dataclasses clsim
     )

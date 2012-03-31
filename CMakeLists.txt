@@ -24,18 +24,128 @@
 # @author Claudio Kopper
 #
 
-# do not build clsim if there is no OpenCL on this system
-if(OPENCL_FOUND)
+# Do we have OpenCL and Geant4 installed on this system? If not,
+# build a simple version of clsim with dataclasses only.
+if (OPENCL_FOUND AND GEANT4_FOUND)
+  set (BUILD_CLSIM_DATACLASSES_ONLY NO)
+else (OPENCL_FOUND AND GEANT4_FOUND)
+  set (BUILD_CLSIM_DATACLASSES_ONLY YES)
+endif (OPENCL_FOUND AND GEANT4_FOUND)
 
-  # the IceTray project definition
+
+# The IceTray project definition
+if (BUILD_CLSIM_DATACLASSES_ONLY)
+  i3_project(clsim
+    DOCS_DIR resources/docs
+  )
+
+  colormsg(RED   "+-- OpenCL and/or Geant4 is not installed on your system. Only building the clsim dataclasses.")
+else (BUILD_CLSIM_DATACLASSES_ONLY)
   i3_project(clsim
     PYTHON_DIR python
     DOCS_DIR resources/docs
   )
+endif (BUILD_CLSIM_DATACLASSES_ONLY)
 
-  SET(LIB_${PROJECT_NAME}_SOURCEFILES
+
+SET(LIB_${PROJECT_NAME}_SOURCEFILES
+  # private/clsim
+  private/clsim/I3CLSimEventStatistics.cxx
+  private/clsim/I3Photon.cxx
+  private/clsim/I3CLSimFlasherPulse.cxx
+  private/clsim/I3CLSimPMTPhotonSimulator.cxx
+  private/clsim/util/I3MuonSlicer.cxx
+  private/clsim/dom/I3PhotonToMCHitConverter.cxx
+  private/clsim/shadow/I3ShadowedPhotonRemover.cxx
+  private/clsim/shadow/I3ShadowedPhotonRemoverModule.cxx
+  private/clsim/shadow/I3ExtraGeometryItem.cxx
+  private/clsim/shadow/I3ExtraGeometryItemUnion.cxx
+  private/clsim/shadow/I3ExtraGeometryItemMove.cxx
+  private/clsim/shadow/I3ExtraGeometryItemCylinder.cxx
+
+  # tableio converters
+  private/clsim/converter/I3PhotonConverter.cxx
+  private/clsim/converter/I3MCHitConverterWithIDs.cxx
+)
+
+SET(LIB_${PROJECT_NAME}_PROJECTS icetray dataio dataclasses phys-services tableio simclasses)
+SET(LIB_${PROJECT_NAME}_TOOLS python boost log4cplus gsl)
+
+
+# The icecube master header file I3.h seems to include inttypes.h without setting
+# __STDC_FORMAT_MACROS. clsim makes use of the PRI* preprocessor definitions,
+# so it needs those macros. Add the definition right here to work around this.
+ADD_DEFINITIONS(-D__STDC_FORMAT_MACROS)
+
+# check for Q-Frame support
+if(EXISTS ${CMAKE_SOURCE_DIR}/dataio/private/dataio/QConverter.cxx)
+  # we assume that the existence of this module means that we have
+  # to deal with a Q-frame-enabled meta-project
+  ADD_DEFINITIONS(-DIS_Q_FRAME_ENABLED)
+  colormsg(GREEN "+-- Q-frame-enabled")
+else(EXISTS ${CMAKE_SOURCE_DIR}/dataio/private/dataio/QConverter.cxx)
+  colormsg(YELLOW "+-- old-style, non-Q-frame module")
+endif(EXISTS ${CMAKE_SOURCE_DIR}/dataio/private/dataio/QConverter.cxx)
+
+
+# add some things if hit-maker is available (IceCube-specific)
+if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/hit-maker)
+  LIST(APPEND LIB_${PROJECT_NAME}_PROJECTS hit-maker)
+  #LIST(APPEND LIB_${PROJECT_NAME}_TOOLS nothing) # no extra tools
+  LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
+       private/clsim/I3CLSimPMTPhotonSimulatorIceCube.cxx
+       )
+
+  ADD_DEFINITIONS(-DUSE_HIT_MAKER)
+  colormsg(GREEN "+-- hit-maker support (for pre-Rosencrantz simulations)")
+endif(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/hit-maker)
+
+
+# Check for the existence of icetray/python/dataclass_suite.hpp
+# If this file does not exist, a local copy of the python
+# binding helper headers is used. TODO: This needs to go away
+# as soon as an offline-software release contains these headers.
+# (They already are in icetray/trunk.)
+if(NOT EXISTS ${CMAKE_SOURCE_DIR}/icetray/public/icetray/python/dataclass_suite.hpp)
+  ADD_DEFINITIONS(-DNO_PYTHON_DATACLASS_SUITE)
+  colormsg(YELLOW "+-- icetray does not have dataclass_suite.hpp. Using local version.")
+endif(NOT EXISTS ${CMAKE_SOURCE_DIR}/icetray/public/icetray/python/dataclass_suite.hpp)
+
+
+# check if multiPMT support is available and add multiPMT-only 
+# source files (this is still for the KM3NeT multiPMT version of IceTray)
+# support for 3-item OMKeys is coming soon!
+if(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3OMTypeInfo.h)
+  LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
+       private/clsim/dom/I3PhotonToMCHitConverterForMultiPMT.cxx
+       )
+
+  ADD_DEFINITIONS(-DHAS_MULTIPMT_SUPPORT)
+  colormsg(GREEN "+-- KM3NeT old-style multiPMT support")
+endif(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3OMTypeInfo.h)
+
+# check for glshovel support
+if(QT4_FOUND AND NOT QT_CONFIG_ERROR AND OPENGL_FOUND AND GLUT_FOUND)
+  if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/glshovel)
+    # We seem to have glshovel and its requirements available.
+    # Build the I3Photon renderer!
+    LIST(APPEND LIB_${PROJECT_NAME}_PROJECTS glshovel)
+    LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
+         private/glshovel/render/PhotonPaths.cxx
+     )
+    include(${QT_USE_FILE})
+
+    colormsg(GREEN "+-- glshovel I3Photon renderers")
+  endif(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/glshovel)
+endif(QT4_FOUND AND NOT QT_CONFIG_ERROR AND OPENGL_FOUND AND GLUT_FOUND)
+
+
+
+# This is the core clsim stuff (everything using OpenCL and/or Geant4)
+if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
+
+  LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
     # private/clsim
-    private/clsim/I3CLSimEventStatistics.cxx
     private/clsim/I3CLSimMediumProperties.cxx
     private/clsim/I3CLSimModule.cxx
     private/clsim/I3CLSimModuleHelper.cxx
@@ -45,7 +155,6 @@ if(OPENCL_FOUND)
     private/clsim/I3CLSimLightSourceToStepConverterUtils.cxx
     private/clsim/I3CLSimPhoton.cxx
     private/clsim/I3CLSimPhotonHistory.cxx
-    private/clsim/I3CLSimPMTPhotonSimulator.cxx
     private/clsim/random_value/I3CLSimRandomValueApplyFunction.cxx
     private/clsim/random_value/I3CLSimRandomValue.cxx
     private/clsim/random_value/I3CLSimRandomValueHenyeyGreenstein.cxx
@@ -69,21 +178,7 @@ if(OPENCL_FOUND)
     private/clsim/function/I3CLSimFunctionScatLenPartic.cxx
     private/clsim/I3CLSimLightSource.cxx
     private/clsim/I3CLSimSpectrumTable.cxx
-    private/clsim/I3CLSimFlasherPulse.cxx
     private/clsim/I3CLSimLightSourceToStepConverterFlasher.cxx
-    private/clsim/util/I3MuonSlicer.cxx
-    private/clsim/I3Photon.cxx
-    private/clsim/dom/I3PhotonToMCHitConverter.cxx
-    private/clsim/shadow/I3ShadowedPhotonRemover.cxx
-    private/clsim/shadow/I3ShadowedPhotonRemoverModule.cxx
-    private/clsim/shadow/I3ExtraGeometryItem.cxx
-    private/clsim/shadow/I3ExtraGeometryItemUnion.cxx
-    private/clsim/shadow/I3ExtraGeometryItemMove.cxx
-    private/clsim/shadow/I3ExtraGeometryItemCylinder.cxx
-
-    # tableio converters
-    private/clsim/converter/I3PhotonConverter.cxx
-    private/clsim/converter/I3MCHitConverterWithIDs.cxx
 
     # private/geant4
     private/geant4/I3CLSimLightSourceToStepConverterGeant4.cxx
@@ -111,13 +206,9 @@ if(OPENCL_FOUND)
     private/test/I3CLSimTesterBase.cxx
     private/test/I3CLSimFunctionTester.cxx
   )
-  SET(LIB_${PROJECT_NAME}_PROJECTS icetray dataio dataclasses phys-services tableio simclasses)
-  SET(LIB_${PROJECT_NAME}_TOOLS python boost log4cplus gsl clhep geant4 opencl)
 
-  # The icecube master header file I3.h seems to include inttypes.h without setting
-  # __STDC_FORMAT_MACROS. clsim makes use of the PRI* preprocessor definitions,
-  # so it needs those macros. Add the definition right here to work around this.
-  ADD_DEFINITIONS(-D__STDC_FORMAT_MACROS)
+  #LIST(APPEND LIB_${PROJECT_NAME}_PROJECTS )
+  LIST(APPEND LIB_${PROJECT_NAME}_TOOLS clhep geant4 opencl)
 
   if(NOT EXISTS ${CMAKE_SOURCE_DIR}/clsim/resources/safeprimes_base32.txt)
     colormsg(RED   "+-- Downloading and unpacking the safeprimes_base32.txt data file...")
@@ -127,91 +218,25 @@ if(OPENCL_FOUND)
   else(NOT EXISTS ${CMAKE_SOURCE_DIR}/clsim/resources/safeprimes_base32.txt)
     colormsg(CYAN  "+-- safeprimes_base32.txt already downloaded")
   endif(NOT EXISTS ${CMAKE_SOURCE_DIR}/clsim/resources/safeprimes_base32.txt)
+endif(NOT BUILD_CLSIM_DATACLASSES_ONLY)
 
-  # check for Q-Frame support
-  if(EXISTS ${CMAKE_SOURCE_DIR}/dataio/private/dataio/QConverter.cxx)
-    # we assume that the existence of this module means that we have
-    # to deal with a Q-frame-enabled meta-project
-    ADD_DEFINITIONS(-DIS_Q_FRAME_ENABLED)
-    colormsg(GREEN "+-- Q-frame-enabled")
-  else(EXISTS ${CMAKE_SOURCE_DIR}/dataio/private/dataio/QConverter.cxx)
-    colormsg(YELLOW "+-- old-style, non-Q-frame module")
-  endif(EXISTS ${CMAKE_SOURCE_DIR}/dataio/private/dataio/QConverter.cxx)
+# the clsim library definition
+i3_add_library(${PROJECT_NAME}
+  ${LIB_${PROJECT_NAME}_SOURCEFILES}
+  USE_TOOLS ${LIB_${PROJECT_NAME}_TOOLS}
+  USE_PROJECTS ${LIB_${PROJECT_NAME}_PROJECTS}
+  )
 
-
-  # add some things if hit-maker is available (IceCube-specific)
-  if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/hit-maker)
-    LIST(APPEND LIB_${PROJECT_NAME}_PROJECTS hit-maker)
-    #LIST(APPEND LIB_${PROJECT_NAME}_TOOLS nothing) # no extra tools
-    LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
-         private/clsim/I3CLSimPMTPhotonSimulatorIceCube.cxx
-         )
-
-    ADD_DEFINITIONS(-DUSE_HIT_MAKER)
-    colormsg(GREEN "+-- hit-maker support (for pre-Rosencrantz simulations)")
-  endif(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/hit-maker)
-
-
-  # heck for the existence of icetray/python/dataclass_suite.hpp
-  # If this file does not exist, a local copy of the python
-  # binding helper headers is used. TODO: This needs to go away
-  # as soon as an offline-software release contains these headers.
-  # (They already are in icetray/trunk.)
-  if(NOT EXISTS ${CMAKE_SOURCE_DIR}/icetray/public/icetray/python/dataclass_suite.hpp)
-    ADD_DEFINITIONS(-DNO_PYTHON_DATACLASS_SUITE)
-    colormsg(YELLOW "+-- icetray does not have dataclass_suite.hpp. Using local version.")
-  endif(NOT EXISTS ${CMAKE_SOURCE_DIR}/icetray/public/icetray/python/dataclass_suite.hpp)
-
-
-  # check if multiPMT support is available and add multiPMT-only 
-  # source files (this is still for the KM3NeT multiPMT version of IceTray)
-  # support for 3-item OMKeys is coming soon!
-  if(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3OMTypeInfo.h)
-    LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
-         private/clsim/dom/I3PhotonToMCHitConverterForMultiPMT.cxx
-         )
-
-    ADD_DEFINITIONS(-DHAS_MULTIPMT_SUPPORT)
-    colormsg(GREEN "+-- KM3NeT old-style multiPMT support")
-  endif(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3OMTypeInfo.h)
-
-  # check for glshovel support
-  if(QT4_FOUND AND NOT QT_CONFIG_ERROR AND OPENGL_FOUND AND GLUT_FOUND)
-    if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/glshovel)
-      # We seem to have glshovel and its requirements available.
-      # Build the I3Photon renderer!
-      LIST(APPEND LIB_${PROJECT_NAME}_PROJECTS glshovel)
-      LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
-           private/glshovel/render/PhotonPaths.cxx
-       )
-      include(${QT_USE_FILE})
-
-      colormsg(GREEN "+-- glshovel I3Photon renderers")
-    endif(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/glshovel)
-  endif(QT4_FOUND AND NOT QT_CONFIG_ERROR AND OPENGL_FOUND AND GLUT_FOUND)
-
-
-  i3_add_library(${PROJECT_NAME}
-    ${LIB_${PROJECT_NAME}_SOURCEFILES}
-    USE_TOOLS ${LIB_${PROJECT_NAME}_TOOLS}
-    USE_PROJECTS ${LIB_${PROJECT_NAME}_PROJECTS}
+# the make-safeprimes tool needs gmp, so only compile it if that tool is available
+if(GMP_FOUND)
+  i3_executable(make_safeprimes
+    private/make_safeprimes/main.c
+    USE_TOOLS python boost gmp
     )
+  colormsg(GREEN "+-- gmp support (make_safeprimes utility)")
+else(GMP_FOUND)
+  colormsg(CYAN  "+-- no gmp support (make_safeprimes utility)")
+endif(GMP_FOUND)
 
-  # the make-safeprimes tool needs gmp, so only compile it if that tool is available
 
-  # add some things if hit-maker is available (IceCube-specific)
-  if(GMP_FOUND)
-    i3_executable(make_safeprimes
-      private/make_safeprimes/main.c
-      USE_TOOLS python boost gmp
-      )
-    colormsg(GREEN "+-- gmp support (make_safeprimes utility)")
-  else(GMP_FOUND)
-    colormsg(CYAN  "+-- no gmp support (make_safeprimes utility)")
-  endif(GMP_FOUND)
-
-  add_subdirectory(private/pybindings)
-
-else(OPENCL_FOUND) # there is no OpenCL installed on this system
-    colormsg(RED   "+-- OpenCL is not installed on your system. Cannot build clsim!")
-endif(OPENCL_FOUND)
+add_subdirectory(private/pybindings)
