@@ -532,7 +532,7 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
                 // fill in all information
                 hit.SetTime(correctedTime);
                 hit.SetHitID(photon.GetID());
-                hit.SetWeight(1.);
+                //hit.SetWeight(1.); // new versions of I3MCHit use SetCharge/SetNPE. The default is 1 anyway.
                 if (particle) hit.SetParticleID(*particle);
                 hit.SetCherenkovDistance(NAN);
                 hit.SetHitSource(I3MCHit::SPE); // SPE for now, may be changed by afterpulse simulation
@@ -547,7 +547,7 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
                 // fill in all information
                 hit.SetTime(correctedTime);
                 hit.SetHitID(photon.GetID());
-                hit.SetWeight(1.);
+                //hit.SetWeight(1.); // new versions of I3MCHit use SetCharge/SetNPE. The default is 1 anyway.
                 if (particle) hit.SetParticleID(*particle);
                 hit.SetCherenkovDistance(NAN);
 
