@@ -90,7 +90,7 @@ def I3CLSimMakePhotons(tray, name,
         The name of the I3MCTree containing the particles to propagate.
     :param OutputMCTreeName:
         A copy of the (possibly sliced) MCTree will be stored as this name.
-    :param FlasherPulseSeriesName:
+    :param FlasherInfoVectName:
         Set this to the name of I3FlasherInfoVect objects in the frame to
         enable flasher simulation. The module will read I3FlasherInfoVect objects
         and generate photons according to assumed parameterizations.
