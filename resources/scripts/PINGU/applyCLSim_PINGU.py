@@ -40,7 +40,7 @@ if len(args) != 0:
 if options.INFILE:
         filename = options.INFILE
         if os.access(filename,os.R_OK) == False:
-                raise "cannot find input file!"
+                raise RuntimeError("cannot find input file!")
         infile = filename
         print 'using input file %s' % infile
 else:
@@ -56,7 +56,7 @@ if infileExt == ".gz":
         infileExt = ".i3.gz"
 
 if infileExt != ".i3" and infileExt != ".i3.gz":
-        raise Exception, "you have to specify either a .i3 or an .i3.gz file!"
+        raise RuntimeError("you have to specify either a .i3 or an .i3.gz file!")
 
 if options.GCDFILE is not None:
     print "using GCD file", options.GCDFILE 

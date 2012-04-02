@@ -1,0 +1,2 @@
+This shows how to simulate flasher events with clsim. A simple script generating
+test flashes by putting I3FlasherInfoVect objects into a frame is provided.
