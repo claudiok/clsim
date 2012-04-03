@@ -40,15 +40,18 @@ static const unsigned i3clsimfunctionfromtable_version_ = 0;
 struct I3CLSimFunctionFromTable : public I3CLSimFunction
 {
 public:
+    static const bool default_storeDataAsHalfPrecision;
     
     // arbitrary wavelength values
     I3CLSimFunctionFromTable(const std::vector<double> &wlens,
-                                       const std::vector<double> &values);
+                             const std::vector<double> &values,
+                             bool storeDataAsHalfPrecision=default_storeDataAsHalfPrecision);
     
     // wavelengths with constant spacing (more efficient)
     I3CLSimFunctionFromTable(double startWlen,
-                                       double wlenStep,
-                                       const std::vector<double> &values);
+                             double wlenStep,
+                             const std::vector<double> &values,
+                             bool storeDataAsHalfPrecision=default_storeDataAsHalfPrecision);
     virtual ~I3CLSimFunctionFromTable();
     
     /**
@@ -128,6 +131,8 @@ private:
     std::vector<double> values_;
     
     bool equalSpacingMode_;
+    
+    bool storeDataAsHalfPrecision_;
     
     friend class boost::serialization::access;
     template <class Archive> void serialize(Archive & ar, unsigned version);

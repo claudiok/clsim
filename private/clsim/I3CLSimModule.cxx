@@ -403,7 +403,7 @@ void I3CLSimModule::Configure()
                                             );
         }
         
-        log_warn("%zu additional (non-Cherenkov) wavelength generators (spectra) have been configured.",
+        log_info("%zu additional (non-Cherenkov) wavelength generators (spectra) have been configured.",
                  spectrumTable_->size()-1);
     }
 
@@ -630,7 +630,7 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
     
     BOOST_FOREACH(const I3CLSimOpenCLDevice &openCLdevice, openCLDeviceList_)
     {
-        log_warn(" -> platform: %s device: %s",
+        LOG_IMPL(INFO, " -> platform: %s device: %s",
                  openCLdevice.GetPlatformName().c_str(), openCLdevice.GetDeviceName().c_str());
         
         I3CLSimStepToPhotonConverterOpenCLPtr openCLStepsToPhotonsConverter =
@@ -664,7 +664,7 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
             const uint64_t newGranularity = boost::math::lcm(currentGranularity, granularity);
             
             if (newGranularity != granularity) {
-                log_warn("new OpenCL device work group size is not compatible (%" PRIu64 "), changing granularity from %" PRIu64 " to %" PRIu64,
+                LOG_IMPL(INFO, "new OpenCL device work group size is not compatible (%" PRIu64 "), changing granularity from %" PRIu64 " to %" PRIu64,
                          currentGranularity, granularity, newGranularity);
             }
             
@@ -680,7 +680,7 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
 
             if (newMaxBunchSizeWithGranularity != maxBunchSize)
             {
-                log_warn("maximum bunch size decreased from %" PRIu64 " to %" PRIu64 " because of new devices maximum request of %" PRIu64 " and a granularity of %" PRIu64,
+                LOG_IMPL(INFO, "maximum bunch size decreased from %" PRIu64 " to %" PRIu64 " because of new devices maximum request of %" PRIu64 " and a granularity of %" PRIu64,
                          maxBunchSize, newMaxBunchSizeWithGranularity, currentMaxBunchSize, granularity);
                 
             }

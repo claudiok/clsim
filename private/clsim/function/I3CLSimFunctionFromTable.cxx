@@ -24,6 +24,9 @@
  * @author Claudio Kopper
  */
 
+#define __CL_ENABLE_EXCEPTIONS
+#include "clsim/cl.hpp"
+
 #include <icetray/serialization.h>
 #include <clsim/function/I3CLSimFunctionFromTable.h>
 
@@ -38,14 +41,25 @@
 #include "clsim/I3CLSimHelperToFloatString.h"
 using namespace I3CLSimHelper;
 
+// when storing data in 16bits, this class can optionally
+// use IEEE half precision. This is not used by default,
+// but can be activated using this ifdef:
+#ifdef USE_OPENCL_HALF_PRECISION
+#include "opencl/ieeehalfprecision.h"
+#endif
+
+const bool I3CLSimFunctionFromTable::default_storeDataAsHalfPrecision=false;
+
 I3CLSimFunctionFromTable::
 I3CLSimFunctionFromTable(const std::vector<double> &wlens,
-                                   const std::vector<double> &values)
+                         const std::vector<double> &values,
+                         bool storeDataAsHalfPrecision)
 :
 wlenStep_(NAN),
 wlens_(wlens),
 values_(values),
-equalSpacingMode_(false)
+equalSpacingMode_(false),
+storeDataAsHalfPrecision_(storeDataAsHalfPrecision)
 {
     if (wlens_.size() < 2) throw std::range_error("wlens must contain at least 2 elements!");
     if (wlens_.size() != values_.size()) throw std::range_error("wlens and values must have the same size!");
@@ -56,13 +70,15 @@ equalSpacingMode_(false)
 
 I3CLSimFunctionFromTable::
 I3CLSimFunctionFromTable(double startWlen,
-                                   double wlenStep,
-                                   const std::vector<double> &values)
+                         double wlenStep,
+                         const std::vector<double> &values,
+                         bool storeDataAsHalfPrecision)
 :
 startWlen_(startWlen),
 wlenStep_(wlenStep),
 values_(values),
-equalSpacingMode_(true)
+equalSpacingMode_(true),
+storeDataAsHalfPrecision_(storeDataAsHalfPrecision)
 {
     if (startWlen_ < 0.) throw std::range_error("startWlen must not be < 0!");
     if (wlenStep_ <= 0.) throw std::range_error("wlenStep must not be <= 0!");
@@ -162,16 +178,70 @@ std::string I3CLSimFunctionFromTable::GetOpenCLFunction(const std::string &funct
     // some names
     const std::string dataName = functionName + "_data";
     const std::string interpHelperName = functionName + "_getInterpolationBinAndFraction";
+
+#ifndef USE_OPENCL_HALF_PRECISION
+    double smallestEntry=0., largestEntry=0.;
+#endif
     
-    // define the actual data
-    std::string dataDef = std::string() +
-    "__constant float " + dataName + "[" + boost::lexical_cast<std::string>(values_.size()) + "] = {\n";
-    BOOST_FOREACH(const double &val, values_)
+    std::string dataDef;
+    if (storeDataAsHalfPrecision_)
     {
-        dataDef += ToFloatString(val) + ", ";
+#ifdef USE_OPENCL_HALF_PRECISION
+        // define the actual data
+        dataDef = dataDef +
+        "// this is IEEE half precision values stored as 16bit integers:\n" +
+        "__constant unsigned short " + dataName + "[" + boost::lexical_cast<std::string>(values_.size()) + "] = {\n";
+        BOOST_FOREACH(const double &val, values_)
+        {
+            // convert the double value to IEEE half precision and store it as an unsigned integer (16bit)
+            uint16_t dummy=0;
+            doubles2halfp(&dummy, &val, 1);
+            dataDef += boost::lexical_cast<std::string>(dummy) + ", ";
+        }
+        dataDef += "\n";
+        dataDef += "};\n\n";
+#else
+        // find the smallest and largest entries.
+        bool firstIteration=true;
+        BOOST_FOREACH(const double &val, values_)
+        {
+            if (firstIteration) {
+                firstIteration=false;
+                smallestEntry=val;
+                largestEntry=val;
+                continue;
+            }
+            
+            if (val < smallestEntry) smallestEntry=val;
+            if (val > largestEntry) largestEntry=val;
+        }
+        
+        // define the actual data
+        dataDef = dataDef +
+        "#define dataName_SMALLEST_ENTRY " + ToFloatString(smallestEntry) + " \n" +
+        "#define dataName_LARGEST_ENTRY " + ToFloatString(largestEntry) + " \n" +
+        "__constant unsigned short " + dataName + "[" + boost::lexical_cast<std::string>(values_.size()) + "] = {\n";
+        BOOST_FOREACH(const double &val, values_)
+        {
+            uint16_t dummy = static_cast<uint16_t>(65536.*(val-smallestEntry)/(largestEntry-smallestEntry));
+            dataDef += boost::lexical_cast<std::string>(dummy) + ", ";
+        }
+        dataDef += "\n";
+        dataDef += "};\n\n";
+#endif
     }
-    dataDef += "\n";
-    dataDef += "};\n\n";
+    else
+    {
+        // define the actual data
+        dataDef = dataDef +
+        "__constant float " + dataName + "[" + boost::lexical_cast<std::string>(values_.size()) + "] = {\n";
+        BOOST_FOREACH(const double &val, values_)
+        {
+            dataDef += ToFloatString(val) + ", ";
+        }
+        dataDef += "\n";
+        dataDef += "};\n\n";
+    }
 
     std::string interpHelperDef =
     std::string("inline void ") + interpHelperName + "(float wavelength, int *bin, float *fraction)";
@@ -198,16 +268,46 @@ std::string I3CLSimFunctionFromTable::GetOpenCLFunction(const std::string &funct
     std::string funcDef = 
     std::string("inline float ") + functionName + std::string("(float wavelength)\n");
     
-    std::string funcBody = std::string() + 
-    "{\n"
-    "    int bin; float fraction;\n"
-    "    " + interpHelperName + "(wavelength, &bin, &fraction);\n"
-    "    \n"
-    "    return mix(" + dataName + "[bin],\n"
-    "               " + dataName + "[bin+1],\n"
-    "               fraction);\n"
-    "}\n"
-    ;
+    std::string funcBody;
+    if (storeDataAsHalfPrecision_)
+    {
+#ifdef USE_OPENCL_HALF_PRECISION
+        funcBody = funcBody + 
+        "{\n"
+        "    int bin; float fraction;\n"
+        "    " + interpHelperName + "(wavelength, &bin, &fraction);\n"
+        "    \n"
+        "    return mix(vload_half(bin,   (const __constant half *)" + dataName + "),\n"
+        "               vload_half(bin+1, (const __constant half *)" + dataName + "),\n"
+        "               fraction);\n"
+        "}\n"
+        ;
+#else
+        funcBody = funcBody + 
+        "{\n"
+        "    int bin; float fraction;\n"
+        "    " + interpHelperName + "(wavelength, &bin, &fraction);\n"
+        "    \n"
+            "    return mix(convert_float(" + dataName + "[bin])  *((dataName_LARGEST_ENTRY-dataName_SMALLEST_ENTRY)/65536.f) + dataName_SMALLEST_ENTRY,\n"
+            "               convert_float(" + dataName + "[bin+1])*((dataName_LARGEST_ENTRY-dataName_SMALLEST_ENTRY)/65536.f) + dataName_SMALLEST_ENTRY,\n"
+            "               fraction);\n"
+        "}\n"
+        ;
+#endif
+    }
+    else
+    {
+        funcBody = funcBody + 
+        "{\n"
+        "    int bin; float fraction;\n"
+        "    " + interpHelperName + "(wavelength, &bin, &fraction);\n"
+        "    \n"
+        "    return mix(" + dataName + "[bin],\n"
+        "               " + dataName + "[bin+1],\n"
+        "               fraction);\n"
+        "}\n"
+        ;
+    }
     
     return funcDef + ";\n" + interpHelperDef + ";\n" + dataDef + interpHelperDef + interpHelperBody + funcDef + funcBody;
 }

@@ -138,6 +138,7 @@ tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
     RandomService = randomService,
     UseGPUs=False,
     UseCPUs=True,
+    #IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos090.11jul2011.txt"))
     IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"))
 
 tray.AddModule("I3Writer","writer",

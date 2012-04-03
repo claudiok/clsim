@@ -135,22 +135,26 @@ void register_I3CLSimFunction()
          bp::init<
          double,
          double,
-         const std::vector<double> &
+         const std::vector<double> &,
+         bool
          >(
            (
             bp::arg("startWlen"), 
             bp::arg("wlenStep"), 
-            bp::arg("values")
+            bp::arg("values"),
+            bp::arg("storeDataAsHalfPrecision") = I3CLSimFunctionFromTable::default_storeDataAsHalfPrecision
            )
           )
         )
         .def(bp::init<
              const std::vector<double> &,
-             const std::vector<double> &
+             const std::vector<double> &,
+             bool
              >(
                (
                 bp::arg("wlens"),
-                bp::arg("values")
+                bp::arg("values"),
+                bp::arg("storeDataAsHalfPrecision") = I3CLSimFunctionFromTable::default_storeDataAsHalfPrecision
                )
               )
             )

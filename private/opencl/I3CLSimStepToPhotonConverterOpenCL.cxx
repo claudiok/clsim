@@ -660,9 +660,15 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
     //BuildOptions += "-cl-no-signed-zeros ";
     //BuildOptions += "-cl-unsafe-math-optimizations ";
     BuildOptions += "-cl-mad-enable ";
+
+    const bool nvidiaVerboseCompile=false;
+    if (nvidiaVerboseCompile)
+    {
+        // only valid if extension "cl_nv_compiler_options" is present
+        BuildOptions += "-cl-nv-verbose ";          // Passed on to ptxas as --verbose
+    }
     
     // only valid if extension "cl_nv_compiler_options" is present
-    //BuildOptions += "-cl-nv-verbose ";          // Passed on to ptxas as --verbose
     //BuildOptions += "-cl-nv-maxrregcount=60 ";  // Passed on to ptxas as --maxrregcount <N>
     //BuildOptions += "-cl-nv-opt-level=3 ";     // Passed on to ptxas as --opt-level <N>
     
@@ -696,6 +702,17 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
         log_debug("building...");
         program.build(devices, BuildOptions.c_str());
         log_debug("...building finished.");
+        
+        if (nvidiaVerboseCompile) {
+            std::string deviceName = device.getInfo<CL_DEVICE_NAME>();
+            // using LOG_IMPL will make this work even in Release build mode:
+            LOG_IMPL(INFO, "  * build status on %s\"", deviceName.c_str());
+            LOG_IMPL(INFO, "==============================");
+            LOG_IMPL(INFO, "Build Status: %s", boost::lexical_cast<std::string>(program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(device)).c_str());
+            LOG_IMPL(INFO, "Build Options: %s", boost::lexical_cast<std::string>(program.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(device)).c_str());
+            LOG_IMPL(INFO, "Build Log: %s", boost::lexical_cast<std::string>(program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device)).c_str());
+            LOG_IMPL(INFO, "==============================");
+        }
     } catch (cl::Error &err) {
         log_error("OpenCL ERROR (compile): %s (%i)", err.what(), err.err());
         
@@ -1025,7 +1042,7 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl_downloadPhotons(boost
             waitForOpenCLEventYield(copyComplete);
         }
         
-        log_warn("Num photons to copy (buffer %u): %" PRIu32, bufferIndex, numberOfGeneratedPhotons);
+        LOG_IMPL(INFO, "Num photons to copy (buffer %u): %" PRIu32, bufferIndex, numberOfGeneratedPhotons);
         
         if (numberOfGeneratedPhotons > maxNumOutputPhotons_)
         {
@@ -1111,22 +1128,13 @@ namespace {
         
         const double utilization = kernel_duration_in_nanoseconds/host_duration_in_nanoseconds;
         
-#ifdef I3_OPTIMIZE
-        std::cout << "kernel statistics: " ;
-        if (timeStart==timeEnd) std::cout << "<=";
-        std::cout << kernel_duration_in_nanoseconds/static_cast<double>(totalNumberOfPhotons) 
-        << " nanoseconds/photon (util: " << utilization*100. << "%) "
-        << "(" << platformName << " " << deviceName << ")";
-        if (starving) std::cout << " [starving]";
-        std::cout << std::endl;
-#else
-        log_info("kernel statistics: %s%g nanoseconds/photon (util: %.0f%%) (%s %s) %s",
+        // use LOG_IMPL here to make it log this even when in Release build mode.
+        LOG_IMPL(INFO, "kernel statistics: %s%g nanoseconds/photon (util: %.0f%%) (%s %s) %s",
                  (timeStart==timeEnd)?"<=":"",
                  kernel_duration_in_nanoseconds/static_cast<double>(totalNumberOfPhotons),
                  utilization*100.,
                  platformName.c_str(), deviceName.c_str(),
                  (starving?"[starving]":""));
-#endif
         
         return this_timestamp;
     }

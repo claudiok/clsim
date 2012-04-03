@@ -199,6 +199,7 @@ if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
     private/opencl/I3CLSimHelperGenerateMediumPropertiesSource_Optimizers.cxx
     private/opencl/I3CLSimStepToPhotonConverterOpenCL.cxx
     private/opencl/I3CLSimOpenCLDevice.cxx
+    private/opencl/ieeehalfprecision.cxx
 
     # private/test/
     private/test/I3CLSimMediumPropertiesTester.cxx
