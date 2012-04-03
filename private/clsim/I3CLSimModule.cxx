@@ -806,7 +806,7 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
             
             if (photonHistory.size() > photon.GetNumScatters())
                 log_fatal("Logic error: photonHistory.size() [==%zu] > photon.GetNumScatters() [==%zu]",
-                          photonHistory.size(), photon.GetNumScatters());
+                          photonHistory.size(), static_cast<std::size_t>(photon.GetNumScatters()));
             
             for (std::size_t j=0;j<photonHistory.size();++j)
             {

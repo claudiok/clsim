@@ -112,7 +112,6 @@ void register_I3ExtraGeometryItem()
         .def("DoesLineIntersect", bp::pure_virtual(&I3ExtraGeometryItem::DoesLineIntersect))
         .def("GetBoundingBox", bp::pure_virtual(&I3ExtraGeometryItem::GetBoundingBox))
         .def_pickle(bp::boost_serializable_pickle_suite<I3ExtraGeometryItem>())
-        .def(freeze())
         ;
     }
     

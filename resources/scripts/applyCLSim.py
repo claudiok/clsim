@@ -132,14 +132,25 @@ if options.REMOVEPHOTONDATA:
 else:
     photonSeriesName = "PropagatedPhotons"
 
-tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
-    PhotonSeriesName = photonSeriesName,
-    ParallelEvents = options.MAXPARALLELEVENTS,
-    RandomService = randomService,
-    UseGPUs=False,
-    UseCPUs=True,
-    #IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos090.11jul2011.txt"))
-    IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"))
+if hasattr(icetray, "traysegment"):
+    tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
+        PhotonSeriesName = photonSeriesName,
+        ParallelEvents = options.MAXPARALLELEVENTS,
+        RandomService = randomService,
+        UseGPUs=False,
+        UseCPUs=True,
+        #IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos090.11jul2011.txt"))
+        IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"))
+else:
+    # this is how you would add clsim to your script without
+    # IceTray support for tray segments:
+    clsim.I3CLSimMakeHits(tray, "makeCLSimHits",
+        PhotonSeriesName = photonSeriesName,
+        ParallelEvents = options.MAXPARALLELEVENTS,
+        RandomService = randomService,
+        UseGPUs=False,
+        UseCPUs=True)
+    
 
 tray.AddModule("I3Writer","writer",
     Filename = outdir+outfile)

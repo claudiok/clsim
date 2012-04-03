@@ -29,7 +29,11 @@ from os.path import expandvars, exists, isdir, isfile
 
 from icecube import icetray, dataclasses
 
-@icetray.traysegment
+# use this instead of a simple "@icetray.traysegment" to support
+# ancient versions of IceTray that do not have tray segments.
+def unchanged(func): return func
+my_traysegment = icetray.traysegment if hasattr(icetray, "traysegment") else unchanged
+@my_traysegment
 def I3CLSimMakeHitsFromPhotons(tray, name,
                                MCTreeName="I3MCTree_sliced",
                                PhotonSeriesName="PhotonSeriesMap",

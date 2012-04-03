@@ -24,6 +24,19 @@
 # @author Claudio Kopper
 #
 
+# make this file compatible with old versions of icetray that do not have "colormsg"
+if(NOT COMMAND colormsg)
+  function (colormsg)
+    if($ARGC EQUAL 1)
+      message(STATUS ${ARGV0})
+    else($ARGC EQUAL 1)
+      message(STATUS "  "${ARGV1})
+    endif($ARGC EQUAL 1)
+  endfunction()
+endif(NOT COMMAND colormsg)
+
+
+
 # Do we have OpenCL and Geant4 installed on this system? If not,
 # build a simple version of clsim with dataclasses only.
 if (OPENCL_FOUND AND GEANT4_FOUND)
@@ -39,7 +52,15 @@ if (BUILD_CLSIM_DATACLASSES_ONLY)
     DOCS_DIR resources/docs
   )
 
-  colormsg(RED   "+-- OpenCL and/or Geant4 is not installed on your system. Only building the clsim dataclasses.")
+  if (OPENCL_FOUND AND GEANT4_FOUND)
+    colormsg(RED   "+-- Only building the clsim dataclasses. (manual override, Geant4 and OpenCL *are* available)")
+  elseif (NOT OPENCL_FOUND AND GEANT4_FOUND)
+    colormsg(RED   "+-- OpenCL is not installed on your system. Only building the clsim dataclasses.")
+  elseif (OPENCL_FOUND AND NOT GEANT4_FOUND)
+    colormsg(RED   "+-- Geant4 is not installed on your system. Only building the clsim dataclasses.")
+  else (NOT OPENCL_FOUND AND NOT GEANT4_FOUND)
+    colormsg(RED   "+-- Neither OpenCL nor Geant4 are not installed on your system. Only building the clsim dataclasses.")
+  endif (OPENCL_FOUND AND GEANT4_FOUND)
 else (BUILD_CLSIM_DATACLASSES_ONLY)
   i3_project(clsim
     PYTHON_DIR python

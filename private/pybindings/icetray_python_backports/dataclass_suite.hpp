@@ -158,7 +158,7 @@ public:
 		cl.def_pickle(boost_serializable_pickle_suite<T>());
 		add_string_to_stream<Class, T>(cl);
 		add_indexing<Class, T>(cl);
-		cl.def(freeze());
+		//cl.def(freeze()); // this may not be supported on the ancient version of IceTray this file is supposed to be used with..
 	}
 	
 };

@@ -35,7 +35,12 @@ from icecube.clsim import GetFlasherParameterizationList
 from I3CLSimMakePhotons import I3CLSimMakePhotons
 from I3CLSimMakeHitsFromPhotons import I3CLSimMakeHitsFromPhotons
 
-@icetray.traysegment
+
+# use this instead of a simple "@icetray.traysegment" to support
+# ancient versions of IceTray that do not have tray segments.
+def unchanged(func): return func
+my_traysegment = icetray.traysegment if hasattr(icetray, "traysegment") else unchanged
+@my_traysegment
 def I3CLSimMakeHits(tray, name,
                     UseCPUs=False,
                     UseGPUs=True,
@@ -200,43 +205,56 @@ def I3CLSimMakeHits(tray, name,
         else:
             clSimMCTreeName=MCTreeName+"_clsim"
 
+    I3CLSimMakePhotons_kwargs = dict(UseCPUs=UseCPUs,
+                                     UseGPUs=UseGPUs,
+                                     MCTreeName=MCTreeName,
+                                     OutputMCTreeName=clSimMCTreeName,
+                                     FlasherInfoVectName=FlasherInfoVectName,
+                                     MMCTrackListName=MMCTrackListName,
+                                     PhotonSeriesName=photonsName,
+                                     ParallelEvents=ParallelEvents,
+                                     RandomService=RandomService,
+                                     IceModelLocation=IceModelLocation,
+                                     UnWeightedPhotons=UnWeightedPhotons,
+                                     UseGeant4=UseGeant4,
+                                     StopDetectedPhotons=StopDetectedPhotons,
+                                     PhotonHistoryEntries=PhotonHistoryEntries,
+                                     DoNotParallelize=DoNotParallelize,
+                                     DOMOversizeFactor=DOMOversizeFactor,
+                                     UnshadowedFraction=UnshadowedFraction,
+                                     UseHoleIceParameterization=UseHoleIceParameterization,
+                                     ExtraArgumentsToI3CLSimModule=ExtraArgumentsToI3CLSimModule,
+                                     If=If)
 
-    tray.AddSegment(I3CLSimMakePhotons, name + "_makePhotons",
-                    UseCPUs=UseCPUs,
-                    UseGPUs=UseGPUs,
-                    MCTreeName=MCTreeName,
-                    OutputMCTreeName=clSimMCTreeName,
-                    FlasherInfoVectName=FlasherInfoVectName,
-                    MMCTrackListName=MMCTrackListName,
-                    PhotonSeriesName=photonsName,
-                    ParallelEvents=ParallelEvents,
-                    RandomService=RandomService,
-                    IceModelLocation=IceModelLocation,
-                    UnWeightedPhotons=UnWeightedPhotons,
-                    UseGeant4=UseGeant4,
-                    StopDetectedPhotons=StopDetectedPhotons,
-                    PhotonHistoryEntries=PhotonHistoryEntries,
-                    DoNotParallelize=DoNotParallelize,
-                    DOMOversizeFactor=DOMOversizeFactor,
-                    UnshadowedFraction=UnshadowedFraction,
-                    UseHoleIceParameterization=UseHoleIceParameterization,
-                    ExtraArgumentsToI3CLSimModule=ExtraArgumentsToI3CLSimModule,
-                    If=If
-                    )
+    if hasattr(icetray, "traysegment"):
+        tray.AddSegment(I3CLSimMakePhotons, name + "_makePhotons",
+                        **I3CLSimMakePhotons_kwargs)
+    else:
+        # if there is no tray segment support in IceTray, use this instead:
+        I3CLSimMakePhotons(tray, name + "_makePhotons",
+                           **I3CLSimMakePhotons_kwargs)
 
     if MCHitSeriesName is not None:
-        tray.AddSegment(I3CLSimMakeHitsFromPhotons, name + "_makeHitsFromPhotons",
-                        MCTreeName=clSimMCTreeName,
-                        PhotonSeriesName=photonsName,
-                        MCHitSeriesName=MCHitSeriesName,
-                        SimulateAfterPulses=SimulateAfterPulses,
-                        RandomService=RandomService,
-                        DOMOversizeFactor=DOMOversizeFactor,
-                        UnshadowedFraction=UnshadowedFraction,
-                        UseHoleIceParameterization=UseHoleIceParameterization,
-                        If=If
-                        )
-
+        I3CLSimMakeHitsFromPhotons_kwargs = dict(MCTreeName=clSimMCTreeName,
+                                                 PhotonSeriesName=photonsName,
+                                                 MCHitSeriesName=MCHitSeriesName,
+                                                 SimulateAfterPulses=SimulateAfterPulses,
+                                                 RandomService=RandomService,
+                                                 DOMOversizeFactor=DOMOversizeFactor,
+                                                 UnshadowedFraction=UnshadowedFraction,
+                                                 UseHoleIceParameterization=UseHoleIceParameterization,
+                                                 If=If)
+        
+        if hasattr(icetray, "traysegment"):
+            tray.AddSegment(I3CLSimMakeHitsFromPhotons, name + "_makeHitsFromPhotons",
+                            **I3CLSimMakeHitsFromPhotons_kwargs
+                            )
+        else:
+            # if there is no tray segment support in IceTray, use this instead:
+            I3CLSimMakeHitsFromPhotons(tray, name + "_makeHitsFromPhotons",
+                            **I3CLSimMakeHitsFromPhotons_kwargs
+                            )
+            
     if PhotonSeriesName is None:
         tray.AddModule("Delete", name + "_deletePhotons",
             Keys = [photonsName],
