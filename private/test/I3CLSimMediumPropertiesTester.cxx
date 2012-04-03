@@ -135,7 +135,13 @@ I3VectorFloatPtr I3CLSimMediumPropertiesTester::EvaluatePhaseRefIndex(I3VectorFl
 
 I3VectorFloatPtr I3CLSimMediumPropertiesTester::EvaluateDispersion(I3VectorFloatConstPtr xValues, uint32_t layer)
 {
-    return EvaluateIt(xValues, layer, 1);
+    if (mediumProperties_->GetPhaseRefractiveIndices()[0]->HasDerivative()) {
+        return EvaluateIt(xValues, layer, 1);
+    } else {
+        if (!xValues) return I3VectorFloatPtr();
+    
+        return I3VectorFloatPtr(new I3VectorFloat(xValues->size(), NAN)); // no dispersion available
+    }
 }
 
 I3VectorFloatPtr I3CLSimMediumPropertiesTester::EvaluateGroupVelocity(I3VectorFloatConstPtr xValues, uint32_t layer)

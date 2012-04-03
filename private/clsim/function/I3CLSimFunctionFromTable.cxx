@@ -44,6 +44,8 @@ using namespace I3CLSimHelper;
 // when storing data in 16bits, this class can optionally
 // use IEEE half precision. This is not used by default,
 // but can be activated using this ifdef:
+ //#define USE_OPENCL_HALF_PRECISION
+
 #ifdef USE_OPENCL_HALF_PRECISION
 #include "opencl/ieeehalfprecision.h"
 #endif
@@ -223,7 +225,7 @@ std::string I3CLSimFunctionFromTable::GetOpenCLFunction(const std::string &funct
         "__constant unsigned short " + dataName + "[" + boost::lexical_cast<std::string>(values_.size()) + "] = {\n";
         BOOST_FOREACH(const double &val, values_)
         {
-            uint16_t dummy = static_cast<uint16_t>(65536.*(val-smallestEntry)/(largestEntry-smallestEntry));
+            uint16_t dummy = static_cast<uint16_t>(65535.*(val-smallestEntry)/(largestEntry-smallestEntry));
             dataDef += boost::lexical_cast<std::string>(dummy) + ", ";
         }
         dataDef += "\n";
@@ -288,8 +290,8 @@ std::string I3CLSimFunctionFromTable::GetOpenCLFunction(const std::string &funct
         "    int bin; float fraction;\n"
         "    " + interpHelperName + "(wavelength, &bin, &fraction);\n"
         "    \n"
-            "    return mix(convert_float(" + dataName + "[bin])  *((dataName_LARGEST_ENTRY-dataName_SMALLEST_ENTRY)/65536.f) + dataName_SMALLEST_ENTRY,\n"
-            "               convert_float(" + dataName + "[bin+1])*((dataName_LARGEST_ENTRY-dataName_SMALLEST_ENTRY)/65536.f) + dataName_SMALLEST_ENTRY,\n"
+            "    return mix(convert_float(" + dataName + "[bin])  *((dataName_LARGEST_ENTRY-dataName_SMALLEST_ENTRY)/65535.f) + dataName_SMALLEST_ENTRY,\n"
+            "               convert_float(" + dataName + "[bin+1])*((dataName_LARGEST_ENTRY-dataName_SMALLEST_ENTRY)/65535.f) + dataName_SMALLEST_ENTRY,\n"
             "               fraction);\n"
         "}\n"
         ;
