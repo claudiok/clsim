@@ -550,6 +550,7 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
                 //hit.SetWeight(1.); // new versions of I3MCHit use SetCharge/SetNPE. The default is 1 anyway.
                 if (particle) hit.SetParticleID(*particle);
                 hit.SetCherenkovDistance(NAN);
+                hit.SetHitSource(I3MCHit::SPE); // SPE for now, may be changed by afterpulse simulation
 
                 pmtPhotonSimulator_->ApplyAfterPulseLatePulseAndJitterSim
                 (key, hit, *hits);
