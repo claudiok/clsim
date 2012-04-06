@@ -33,6 +33,8 @@
 
 #include <boost/foreach.hpp>
 
+#include <gsl/gsl_sys.h>
+
 #include "dataclasses/physics/I3Particle.h"
 #include "dataclasses/physics/I3MCTree.h"
 #include "dataclasses/physics/I3MCTreeUtils.h"
@@ -141,7 +143,31 @@ namespace {
         
         return totalEnergy;
     }
-                                        
+
+    inline double DistanceFromInfiniteTrack(const I3Position &position, const I3Position &muonPos, const I3Direction &muonDir, double &distanceOnTrack)
+    {
+        double pos0_x = muonPos.GetX();
+        double pos0_y = muonPos.GetY();
+        double pos0_z = muonPos.GetZ();
+        
+        double e_x = muonDir.GetX();
+        double e_y = muonDir.GetY();
+        double e_z = muonDir.GetZ();
+        
+        double h_x = position.GetX() - pos0_x;  //vector between particle position and "OM"/"cascade"
+        double h_y = position.GetY() - pos0_y;
+        double h_z = position.GetZ() - pos0_z;
+        
+        double s = e_x*h_x + e_y*h_y + e_z*h_z; //distance between particle position and closest approach position
+        
+        double pos2_x = pos0_x + s*e_x; //closest approach position
+        double pos2_y = pos0_y + s*e_y;
+        double pos2_z = pos0_z + s*e_z;
+        
+        distanceOnTrack=s; //record the distance on the track
+        
+        return gsl_hypot3(pos2_x-position.GetX(), pos2_y-position.GetY(), pos2_z-position.GetZ());
+    }
     
     namespace {
         I3MCTree::iterator
@@ -180,6 +206,10 @@ namespace {
                 log_fatal("It seems you either ran MMC with the \"-recc\" option or I3MuonSlicer has already been applied.");
             }
 
+            if (std::abs(particle.GetSpeed()-I3Constants::c) > 1e-5)
+                log_fatal("Found a muon that does not travel with the speed of light. v=%gm/ns",
+                          particle.GetSpeed()/(I3Units::m/I3Units::ns));
+            
             if (isnan(particle.GetEnergy())) log_fatal("Muon must have an energy");
             if (isnan(particle.GetTime())) log_fatal("Muon must have a time");
             
@@ -234,6 +264,16 @@ namespace {
                 Ef = 0.;
                 tf = particle.GetTime() + particle.GetLength()/I3Constants::c;
                 hadInvalidEf=true;
+            }
+
+            if (std::abs(ti-particle.GetTime()) > 0.1*I3Units::ns) {
+                log_fatal("MMCTrackLists's ti is incompatible with particle.GetTime(). ti=%fns, p.GetTime()=%fns",
+                          ti/I3Units::ns, particle.GetTime()/I3Units::ns);
+            }
+
+            if (std::abs(Ei-particle.GetEnergy()) > 0.1*I3Units::MeV) {
+                log_fatal("MMCTrackLists's Ei is incompatible with particle.GetEnergy(). Ei=%fGeV, p.GetEnergy()=%fGeV",
+                          Ei/I3Units::GeV, particle.GetEnergy()/I3Units::GeV);
             }
 
             if (isnan(ti)) log_fatal("t_initial is NaN");
@@ -292,13 +332,52 @@ namespace {
                 
                 unsigned int iterationNum=0;
                 
-                BOOST_FOREACH(const I3Particle &daughter, daughters)
+                BOOST_FOREACH(I3Particle daughter, daughters) // make a copy of the particle here (we might need to change it later)
                 {
-                    if (isnan(daughter.GetTime())) continue;
-                    if ((daughter.GetTime() < ti) || (daughter.GetTime() > tf))
+                    if (currentEnergy<0.)
+                        log_fatal("Muon loses more energy than it has. Ecurrent=%gGeV", currentEnergy/I3Units::GeV);
+
+                    double distanceOnTrack=NAN;
+                    const double distanceFromMuonTrack = DistanceFromInfiniteTrack(daughter.GetPos(), particle.GetPos(), particle.GetDir(), distanceOnTrack);
+                    if (distanceFromMuonTrack > 1.*I3Units::mm) {
+                        log_error("cascade is not on muon track! (distance from (infinite) track=%gm). Not splitting the muon.",
+                                  distanceFromMuonTrack/I3Units::m);
+
+                        // append it to the output tree anyway
+                        I3MCTreeUtils::AppendChild(outputTree, particle, daughter);
                         continue;
+                    }
+                    
+                    if (isnan(daughter.GetTime())) continue;
+                    
+                    // calculate an expected time for the cascade (from its position on the track)
+                    const double expectedTime = particle.GetTime() + distanceOnTrack/I3Constants::c;
+                    if (std::abs(expectedTime-daughter.GetTime()) > 0.1*I3Units::ns) {
+                        log_debug("Expected a cascade at time %fns (from its position on the track), but found it at t=%fns. Correcting.",
+                                  expectedTime/I3Units::ns, daughter.GetTime()/I3Units::ns);
+
+                        // correct the particle time
+                        daughter.SetTime(expectedTime);
+                    }
+
+                    {
+                        // if the cascade is at the very beginning or end of the track
+                        // make sure it gets the exact same time as the track
+                        double newTime=daughter.GetTime();
+                        if ((newTime < ti) && (newTime > ti-0.1*I3Units::ns)) newTime=ti;
+                        if ((newTime > tf) && (newTime < tf+0.1*I3Units::ns)) newTime=tf;
+                        daughter.SetTime(newTime);
+                    }
+
+                    if ((daughter.GetTime() < ti) || (daughter.GetTime() > tf)) {
+                        log_error("skipped a cascade that is not within the muon track time bounds!, muon_time_range=[%f,%f]ns cascade_time=%fns. LIGHT IS LOST!",
+                                  ti/I3Units::ns, tf/I3Units::ns, daughter.GetTime());
+                        continue;
+                    }
                  
-                    const double sliceDuration = daughter.GetTime()-currentTime;
+                    double sliceDuration = daughter.GetTime()-currentTime;
+                    if (sliceDuration<0.) sliceDuration=0.;
+                    
                     const double sliceLength = sliceDuration*I3Constants::c;
                     const double lengthFromVertexToSliceStart = (currentTime-particle.GetTime())*I3Constants::c;
                     
@@ -326,14 +405,12 @@ namespace {
                                  hadInvalidEi?"YES":"NO",
                                  hadInvalidEf?"YES":"NO");
                     
-                    I3MCTreeUtils::AppendChild(outputTree, particle, muonSlice);
+                    if (sliceLength>=0.1*I3Units::mm)
+                        I3MCTreeUtils::AppendChild(outputTree, particle, muonSlice);
                     I3MCTreeUtils::AppendChild(outputTree, particle, daughter);
                     
                     currentTime+=sliceDuration;
                     currentEnergy-=daughter.GetEnergy()+dEdt*sliceDuration;
-                    
-                    if (currentEnergy<0.)
-                        log_fatal("Muon looses more energy than it has.");
                     
                     ++iterationNum;
                 }
@@ -348,12 +425,21 @@ namespace {
                     }
                 }
                 
+                if (currentEnergy < 0.) {
+                    log_debug("muon decayed. (currentEnergy=%gGeV)", currentEnergy/I3Units::GeV);
+                    return;
+                }
                 
                 // slice after last daughter
-                const double sliceDuration = tf-currentTime;
+                double sliceDuration = tf-currentTime;
                 const double sliceLength = sliceDuration*I3Constants::c;
                 const double lengthFromVertexToSliceStart = (currentTime-particle.GetTime())*I3Constants::c;
-                
+
+                if (sliceLength <= 0.1*I3Units::mm) {
+                    log_debug("ignoring muon slice with negative length. L=%fm", sliceLength/I3Units::m);
+                    return; // do not write tracks with no (or negative) length
+                }
+
                 I3Particle muonSlice;
                 muonSlice.SetDir(particle.GetDir());
                 muonSlice.SetPos(particle.GetPos().GetX() + particle.GetDir().GetX() * lengthFromVertexToSliceStart,
