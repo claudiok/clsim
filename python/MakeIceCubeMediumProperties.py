@@ -47,13 +47,27 @@ def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m,
     icemodel_par = numpy.loadtxt(iceDataDirectory+"/icemodel.par")
     icemodel_cfg = numpy.loadtxt(iceDataDirectory+"/cfg.txt")
     
-    alpha = icemodel_par[0][0]
-    kappa = icemodel_par[1][0]
-    A     = icemodel_par[2][0]
-    B     = icemodel_par[3][0]
-    D     = icemodel_par[4][0]
-    E     = icemodel_par[5][0]
-
+    # is this Dima's new 4-parameter file or his old 6-parameter file?
+    if len(icemodel_par)==6:
+        alpha = icemodel_par[0][0]
+        kappa = icemodel_par[1][0]
+        A     = icemodel_par[2][0]
+        B     = icemodel_par[3][0]
+        D     = icemodel_par[4][0]
+        E     = icemodel_par[5][0]
+    elif len(icemodel_par)==4:
+        # the 4-parameter files appeared up in ppc around March 2012
+        alpha = icemodel_par[0][0]
+        kappa = icemodel_par[1][0]
+        A     = icemodel_par[2][0]
+        B     = icemodel_par[3][0]
+        
+        # this is what ppc does to fill the remaining two parameters:
+        wv0 = 400.
+        D     = wv0**kappa
+        E     = 0.
+    else:
+        raise RuntimeError(iceDataDirectory+"/icemodel.par is not a valid Dima-icemodel file. (needs either 4 or 6 entries, this one has %u entries)" % len(icemodel_par))
         
     oversizeScaling       = icemodel_cfg[0] # currently ignored
     efficiencyCorrection  = icemodel_cfg[1] # currently ignored
