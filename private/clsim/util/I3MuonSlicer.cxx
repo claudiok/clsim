@@ -352,30 +352,36 @@ namespace {
                     
                     // calculate an expected time for the cascade (from its position on the track)
                     const double expectedTime = particle.GetTime() + distanceOnTrack/I3Constants::c;
-                    if (std::abs(expectedTime-daughter.GetTime()) > 0.1*I3Units::ns) {
-                        log_debug("Expected a cascade at time %fns (from its position on the track), but found it at t=%fns. Correcting.",
-                                  expectedTime/I3Units::ns, daughter.GetTime()/I3Units::ns);
+                    
+                    if (std::abs(distanceOnTrack-particle.GetLength()) < 1.*I3Units::mm) {
+                        // do NOT correct the cascade time, it might be a delayed muon deacy (which should not be corrected)
+                        log_debug("decaying muon detected, no timing correction for cascade at the track end.");
+                    } else {
+                        if (std::abs(expectedTime-daughter.GetTime()) > 0.1*I3Units::ns) {
+                            log_warn("Expected a cascade at time %fns (from its position on the track), but found it at t=%fns. Correcting.",
+                                      expectedTime/I3Units::ns, daughter.GetTime()/I3Units::ns);
 
-                        // correct the particle time
-                        daughter.SetTime(expectedTime);
-                    }
+                            // correct the particle time
+                            daughter.SetTime(expectedTime);
+                        }
 
-                    {
-                        // if the cascade is at the very beginning or end of the track
-                        // make sure it gets the exact same time as the track
-                        double newTime=daughter.GetTime();
-                        if ((newTime < ti) && (newTime > ti-0.1*I3Units::ns)) newTime=ti;
-                        if ((newTime > tf) && (newTime < tf+0.1*I3Units::ns)) newTime=tf;
-                        daughter.SetTime(newTime);
-                    }
+                        {
+                            // if the cascade is at the very beginning or end of the track
+                            // make sure it gets the exact same time as the track
+                            double newTime=daughter.GetTime();
+                            if ((newTime < ti) && (newTime > ti-0.1*I3Units::ns)) newTime=ti;
+                            if ((newTime > tf) && (newTime < tf+0.1*I3Units::ns)) newTime=tf;
+                            daughter.SetTime(newTime);
+                        }
 
-                    if ((daughter.GetTime() < ti) || (daughter.GetTime() > tf)) {
-                        log_error("skipped a cascade that is not within the muon track time bounds!, muon_time_range=[%f,%f]ns cascade_time=%fns. LIGHT IS LOST!",
-                                  ti/I3Units::ns, tf/I3Units::ns, daughter.GetTime());
-                        continue;
+                        if ((daughter.GetTime() < ti) || (daughter.GetTime() > tf)) {
+                            log_error("skipped a cascade that is not within the muon track time bounds!, muon_time_range=[%f,%f]ns cascade_time=%fns. LIGHT IS LOST!",
+                                      ti/I3Units::ns, tf/I3Units::ns, daughter.GetTime());
+                            continue;
+                        }
                     }
-                 
-                    double sliceDuration = daughter.GetTime()-currentTime;
+                    
+                    double sliceDuration = expectedTime-currentTime;
                     if (sliceDuration<0.) sliceDuration=0.;
                     
                     const double sliceLength = sliceDuration*I3Constants::c;
