@@ -224,7 +224,7 @@ def I3CLSimMakePhotons(tray, name,
                        If=If)
         clSimMCTreeName = clSimMCTreeName_new
     else:
-        if OutputMCTreeName is not None:
+        if (OutputMCTreeName is not None) and (OutputMCTreeName != ""):
             # copy the MCTree to the requested output name
             def copyMCTree(frame, inputName, outputName, If=None):
                 if If is not None:
