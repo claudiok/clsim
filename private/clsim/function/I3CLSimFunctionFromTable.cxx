@@ -220,8 +220,8 @@ std::string I3CLSimFunctionFromTable::GetOpenCLFunction(const std::string &funct
         
         // define the actual data
         dataDef = dataDef +
-        "#define dataName_SMALLEST_ENTRY " + ToFloatString(smallestEntry) + " \n" +
-        "#define dataName_LARGEST_ENTRY " + ToFloatString(largestEntry) + " \n" +
+        "#define " + dataName + "_SMALLEST_ENTRY " + ToFloatString(smallestEntry) + " \n" +
+        "#define " + dataName + "_LARGEST_ENTRY " + ToFloatString(largestEntry) + " \n" +
         "__constant unsigned short " + dataName + "[" + boost::lexical_cast<std::string>(values_.size()) + "] = {\n";
         BOOST_FOREACH(const double &val, values_)
         {
@@ -290,8 +290,8 @@ std::string I3CLSimFunctionFromTable::GetOpenCLFunction(const std::string &funct
         "    int bin; float fraction;\n"
         "    " + interpHelperName + "(wavelength, &bin, &fraction);\n"
         "    \n"
-            "    return mix(convert_float(" + dataName + "[bin])  *((dataName_LARGEST_ENTRY-dataName_SMALLEST_ENTRY)/65535.f) + dataName_SMALLEST_ENTRY,\n"
-            "               convert_float(" + dataName + "[bin+1])*((dataName_LARGEST_ENTRY-dataName_SMALLEST_ENTRY)/65535.f) + dataName_SMALLEST_ENTRY,\n"
+            "    return mix(convert_float(" + dataName + "[bin])  *((" + dataName + "_LARGEST_ENTRY-" + dataName + "_SMALLEST_ENTRY)/65535.f) + " + dataName + "_SMALLEST_ENTRY,\n"
+            "               convert_float(" + dataName + "[bin+1])*((" + dataName + "_LARGEST_ENTRY-" + dataName + "_SMALLEST_ENTRY)/65535.f) + " + dataName + "_SMALLEST_ENTRY,\n"
             "               fraction);\n"
         "}\n"
         ;
