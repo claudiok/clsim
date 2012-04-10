@@ -266,16 +266,6 @@ namespace {
                 hadInvalidEf=true;
             }
 
-            if (std::abs(ti-particle.GetTime()) > 0.1*I3Units::ns) {
-                log_fatal("MMCTrackLists's ti is incompatible with particle.GetTime(). ti=%fns, p.GetTime()=%fns",
-                          ti/I3Units::ns, particle.GetTime()/I3Units::ns);
-            }
-
-            if (std::abs(Ei-particle.GetEnergy()) > 0.1*I3Units::MeV) {
-                log_fatal("MMCTrackLists's Ei is incompatible with particle.GetEnergy(). Ei=%fGeV, p.GetEnergy()=%fGeV",
-                          Ei/I3Units::GeV, particle.GetEnergy()/I3Units::GeV);
-            }
-
             if (isnan(ti)) log_fatal("t_initial is NaN");
             if (isnan(tf)) log_fatal("t_final is NaN");
 
