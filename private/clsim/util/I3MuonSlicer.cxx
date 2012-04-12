@@ -346,6 +346,8 @@ namespace {
                     if (std::abs(distanceOnTrack-particle.GetLength()) < 5.*I3Units::mm) {
                         // do NOT correct the cascade time, it might be a delayed muon deacy (which should not be corrected)
                         log_debug("decaying muon detected, no timing correction for cascade at the track end.");
+// for now, do NOT try to correct what we are given by MMC.
+#ifdef TRY_TO_CORRECT_MMC
                     } else {
                         if (std::abs(expectedTime-daughter.GetTime()) > 2.*I3Units::ns) {
                             log_warn("Expected a cascade at time %fns (from its position on the track), but found it at t=%fns. Correcting.",
@@ -369,6 +371,7 @@ namespace {
                                       ti/I3Units::ns, tf/I3Units::ns, daughter.GetTime());
                             continue;
                         }
+#endif
                     }
                     
                     double sliceDuration = expectedTime-currentTime;
