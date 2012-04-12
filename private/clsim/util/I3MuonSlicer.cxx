@@ -343,11 +343,11 @@ namespace {
                     // calculate an expected time for the cascade (from its position on the track)
                     const double expectedTime = particle.GetTime() + distanceOnTrack/I3Constants::c;
                     
-                    if (std::abs(distanceOnTrack-particle.GetLength()) < 1.*I3Units::mm) {
+                    if (std::abs(distanceOnTrack-particle.GetLength()) < 5.*I3Units::mm) {
                         // do NOT correct the cascade time, it might be a delayed muon deacy (which should not be corrected)
                         log_debug("decaying muon detected, no timing correction for cascade at the track end.");
                     } else {
-                        if (std::abs(expectedTime-daughter.GetTime()) > 0.1*I3Units::ns) {
+                        if (std::abs(expectedTime-daughter.GetTime()) > 2.*I3Units::ns) {
                             log_warn("Expected a cascade at time %fns (from its position on the track), but found it at t=%fns. Correcting.",
                                       expectedTime/I3Units::ns, daughter.GetTime()/I3Units::ns);
 
