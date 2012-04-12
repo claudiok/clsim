@@ -71,6 +71,8 @@ def gen_steps(particle, converter, copies=1):
     
     return steps
 
+# set up the Geant4 environment
+clsim.AutoSetGeant4Environment()
 
 # set up converter
 ppcConverter = setup_converter()
