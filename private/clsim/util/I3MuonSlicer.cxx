@@ -322,6 +322,9 @@ namespace {
                 
                 unsigned int iterationNum=0;
                 
+                // cache the iterator to speed up adding things to the tree
+                I3MCTree::iterator particle_in_tree_it = GetMCTreeIterator(outputTree, particle);
+
                 BOOST_FOREACH(I3Particle daughter, daughters) // make a copy of the particle here (we might need to change it later)
                 {
                     if (currentEnergy<0.) {
@@ -336,7 +339,8 @@ namespace {
                                   distanceFromMuonTrack/I3Units::m);
 
                         // append it to the output tree anyway
-                        I3MCTreeUtils::AppendChild(outputTree, particle, daughter);
+                        outputTree.append_child(particle_in_tree_it,daughter);
+                        //I3MCTreeUtils::AppendChild(outputTree, particle, daughter);
                         continue;
                     }
                     
@@ -406,9 +410,12 @@ namespace {
                                  hadInvalidEi?"YES":"NO",
                                  hadInvalidEf?"YES":"NO");
                     
-                    if (sliceLength>=0.1*I3Units::mm)
-                        I3MCTreeUtils::AppendChild(outputTree, particle, muonSlice);
-                    I3MCTreeUtils::AppendChild(outputTree, particle, daughter);
+                    if (sliceLength>=0.1*I3Units::mm) {
+                        outputTree.append_child(particle_in_tree_it, muonSlice);
+                        //I3MCTreeUtils::AppendChild(outputTree, particle, muonSlice);
+                    }
+                    outputTree.append_child(particle_in_tree_it, daughter);
+                    //I3MCTreeUtils::AppendChild(outputTree, particle, daughter);
                     
                     currentTime+=sliceDuration;
                     currentEnergy-=daughter.GetEnergy()+dEdt*sliceDuration;
@@ -465,8 +472,9 @@ namespace {
                              hadInvalidEi?"YES":"NO",
                              hadInvalidEf?"YES":"NO");
 
-                I3MCTreeUtils::AppendChild(outputTree, particle, muonSlice);
-                
+                //I3MCTreeUtils::AppendChild(outputTree, particle, muonSlice);
+                outputTree.append_child(particle_in_tree_it, muonSlice);
+
                 return; // return here in order _not_ to do the default loop below
             }
             
