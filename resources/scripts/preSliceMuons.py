@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 """
-This shows how to use clsim using the provided
-tray segment. In this mode, clsim can act as
-a "drop-in" replacement for hit-maker or PPC.
+Use this script to pre-slice muons in the MCTree.
+This can turn out to be a major bottleneck during
+GPU production. Using this script, this can be done
+on a different (CPU-only) node.
 """
 
 from optparse import OptionParser
@@ -19,14 +20,9 @@ parser.add_option("-s", "--seed",type="int",default=12345,
                   dest="SEED", help="Initial seed for the random number generator")
 parser.add_option("-r", "--runnumber", type="int", default=1,
                   dest="RUNNUMBER", help="The run number for this simulation")
-parser.add_option("-p", "--max-parallel-events", type="int", default=100,
-                  dest="MAXPARALLELEVENTS", help="maximum number of events(==frames) that will be processed in parallel")
 parser.add_option("--apply-mmc", action="store_true", default=False,
                   dest="APPLYMMC", help="apply MMC to the I3MCTree before passing it to CLSim")
-parser.add_option("--remove-photon-data", action="store_true", default=False,
-                  dest="REMOVEPHOTONDATA", help="Remove I3Photons before writing the output file (only keep hits)")
-parser.add_option("--input-is-pre-sliced", action="store_true", default=False,
-                  dest="INPUTISPRESLICED", help="use this when the I3MCTree is already sliced")
+
 
 # parse cmd line args, bail out if anything is not understood
 (options,args) = parser.parse_args()
@@ -36,9 +32,6 @@ if len(args) != 0:
                 crap += a
                 crap += " "
         parser.error(crap)
-
-if options.APPLYMMC and options.INPUTISPRESLICED:
-    raise RuntimeError("you cannot use the --apply-mmc and --input-is-pre-sliced options together.")
 
 ########################
 if options.INFILE:
@@ -82,17 +75,14 @@ if outdir and outdir!="":
 if not outfile:
         # automatically generate the output filename
         infileRootDir, infileRootFile = os.path.split(infileRoot)
-        outfile = infileRootFile + "_clsim"
+        outfile = infileRootFile + "_sliced"
         outfile = outfile + infileExt
 print "output dir is %s" % outdir
 print "output file is %s" % outdir + outfile
 
 ########################
 
-if options.REMOVEPHOTONDATA:
-    print "not storing I3Photons"
-else:
-    print "storing I3Photons"
+
 
 
 from I3Tray import *
@@ -130,45 +120,10 @@ if options.APPLYMMC:
                    ShiftParticles = False,
                    )
 
-
-
-if options.REMOVEPHOTONDATA:
-    photonSeriesName = None
-else:
-    photonSeriesName = "PropagatedPhotons"
-
-
-if not options.INPUTISPRESLICED:
-    MCTreeName="I3MCTree"
-    MMCTrackListName="MMCTrackList"
-else:
-    MCTreeName="I3MCTree_sliced"
-    MMCTrackListName=None
-
-
-if hasattr(icetray, "traysegment"):
-    tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
-        PhotonSeriesName = photonSeriesName,
-        MCTreeName = MCTreeName,
-        MMCTrackListName = MMCTrackListName,
-        ParallelEvents = options.MAXPARALLELEVENTS,
-        RandomService = randomService,
-        UseGPUs=False,
-        UseCPUs=True,
-        #IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos090.11jul2011.txt"))
-        IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"))
-else:
-    # this is how you would add clsim to your script without
-    # IceTray support for tray segments:
-    clsim.I3CLSimMakeHits(tray, "makeCLSimHits",
-        PhotonSeriesName = photonSeriesName,
-        MCTreeName = MCTreeName,
-        MMCTrackListName = MMCTrackListName,
-        ParallelEvents = options.MAXPARALLELEVENTS,
-        RandomService = randomService,
-        UseGPUs=False,
-        UseCPUs=True)
-    
+tray.AddModule("I3MuonSlicer", "chopMuons",
+               InputMCTreeName="I3MCTree",
+               MMCTrackListName="MMCTrackList",
+               OutputMCTreeName="I3MCTree_sliced")
 
 tray.AddModule("I3Writer","writer",
     Filename = outdir+outfile)

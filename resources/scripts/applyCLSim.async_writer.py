@@ -21,14 +21,14 @@ import string
 
 usage = "usage: %prog [options] inputfile"
 parser = OptionParser(usage)
-parser.add_option("-o", "--outfile", default="test_muons_photons.i3",
+parser.add_option("-o", "--outfile", default=None,
                   dest="OUTFILE", help="Write output to OUTFILE (.i3{.gz} format)")
-parser.add_option("-i", "--infile", default="test_muons.i3",
+parser.add_option("-i", "--infile", default=None,
                   dest="INFILE", help="Read input from INFILE (.i3{.gz} format)")
 parser.add_option("-g", "--gcdfile", default=None,
                   dest="GCDFILE", help="Read an optional GCDFILE (.i3{.gz} format) before starting with the actual data")
 parser.add_option("-s", "--seed",type="int",default=12345,
-                                  dest="SEED", help="Initial seed for the random number generator")
+                  dest="SEED", help="Initial seed for the random number generator")
 parser.add_option("-r", "--runnumber", type="int", default=1,
                   dest="RUNNUMBER", help="The run number for this simulation")
 parser.add_option("-p", "--max-parallel-events", type="int", default=100,
@@ -37,6 +37,8 @@ parser.add_option("--apply-mmc", action="store_true", default=False,
                   dest="APPLYMMC", help="apply MMC to the I3MCTree before passing it to CLSim")
 parser.add_option("--remove-photon-data", action="store_true", default=False,
                   dest="REMOVEPHOTONDATA", help="Remove I3Photons before writing the output file (only keep hits)")
+parser.add_option("--input-is-pre-sliced", action="store_true", default=False,
+                  dest="INPUTISPRESLICED", help="use this when the I3MCTree is already sliced")
 parser.add_option("--qify", action="store_true", default=False,
                   dest="QIFY", help="convert a P-frame only file to Q-frame only before using it")
 parser.add_option("--clean-input", action="store_true", default=False,
@@ -50,6 +52,9 @@ if len(args) != 0:
                 crap += a
                 crap += " "
         parser.error(crap)
+
+if options.APPLYMMC and options.INPUTISPRESLICED:
+    raise RuntimeError("you cannot use the --apply-mmc and --input-is-pre-sliced options together.")
 
 ########################
 if options.INFILE:
@@ -174,10 +179,21 @@ if options.APPLYMMC:
 
 photonSeriesName = "PropagatedPhotons"
 
+if not options.INPUTISPRESLICED:
+    MCTreeName="I3MCTree"
+    MMCTrackListName="MMCTrackList"
+    OutputMCTreeName="I3MCTree_sliced"
+else:
+    MCTreeName="I3MCTree_sliced"
+    MMCTrackListName=None
+    OutputMCTreeName=None
+
 
 tray.AddSegment(clsim.I3CLSimMakePhotons, "makeCLSimPhotons",
                 PhotonSeriesName = photonSeriesName,
-                OutputMCTreeName="I3MCTree_sliced",
+                MCTreeName = MCTreeName,
+                MMCTrackListName = MMCTrackListName,
+                OutputMCTreeName=OutputMCTreeName,
                 ParallelEvents = options.MAXPARALLELEVENTS,
                 RandomService = randomService,
                 UseGPUs=True,
