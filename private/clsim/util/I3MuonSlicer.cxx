@@ -170,8 +170,9 @@ namespace {
     }
     
     namespace {
+        inline
         I3MCTree::iterator
-        GetMCTreeIterator(I3MCTree &t, const I3Particle& p){
+        GetMCTreeIterator(const I3MCTree &t, const I3Particle& p){
             I3MCTree::iterator i;
             for(i=t.begin() ; i!= t.end(); i++)
                 if((i->GetMinorID() == p.GetMinorID()) &&
@@ -180,18 +181,40 @@ namespace {
             return t.end();
         }
 
-        
+        inline 
+        const std::vector<I3MCTree::iterator> 
+        GetDaughterIteratorsFromParentIterator(const I3MCTree& t, I3MCTree::iterator parent_it)
+        {
+            std::vector<I3MCTree::iterator> daughterList;
+            I3MCTree::sibling_iterator j(parent_it);
+            for (j=t.begin(parent_it); j!=t.end(parent_it); ++j)
+                daughterList.push_back(j);
+            return daughterList;
+        }
     }
     
     void SliceMuonOrCopySubtree(const I3MCTree &inputTree,
                                 const I3MMCTrackList &mmcTrackList,
                                 const std::map<std::pair<uint64_t, int>, const I3MMCTrack *> &mmcTrackListIndex,
                                 I3MCTree &outputTree,
-                                const I3Particle &particle
+                                const I3MCTree::iterator &particle_it_inputTree,
+                                I3MCTree::iterator particle_it_outputTree
                                 )
     {
-        const std::vector<I3Particle> daughters =
-        I3MCTreeUtils::GetDaughters(inputTree, particle);
+        const I3Particle &particle = *particle_it_inputTree;
+
+        // cache the iterator to speed up adding things to the tree
+        if (particle_it_inputTree == inputTree.end()) log_fatal("internal error. output particle not in output tree.");
+        if (particle_it_outputTree == outputTree.end()) log_fatal("internal error. output particle not in output tree.");
+
+        const std::vector<I3MCTree::iterator> daughterIterators =
+        GetDaughterIteratorsFromParentIterator(inputTree, particle_it_inputTree);
+
+        std::vector<I3Particle> daughters;
+        BOOST_FOREACH(const I3MCTree::iterator &it, daughterIterators)
+        {
+            daughters.push_back(*it);
+        }
 
         // special treatment for muons with a length only
         if (((!isnan(particle.GetLength())) && (particle.GetLength() > 0.)) &&
@@ -280,11 +303,7 @@ namespace {
                          tf/I3Units::ns, ti/I3Units::ns, particle.GetTime()/I3Units::ns, particle.GetMinorID(), particle.GetMajorID());
 
                 // set the current muon shape to "Dark"
-                {
-                    I3MCTree::iterator tree_it = GetMCTreeIterator(outputTree, particle);
-                    if (tree_it == outputTree.end()) log_fatal("internal error. output particle not in output tree.");
-                    tree_it->SetShape(I3Particle::Dark);
-                }
+                particle_it_outputTree->SetShape(I3Particle::Dark);
             }
             else if (tf==ti)
             {
@@ -293,20 +312,12 @@ namespace {
                               tf/I3Units::ns, particle.GetTime()/I3Units::ns, particle.GetMinorID(), particle.GetMajorID());
 
                 // set the current muon shape to "Dark"
-                {
-                    I3MCTree::iterator tree_it = GetMCTreeIterator(outputTree, particle);
-                    if (tree_it == outputTree.end()) log_fatal("internal error. output particle not in output tree.");
-                    tree_it->SetShape(I3Particle::Dark);
-                }
+                particle_it_outputTree->SetShape(I3Particle::Dark);
             }
             else // (ti<tf) && (Ei>0.)
             {
                 // set the current muon shape to "Dark"
-                {
-                    I3MCTree::iterator tree_it = GetMCTreeIterator(outputTree, particle);
-                    if (tree_it == outputTree.end()) log_fatal("internal error. output particle not in output tree.");
-                    tree_it->SetShape(I3Particle::Dark);
-                }
+                particle_it_outputTree->SetShape(I3Particle::Dark);
                 
                 const double totalEnergyInCascades = 
                 GetTotalEnergyOfParticles(daughters, ti, tf);
@@ -322,9 +333,6 @@ namespace {
                 
                 unsigned int iterationNum=0;
                 
-                // cache the iterator to speed up adding things to the tree
-                I3MCTree::iterator particle_in_tree_it = GetMCTreeIterator(outputTree, particle);
-
                 BOOST_FOREACH(I3Particle daughter, daughters) // make a copy of the particle here (we might need to change it later)
                 {
                     if (currentEnergy<0.) {
@@ -339,8 +347,7 @@ namespace {
                                   distanceFromMuonTrack/I3Units::m);
 
                         // append it to the output tree anyway
-                        outputTree.append_child(particle_in_tree_it,daughter);
-                        //I3MCTreeUtils::AppendChild(outputTree, particle, daughter);
+                        outputTree.append_child(particle_it_outputTree,daughter);
                         continue;
                     }
                     
@@ -411,11 +418,9 @@ namespace {
                                  hadInvalidEf?"YES":"NO");
                     
                     if (sliceLength>=0.1*I3Units::mm) {
-                        outputTree.append_child(particle_in_tree_it, muonSlice);
-                        //I3MCTreeUtils::AppendChild(outputTree, particle, muonSlice);
+                        outputTree.append_child(particle_it_outputTree, muonSlice);
                     }
-                    outputTree.append_child(particle_in_tree_it, daughter);
-                    //I3MCTreeUtils::AppendChild(outputTree, particle, daughter);
+                    outputTree.append_child(particle_it_outputTree, daughter);
                     
                     currentTime+=sliceDuration;
                     currentEnergy-=daughter.GetEnergy()+dEdt*sliceDuration;
@@ -472,8 +477,7 @@ namespace {
                              hadInvalidEi?"YES":"NO",
                              hadInvalidEf?"YES":"NO");
 
-                //I3MCTreeUtils::AppendChild(outputTree, particle, muonSlice);
-                outputTree.append_child(particle_in_tree_it, muonSlice);
+                outputTree.append_child(particle_it_outputTree, muonSlice);
 
                 return; // return here in order _not_ to do the default loop below
             }
@@ -482,14 +486,18 @@ namespace {
 
         // It's either something else or a muon without a length.
         // Add all the daughters and recurse.
-        BOOST_FOREACH(const I3Particle &daughter, daughters)
+        BOOST_FOREACH(const I3MCTree::iterator &daughter_it_inputTree, daughterIterators)
         {
-            I3MCTreeUtils::AppendChild(outputTree, particle, daughter);
+            // add the particle to the output tree and get an iterator
+            I3MCTree::iterator daughter_it_outputTree =
+            outputTree.append_child(particle_it_outputTree, *daughter_it_inputTree);
+            
             SliceMuonOrCopySubtree(inputTree,
                                    mmcTrackList,
                                    mmcTrackListIndex,
                                    outputTree,
-                                   daughter);
+                                   daughter_it_inputTree,
+                                   daughter_it_outputTree);
         }
         
     }
@@ -546,11 +554,15 @@ void I3MuonSlicer::Physics(I3FramePtr frame)
         //I3MCTreeUtils::AddPrimary(outputMCTree, primary);
         I3TreeUtils::AddTopLevel<I3Particle>(*outputMCTree, primary); 
 
+        I3MCTree::iterator primary_in_input_tree  = GetMCTreeIterator(*inputMCTree,  primary);
+        I3MCTree::iterator primary_in_output_tree = GetMCTreeIterator(*outputMCTree, primary);
+
         SliceMuonOrCopySubtree(*inputMCTree,
                                *MMCTrackList,
                                MMCTrackListIndex,
                                *outputMCTree,
-                               primary);
+                               primary_in_input_tree,
+                               primary_in_output_tree);
     }
     
     
