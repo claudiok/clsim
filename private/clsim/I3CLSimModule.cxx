@@ -1011,13 +1011,13 @@ void I3CLSimModule::FlushFrameCache()
 }
 
 namespace {
-    bool ParticleHasMuonDaughter(const I3Particle &particle, const I3MCTree &mcTree)
+    bool ParticleHasMuonDaughter(const I3MCTree::iterator &particle_it, const I3MCTree &mcTree)
     {
-        const std::vector<I3Particle> daughters =
-        I3MCTreeUtils::GetDaughters(mcTree, particle);
-
-        BOOST_FOREACH(const I3Particle &daughter, daughters)
+        I3MCTree::sibling_iterator j(particle_it);
+        for (j=mcTree.begin(particle_it); j!=mcTree.end(particle_it); ++j)
         {
+            const I3Particle &daughter = *j;
+
             if ((daughter.GetType()==I3Particle::MuMinus) ||
                 (daughter.GetType()==I3Particle::MuPlus))
                 return true;
@@ -1288,10 +1288,10 @@ void I3CLSimModule::Finish()
 void I3CLSimModule::ConvertMCTreeToLightSources(const I3MCTree &mcTree,
                                                 std::deque<I3CLSimLightSource> &lightSources)
 {
-    for (I3MCTree::iterator it = mcTree.begin();
-         it != mcTree.end(); ++it)
+    for (I3MCTree::iterator particle_it = mcTree.begin();
+         particle_it != mcTree.end(); ++particle_it)
     {
-        const I3Particle &particle_ref = *it;
+        const I3Particle &particle_ref = *particle_it;
 
         // In-ice particles only
         if (particle_ref.GetLocationType() != I3Particle::InIce) continue;
@@ -1383,7 +1383,7 @@ void I3CLSimModule::ConvertMCTreeToLightSources(const I3MCTree &mcTree,
         // were sliced with I3MuonSlicer. Only add their
         // children.
         if (!ignoreMuons_) {
-            if (ParticleHasMuonDaughter(particle_ref, mcTree)) {
+            if (ParticleHasMuonDaughter(particle_it, mcTree)) {
                 log_warn("particle has muon as daughter(s) but is not \"Dark\". Strange. Ignoring.");
                 continue;
             }
