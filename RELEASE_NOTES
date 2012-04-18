@@ -1,0 +1,17 @@
+# $Id$
+# $Author$
+# $Date$
+
+April 18, 2012 Claudio Kopper  (ckopper@icecube.wisc.edu)
+--------------------------------------------------------------------
+Release V00-01-05
+
+This is a minor release that should improve compatibility with
+older nVidia cards (such as GTX 295) that do not have as much GPU
+memory as newer cards. The maximum amount of memroy will now
+only be used on nVidia cards that have either "Tesla", "GTX 580"
+or "GTX 680" in their names.
+
+Performance for large I3MCTrees should be significantly
+improved in this release.
+
