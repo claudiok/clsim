@@ -299,7 +299,11 @@ def I3CLSimMakePhotons(tray, name,
         if string.count(device.device, 'Tesla') > 0 or string.count(device.device, 'GTX') > 0:
             # assume these are "fast", all others are "slow"
             device.useNativeMath=True
-            device.approximateNumberOfWorkItems=1024000
+            if string.count(device.device, 'Tesla') > 0 or string.count(device.device, '580') > 0 or string.count(device.device, '680') > 0:
+                # these cards should have enough ram to support this
+                device.approximateNumberOfWorkItems=1024000
+            else:
+                device.approximateNumberOfWorkItems=102400
         else:
             device.useNativeMath=False
             device.approximateNumberOfWorkItems=10240
