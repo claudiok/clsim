@@ -607,7 +607,7 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
             if ((err.err() == CL_OUT_OF_RESOURCES) && (createContextRetriesLeft>0)) {
                 --createContextRetriesLeft;
                 
-                log_warn("OpenCL ERROR while creating conetxt: CL_OUT_OF_RESOURCES. Trying again in %fs.. (%u tries left)",
+                log_warn("Could not create OpenCL context: CL_OUT_OF_RESOURCES. Some drivers will work if we just try again. Waiting %fs.. (%u tries left)",
                          static_cast<double>(retryDelayMilliseconds)/1000., createContextRetriesLeft);
                 
                 boost::this_thread::sleep(boost::posix_time::milliseconds(retryDelayMilliseconds));
