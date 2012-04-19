@@ -1382,7 +1382,7 @@ void I3CLSimModule::ConvertMCTreeToLightSources(const I3MCTree &mcTree,
         // -> those already ran through MMC(-recc) or
         // were sliced with I3MuonSlicer. Only add their
         // children.
-        if (!ignoreMuons_) {
+        if ((!ignoreMuons_) && (isMuon)) {
             if (ParticleHasMuonDaughter(particle_it, mcTree)) {
                 log_warn("particle has muon as daughter(s) but is not \"Dark\". Strange. Ignoring.");
                 continue;
