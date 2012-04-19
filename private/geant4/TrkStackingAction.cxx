@@ -55,14 +55,18 @@ G4ClassificationOfNewTrack TrkStackingAction::ClassifyNewTrack(const G4Track * a
     (TrkUserEventInformation*)G4EventManager::GetEventManager()
     ->GetConstCurrentEvent()->GetUserInformation();
 
-    {
-        const double maxRefractiveIndex = eventInformation->maxRefractiveIndex;
-        const double BetaInverse = c_light/aTrack->GetVelocity();
-
-        // below the Cherekov threshold?
-        if (BetaInverse > maxRefractiveIndex)
-            return fKill;
-    }
+    // changed Apr 19, 2012: do not automatically assume a particle
+    // below the Cherenkov threshold should be killed. It might decay
+    // later while we can still se it.
+    //
+    // {
+    //     const double maxRefractiveIndex = eventInformation->maxRefractiveIndex;
+    //     const double BetaInverse = c_light/aTrack->GetVelocity();
+    //
+    //     // below the Cherekov threshold?
+    //     if (BetaInverse > maxRefractiveIndex)
+    //      return fKill;
+    // }
 
     // see if there are eny parameterizations available for this particle
     const I3CLSimLightSourceParameterizationSeries &parameterizations = eventInformation->parameterizationAvailable;

@@ -260,12 +260,15 @@ TrkCerenkov::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
     }
     stepStore.reset();
     
-    
+    // changed Apr 19, 2012: do not automatically assume a particle
+    // below the Cherenkov threshold should be killed. It might decay
+    // later while we can still se it.
+    //
     // kill the particle if it has fallen below the threshold
-    if (1./beta2 > eventInformation->maxRefractiveIndex)
-    {
-        aParticleChange.ProposeTrackStatus(fStopAndKill);
-    }
+    //if (1./beta2 > eventInformation->maxRefractiveIndex)
+    //{
+    //    aParticleChange.ProposeTrackStatus(fStopAndKill);
+    //}
     
     return pParticleChange;
 }
