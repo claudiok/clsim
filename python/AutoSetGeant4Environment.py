@@ -88,7 +88,7 @@ def AutoSetGeant4Environment(force=True):
 
             # get the environment after loading geant4.sh
             source = os.path.expandvars("source $I3_PORTS/bin/geant4.sh")
-            dump = '/usr/bin/python -c "import os,pickle;print pickle.dumps(os.environ)"'
+            dump = '/usr/bin/env python -c "import os,pickle;print pickle.dumps(os.environ)"'
             penv = os.popen('%s && %s' %(source,dump))
             geant4env = pickle.loads(penv.read())
 
