@@ -31,7 +31,7 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
-
+#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
 #if defined(__APPLE__) || defined(__MACOSX)
 #include <OpenCL/cl_ext.h>
 #else
@@ -146,23 +146,24 @@ I3CLSimOpenCLDeviceSeriesPtr I3CLSimOpenCLDevice::SplitDevice() const
     if (!device_) throw std::runtime_error("no valid device");
 
 #ifdef USE_CL_DEVICE_FISSION
+    // this is using the OpenCL 1.1 extension version of device fission
     if (device_->getInfo<CL_DEVICE_EXTENSIONS>().find("cl_ext_device_fission") == std::string::npos) {
-        
-        std::string extensions = device_->getInfo<CL_DEVICE_EXTENSIONS>();
-        log_warn("extension: %s", extensions.c_str());
         throw std::runtime_error("device does not support fission (extension \"cl_ext_device_fission\" is not available)");
     }
+
+    std::string extensions = device_->getInfo<CL_DEVICE_EXTENSIONS>();
+    log_warn("extension: %s", extensions.c_str());
 #else
 #if defined(CL_VERSION_1_2)
     // TODO: implement OpenCL 1.2 device fission as soon as the 1.2 version of cl.hpp is available
+    
+    // NOT AVAILABLE YET! (will use the 1.1 extension version instead if available)
+
+    throw std::runtime_error("Your OpenCL implementation does not support the \"cl_ext_device_fission\" extension. OpenCL 1.2 device fission support is not implemented yet.");
 #else
-    std::string extensions = device_->getInfo<CL_DEVICE_EXTENSIONS>();
-    log_warn("extension: %s", extensions.c_str());
     throw std::runtime_error("Your OpenCL implementation does neither support the \"cl_ext_device_fission\" extension nor is it version 1.2 or later");
 #endif
 #endif    
-    
-    
     
     return retval;
 }
