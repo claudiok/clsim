@@ -1381,8 +1381,9 @@ public:
             return detail::errHandler(err, __CREATE_SUB_DEVICES);
         }
 
+        cl_uint dummy; // work-around for Intel OpenCL
         cl_device_id* ids = (cl_device_id*) alloca(n * sizeof(cl_device_id));
-        err = pfn_clCreateSubDevicesEXT(object_, properties, n, ids, NULL);
+        err = pfn_clCreateSubDevicesEXT(object_, properties, n, ids, &dummy); // &dummy should not be necessary, but Intel OpenCL fails without it
         if (err != CL_SUCCESS) {
             return detail::errHandler(err, __CREATE_SUB_DEVICES);
         }

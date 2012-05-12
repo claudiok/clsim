@@ -292,10 +292,11 @@ def I3CLSimMakePhotons(tray, name,
         spectrumTable = None
 
     # get OpenCL devices
-    openCLDevices = [device for device in clsim.I3CLSimOpenCLDevice.GetAllDevices() if (device.gpu and UseGPUs) or (device.cpu and UseCPUs)]
-
+    openCLDevicesRaw = [device for device in clsim.I3CLSimOpenCLDevice.GetAllDevices() if (device.gpu and UseGPUs) or (device.cpu and UseCPUs)]
+    openCLDevices = []
+    
     # (auto-)configure OpenCL devices
-    for device in openCLDevices:
+    for device in openCLDevicesRaw:
         if string.count(device.device, 'Tesla') > 0 or string.count(device.device, 'GTX') > 0:
             # assume these are "fast", all others are "slow"
             device.useNativeMath=True
@@ -309,7 +310,27 @@ def I3CLSimMakePhotons(tray, name,
             device.approximateNumberOfWorkItems=10240
 
         if DoNotParallelize and device.cpu:
-            device.approximateNumberOfWorkItems=1
+            device.approximateNumberOfWorkItems=10240
+            
+            # check if we can split this device into individual cores
+            try:
+                subDevices = device.SplitDevice()
+                
+                if len(subDevices) > 0:
+                    device.approximateNumberOfWorkItems=10240
+                    openCLDevices.append(subDevices[0])
+                else:
+                    print "failed to split CPU device into individual cores", device.platform, device.device, "[using full device with minimal number of work-items to (hopefully) disable parallelization]"
+                    device.approximateNumberOfWorkItems=1
+                    openCLDevices.append(device)
+            except:
+                print "failed to split CPU device into individual cores", device.platform, device.device, "(exception) [using full device with minimal number of work-items to (hopefully) disable parallelization]"
+                device.approximateNumberOfWorkItems=1
+                openCLDevices.append(device)
+            
+        else:
+            openCLDevices.append(device)
+            
 
     tray.AddModule("I3CLSimModule", name + "_clsim",
                    MCTreeName=clSimMCTreeName,

@@ -84,3 +84,10 @@ which is a number starting at 1 that I am supposed to use to select the GPU.
                 print "script seems to be running in condor (slot %u). auto-configuring CUDA_VISIBLE_DEVICES!" % condorSlotNumber
                 os.environ["CUDA_VISIBLE_DEVICES"] = str(condorSlotNumber-1)
 
+4. I am running clsim on an nVidia GPU, but it seems to hang and is not generating photons.
+When looking at the GPU utilization using ``nvidia-smi``, I do see 100%, but nothing seems
+to be happening.
+    
+    This is a known bug in very old OpenCL libraries supplied by nVidia. clsim is known not
+    to work with driver versions 260.19.21 and older. Versions 270.x.x and newer have been tested
+    and are known to work, so just update to the most recent version available and clsim should work.

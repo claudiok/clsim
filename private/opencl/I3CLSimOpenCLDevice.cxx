@@ -151,9 +151,56 @@ I3CLSimOpenCLDeviceSeriesPtr I3CLSimOpenCLDevice::SplitDevice() const
         throw std::runtime_error("device does not support fission (extension \"cl_ext_device_fission\" is not available)");
     }
 
-    std::string extensions = device_->getInfo<CL_DEVICE_EXTENSIONS>();
-    log_warn("extension: %s", extensions.c_str());
-#else
+    // the extension is available! let's split it up!
+    
+    // this configures how the device should be split
+    cl_device_partition_property_ext subDeviceProperties[] =
+    {
+        CL_DEVICE_PARTITION_EQUALLY_EXT,
+        1,
+        CL_PROPERTIES_LIST_END_EXT,
+        0
+    };
+    std::vector<cl::Device> subDevices;
+    
+    try {
+        device_->createSubDevices(subDeviceProperties, &subDevices);
+    } catch (cl::Error &err) {
+        log_error("OpenCL ERROR: %s (%i)", err.what(), err.err());
+        throw;
+    }
+    
+    
+    if (subDevices.size() <= 0) {
+        throw std::runtime_error("OpenCL device could not be split!");
+    }
+    
+    log_trace("OpenCL device has been split into %zu parts.", subDevices.size());
+
+    // prepare the return vector
+    retval->clear();
+    std::size_t split_counter=0;
+    BOOST_FOREACH(cl::Device &subDevice, subDevices)
+    {
+        retval->push_back(I3CLSimOpenCLDevice());
+        I3CLSimOpenCLDevice &newDevice = retval->back();
+
+        // copy current platform and basic properties
+        newDevice.platform_ = platform_;
+        newDevice.useNativeMath_ = useNativeMath_;
+        newDevice.approximateNumberOfWorkItems_ = approximateNumberOfWorkItems_;
+        newDevice.device_ = shared_ptr<cl::Device>(new cl::Device(subDevice));
+        newDevice.platformName_ = platformName_;
+
+        // replace OpenCL info
+        newDevice.deviceName_ = deviceName_ + " [split " + boost::lexical_cast<std::string>(split_counter) + "]";
+        
+        log_trace("sub-device %zu: %s", split_counter, newDevice.deviceName_.c_str());
+        
+        ++split_counter;
+    }
+
+    #else
 #if defined(CL_VERSION_1_2)
     // TODO: implement OpenCL 1.2 device fission as soon as the 1.2 version of cl.hpp is available
     
