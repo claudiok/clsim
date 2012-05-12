@@ -38,7 +38,9 @@
 #include <CL/cl_ext.h>
 #endif
 
-#if defined(CL_VERSION_1_1) && !defined(CL_VERSION_1_2) && defined(cl_ext_device_fission)
+// use this instead once cl.hpp is updated to version 1.2:
+//#if defined(CL_VERSION_1_1) && !defined(CL_VERSION_1_2) && defined(cl_ext_device_fission)
+#if defined(cl_ext_device_fission)
 // 1. enable the C++ bindings for Device Fission
 // (OpenCL 1.1 extension version)
 #define USE_CL_DEVICE_FISSION 1
@@ -152,7 +154,7 @@ I3CLSimOpenCLDeviceSeriesPtr I3CLSimOpenCLDevice::SplitDevice() const
     }
 #else
 #if defined(CL_VERSION_1_2)
-    
+    // TODO: implement OpenCL 1.2 device fission as soon as the 1.2 version of cl.hpp is available
 #else
     std::string extensions = device_->getInfo<CL_DEVICE_EXTENSIONS>();
     log_warn("extension: %s", extensions.c_str());
