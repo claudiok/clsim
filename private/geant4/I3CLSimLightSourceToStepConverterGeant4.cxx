@@ -542,11 +542,11 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
         continue;
         }
         
-    if ((lightSource->GetType() == I3CLSimLightSource::Particle) && (lightSource->GetParticle().GetType() == I3Particle::unknown))
-    {
-        G4cerr << "Ignoring a particle with type \"unknown\"." << std::endl;
-        continue;
-    }
+        if ((lightSource->GetType() == I3CLSimLightSource::Particle) && (lightSource->GetParticle().GetType() == I3Particle::unknown))
+        {
+            G4cerr << "Ignoring a particle with type \"unknown\"." << std::endl;
+            continue;
+        }
 
         // check if there is a parameterization for this particle, so we
         // may not even have to send it to Geant4
