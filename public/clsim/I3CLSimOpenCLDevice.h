@@ -58,6 +58,10 @@ public:
 
     static shared_ptr<std::vector<I3CLSimOpenCLDevice> > GetAllDevices();
     
+    // split a device using "OpenCL device fission"
+    // (might be useful to get a single core of a CPU)
+    shared_ptr<std::vector<I3CLSimOpenCLDevice> > SplitDevice() const;
+    
     inline const std::string &GetPlatformName() const {return platformName_;}
     inline const std::string &GetDeviceName() const {return deviceName_;}
 

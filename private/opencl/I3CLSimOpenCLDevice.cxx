@@ -31,6 +31,19 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
+
+#if defined(__APPLE__) || defined(__MACOSX)
+#include <OpenCL/cl_ext.h>
+#else
+#include <CL/cl_ext.h>
+#endif
+
+#if defined(CL_VERSION_1_1) && !defined(CL_VERSION_1_2) && defined(cl_ext_device_fission)
+// 1. enable the C++ bindings for Device Fission
+// (OpenCL 1.1 extension version)
+#define USE_CL_DEVICE_FISSION 1
+#endif
+
 #define __CL_ENABLE_EXCEPTIONS
 #include "clsim/cl.hpp"
 
@@ -124,6 +137,34 @@ I3CLSimOpenCLDeviceSeriesPtr I3CLSimOpenCLDevice::GetAllDevices()
 
     return retval;
 }
+
+I3CLSimOpenCLDeviceSeriesPtr I3CLSimOpenCLDevice::SplitDevice() const
+{
+    I3CLSimOpenCLDeviceSeriesPtr retval(new I3CLSimOpenCLDeviceSeries(allDevices_));
+    if (!device_) throw std::runtime_error("no valid device");
+
+#ifdef USE_CL_DEVICE_FISSION
+    if (device_->getInfo<CL_DEVICE_EXTENSIONS>().find("cl_ext_device_fission") == std::string::npos) {
+        
+        std::string extensions = device_->getInfo<CL_DEVICE_EXTENSIONS>();
+        log_warn("extension: %s", extensions.c_str());
+        throw std::runtime_error("device does not support fission (extension \"cl_ext_device_fission\" is not available)");
+    }
+#else
+#if defined(CL_VERSION_1_2)
+    
+#else
+    std::string extensions = device_->getInfo<CL_DEVICE_EXTENSIONS>();
+    log_warn("extension: %s", extensions.c_str());
+    throw std::runtime_error("Your OpenCL implementation does neither support the \"cl_ext_device_fission\" extension nor is it version 1.2 or later");
+#endif
+#endif    
+    
+    
+    
+    return retval;
+}
+
 
 // comparison
 bool operator==(const I3CLSimOpenCLDevice &a, const I3CLSimOpenCLDevice &b)

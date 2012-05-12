@@ -120,6 +120,8 @@ void register_I3CLSimOpenCLDevice()
         .def("GetAllDevices", &I3CLSimOpenCLDevice::GetAllDevices)
         .staticmethod("GetAllDevices")
 
+        .def("SplitDevice", &I3CLSimOpenCLDevice::SplitDevice)
+
         .def("GetPlatformName", &I3CLSimOpenCLDevice::GetPlatformName, bp::return_value_policy<bp::copy_const_reference>())
         .def("GetDeviceName", &I3CLSimOpenCLDevice::GetDeviceName, bp::return_value_policy<bp::copy_const_reference>())
         .add_property("platform", 

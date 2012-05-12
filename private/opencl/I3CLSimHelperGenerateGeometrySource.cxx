@@ -38,6 +38,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
 
+#define __CL_ENABLE_EXCEPTIONS
 #include "clsim/cl.hpp"
 
 #include "clsim/I3CLSimHelperToFloatString.h"
