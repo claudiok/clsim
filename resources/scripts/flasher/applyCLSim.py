@@ -6,18 +6,18 @@ import string
 
 usage = "usage: %prog [options] inputfile"
 parser = OptionParser(usage)
-parser.add_option("-o", "--outfile", default=None,
+parser.add_option("-o", "--outfile", default="test_muons_photons.i3",
                   dest="OUTFILE", help="Write output to OUTFILE (.i3{.gz} format)")
-parser.add_option("-i", "--infile", default="test_flashes.i3",
+parser.add_option("-i", "--infile", default="test_muons.i3",
                   dest="INFILE", help="Read input from INFILE (.i3{.gz} format)")
-parser.add_option("-s", "--seed",type="int",default=12346,
+parser.add_option("-s", "--seed",type="int",default=12345,
                   dest="SEED", help="Initial seed for the random number generator")
 parser.add_option("-r", "--runnumber", type="int", default=1,
                   dest="RUNNUMBER", help="The run number for this simulation")
 parser.add_option("-p", "--max-parallel-events", type="int", default=10,
                   dest="MAXPARALLELEVENTS", help="maximum number of events(==frames) that will be processed in parallel")
-parser.add_option("--keep-photon-data", action="store_false", default=True,
-                  dest="REMOVEPHOTONDATA", help="Keep I3Photons before writing the output file (in addition to I3MCHits")
+parser.add_option("--remove-photon-data", action="store_true", default=False,
+                  dest="REMOVEPHOTONDATA", help="Remove I3Photons before writing the output file (only keep hits)")
 
 # parse cmd line args, bail out if anything is not understood
 (options,args) = parser.parse_args()
@@ -113,7 +113,6 @@ tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
     PhotonSeriesName = photonSeriesName,
     ParallelEvents = options.MAXPARALLELEVENTS,
     RandomService = randomService,
-    SimulateAfterPulses=True, # remove this when using DOMLauncher!
     UseGPUs=False,
     UseCPUs=True,
     IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
