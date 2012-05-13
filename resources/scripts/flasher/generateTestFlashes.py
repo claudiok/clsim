@@ -48,8 +48,8 @@ tray.AddModule("I3InfiniteSource","streams",
                Stream=icetray.I3Frame.DAQ)
 
 tray.AddModule("I3MCEventHeaderGenerator","gen_header",
-               Year=2009,
-               DAQTime=158100000000000000,
+               Year=2012,
+               DAQTime=7968509615844458,
                RunNumber=1,
                EventID=1,
                IncrementEventID=True)
@@ -63,13 +63,14 @@ def makeDrivingTime(frame):
 tray.AddModule(makeDrivingTime, "makeDrivingTime", Streams=[icetray.I3Frame.DAQ])
 
 tray.AddModule(clsim.FakeFlasherInfoGenerator, "FakeFlasherInfoGenerator",
-               FlashingDOM = icetray.OMKey(79,22), # a cDOM
+               FlashingDOM = icetray.OMKey(57,30),
                #FlashingDOM = icetray.OMKey(36,22), # a cDOM
                FlasherTime = 0.*I3Units.ns,
-               #FlasherMask = 0b111111000000, # only the 6 horizontal LEDs,  0-5 are tilted, 6-11 are horizontal [cDOM LEDs are all horizantal]
-               FlasherMask = 0b10101, # 505nm LEDs only (on a cDOM) 
+               FlasherMask = 0b111111000000, # only the 6 horizontal LEDs,  0-5 are tilted, 6-11 are horizontal [cDOM LEDs are all horizantal]
+               #FlasherMask = 0b10101, # 505nm LEDs only (on a cDOM) 
                FlasherBrightness = 127, # full brightness
                FlasherWidth = 127)      # full width
+
 
 tray.AddModule("I3Writer","writer",
     Filename = options.OUTFILE)

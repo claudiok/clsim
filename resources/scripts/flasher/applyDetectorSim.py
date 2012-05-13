@@ -24,6 +24,8 @@ parser.add_option("-s", "--seed",type="int",default=12345,
                   dest="SEED", help="Initial seed for the random number generator")
 parser.add_option("--keep-mchits", action="store_true", default=False,
                   dest="KEEPMCHITS", help="Keep I3MCHits before writing the output file")
+parser.add_option("--use-domlauncher", action="store_true", default=False,
+                  dest="USEDOMLAUNCHER", help="Use DOMLauncher instead of PMTsimulator/DOMsimulator")
 
 # parse cmd line args, bail out if anything is not understood
 (options,args) = parser.parse_args()
@@ -90,9 +92,13 @@ import os
 import sys
 
 from icecube import icetray, dataclasses, dataio, phys_services
-from icecube import noise_generator, pmt_simulator, DOMsimulator, trigger_sim
+from icecube import noise_generator, trigger_sim
 from icecube.BadDomList import bad_dom_list_static
 
+if options.USEDOMLAUNCHER:
+    from icecube import DOMLauncher
+else:
+    from icecube import pmt_simulator, DOMsimulator
 
 tray = I3Tray()
 
@@ -127,9 +133,16 @@ tray.AddModule("I3NoiseGeneratorModule","noiseic",
     InputHitSeriesMapName = "MCHitSeriesMap",
     DOMstoExclude = bad_dom_list_static.IC86_static_bad_dom_list())
 
-tray.AddModule("I3PMTSimulator","pmt")
-
-tray.AddModule("I3DOMsimulator","domsimulator")
+if options.USEDOMLAUNCHER:
+    tray.AddModule("PMTResponseSimulator","rosencrantz",
+        Input="MCHitSeriesMap",
+        Output="weightedMCHitSeriesMap")
+    tray.AddModule("DOMLauncher", "guildenstern",
+        Input="weightedMCHitSeriesMap",
+        Output="InIceRawData")
+else:
+    tray.AddModule("I3PMTSimulator","pmt")
+    tray.AddModule("I3DOMsimulator","domsimulator")
 
 ## The usual SMT8
 tray.AddModule("SimpleMajorityTrigger","IISMT8",
@@ -150,20 +163,28 @@ tray.AddModule("I3GlobalTriggerSim","globaltrigger",
 
 tray.AddModule("I3Pruner","pruner",
     GlobalTriggerName = "I3TriggerHierarchy",
-    DOMLaunchSeriesMapNames = ["InIceRawData","IceTopRawData"])
+    DOMLaunchSeriesMapNames = ["InIceRawData"])
+
+if options.USEDOMLAUNCHER:
+    MCPMTResponseMapNames = []
+    MCHitSeriesMapNames = ["MCHitSeriesMap", "weightedMCHitSeriesMap"]
+else:
+    MCPMTResponseMapNames = ["MCPMTResponseMap"]
+    MCHitSeriesMapNames = ["MCHitSeriesMap"]
 
 tray.AddModule("I3TimeShifter","timeshifter",
-    I3DOMLaunchSeriesMapNames = ["InIceRawData","IceTopRawData"],
-    I3MCPMTResponseMapNames = ["MCPMTResponseMap"],
+    I3DOMLaunchSeriesMapNames = ["InIceRawData"],
+    I3MCPMTResponseMapNames = MCPMTResponseMapNames,
     I3MCTreeNames = [],
-    I3MCHitSeriesMapNames = ["MCHitSeriesMap"],
+    I3MCHitSeriesMapNames = MCHitSeriesMapNames,
     ShiftUntriggeredEvents = False)
 
 
 # clean up
 tray.AddModule("Delete", "cleanup",
     Keys = ["MCTimeIncEventID",
-            "MCPMTResponseMap"])
+            "MCPMTResponseMap",
+            "weightedMCHitSeriesMap"])
 
 if not options.KEEPMCHITS:
     tray.AddModule("Delete", "cleanup_I3MCHits",
