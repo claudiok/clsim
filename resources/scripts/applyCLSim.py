@@ -116,6 +116,9 @@ if options.APPLYMMC:
 
 tray = I3Tray()
 
+# this is how you can dump some of the simulation timings&statistics to an XML file:
+tray.AddService("I3XMLSummaryServiceFactory","summary",
+    OutputFileName = "applyCLSim.xml")
 
 tray.AddModule("I3Reader","reader",
                Filename=infile)
@@ -155,7 +158,6 @@ if hasattr(icetray, "traysegment"):
         RandomService = randomService,
         UseGPUs=False,
         UseCPUs=True,
-        DoNotParallelize=True,
         #IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos090.11jul2011.txt"))
         IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"))
 else:

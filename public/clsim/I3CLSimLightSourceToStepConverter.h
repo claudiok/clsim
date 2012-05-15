@@ -154,7 +154,7 @@ public:
     virtual void EnqueueBarrier() = 0;
 
     /**
-     * Returns true an enqueued barrier is still active. And active
+     * Returns true if an enqueued barrier is still active. And active
      * barrier means that no new particles can currently be added
      * to the queue. Steps have to be retrieved using GetConversionResult()
      * until this function returns false.

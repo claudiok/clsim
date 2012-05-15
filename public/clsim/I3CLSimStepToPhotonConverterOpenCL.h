@@ -334,6 +334,12 @@ public:
      */
     virtual I3CLSimStepToPhotonConverter::ConversionResult_t GetConversionResult();
     
+    inline double GetTotalDeviceTime() {boost::unique_lock<boost::mutex> guard(statistics_mutex_); return static_cast<double>(statistics_total_device_duration_in_nanoseconds_);}
+    inline double GetTotalHostTime() {boost::unique_lock<boost::mutex> guard(statistics_mutex_); return static_cast<double>(statistics_total_host_duration_in_nanoseconds_);}
+    inline uint64_t GetNumKernelCalls() {boost::unique_lock<boost::mutex> guard(statistics_mutex_); return statistics_total_kernel_calls_;}
+    inline uint64_t GetTotalNumPhotonsGenerated() {boost::unique_lock<boost::mutex> guard(statistics_mutex_); return statistics_total_num_photons_generated_;}
+    inline uint64_t GetTotalNumPhotonsAtDOMs() {boost::unique_lock<boost::mutex> guard(statistics_mutex_); return statistics_total_num_photons_atDOMs_;}
+    
 private:
     typedef std::pair<uint32_t, I3CLSimStepSeriesConstPtr> ToOpenCLPair_t;
 
@@ -358,6 +364,21 @@ private:
     void OpenCLThread_impl_runKernel(unsigned int bufferIndex,
                                      cl::Event &kernelFinishEvent,
                                      std::size_t numberOfInputSteps);
+
+    boost::posix_time::ptime DumpStatistics(const cl::Event &kernelFinishEvent,
+                                            const boost::posix_time::ptime &last_timestamp,
+                                            uint64_t totalNumberOfPhotons,
+                                            bool starving,
+                                            const std::string &platformName,
+                                            const std::string &deviceName,
+                                            uint64_t deviceProfilingResolution);
+
+    boost::mutex statistics_mutex_;
+    uint64_t statistics_total_device_duration_in_nanoseconds_;
+    uint64_t statistics_total_host_duration_in_nanoseconds_;
+    uint64_t statistics_total_kernel_calls_;
+    uint64_t statistics_total_num_photons_generated_;
+    uint64_t statistics_total_num_photons_atDOMs_;
 
     
     boost::shared_ptr<boost::thread> openCLThreadObj_;

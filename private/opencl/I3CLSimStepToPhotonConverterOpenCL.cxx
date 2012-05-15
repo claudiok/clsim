@@ -62,6 +62,11 @@ const bool I3CLSimStepToPhotonConverterOpenCL::default_useNativeMath=true;
 I3CLSimStepToPhotonConverterOpenCL::I3CLSimStepToPhotonConverterOpenCL(I3RandomServicePtr randomService,
                                                                        bool useNativeMath)
 :
+statistics_total_device_duration_in_nanoseconds_(0),
+statistics_total_host_duration_in_nanoseconds_(0),
+statistics_total_kernel_calls_(0),
+statistics_total_num_photons_generated_(0),
+statistics_total_num_photons_atDOMs_(0),
 openCLStarted_(false),
 queueToOpenCL_(new I3CLSimQueue<ToOpenCLPair_t>(5)),
 queueFromOpenCL_(new I3CLSimQueue<I3CLSimStepToPhotonConverter::ConversionResult_t>(0)),
@@ -1043,6 +1048,13 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl_downloadPhotons(boost
         }
         
         LOG_IMPL(INFO, "Num photons to copy (buffer %u): %" PRIu32, bufferIndex, numberOfGeneratedPhotons);
+
+#ifdef DUMP_STATISTICS
+        {
+            boost::unique_lock<boost::mutex> guard(statistics_mutex_);
+            statistics_total_num_photons_atDOMs_ += numberOfGeneratedPhotons;
+        }
+#endif
         
         if (numberOfGeneratedPhotons > maxNumOutputPhotons_)
         {
@@ -1105,41 +1117,50 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl_downloadPhotons(boost
     
 }
 
-#ifdef DUMP_STATISTICS
-namespace {
-    inline boost::posix_time::ptime DumpStatistics(const cl::Event &kernelFinishEvent,
+boost::posix_time::ptime 
+I3CLSimStepToPhotonConverterOpenCL::DumpStatistics(const cl::Event &kernelFinishEvent,
                                                    const boost::posix_time::ptime &last_timestamp,
                                                    uint64_t totalNumberOfPhotons,
                                                    bool starving,
                                                    const std::string &platformName,
                                                    const std::string &deviceName,
                                                    uint64_t deviceProfilingResolution)
+{
+    // calculate time since last kernel execution
+    boost::posix_time::ptime this_timestamp(boost::posix_time::microsec_clock::universal_time());
+
+#ifdef DUMP_STATISTICS
+    boost::posix_time::time_duration posix_duration = this_timestamp - last_timestamp;
+    const uint64_t host_duration_in_nanoseconds = posix_duration.total_nanoseconds();
+    
+    uint64_t timeStart, timeEnd;
+    kernelFinishEvent.getProfilingInfo(CL_PROFILING_COMMAND_START, &timeStart);
+    kernelFinishEvent.getProfilingInfo(CL_PROFILING_COMMAND_END, &timeEnd);
+    
+    const uint64_t kernel_duration_in_nanoseconds = (timeStart==timeEnd)?deviceProfilingResolution:(timeEnd-timeStart);
+    
     {
-        // calculate time since last kernel execution
-        boost::posix_time::ptime this_timestamp(boost::posix_time::microsec_clock::universal_time());
-        boost::posix_time::time_duration posix_duration = this_timestamp - last_timestamp;
-        const double host_duration_in_nanoseconds = static_cast<double>(posix_duration.total_nanoseconds());
+        boost::unique_lock<boost::mutex> guard(statistics_mutex_);
         
-        uint64_t timeStart, timeEnd;
-        kernelFinishEvent.getProfilingInfo(CL_PROFILING_COMMAND_START, &timeStart);
-        kernelFinishEvent.getProfilingInfo(CL_PROFILING_COMMAND_END, &timeEnd);
-        
-        const double kernel_duration_in_nanoseconds = (timeStart==timeEnd)?static_cast<double>(deviceProfilingResolution):static_cast<double>(timeEnd-timeStart);
-        
-        const double utilization = kernel_duration_in_nanoseconds/host_duration_in_nanoseconds;
-        
-        // use LOG_IMPL here to make it log this even when in Release build mode.
-        LOG_IMPL(INFO, "kernel statistics: %s%g nanoseconds/photon (util: %.0f%%) (%s %s) %s",
-                 (timeStart==timeEnd)?"<=":"",
-                 kernel_duration_in_nanoseconds/static_cast<double>(totalNumberOfPhotons),
-                 utilization*100.,
-                 platformName.c_str(), deviceName.c_str(),
-                 (starving?"[starving]":""));
-        
-        return this_timestamp;
+        statistics_total_device_duration_in_nanoseconds_ += kernel_duration_in_nanoseconds;
+        statistics_total_host_duration_in_nanoseconds_ += host_duration_in_nanoseconds;
+        statistics_total_kernel_calls_++;
+        statistics_total_num_photons_generated_ += totalNumberOfPhotons;
     }
-}
+    
+    const double utilization = static_cast<double>(kernel_duration_in_nanoseconds)/static_cast<double>(host_duration_in_nanoseconds);
+    
+    // use LOG_IMPL here to make it log this even when in Release build mode.
+    LOG_IMPL(INFO, "kernel statistics: %s%g nanoseconds/photon (util: %.0f%%) (%s %s) %s",
+             (timeStart==timeEnd)?"<=":"",
+             static_cast<double>(kernel_duration_in_nanoseconds)/static_cast<double>(totalNumberOfPhotons),
+             utilization*100.,
+             platformName.c_str(), deviceName.c_str(),
+             (starving?"[starving]":""));
 #endif
+    
+    return this_timestamp;
+}
 
 void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::disable_interruption &di)
 {

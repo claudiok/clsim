@@ -39,6 +39,8 @@
 #include "dataclasses/physics/I3MCTree.h"
 #include "dataclasses/physics/I3MCTreeUtils.h"
 
+#include "phys-services/I3SummaryService.h"
+
 #include "clsim/function/I3CLSimFunctionConstant.h"
 
 #include "clsim/I3CLSimLightSource.h"
@@ -1278,6 +1280,35 @@ void I3CLSimModule::Finish()
     
     log_info("Flushing I3Tray..");
     Flush();
+    
+    log_info("I3CLSimModule is done.");
+
+    // add some summary information to a potential I3SummaryService
+    I3SummaryServicePtr summary = context_.Get<I3SummaryServicePtr>();
+    if (summary) {
+        const std::string prefix = "I3CLSimModule_" + GetName() + "_";
+        
+        for (std::size_t i=0; i<openCLStepsToPhotonsConverters_.size(); ++i)
+        {
+            const std::string postfix = (openCLStepsToPhotonsConverters_.size()==1)?"":"_"+boost::lexical_cast<std::string>(i);
+            
+            const double totalNumPhotonsGenerated = openCLStepsToPhotonsConverters_[i]->GetTotalNumPhotonsGenerated();
+            const double totalDeviceTime = static_cast<double>(openCLStepsToPhotonsConverters_[i]->GetTotalDeviceTime())*I3Units::ns;
+            const double totalHostTime = static_cast<double>(openCLStepsToPhotonsConverters_[i]->GetTotalHostTime())*I3Units::ns;
+            
+            (*summary)[prefix+"TotalDeviceTime"           +postfix] = totalDeviceTime;
+            (*summary)[prefix+"TotalHostTime"             +postfix] = totalHostTime;
+            (*summary)[prefix+"NumKernelCalls"            +postfix] = openCLStepsToPhotonsConverters_[i]->GetNumKernelCalls();
+            (*summary)[prefix+"TotalNumPhotonsGenerated"  +postfix] = totalNumPhotonsGenerated;
+            (*summary)[prefix+"TotalNumPhotonsAtDOMs"     +postfix] = openCLStepsToPhotonsConverters_[i]->GetTotalNumPhotonsAtDOMs();
+            
+            (*summary)[prefix+"AverageDeviceTimePerPhoton"+postfix] = totalDeviceTime/totalNumPhotonsGenerated;
+            (*summary)[prefix+"AverageHostTimePerPhoton"  +postfix] = totalHostTime/totalNumPhotonsGenerated;
+            (*summary)[prefix+"DeviceUtilization"         +postfix] = totalDeviceTime/totalHostTime;
+        }
+        
+    }
+
 }
 
 
