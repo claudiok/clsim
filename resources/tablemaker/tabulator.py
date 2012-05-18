@@ -23,12 +23,19 @@ class PhotoTable(object):
 		self.weights += other.weights
 		self.n_photons += other.n_photons
 		
+		return self
+	
+	def __idiv__(self, num):
+		return self.__imul__(1./num)
+		
 	def __imul__(self, num):
 		self.values *= num
 		self.weights *= num*num
 		
+		return self
+		
 	def normalize(self):
-		self *= (1./self.n_photons)
+		self /= self.n_photons
 		
 	def save(self, fname):
 		import pyfits
@@ -42,7 +49,6 @@ class PhotoTable(object):
 		
 		if self.weights is not None:
 			errors = pyfits.ImageHDU(self.weights, name='ERRORS')
-			print errors.data.shape
 			hdulist.append(errors)
 		
 		for i in xrange(self.values.ndim):

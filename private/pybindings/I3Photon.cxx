@@ -100,7 +100,7 @@ namespace I3Photon_python_helper
         
         for (uint32_t i=0;i<photon.GetNumPositionListEntries();++i)
         {
-            pylist.append( photon.GetPositionListEntry(i) );
+            pylist.append( I3Position(*photon.GetPositionListEntry(i)) );
         }
         
         return pylist;
