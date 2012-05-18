@@ -39,6 +39,7 @@ inline void checkForCollision_OnString(
     floating_t inv_groupvel,
     floating_t photonTotalPathLength,
     uint photonNumScatters,
+    floating_t distanceTraveledInAbsorptionLengths,
     const floating4_t photonStartPosAndTime,
     const floating4_t photonStartDirAndWlen,
     const struct I3CLSimStep *step,
@@ -157,6 +158,7 @@ inline void checkForCollision_OnString(
                         inv_groupvel,
                         photonTotalPathLength,
                         photonNumScatters,
+                        distanceTraveledInAbsorptionLengths,
                         photonStartPosAndTime,
                         photonStartDirAndWlen,
                         step,
@@ -191,6 +193,7 @@ inline void checkForCollision_InCell(
     floating_t inv_groupvel,
     floating_t photonTotalPathLength,
     uint photonNumScatters,
+    floating_t distanceTraveledInAbsorptionLengths,
     const floating4_t photonStartPosAndTime,
     const floating4_t photonStartDirAndWlen,
     const struct I3CLSimStep *step,
@@ -268,6 +271,7 @@ inline void checkForCollision_InCell(
                 inv_groupvel,
                 photonTotalPathLength,
                 photonNumScatters,
+                distanceTraveledInAbsorptionLengths,
                 photonStartPosAndTime,
                 photonStartDirAndWlen,
                 step,
@@ -300,6 +304,7 @@ inline void checkForCollision_InCells(
     floating_t inv_groupvel,
     floating_t photonTotalPathLength,
     uint photonNumScatters,
+    floating_t distanceTraveledInAbsorptionLengths,
     const floating4_t photonStartPosAndTime,
     const floating4_t photonStartDirAndWlen,
     const struct I3CLSimStep *step,
@@ -349,6 +354,7 @@ inline void checkForCollision_InCells(
         inv_groupvel,                           \
         photonTotalPathLength,                  \
         photonNumScatters,                      \
+        distanceTraveledInAbsorptionLengths,    \
         photonStartPosAndTime,                  \
         photonStartDirAndWlen,                  \
         step,                                   \
@@ -377,6 +383,7 @@ inline void checkForCollision_InCells(
         inv_groupvel,                           \
         photonTotalPathLength,                  \
         photonNumScatters,                      \
+        distanceTraveledInAbsorptionLengths,    \
         photonStartPosAndTime,                  \
         photonStartDirAndWlen,                  \
         step,                                   \
@@ -445,6 +452,7 @@ inline bool checkForCollision(const floating4_t photonPosAndTime,
     floating_t inv_groupvel,
     floating_t photonTotalPathLength,
     uint photonNumScatters,
+    floating_t distanceTraveledInAbsorptionLengths,
     const floating4_t photonStartPosAndTime,
     const floating4_t photonStartDirAndWlen,
     const struct I3CLSimStep *step,
@@ -470,6 +478,7 @@ inline bool checkForCollision(const floating4_t photonPosAndTime,
             inv_groupvel,
             photonTotalPathLength,
             photonNumScatters,
+            distanceTraveledInAbsorptionLengths,
             photonStartPosAndTime,
             photonStartDirAndWlen,
             step,
@@ -510,6 +519,7 @@ inline bool checkForCollision(const floating4_t photonPosAndTime,
         inv_groupvel,
         photonTotalPathLength,
         photonNumScatters,
+        distanceTraveledInAbsorptionLengths,
         photonStartPosAndTime,
         photonStartDirAndWlen,
         step,
@@ -539,6 +549,7 @@ inline bool checkForCollision(const floating4_t photonPosAndTime,
                 inv_groupvel,
                 photonTotalPathLength,
                 photonNumScatters,
+                distanceTraveledInAbsorptionLengths,
                 photonStartPosAndTime,
                 photonStartDirAndWlen,
                 step,

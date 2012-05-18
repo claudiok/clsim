@@ -37,7 +37,7 @@
  * @brief Stores the history of a photon as the last
  * points of scatter before reaching a DOM.
  */
-static const unsigned i3clsimphotonhistory_version_ = 0;
+static const unsigned i3clsimphotonhistory_version_ = 1;
 
 struct I3CLSimPhotonHistory
 {
@@ -53,17 +53,19 @@ public:
     inline float GetX(std::size_t index) const {return posX_[index];}
     inline float GetY(std::size_t index) const {return posY_[index];}
     inline float GetZ(std::size_t index) const {return posZ_[index];}
+    inline float GetDistanceInAbsorptionLengths(std::size_t index) const {return distanceInAbsorptionLengths_[index];}
     
     inline I3PositionPtr operator[](std::size_t index) const {return I3PositionPtr(new I3Position(posX_[index], posY_[index], posZ_[index]));}
     inline I3PositionPtr at(std::size_t index) const {return I3PositionPtr(new I3Position(posX_.at(index), posY_.at(index), posZ_.at(index)));}
     
-    inline void push_back(float x, float y, float z) {posX_.push_back(x); posY_.push_back(y); posZ_.push_back(z);} 
-    inline void push_back(const I3Position &pos) {push_back(pos.GetX(), pos.GetY(), pos.GetZ());} 
+    inline void push_back(float x, float y, float z, float abslens) {posX_.push_back(x); posY_.push_back(y); posZ_.push_back(z); distanceInAbsorptionLengths_.push_back(abslens);} 
+    inline void push_back(const I3Position &pos, float abslens) {push_back(pos.GetX(), pos.GetY(), pos.GetZ(), abslens);} 
     
 private:
     std::vector<float> posX_;
     std::vector<float> posY_;
     std::vector<float> posZ_;
+    std::vector<float> distanceInAbsorptionLengths_;
     
 private:
     friend class boost::serialization::access;
@@ -79,6 +81,7 @@ inline bool operator==(const I3CLSimPhotonHistory &a, const I3CLSimPhotonHistory
         if (a.GetX(i) != b.GetX(i)) return false;
         if (a.GetY(i) != b.GetY(i)) return false;
         if (a.GetZ(i) != b.GetZ(i)) return false;
+        if (a.GetDistanceInAbsorptionLengths(i) != b.GetDistanceInAbsorptionLengths(i)) return false;
     }
     
     return true;

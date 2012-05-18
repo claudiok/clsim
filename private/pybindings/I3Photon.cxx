@@ -59,6 +59,7 @@ i3photon_prettyprint(const I3Photon& s)
         << "        wavelength : " << s.GetWavelength()/I3Units::nanometer << "nm" << std::endl
         << "    group velocity : " << s.GetGroupVelocity()/(I3Units::meter/I3Units::nanosecond) << "m/ns" << std::endl
         << "      numScattered : " << s.GetNumScattered() << std::endl
+        << "     distInAbsLens : " << s.GetDistanceInAbsorptionLengths() << std::endl
         << "            weight : " << s.GetWeight() << std::endl
         << "     cherenkovDist : " << s.GetCherenkovDist()/I3Units::m << "m" << std::endl
         << "     cherenkovTime : " << s.GetCherenkovTime()/I3Units::ns << "ns" << std::endl
@@ -69,6 +70,7 @@ i3photon_prettyprint(const I3Photon& s)
     for (uint32_t i=0;i<s.GetNumPositionListEntries();++i)
     {
         I3PositionConstPtr pos = s.GetPositionListEntry(i);
+        double distInAbsLensAtPos = s.GetDistanceInAbsorptionLengthsAtPositionListEntry(i);
         if (i==0) {
             oss << "         (initial) : ";
         } else if (i==s.GetNumPositionListEntries()-1) {
@@ -80,7 +82,7 @@ i3photon_prettyprint(const I3Photon& s)
         if (!pos) {
             oss << "(not saved)" << std::endl;
         } else {
-            oss << "(" << pos->GetX()/I3Units::m << "," << pos->GetY()/I3Units::m << "," << pos->GetZ()/I3Units::m << ")m" << std::endl; 
+            oss << "(" << pos->GetX()/I3Units::m << "," << pos->GetY()/I3Units::m << "," << pos->GetZ()/I3Units::m << ")m; absLens=" << distInAbsLensAtPos << std::endl; 
         }
     }
     
@@ -140,6 +142,10 @@ void register_I3Photon()
         .def("GetNumScattered", &I3Photon::GetNumScattered)
         .def("SetNumScattered", &I3Photon::SetNumScattered)
 
+        .add_property("distanceInAbsorptionLengths", &I3Photon::GetDistanceInAbsorptionLengths, &I3Photon::SetDistanceInAbsorptionLengths)
+        .def("GetDistanceInAbsorptionLengths", &I3Photon::GetDistanceInAbsorptionLengths)
+        .def("SetDistanceInAbsorptionLengths", &I3Photon::SetDistanceInAbsorptionLengths)
+
         .add_property("wavelength", &I3Photon::GetWavelength, &I3Photon::SetWavelength)
         .def("GetWavelength", &I3Photon::GetWavelength)
         .def("SetWavelength", &I3Photon::SetWavelength)
@@ -183,9 +189,10 @@ void register_I3Photon()
 
         .add_property("numPositionListEntries", &I3Photon::GetNumPositionListEntries)
         .def("GetNumPositionListEntries", &I3Photon::GetNumPositionListEntries)
-        .def("GetPositionListEntry", &GetPositionList)
+        .def("GetPositionList", &GetPositionList)
         .add_property("positionList", &GetPositionList)
-        .def("GetPositionList", &I3Photon::GetPositionListEntry)
+        .def("GetPositionListEntry", &I3Photon::GetPositionListEntry)
+        .def("GetDistanceInAbsorptionLengthsAtPositionListEntry", &I3Photon::GetDistanceInAbsorptionLengthsAtPositionListEntry)
         .def("AppendToIntermediatePositionList", &I3Photon::AppendToIntermediatePositionList)
 
         .def("__str__", i3photon_prettyprint)

@@ -812,7 +812,9 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
             
             for (std::size_t j=0;j<photonHistory.size();++j)
             {
-                outputPhoton.AppendToIntermediatePositionList(I3Position( photonHistory.GetX(j), photonHistory.GetY(j), photonHistory.GetZ(j) ));
+                outputPhoton.AppendToIntermediatePositionList(I3Position( photonHistory.GetX(j), photonHistory.GetY(j), photonHistory.GetZ(j) ),
+                                                              photonHistory.GetDistanceInAbsorptionLengths(j)
+                                                             );
             }
         }
         

@@ -93,6 +93,7 @@ public:
     inline int16_t GetStringID() const {return stringID;}
     inline uint16_t GetOMID() const {return omID;}
     inline float GetGroupVelocity() const {return groupVelocity;}
+    inline float GetDistInAbsLens() const {return distInAbsLens;}
 
     inline I3PositionPtr GetPos() const {return I3PositionPtr(new I3Position(((const cl_float *)&posAndTime)[0], ((const cl_float *)&posAndTime)[1], ((const cl_float *)&posAndTime)[2]));}
     inline I3PositionPtr GetStartPos() const
@@ -140,6 +141,7 @@ public:
     inline void SetStringID(const int16_t &val) {stringID=val;}
     inline void SetOMID(const uint16_t &val) {omID=val;}
     inline void SetGroupVelocity(const float &val) {groupVelocity=val;}
+    inline void SetDistInAbsLens(const float &val) {distInAbsLens=val;}
 
     inline void SetPos(const I3Position &pos)
     {
@@ -195,7 +197,7 @@ public:
     cl_float4 startPosAndTime;
     cl_float2 startDir;
     cl_float groupVelocity;
-    cl_uint dummy;
+    cl_float distInAbsLens;
     
 private:
     friend class boost::serialization::access;
@@ -210,8 +212,8 @@ template<> void I3CLSimPhoton::load(boost::archive::portable_binary_iarchive &ar
 
 inline bool operator==(const I3CLSimPhoton &a, const I3CLSimPhoton &b)
 {
-    // compare all fields (binary) [except the last field, which is a dummy)
-    return (std::memcmp(&a, &b, sizeof(I3CLSimPhoton)-sizeof(cl_uint))==0);
+    // compare all fields (binary)
+    return (std::memcmp(&a, &b, sizeof(I3CLSimPhoton))==0);
 }
 
 BOOST_CLASS_VERSION(I3CLSimPhoton, i3clsimphoton_version_);

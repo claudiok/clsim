@@ -74,7 +74,7 @@ struct __attribute__ ((packed)) I3CLSimPhoton
     float4 startPosAndTime;                                 // 4x 32bit float
     float2 startDir;                                        // 2x 32bit float
     float groupVelocity;                                    //    32bit float
-    uint dummy;                                             //    32bit unsigned
+    float distInAbsLens;                                    //    32bit float
                                                             // total: 20x 32bit float = 80 bytes
 };
 
@@ -108,6 +108,7 @@ inline void saveHit(
     floating_t inv_groupvel,
     floating_t photonTotalPathLength,
     uint photonNumScatters,
+    floating_t distanceTraveledInAbsorptionLengths,
     const floating4_t photonStartPosAndTime,
     const floating4_t photonStartDirAndWlen,
     const struct I3CLSimStep *step,

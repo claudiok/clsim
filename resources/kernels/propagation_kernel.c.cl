@@ -231,6 +231,7 @@ inline void saveHit(
     floating_t inv_groupvel,
     floating_t photonTotalPathLength,
     uint photonNumScatters,
+    floating_t distanceTraveledInAbsorptionLengths,
     const floating4_t photonStartPosAndTime,
     const floating4_t photonStartDirAndWlen,
     const struct I3CLSimStep *step,
@@ -280,6 +281,8 @@ inline void saveHit(
         outputPhotons[myIndex].startDir = sphDirFromCar(photonStartDirAndWlen);
 
         outputPhotons[myIndex].groupVelocity = my_recip(inv_groupvel);
+
+        outputPhotons[myIndex].distInAbsLens = distanceTraveledInAbsorptionLengths;
 
 #ifdef SAVE_PHOTON_HISTORY
         for (uint i=0;i<NUM_PHOTONS_IN_HISTORY;++i)
@@ -390,6 +393,7 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
 
     uint photonsLeftToPropagate=step.numPhotons;
     floating_t abs_lens_left=ZERO;
+    floating_t abs_lens_initial=ZERO;
     
     floating4_t photonStartPosAndTime;
     floating4_t photonStartDirAndWlen;
@@ -441,7 +445,8 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             
             // the photon needs a lifetime. determine distance to next scatter and absorption
             // (this is in units of absorption/scattering lengths)
-            abs_lens_left = -my_log(RNG_CALL_UNIFORM_OC);
+            abs_lens_initial = -my_log(RNG_CALL_UNIFORM_OC);
+            abs_lens_left = abs_lens_initial;
             
             //if ((currentPhotonLayer < 0) || (currentPhotonLayer >= MEDIUM_LAYERS)) abs_lens_left=0.f; // outside, do not track
             
@@ -540,6 +545,7 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             inv_groupvel,
             photonTotalPathLength,
             photonNumScatters,
+            abs_lens_initial-abs_lens_left,
             photonStartPosAndTime,
             photonStartDirAndWlen,
             &step,
@@ -601,6 +607,7 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
                     inv_groupvel,
                     photonTotalPathLength,
                     photonNumScatters,
+                    abs_lens_initial,
                     photonStartPosAndTime,
                     photonStartDirAndWlen,
                     &step,
@@ -624,7 +631,8 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             
 #ifdef SAVE_PHOTON_HISTORY
             // save the photon scatter point
-            currentPhotonHistory[photonNumScatters%NUM_PHOTONS_IN_HISTORY] = photonPosAndTime;
+            currentPhotonHistory[photonNumScatters%NUM_PHOTONS_IN_HISTORY].xyz = photonPosAndTime.xyz;
+            currentPhotonHistory[photonNumScatters%NUM_PHOTONS_IN_HISTORY].w = abs_lens_initial-abs_lens_left;
 #endif
             
             // calculate a new direction

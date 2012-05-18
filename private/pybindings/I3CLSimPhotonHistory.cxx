@@ -53,7 +53,7 @@ i3clsimphotonhistory_prettyprint(const I3CLSimPhotonHistory& s)
     
     for (std::size_t i=0;i<s.size();++i)
     {
-        oss << "  index " << i << " : pos=(" << s.GetX(i)/I3Units::m << "," << s.GetY(i)/I3Units::m << "," << s.GetZ(i)/I3Units::m << ")m" << std::endl;
+        oss << "  index " << i << " : pos=(" << s.GetX(i)/I3Units::m << "," << s.GetY(i)/I3Units::m << "," << s.GetZ(i)/I3Units::m << ")m; abslens=" << s.GetDistanceInAbsorptionLengths(i) << std::endl;
     }
 
     oss << "]" << std::endl;
@@ -64,13 +64,13 @@ i3clsimphotonhistory_prettyprint(const I3CLSimPhotonHistory& s)
 void register_I3CLSimPhotonHistory()
 {
     {
-        void (I3CLSimPhotonHistory::* append_oneary)(const I3Position &) = &I3CLSimPhotonHistory::push_back;
-        void (I3CLSimPhotonHistory::* append_threeary)(float x, float y, float z) = &I3CLSimPhotonHistory::push_back;
+        void (I3CLSimPhotonHistory::* append_twoary)(const I3Position &, float) = &I3CLSimPhotonHistory::push_back;
+        void (I3CLSimPhotonHistory::* append_fourary)(float, float, float, float) = &I3CLSimPhotonHistory::push_back;
 
         scope clsimphotonhistory_scope = 
         class_<I3CLSimPhotonHistory, boost::shared_ptr<I3CLSimPhotonHistory> >("I3CLSimPhotonHistory")
-        .def("append", append_oneary)
-        .def("append", append_threeary)
+        .def("append", append_twoary)
+        .def("append", append_fourary)
         .def("__len__", &I3CLSimPhotonHistory::size)
         .def("__getitem__", &I3CLSimPhotonHistory::at)
         

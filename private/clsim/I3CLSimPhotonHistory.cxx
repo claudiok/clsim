@@ -39,6 +39,10 @@ void I3CLSimPhotonHistory::serialize(Archive &ar, unsigned version)
     ar & make_nvp("posX", posX_);
     ar & make_nvp("posY", posY_);
     ar & make_nvp("posZ", posZ_);
+    
+    if (version >= 1) {
+        ar & make_nvp("distanceInAbsorptionLengths", distanceInAbsorptionLengths_);
+    }
 }     
 
 

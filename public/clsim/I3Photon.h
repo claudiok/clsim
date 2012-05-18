@@ -46,7 +46,7 @@
  * direction from the OM center to the hit
  * position) and the photon's wavelength.
  */
-static const unsigned i3photon_version_ = 1;
+static const unsigned i3photon_version_ = 2;
 
 class I3Photon : public I3FrameObject
 {
@@ -67,7 +67,8 @@ public:
     startTime_(NAN),
     startDirection_(),
     startPosition_(),
-    numScattered_(0)
+    numScattered_(0),
+    distanceInAbsorptionLengths_(NAN)
     { }
     
     I3Photon(uint64_t mid, int id) : 
@@ -84,7 +85,8 @@ public:
     startTime_(NAN),
     startDirection_(),
     startPosition_(),
-    numScattered_(0)
+    numScattered_(0),
+    distanceInAbsorptionLengths_(NAN)
     { }
     
     virtual ~I3Photon();
@@ -212,6 +214,22 @@ public:
 
         numScattered_=numScattered;
     }
+
+    
+    /** 
+     * @return this returns the total distance the photon traveled
+     * in units of absorption lengths
+     */
+    inline double GetDistanceInAbsorptionLengths() const {return distanceInAbsorptionLengths_;}
+    
+    /** 
+     * this sets the total distance the photon traveled
+     * in units of absorption lengths
+     */
+    inline void SetDistanceInAbsorptionLengths(double distanceInAbsorptionLengths) {
+        distanceInAbsorptionLengths_=distanceInAbsorptionLengths;
+    }
+
     
     /** 
      * @return this returns the number of positions where this photon has been recorded.
@@ -247,11 +265,41 @@ public:
             if (index-1 < num_empty_entries) {
                 return I3PositionConstPtr(); // this entry has not been saved
             } else {
-                return I3PositionConstPtr(new I3Position(intermediatePositions_[index-1-num_empty_entries]));
+                return I3PositionConstPtr(new I3Position(intermediatePositions_[index-1-num_empty_entries].first));
             }
         }
     }
-    
+
+    /** 
+     * @return this returns the distance a photon has traveled in units of
+     * absorption lengths at a certain index (corresponding to a position
+     * in the photon path as returned by GetPositionListEntry()),
+     * with index < GetNumPositionListEntries().
+     *
+     * The return value may be NaN if there is no position
+     * stored for a certain index.
+     */
+    inline double GetDistanceInAbsorptionLengthsAtPositionListEntry(uint32_t index) const
+    {
+        if (intermediatePositions_.size() > static_cast<std::size_t>(numScattered_))
+            throw std::logic_error("I3Photon has inconsistent internal state.");
+        if (index >= numScattered_+2)
+            throw std::runtime_error("invalid index");
+        
+        if (index==0) {
+            return 0.; // photon has not traveled yet (@ start position)
+        } else if (index==numScattered_+1) {
+            return distanceInAbsorptionLengths_; // distance at final point
+        } else {
+            const std::size_t num_empty_entries = static_cast<std::size_t>(numScattered_)-intermediatePositions_.size();
+            if (index-1 < num_empty_entries) {
+                return NAN; // this entry has not been saved
+            } else {
+                return intermediatePositions_[index-1-num_empty_entries].second;
+            }
+        }
+    }
+
     /**
      * Appends a position to the back of the intermediate position list.
      * The final list will be: [startPos] + intermediatePos + [finalPos].
@@ -259,12 +307,12 @@ public:
      * Use SetNumScattered() first to set the total number of scatters
      * and then add at most that number of positions.
      */
-    inline void AppendToIntermediatePositionList(const I3Position &pos)
+    inline void AppendToIntermediatePositionList(const I3Position &pos, double distanceInAbsorptionLengths)
     {
         if (intermediatePositions_.size() >= static_cast<std::size_t>(numScattered_))
             throw std::runtime_error(std::string("Use SetNumScattered() first to increase the total number of scatters before adding more scatter positions. numScattered=") + boost::lexical_cast<std::string>(numScattered_) + ", intermediatePositions.size()=" + boost::lexical_cast<std::string>(intermediatePositions_.size()));
 
-        intermediatePositions_.push_back(pos);
+        intermediatePositions_.push_back(std::make_pair(pos, distanceInAbsorptionLengths));
     }
 
     bool operator==(const I3Photon& rhs) const {
@@ -287,16 +335,18 @@ public:
         && startPosition_.GetY() == rhs.startPosition_.GetY()
         && startPosition_.GetZ() == rhs.startPosition_.GetZ()
         && groupVelocity_ == rhs.groupVelocity_
-        && numScattered_ == rhs.numScattered_))
+        && numScattered_ == rhs.numScattered_
+        && distanceInAbsorptionLengths_ == rhs.distanceInAbsorptionLengths_))
             return false;
         
         if (intermediatePositions_.size() != rhs.intermediatePositions_.size()) return false;
         
         for (std::size_t i=0;i<intermediatePositions_.size();++i)
         {
-            if (intermediatePositions_[i].GetX() != rhs.intermediatePositions_[i].GetX()) return false;
-            if (intermediatePositions_[i].GetY() != rhs.intermediatePositions_[i].GetY()) return false;
-            if (intermediatePositions_[i].GetZ() != rhs.intermediatePositions_[i].GetZ()) return false;
+            if (intermediatePositions_[i].first.GetX() != rhs.intermediatePositions_[i].first.GetX()) return false;
+            if (intermediatePositions_[i].first.GetY() != rhs.intermediatePositions_[i].first.GetY()) return false;
+            if (intermediatePositions_[i].first.GetZ() != rhs.intermediatePositions_[i].first.GetZ()) return false;
+            if (intermediatePositions_[i].second != rhs.intermediatePositions_[i].second) return false;
         }
         
         return true;
@@ -320,8 +370,9 @@ private:
     I3Position startPosition_;
 
     uint32_t numScattered_;
+    double distanceInAbsorptionLengths_;
 
-    std::vector<I3Position> intermediatePositions_;
+    std::vector<std::pair<I3Position, double> > intermediatePositions_;
     
     friend class boost::serialization::access;
     

@@ -66,6 +66,7 @@ void I3CLSimPhoton::save(Archive &ar, unsigned version) const
     ar << make_nvp("startPhi", ((const cl_float *)&startDir)[1]);
 
     ar << make_nvp("groupVelocity", groupVelocity);
+    ar << make_nvp("distInAbsLens", distInAbsLens);
 }     
 
 
@@ -101,6 +102,7 @@ void I3CLSimPhoton::load(Archive &ar, unsigned version)
     ar >> make_nvp("startPhi", temp); ((cl_float *)&startDir)[1]=temp;
 
     ar >> make_nvp("groupVelocity", temp); groupVelocity=temp;
+    ar >> make_nvp("distInAbsLens", temp); distInAbsLens=temp;
 
 }     
 

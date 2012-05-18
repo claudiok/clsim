@@ -1001,21 +1001,11 @@ namespace {
             float lastTime=NAN;
             for (uint32_t j=0;j<numRecordedScatters;++j)
             {
+                // [0], [1] and [2] are x,y,z
+                // [3] is the distance the photon traveled in units of absorption lengths
                 const cl_float4 &rawDataEntry = rawData[i*photonHistoryEntries + currentScatterIndex];
-                current_history.push_back(((const cl_float *)&rawDataEntry)[0], ((const cl_float *)&rawDataEntry)[1], ((const cl_float *)&rawDataEntry)[2]);
+                current_history.push_back(((const cl_float *)&rawDataEntry)[0], ((const cl_float *)&rawDataEntry)[1], ((const cl_float *)&rawDataEntry)[2], ((const cl_float *)&rawDataEntry)[3]);
 
-                // sanity check (time is stored in field [3])
-                const float currentTime = ((const cl_float *)&rawDataEntry)[3];
-                if (isnan(lastTime)) {
-                    lastTime=currentTime;
-                } else {
-                    if (currentTime < lastTime) 
-                        log_fatal("time in photon history is not ascending! previous=%fns, this=%fns, j=%zu, initial_time=%fns, final_time=%fns",
-                                  lastTime/I3Units::ns, currentTime/I3Units::ns, static_cast<std::size_t>(j),
-                                  current_photon.GetStartTime()/I3Units::ns,
-                                  current_photon.GetTime()/I3Units::ns);
-                }
-                
                 ++currentScatterIndex;
                 if (currentScatterIndex>=static_cast<uint32_t>(photonHistoryEntries)) currentScatterIndex=0;
             }

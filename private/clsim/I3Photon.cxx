@@ -26,6 +26,7 @@
 
 #include <icetray/serialization.h>
 #include <clsim/I3Photon.h>
+#include <boost/foreach.hpp>
 
 I3Photon::~I3Photon() { }
 
@@ -54,11 +55,23 @@ void I3Photon::serialize (Archive &ar, unsigned version)
     ar & make_nvp("startDir", startDirection_);
     ar & make_nvp("startPos", startPosition_);
     ar & make_nvp("numScattered", numScattered_);
+    if (version >= 2) {
+        ar & make_nvp("distanceInAbsorptionLengths", distanceInAbsorptionLengths_);
+    }
     
-    if (version >= 1) {
+    if (version == 1) {
+        std::vector<I3Position> intermediatePositionsOrig;
+        ar & make_nvp("intermediatePositions", intermediatePositionsOrig);
+        intermediatePositions_.clear();
+        BOOST_FOREACH(const I3Position &pos, intermediatePositionsOrig)
+        {
+            intermediatePositions_.push_back(std::make_pair(pos, NAN));
+        }
+    } else if (version >= 2) {
         ar & make_nvp("intermediatePositions", intermediatePositions_);
     }
         
+    
 }     
 
 I3_SERIALIZABLE(I3Photon);

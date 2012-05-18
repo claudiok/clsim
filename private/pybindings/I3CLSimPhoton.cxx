@@ -73,6 +73,7 @@ i3clsimphoton_prettyprint(const I3CLSimPhoton& s)
         << "            weight : " << s.GetWeight() << std::endl
         << "     cherenkovDist : " << s.GetCherenkovDist()/I3Units::m << "m" << std::endl
         << "     groupVelocity : " << s.GetGroupVelocity()/(I3Units::m/I3Units::ns) << "m/ns" << std::endl
+        << "     distInAbsLens : " << s.GetDistInAbsLens() << " absorption lengths" << std::endl
     
         << "          stringID : " << s.GetStringID() << std::endl
         << "              omID : " << s.GetOMID() << std::endl
@@ -112,6 +113,7 @@ void register_I3CLSimPhoton()
         .add_property("wavelength", &I3CLSimPhoton::GetWavelength, &I3CLSimPhoton::SetWavelength)
         .add_property("cherenkovDist", &I3CLSimPhoton::GetCherenkovDist, &I3CLSimPhoton::SetCherenkovDist)
         .add_property("groupVelocity", &I3CLSimPhoton::GetGroupVelocity, &I3CLSimPhoton::SetGroupVelocity)
+        .add_property("distInAbsLens", &I3CLSimPhoton::GetDistInAbsLens, &I3CLSimPhoton::SetDistInAbsLens)
 
         .add_property("numScatters", &I3CLSimPhoton::GetNumScatters, &I3CLSimPhoton::SetNumScatters)
         .add_property("weight", &I3CLSimPhoton::GetWeight, &I3CLSimPhoton::SetWeight)
