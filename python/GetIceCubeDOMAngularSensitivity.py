@@ -34,6 +34,11 @@ from os.path import expandvars
 
 
 def GetIceCubeDOMAngularSensitivity(holeIce=True):
+    """
+    The relative collection efficiency of the DOM as a polynomial in the
+    cosine of the photon's impact angle with respect to the DOM orientation
+    (for IceCube, straight down).
+    """
     if holeIce:
         coefficients = [ 0.32813,
                          0.63899,
