@@ -1,34 +1,11 @@
+#!/usr/bin/env python
 
 from icecube.icetray import I3Units, I3Module
 from icecube.dataclasses import I3Position, I3Particle, I3Direction, I3Constants
 from icecube.phys_services import I3Calculator
 from icecube.clsim import I3Photon, GetIceCubeDOMAcceptance, GetIceCubeDOMAngularSensitivity
-import numpy, numpy_extensions, math
-
-def potemkin_photon():
-	ph = I3Photon()
-	ph.numScattered = 1
-	ph.groupVelocity = I3Constants.c/I3Constants.n_ice_group
-	ph.startPos = I3Position(0,0,0)
-	ph.startTime = 0.
-	ph.pos = I3Position(100., 100., 100.,)
-	ph.AppendToIntermediatePositionList(I3Position(100., 0., 0.,), 1)
-	ph.distanceInAbsorptionLengths = 2
-	ph.wavelength = 450.
-	ph.weight = 1.
-	
-	return ph
-
-def potemkin_source():
-	p = I3Particle()
-	p.pos = I3Position(0,0,0)
-	p.dir = I3Direction(0,0,1)
-	p.time = 0
-	p.shape = p.Cascade
-	p.energy = 1e3
-	
-	return p
-	
+import numpy, math
+from icecube.photospline import numpy_extensions # meshgrid_nd
 	
 class PhotoTable(object):
 	
@@ -55,15 +32,17 @@ class PhotoTable(object):
 		
 	def save(self, fname):
 		import pyfits
+		
 		data = pyfits.PrimaryHDU(self.values)
 		data.header.update('TYPE', 'Photon detection probability table')
 		
-		data.header.update('N_PHOTONS', n_photons)
+		data.header.update('NPHOTONS', self.n_photons)
 		
 		hdulist = pyfits.HDUList([data])
 		
 		if self.weights is not None:
 			errors = pyfits.ImageHDU(self.weights, name='ERRORS')
+			print errors.data.shape
 			hdulist.append(errors)
 		
 		for i in xrange(self.values.ndim):
@@ -74,20 +53,23 @@ class PhotoTable(object):
 		
 	@classmethod
 	def load(cls, fname):
+		import pyfits
+		
 		hdulist = pyfits.open(fname)
 		data = hdulist[0]
 		values = data.data
 		binedges = []
 		for i in xrange(values.ndim):
-			binedges.append(hdulist['EDGES%d' % i])
+			binedges.append(hdulist['EDGES%d' % i].data)
+		
 		try:
-			weights = hdulist['ERRORS']
+			weights = hdulist['ERRORS'].data
 		except KeyError:
 			weights = None
 			
-		n_photons = data.header['N_PHOTONS']
+		n_photons = data.header['NPHOTONS']
 			
-		return cls(binedges, values, n_photons, weights)
+		return cls(binedges, values, weights, n_photons)
 	
 class Tabulator(object):
 	
@@ -108,7 +90,7 @@ class Tabulator(object):
 	def save(self, fname):
 		# normalize to a photon flux, but not the number of photons (for later stacking)
 		area = self._getBinAreas()
-		PhotoTable(self.binedges, self.values/area, self.weights/(area*area)).save(fname)
+		PhotoTable(self.binedges, self.values/area, self.weights/(area*area), self.n_photons).save(fname)
 	
 	def _getBinAreas(self):
 		
@@ -201,6 +183,8 @@ class Tabulator(object):
 			# XXX HACK: the cosine of the impact angle with the
 			# DOM is the same as the z-component of the photon
 			# direction if the DOM is pointed straight down.
+			# This can be modified for detectors with other values
+			# of pi.
 			impact = pdir[2]
 			distance = start.calc_distance(stop)
 			# segment length in units of the local absorption length
@@ -260,4 +244,66 @@ class I3TabulatorModule(I3Module, Tabulator):
 	def Finish(self):
 		
 		self.save(self.fname)
+
+def potemkin_photon():
+	ph = I3Photon()
+	ph.numScattered = 1
+	ph.groupVelocity = I3Constants.c/I3Constants.n_ice_group
+	ph.startPos = I3Position(0,0,0)
+	ph.startTime = 0.
+	ph.pos = I3Position(100., 100., 100.,)
+	ph.AppendToIntermediatePositionList(I3Position(100., 0., 0.,), 1)
+	ph.distanceInAbsorptionLengths = 2
+	ph.wavelength = 450.
+	ph.weight = 1.
+	
+	return ph
+
+def potemkin_source():
+	p = I3Particle()
+	p.pos = I3Position(0,0,0)
+	p.dir = I3Direction(0,0,1)
+	p.time = 0
+	p.shape = p.Cascade
+	p.energy = 1e3
+	
+	return p
+
+def test_tray():
+	from I3Tray import I3Tray
+	from icecube import dataio, phys_services
+	from icecube.clsim import I3PhotonSeries, I3PhotonSeriesMap, I3CLSimEventStatistics
+	from icecube.icetray import OMKey, I3Frame
+	
+	tray = I3Tray()
+	
+	tray.AddModule('I3InfiniteSource', 'maw')
+	
+	def inserty(frame):
+		source = potemkin_source()
+		psm = I3PhotonSeriesMap()
+		psm[OMKey(0,0)] = I3PhotonSeries([potemkin_photon()])
+		
+		stats = I3CLSimEventStatistics()
+		stats.AddNumPhotonsGeneratedWithWeights(numPhotons=1, weightsForPhotons=1, majorID=0, minorID=0)
+		
+		frame['Source'] = source
+		frame['Photons'] = psm
+		frame['Statistics'] = stats
+		
+	tray.AddModule(inserty, 'inserty', Streams=[I3Frame.DAQ])
+	
+	import os
+	if os.path.exists('potemkin.fits'):
+		os.unlink('potemkin.fits')
+	tray.AddModule(I3TabulatorModule, 'tabbycat',
+	    Photons='Photons', Source='Source', Statistics='Statistics',
+	    Filename='potemkin.fits')
+	
+	tray.AddModule('TrashCan', 'YesWeCan')
+	tray.Execute(1)
+	tray.Finish()
+	
+if __name__ == "__main__":
+	test_tray()
 	 
