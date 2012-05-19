@@ -143,7 +143,7 @@ tray.AddModule(MakeParticle, "MakeParticle",
     Zenith = 90.*I3Units.deg,
     ZCoordinate = 0.*I3Units.m,
     Energy = 0.01*I3Units.GeV, # the longitudinal profile parameterization from PPC breaks down at this energy (the cascade will be point-like). The angular parameteriztion will still work okay. This might be exactly what we want for table-making (it should become an option to the PPC parameterization eventually).
-    NEvents = 2)
+    NEvents = 20)
 
 
 tray.AddSegment(clsim.I3CLSimMakePhotons, "makeCLSimPhotons",
@@ -164,6 +164,8 @@ tray.AddSegment(clsim.I3CLSimMakePhotons, "makeCLSimPhotons",
                                        SaveAllPhotonsPrescale=1.,           # do not prescale the generated photons
                                        StatisticsName="I3CLSimStatistics",  # save a statistics object (contains the initial number of photons)
                                        FixedNumberOfAbsorptionLengths=46.,  # this is approx. the number used by photonics (it uses -ln(1e-20))
+                                       LimitWorkgroupSize=1,                # this effectively disables all parallelism (there should be only one OpenCL worker thread)
+                                                                            #  it also should save LOTS of memory
                                       ),
     IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos094.11jul2011.txt"),
     #IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
@@ -178,7 +180,7 @@ tray.AddModule(tabulator.I3TabulatorModule, 'tabulator',
 
 
 #tray.AddModule("I3Writer","writer",
-#    Filename = options.OUTFILE)
+#    Filename = "photon_dump.i3")
 
 tray.AddModule("TrashCan", "the can")
 

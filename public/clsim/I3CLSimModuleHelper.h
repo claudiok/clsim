@@ -60,7 +60,8 @@ namespace I3CLSimModuleHelper {
                      bool saveAllPhotons,
                      double saveAllPhotonsPrescale,
                      double fixedNumberOfAbsorptionLengths,
-                     uint32_t photonHistoryEntries);
+                     uint32_t photonHistoryEntries,
+                     uint32_t limitWorkgroupSize);
     
     I3CLSimLightSourceToStepConverterGeant4Ptr
     initializeGeant4(I3RandomServicePtr rng,

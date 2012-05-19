@@ -296,7 +296,8 @@ namespace I3CLSimModuleHelper {
                                                            bool saveAllPhotons,
                                                            double saveAllPhotonsPrescale,
                                                            double fixedNumberOfAbsorptionLengths,
-                                                           uint32_t photonHistoryEntries)
+                                                           uint32_t photonHistoryEntries,
+                                                           uint32_t limitWorkgroupSize)
     {
         I3CLSimStepToPhotonConverterOpenCLPtr conv(new I3CLSimStepToPhotonConverterOpenCL(rng, device.GetUseNativeMath()));
 
@@ -321,9 +322,12 @@ namespace I3CLSimModuleHelper {
         conv->Compile();
         //log_trace("%s", conv.GetFullSource().c_str());
         
-        const std::size_t maxWorkgroupSize = conv->GetMaxWorkgroupSize();
+        std::size_t maxWorkgroupSize = conv->GetMaxWorkgroupSize();
+        if (limitWorkgroupSize!=0) {
+            maxWorkgroupSize = std::min(static_cast<std::size_t>(limitWorkgroupSize), maxWorkgroupSize);
+        }
+        
         conv->SetWorkgroupSize(maxWorkgroupSize);
-
         const std::size_t workgroupSize = conv->GetWorkgroupSize();
         
         // use approximately the given number of work items, convert to a multiple of the workgroup size

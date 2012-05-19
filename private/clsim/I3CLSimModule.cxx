@@ -245,6 +245,12 @@ geometryIsConfigured_(false)
                  "a DOM. The last N photons are saved if there are more scattering points than available entries.",
                  photonHistoryEntries_);
 
+    limitWorkgroupSize_=0;
+    AddParameter("LimitWorkgroupSize",
+                 "Limits the maximum OpenCL workgroup size (the number of bunches to be processed in parallel).\n"
+                 "If set to zero (the default) the largest possible workgroup size will be chosen.",
+                 limitWorkgroupSize_);
+
     // add an outbox
     AddOutBox("OutBox");
 
@@ -374,6 +380,8 @@ void I3CLSimModule::Configure()
     GetParameter("FixedNumberOfAbsorptionLengths", fixedNumberOfAbsorptionLengths_);
 
     GetParameter("PhotonHistoryEntries", photonHistoryEntries_);
+
+    GetParameter("LimitWorkgroupSize", limitWorkgroupSize_);
 
     if ((saveAllPhotons_) && (stopDetectedPhotons_)) {
         log_fatal("The \"SaveAllPhotons\" option cannot be used when \"StopDetectedPhotons\" is active.");
@@ -657,7 +665,8 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
                                               saveAllPhotons_,
                                               saveAllPhotonsPrescale_,
                                               fixedNumberOfAbsorptionLengths_,
-                                              photonHistoryEntries_);
+                                              photonHistoryEntries_,
+                                              limitWorkgroupSize_);
         if (!openCLStepsToPhotonsConverter)
             log_fatal("Could not initialize OpenCL!");
         

@@ -319,7 +319,12 @@ def I3CLSimMakePhotons(tray, name,
         if DoNotParallelize and device.cpu:
             # check if we can split this device into individual cores
             try:
-                subDevices = device.SplitDevice()
+                if device.platform == "Intel(R) OpenCL":
+                    # device fission seems to cause serious segfaults in the Intel OpenCL driver.
+                    # do not use it.
+                    subDevices = []
+                else:
+                    subDevices = device.SplitDevice()
                 
                 if len(subDevices) > 0:
                     if OverrideApproximateNumberOfWorkItems is not None:
