@@ -41,7 +41,7 @@ from os.path import expandvars
 import os
 import sys
 
-from icecube import icetray, dataclasses, dataio, phys_services
+from icecube import icetray, dataclasses, dataio, phys_services, sim_services
 from icecube import clsim
 
 import tabulator
