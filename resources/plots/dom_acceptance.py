@@ -159,7 +159,7 @@ def applyOpenCLWlenDependentFunction(xValues, functionOpenCL, getDerivative=Fals
     
     return yValues
 
-def genMCHistogramsOpenCL(distribution, range, iterations=1000, numBins=1000):
+def genMCHistogramsOpenCL(distribution, hist_range, iterations=1000, numBins=1000):
     tester = clsim.I3CLSimRandomDistributionTester(device=openCLDevice,
                                                    workgroupSize=workgroupSize,
                                                    workItemsPerIteration=workItemsPerIteration,
@@ -173,13 +173,42 @@ def genMCHistogramsOpenCL(distribution, range, iterations=1000, numBins=1000):
     values = numpy.array(values)/I3Units.nanometer # convert to numpy array and convert units
     print "converted"
     
-    range_width=range[1]-range[0]
+    range_width=hist_range[1]-hist_range[0]
     
-    num_orig, bins = scipy.histogram(values, range=range, bins=numBins)
+    num_orig, bins = scipy.histogram(values, range=hist_range, bins=numBins)
     print "hist1 complete"
     
     del values # not needed anymore
     print "deleted"
+    
+    num=[]
+    for number in num_orig:
+        num.append(float(number)/float(samples)/float(range_width/float(numBins)))
+    num=numpy.array(num)
+    
+    bins = numpy.array(bins[:-1])+(bins[1]-bins[0])/2.
+    
+    return dict(num=num, bins=bins)
+
+def genMCHistogramsHost(distribution, hist_range, iterations=10000000, numBins=1000):
+    print "generating (host)"
+
+    values = []
+    for i in range(iterations):
+        values.append(distribution.SampleFromDistribution(rng))
+    samples = len(values)
+    print "generated (host)"
+    
+    values = numpy.array(values)/I3Units.nanometer # convert to numpy array and convert units
+    print "converted (host)"
+    
+    range_width=hist_range[1]-hist_range[0]
+    
+    num_orig, bins = scipy.histogram(values, range=hist_range, bins=numBins)
+    print "hist1 complete (host)"
+    
+    del values # not needed anymore
+    print "deleted (host)"
     
     num=[]
     for number in num_orig:
@@ -199,11 +228,13 @@ phaseRefIndex = mediumProps.GetPhaseRefractiveIndex(0)
 wlen_range = (mediumProps.GetMinWavelength()/I3Units.nanometer, mediumProps.GetMaxWavelength()/I3Units.nanometer)
 
 genWavelength = clsim.makeCherenkovWavelengthGenerator(domAcceptance, False, mediumProps)
-histGenWavelength = genMCHistogramsOpenCL(genWavelength, range=wlen_range)
+histGenWavelength = genMCHistogramsOpenCL(genWavelength, hist_range=wlen_range)
+histGenWavelengthHost = genMCHistogramsHost(genWavelength, hist_range=wlen_range)
 numberOfPhotonsPerMeter = clsim.NumberOfPhotonsPerMeter(phaseRefIndex, domAcceptance, wlen_range[0]*I3Units.nanometer, wlen_range[1]*I3Units.nanometer)
 
 genWavelengthFlat = clsim.makeCherenkovWavelengthGenerator(flatAcceptance, False, mediumProps)
-histGenWavelengthFlat = genMCHistogramsOpenCL(genWavelengthFlat, range=wlen_range)
+histGenWavelengthFlat = genMCHistogramsOpenCL(genWavelengthFlat, hist_range=wlen_range)
+histGenWavelengthFlatHost = genMCHistogramsHost(genWavelengthFlat, hist_range=wlen_range)
 numberOfPhotonsPerMeterFlat = clsim.NumberOfPhotonsPerMeter(phaseRefIndex, flatAcceptance, wlen_range[0]*I3Units.nanometer, wlen_range[1]*I3Units.nanometer)
 
 #genWavelengthFlatNoDispersion = clsim.makeCherenkovWavelengthGenerator(flatAcceptance, True, mediumProps)
@@ -234,14 +265,16 @@ ax.plot(wlens, acceptance_OpenCL, linewidth=1., color='r', linestyle='solid', la
 
 
 addAnnotationToPlot(bx, loc=2, text=r"$\int_{-\infty}^{\infty} \left( \frac{\mathrm{d}N_\mathrm{phot}}{\mathrm{d}l \mathrm{d}\lambda} \times \epsilon_\mathrm{DOM} \right) \mathrm{d}\lambda = %.1f \, \mathrm{m}^{-1}$" % (numberOfPhotonsPerMeter))
-bx.plot(histGenWavelength["bins"], histGenWavelength["num"]*numberOfPhotonsPerMeter, linewidth=2, color='r', label="MC generated")
+bx.plot(histGenWavelengthHost["bins"], histGenWavelengthHost["num"]*numberOfPhotonsPerMeter, linewidth=2, color='g', label="MC generated (C++/CPU)")
+bx.plot(histGenWavelength["bins"], histGenWavelength["num"]*numberOfPhotonsPerMeter, linewidth=2, color='r', label="MC generated (OpenCL)")
 bx.plot(wlens, qe_dom2007a(wlens)*Cherenkov_dN_dXdwlen(wlens, beta)*1.*1e9, linewidth=2., color='k', linestyle='solid', label=r"acceptance $\times$ cherenkov spectrum (python)")
 
 
 addAnnotationToPlot(cx, loc=2, text=r"$\int_{-\infty}^{\infty} \frac{\mathrm{d}N_\mathrm{phot}}{\mathrm{d}l \mathrm{d}\lambda} \mathrm{d}\lambda = %.1f \, \mathrm{m}^{-1}$" % (numberOfPhotonsPerMeterFlat))
 
 #cx.plot(histGenWavelengthFlatNoDispersion["bins"], histGenWavelengthFlatNoDispersion["num"]*numberOfPhotonsPerMeterFlat, linewidth=2, color='b', label="MC generated (no dispersion)")
-cx.plot(histGenWavelengthFlat["bins"], histGenWavelengthFlat["num"]*numberOfPhotonsPerMeterFlat, linewidth=2, color='r', label="MC generated")
+cx.plot(histGenWavelengthFlatHost["bins"], histGenWavelengthFlatHost["num"]*numberOfPhotonsPerMeterFlat, linewidth=2, color='g', label="MC generated (C++/CPU)")
+cx.plot(histGenWavelengthFlat["bins"], histGenWavelengthFlat["num"]*numberOfPhotonsPerMeterFlat, linewidth=2, color='r', label="MC generated (OpenCL)")
 cx.plot(wlens, Cherenkov_dN_dXdwlen(wlens, beta)*1.*1e9, linewidth=2., color='k', linestyle='solid', label=r"cherenkov spectrum (python)")
 
 

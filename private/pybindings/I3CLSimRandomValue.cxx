@@ -51,6 +51,12 @@ namespace bp = boost::python;
 struct I3CLSimRandomValueWrapper : I3CLSimRandomValue, bp::wrapper<I3CLSimRandomValue>
 {
     // pure virtual
+    virtual double SampleFromDistribution(const I3RandomServicePtr &random) const
+    {
+        return this->get_override("SampleFromDistribution")(random);
+    }
+
+    // pure virtual
     virtual bool OpenCLFunctionWillOnlyUseASingleRandomNumber() const 
     {
         return this->get_override("OpenCLFunctionWillOnlyUseASingleRandomNumber")();
@@ -86,6 +92,7 @@ void register_I3CLSimRandomValue()
     {
         bp::scope I3CLSimRandomValue_scope = 
         bp::class_<I3CLSimRandomValueWrapper, boost::shared_ptr<I3CLSimRandomValueWrapper>, boost::noncopyable>("I3CLSimRandomValue", no_init)
+        .def("SampleFromDistribution", bp::pure_virtual(&I3CLSimRandomValue::SampleFromDistribution))
         .def("OpenCLFunctionWillOnlyUseASingleRandomNumber", bp::pure_virtual(&I3CLSimRandomValue::OpenCLFunctionWillOnlyUseASingleRandomNumber))
         .def("GetOpenCLFunction", bp::pure_virtual(&I3CLSimRandomValue::GetOpenCLFunction))
         .def("CompareTo", bp::pure_virtual(&I3CLSimRandomValue::CompareTo))

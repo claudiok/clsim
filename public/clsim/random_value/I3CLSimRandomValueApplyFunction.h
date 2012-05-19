@@ -47,6 +47,8 @@ public:
 
     virtual ~I3CLSimRandomValueApplyFunction();
 
+    virtual double SampleFromDistribution(const I3RandomServicePtr &random) const;
+
     virtual bool OpenCLFunctionWillOnlyUseASingleRandomNumber() const {return randomDistUsed_->OpenCLFunctionWillOnlyUseASingleRandomNumber();}
 
     virtual std::string GetOpenCLFunction(const std::string &functionName,

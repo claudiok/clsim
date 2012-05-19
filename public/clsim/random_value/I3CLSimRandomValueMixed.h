@@ -43,6 +43,8 @@ public:
                             I3CLSimRandomValueConstPtr secondDistribution);
     virtual ~I3CLSimRandomValueMixed();
 
+    virtual double SampleFromDistribution(const I3RandomServicePtr &random) const;
+
     virtual bool OpenCLFunctionWillOnlyUseASingleRandomNumber() const;
 
     virtual std::string GetOpenCLFunction(const std::string &functionName,

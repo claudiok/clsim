@@ -217,9 +217,7 @@ def genMCHistograms(generator, samples=10240*1000, numBins=1000):
 #
 from icecube import icetray, dataclasses, clsim, phys_services
 
-def genMCHistogramsOpenCL(distribution, iterations=1000, numBins=10000):
-    rng = phys_services.I3SPRNGRandomService(seed=3244, nstreams=2, streamnum=0)
-    
+def genMCHistogramsOpenCL(distribution, rng, iterations=1000, numBins=10000):
     # get OpenCL CPU devices
     openCLDevices = [device for device in clsim.I3CLSimOpenCLDevice.GetAllDevices() if device.cpu]
     if len(openCLDevices)==0:
@@ -273,15 +271,57 @@ def genMCHistogramsOpenCL(distribution, iterations=1000, numBins=10000):
     
     return dict(cos=dict(num=numCos, bins=binsCos), ang=dict(num=numAng, bins=binsAng))
 
+def genMCHistogramsHost(distribution, rng, iterations=10000000, numBins=1000):
+    print "generating (host)"
+
+    angles = []
+    for i in range(iterations):
+        angles.append(distribution.SampleFromDistribution(rng))
+    samples = len(angles)
+
+    print "generated (host)"
+    
+    angles = numpy.array(angles) # convert to numpy array
+    print "converted (host)"
+    
+    numAng_orig, binsAng = scipy.histogram(numpy.arccos(angles)*(180./math.pi), range=(0.,180.), bins=numBins)
+    print "hist1 complete (host)"
+
+    numCos_orig, binsCos = scipy.histogram(angles, range=(-1.,1.), bins=numBins)
+    print "hist2 complete (host)"
+    
+    del angles # not needed anymore
+    print "deleted (host)"
+    
+    numAng=[]
+    for i, number in enumerate(numAng_orig):
+        binWidth = math.cos(binsAng[i]*math.pi/180.) - math.cos(binsAng[i+1]*math.pi/180.)
+        numAng.append(float(number)/float(samples)/binWidth)
+    numAng=numpy.array(numAng)
+    
+    numCos=[]
+    for i, number in enumerate(numCos_orig):
+        numCos.append(float(number)/float(samples)/float(2./float(numBins)))
+    numCos=numpy.array(numCos)
+    
+    binsAng = numpy.array(binsAng[:-1])+(binsAng[1]-binsAng[0])/2.
+    binsCos = numpy.array(binsCos[:-1])+(binsCos[1]-binsCos[0])/2.
+    
+    return dict(cos=dict(num=numCos, bins=binsCos), ang=dict(num=numAng, bins=binsAng))
+
+
+rng = phys_services.I3SPRNGRandomService(seed=3244, nstreams=2, streamnum=0)
 
 #print clsim.GetPetzoldScatteringCosAngleDistribution().GetOpenCLFunction("func", "ARGS", "ARGSTOCALL", "CO", "OC")
 
 #hist_p00075 = genMCHistograms(lambda: generatep00075CosAngle(prng.uniform(0.,1.), prng.uniform(0.,1.), partic_ang, partic_acu))
 #hist_Oxford = genMCHistograms(lambda: generateOxfordCosAngle(prng.uniform(0.,1.), prng.uniform(0.,1.)))
 
-hist_p00075 = genMCHistogramsOpenCL(clsim.GetAntaresScatteringCosAngleDistribution())
-#hist_p00075 = genMCHistogramsOpenCL(clsim.GetPetzoldScatteringCosAngleDistribution())
-#hist_p00075 = genMCHistogramsOpenCL(clsim.I3CLSimRandomValueRayleighScatteringCosAngle())
+hist_p00075 = genMCHistogramsOpenCL(clsim.GetAntaresScatteringCosAngleDistribution(), rng)
+#hist_p00075 = genMCHistogramsOpenCL(clsim.GetPetzoldScatteringCosAngleDistribution(), rng)
+#hist_p00075 = genMCHistogramsOpenCL(clsim.I3CLSimRandomValueRayleighScatteringCosAngle(), rng)
+
+hist_p00075_host = genMCHistogramsHost(clsim.GetAntaresScatteringCosAngleDistribution(), rng)
 
 
 
@@ -300,7 +340,8 @@ HG_cosTheta = 0.924
 if True:
     fineBins = numpy.logspace(numpy.log10(0.1), numpy.log10(180.), num=1000, base=10.)
 
-    ax.semilogy(hist_p00075["ang"]["bins"], hist_p00075["ang"]["num"], linewidth=2, color='r', label="MC generated")
+    ax.semilogy(hist_p00075["ang"]["bins"], hist_p00075["ang"]["num"], linewidth=2, color='r', label="MC generated (OpenCL)")
+    ax.semilogy(hist_p00075_host["ang"]["bins"], hist_p00075_host["ang"]["num"], linewidth=2, color='y', label="MC generated (C++/CPU)")
 
     ax.semilogy(fineBins, particMobley(numpy.cos(numpy.array(fineBins)*math.pi/180.))*2.*math.pi, linewidth=2, color='k', label=r"\textbf{Petzold} (``avg. part.'') (c.f. Mobley et al., 1993) (from km3)")
     ax.semilogy(fineBins, rayleigh(numpy.cos(numpy.array(fineBins)*math.pi/180.)), linewidth=2, color='g', label=r"\textbf{``Rayleigh''} (c.f. Morel et al., 1974) $(\propto 1+0.835 \cos^2 \theta)$")
@@ -321,7 +362,8 @@ if True:
 if True:
     fineBins = numpy.linspace(-1., 1., num=1000)
 
-    bx.semilogy(hist_p00075["cos"]["bins"], hist_p00075["cos"]["num"], linewidth=2, color='r', label="MC generated")
+    bx.semilogy(hist_p00075["cos"]["bins"], hist_p00075["cos"]["num"], linewidth=2, color='r', label="MC generated (OpenCL)")
+    bx.semilogy(hist_p00075_host["cos"]["bins"], hist_p00075_host["cos"]["num"], linewidth=2, color='y', label="MC generated (C++/CPU)")
 
     bx.semilogy(fineBins, particMobley(numpy.array(fineBins))*2.*math.pi, linewidth=2, color='k', label=r"\textbf{Petzold} (``avg. part.'') (c.f. Mobley et al., 1993) (from km3)")
     

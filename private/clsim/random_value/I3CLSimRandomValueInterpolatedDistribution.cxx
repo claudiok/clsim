@@ -50,6 +50,8 @@ firstX_(NAN)
     
     if (x_.size() <= 1)
         log_fatal("At least two entries have to be specified in the vectors passed to I3CLSimRandomValueInterpolatedDistribution().");
+
+    InitTables();
 }
 
 I3CLSimRandomValueInterpolatedDistribution::
@@ -66,6 +68,8 @@ firstX_(xFirst)
     
     if (y_.size() <= 1)
         log_fatal("At least two entries have to be specified in the vector passed to I3CLSimRandomValueInterpolatedDistribution().");
+    
+    InitTables();
 }
 
 
@@ -74,6 +78,104 @@ I3CLSimRandomValueInterpolatedDistribution::~I3CLSimRandomValueInterpolatedDistr
 }
 
 I3CLSimRandomValueInterpolatedDistribution::I3CLSimRandomValueInterpolatedDistribution() {;}
+
+double I3CLSimRandomValueInterpolatedDistribution::SampleFromDistribution(const I3RandomServicePtr &random) const
+{
+    if (!random) log_fatal("random service is NULL!");
+
+    typedef std::vector<double>::size_type sizeType;
+
+    const sizeType numEntries=y_.size();
+
+    const double randomNumber = random->Uniform();
+
+    unsigned int k=0;
+    //double this_acu = data_acu_[0];
+    double this_acu = 0.; //this is 0 by definition!
+    for (;;)
+    {
+        double next_acu = data_acu_[k+1];
+        if (next_acu >= randomNumber) break;
+        this_acu = next_acu;
+        ++k;
+    }
+    
+    // look between bins k and k+1
+    
+    const double b = data_beta_[k];
+    
+    double x0, slope;
+    if (isnan(constantXSpacing_)) {
+        x0 = x_[k];
+        slope = (data_beta_[k+1]-b)/(x_[k+1]-x0);
+    } else {
+        x0 = static_cast<double>(k)*constantXSpacing_ + firstX_;
+        slope = (data_beta_[k+1]-b)/constantXSpacing_;
+    }
+    
+    const double dy = randomNumber-this_acu;
+    
+    if ((b==0.) && (slope==0.))
+    {
+        return x0;
+    }
+    else if (b==0.)
+    {
+        return x0 + std::sqrt(2.*dy/slope);
+    }
+    else if (slope==0.)
+    {
+        return x0 + dy/b;
+    }
+    else
+    {
+        return x0 + (std::sqrt(dy * (2.*slope)/(b*b) + 1.)-1.)*b/slope;
+    }
+    
+}
+
+void I3CLSimRandomValueInterpolatedDistribution::InitTables()
+{
+    typedef std::vector<double>::size_type sizeType;
+    
+    // sanity checks
+    if (isnan(constantXSpacing_)) {
+        if (x_.size()!=y_.size()) log_fatal("Internal error: angles_.size()!=values_.size()");
+    }
+    
+    sizeType numEntries=y_.size();
+    if (numEntries<=1) log_fatal("Internal error: insufficient number of entries.");
+
+    // intermediate data containers
+    data_acu_.resize(numEntries);
+    data_beta_.resize(numEntries);
+    
+    // simple trapezoidal integration (which is not an approximation in this case)
+    data_acu_[0]=0.;
+    if (isnan(constantXSpacing_))
+    {
+        for (std::size_t j=1;j<numEntries;++j)
+        {
+            data_acu_[j] = data_acu_[j-1] + (x_[j]-x_[j-1]) * (y_[j]+y_[j-1]) / 2.;
+        }
+    } 
+    else
+    {
+        for (std::size_t j=1;j<numEntries;++j)
+        {
+            data_acu_[j] = data_acu_[j-1] + (constantXSpacing_) * (y_[j]+y_[j-1]) / 2.;
+        }
+    }
+    
+    // normalize
+    for (std::size_t j=0;j<numEntries;++j)
+    {
+        data_beta_[j] = y_[j]/data_acu_[numEntries-1];
+        data_acu_[j] = data_acu_[j]/data_acu_[numEntries-1];
+    }
+    
+
+}
 
 std::string I3CLSimRandomValueInterpolatedDistribution::WriteTableCode(const std::string &prefix) const
 {
@@ -86,36 +188,6 @@ std::string I3CLSimRandomValueInterpolatedDistribution::WriteTableCode(const std
     
     sizeType numEntries=y_.size();
     if (numEntries<=1) log_fatal("Internal error: insufficient number of entries.");
-    
-    
-    // intermediate data containers
-    std::vector<double> data_acu(numEntries);
-    std::vector<double> data_beta(numEntries);
-
-    // simple trapezoidal integration (which is not an approximation in this case)
-    data_acu[0]=0.;
-    if (isnan(constantXSpacing_))
-    {
-        for (std::size_t j=1;j<numEntries;++j)
-        {
-            data_acu[j] = data_acu[j-1] + (x_[j]-x_[j-1]) * (y_[j]+y_[j-1]) / 2.;
-        }
-    } 
-    else
-    {
-        for (std::size_t j=1;j<numEntries;++j)
-        {
-            data_acu[j] = data_acu[j-1] + (constantXSpacing_) * (y_[j]+y_[j-1]) / 2.;
-        }
-    }
-        
-    // normalize
-    for (std::size_t j=0;j<numEntries;++j)
-    {
-        data_beta[j] = y_[j]/data_acu[numEntries-1];
-        data_acu[j] = data_acu[j]/data_acu[numEntries-1];
-    }
-    
     
     
     // prepare the output buffer
@@ -144,14 +216,14 @@ std::string I3CLSimRandomValueInterpolatedDistribution::WriteTableCode(const std
     
     output << "__constant float " << prefix << "distYValues[" << prefix << "NUM_DIST_ENTRIES] = {" << std::endl;
     for (sizeType j=0;j<numEntries;++j){     
-        output << "  " << data_beta[j] << "f, " << std::endl;
+        output << "  " << data_beta_[j] << "f, " << std::endl;
     }
     output << "};" << std::endl;
     output << std::endl;
 
     output << "__constant float " << prefix << "distYCumulativeValues[" << prefix << "NUM_DIST_ENTRIES] = {" << std::endl;
     for (sizeType j=0;j<numEntries;++j){     
-        output << "  " << data_acu[j] << "f, " << std::endl;
+        output << "  " << data_acu_[j] << "f, " << std::endl;
     }
     output << "};" << std::endl;
     output << std::endl;

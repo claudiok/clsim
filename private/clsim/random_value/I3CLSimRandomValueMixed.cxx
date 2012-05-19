@@ -57,6 +57,18 @@ I3CLSimRandomValueMixed::~I3CLSimRandomValueMixed()
 
 I3CLSimRandomValueMixed::I3CLSimRandomValueMixed() {;}
 
+double I3CLSimRandomValueMixed::SampleFromDistribution(const I3RandomServicePtr &random) const
+{
+    if (!random) log_fatal("random service is NULL!");
+
+    const double rr = random->Uniform();
+    if (rr < fractionOfFirstDistribution_) {
+        return firstDistribution_->SampleFromDistribution(random);
+    } else {
+        return secondDistribution_->SampleFromDistribution(random);
+    }
+}
+
 bool I3CLSimRandomValueMixed::OpenCLFunctionWillOnlyUseASingleRandomNumber() const
 {
     return ((firstDistribution_->OpenCLFunctionWillOnlyUseASingleRandomNumber()) && 

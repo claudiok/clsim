@@ -58,6 +58,24 @@ I3CLSimRandomValueApplyFunction::~I3CLSimRandomValueApplyFunction()
 
 I3CLSimRandomValueApplyFunction::I3CLSimRandomValueApplyFunction() {;}
 
+double I3CLSimRandomValueApplyFunction::SampleFromDistribution(const I3RandomServicePtr &random) const
+{
+    if (!random) log_fatal("random service is NULL!");
+    
+    const double sampledValue = randomDistUsed_->SampleFromDistribution(random);
+    
+    if      (applyFunctionName_=="cos")  return std::cos (sampledValue); 
+    else if (applyFunctionName_=="sin")  return std::sin (sampledValue); 
+    else if (applyFunctionName_=="tan")  return std::tan (sampledValue); 
+    else if (applyFunctionName_=="acos") return std::acos(sampledValue); 
+    else if (applyFunctionName_=="asin") return std::asin(sampledValue); 
+    else if (applyFunctionName_=="atan") return std::atan(sampledValue); 
+    else if (applyFunctionName_=="exp")  return std::exp (sampledValue); 
+    else {
+        log_fatal("The function \"%s\" is currently not implemented in host code.", applyFunctionName_.c_str());
+        return NAN;
+    }
+}
 
 
 std::string I3CLSimRandomValueApplyFunction::GetOpenCLFunction

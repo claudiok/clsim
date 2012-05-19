@@ -47,6 +47,21 @@ I3CLSimRandomValueHenyeyGreenstein::~I3CLSimRandomValueHenyeyGreenstein()
 
 I3CLSimRandomValueHenyeyGreenstein::I3CLSimRandomValueHenyeyGreenstein() {;}
 
+double I3CLSimRandomValueHenyeyGreenstein::SampleFromDistribution(const I3RandomServicePtr &random) const
+{
+    if (!random) log_fatal("random service is NULL!");
+
+    const double g = meanCosine_;
+    const double g2 = meanCosine_*meanCosine_;
+    
+    // a random number [-1;+1]
+    const double s = 2.*(random->Uniform())-1.;
+    
+    const double ii = ((1. - g2)/(1. + g*s));
+    
+    return std::min(std::max((1. + g2 - ii*ii) / (2.*g), -1.), 1.);
+}
+
 std::string I3CLSimRandomValueHenyeyGreenstein::GetOpenCLFunction
 (const std::string &functionName,
  const std::string &functionArgs,

@@ -40,6 +40,25 @@ I3CLSimRandomValueRayleighScatteringCosAngle::~I3CLSimRandomValueRayleighScatter
 
 }
 
+double I3CLSimRandomValueRayleighScatteringCosAngle::SampleFromDistribution(const I3RandomServicePtr &random) const
+{
+    if (!random) log_fatal("random service is NULL!");
+
+    const double b = 0.835;
+    const double p = 1./0.835;
+
+    const double q = (b+3.)*((random->Uniform())-0.5)/b;
+    const double d = q*q + p*p*p;
+
+    const double u1 = -q+std::sqrt(d);
+    const double u = std::pow((std::abs(u1)),(1./3.)) * ((u1<0.)?-1.:1.);
+
+    const double v1 = -q-std::sqrt(d);
+    const double v = std::pow((std::abs(v1)),(1./3.)) * ((v1<0.)?-1.:1.);
+
+    return std::min(std::max(u+v, -1.), 1.);
+}
+
 std::string I3CLSimRandomValueRayleighScatteringCosAngle::GetOpenCLFunction
 (const std::string &functionName,
  const std::string &functionArgs,

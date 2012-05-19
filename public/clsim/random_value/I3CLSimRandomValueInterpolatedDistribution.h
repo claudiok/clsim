@@ -52,6 +52,8 @@ public:
 
     virtual ~I3CLSimRandomValueInterpolatedDistribution();
 
+    virtual double SampleFromDistribution(const I3RandomServicePtr &random) const;
+
     virtual bool OpenCLFunctionWillOnlyUseASingleRandomNumber() const {return true;}
 
     virtual std::string GetOpenCLFunction(const std::string &functionName,
@@ -64,9 +66,13 @@ public:
     virtual bool CompareTo(const I3CLSimRandomValue &other) const;
     
 private:
+    void InitTables();
     std::string WriteTableCode(const std::string &prefix) const;
     
     I3CLSimRandomValueInterpolatedDistribution();
+
+    std::vector<double> data_acu_;
+    std::vector<double> data_beta_;
 
     std::vector<double> x_;
     std::vector<double> y_;

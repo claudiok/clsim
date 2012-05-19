@@ -59,6 +59,16 @@ I3CLSimRandomValueWlenCherenkovNoDispersion::~I3CLSimRandomValueWlenCherenkovNoD
 I3CLSimRandomValueWlenCherenkovNoDispersion::I3CLSimRandomValueWlenCherenkovNoDispersion() {;}
 
 
+double I3CLSimRandomValueWlenCherenkovNoDispersion::SampleFromDistribution(const I3RandomServicePtr &random) const
+{
+    if (!random) log_fatal("random service is NULL!");
+
+    const double minVal = 1./toWlen_;
+    const double range = (1./fromWlen_) - minVal;
+
+    const double r = random->Uniform();
+    return 1./(minVal + r * range);
+}
 
 std::string I3CLSimRandomValueWlenCherenkovNoDispersion::GetOpenCLFunction
 (const std::string &functionName,

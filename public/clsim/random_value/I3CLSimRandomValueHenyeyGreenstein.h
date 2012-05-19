@@ -47,6 +47,8 @@ public:
     I3CLSimRandomValueHenyeyGreenstein(double meanCosine);
     virtual ~I3CLSimRandomValueHenyeyGreenstein();
 
+    virtual double SampleFromDistribution(const I3RandomServicePtr &random) const;
+
     virtual bool OpenCLFunctionWillOnlyUseASingleRandomNumber() const {return true;}
 
     virtual std::string GetOpenCLFunction(const std::string &functionName,

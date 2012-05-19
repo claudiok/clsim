@@ -47,6 +47,17 @@ I3CLSimRandomValueSimplifiedLiu::~I3CLSimRandomValueSimplifiedLiu()
 
 I3CLSimRandomValueSimplifiedLiu::I3CLSimRandomValueSimplifiedLiu() {;}
 
+
+double I3CLSimRandomValueSimplifiedLiu::SampleFromDistribution(const I3RandomServicePtr &random) const
+{
+    if (!random) log_fatal("random service is NULL!");
+
+    const double beta = (1.-meanCosine_)/(1.+meanCosine_);
+
+    return std::min(std::max(2.*std::pow((random->Uniform()),beta)-1., -1.), 1.);
+}
+
+
 std::string I3CLSimRandomValueSimplifiedLiu::GetOpenCLFunction
 (const std::string &functionName,
  const std::string &functionArgs,

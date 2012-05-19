@@ -30,6 +30,8 @@
 #include "icetray/serialization.h"
 #include "icetray/I3TrayHeaders.h"
 
+#include "phys-services/I3RandomService.h"
+
 #include <string>
 
 /**
@@ -43,6 +45,13 @@ public:
     
     I3CLSimRandomValue();
     virtual ~I3CLSimRandomValue();
+
+    /**
+     * Return a random number sampled from the distribution.
+     * This runs as host code and is mainly for cross-checking
+     * the OpenCL implementation.
+     */
+    virtual double SampleFromDistribution(const I3RandomServicePtr &random) const = 0;
 
     /**
      * If the OpenCL function will only use a single random number,
