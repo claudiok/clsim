@@ -173,14 +173,14 @@ class Tabulator(object):
 		
 		# The various weights are constant for different bits of the photon track.
 		# Constant for a given photon:
-		# - Wavelength bias: 1 / photon weight
+		# - Photon weight: 1 / wavelength bias
 		# - DOM effective area (as a function of wavelength)
 		# Constant for paths between scatters:
 		# - relative angular efficiency (as a function of impact angle)
 		# Varies along the track:
 		# - survival probability (exp(-path/absorption length))
 		# The units of the combined weight are m^2 / photon
-		wlen_weight = self._effectiveArea.GetValue(photon.wavelength)/photon.weight
+		wlen_weight = self._effectiveArea.GetValue(photon.wavelength)*photon.weight
 		
 		t = photon.startTime
 		

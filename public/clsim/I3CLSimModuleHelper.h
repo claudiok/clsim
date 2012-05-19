@@ -59,6 +59,7 @@ namespace I3CLSimModuleHelper {
                      bool stopDetectedPhotons,
                      bool saveAllPhotons,
                      double saveAllPhotonsPrescale,
+                     double fixedNumberOfAbsorptionLengths,
                      uint32_t photonHistoryEntries);
     
     I3CLSimLightSourceToStepConverterGeant4Ptr

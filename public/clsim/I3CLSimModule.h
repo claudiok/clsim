@@ -240,6 +240,14 @@ private:
     ///   Only this fraction of photons is actually generated.
     double saveAllPhotonsPrescale_;
 
+    /// Parameter: Sets the number of absorption lengths each photon
+    ///   should be propagated. If set to NaN (the default),
+    ///   the number is sampled from an exponential distribution.
+    ///   (This is what you want for "normal" propagation.)
+    ///
+    ///   Use this override for table-making.
+    double fixedNumberOfAbsorptionLengths_;
+
     /// Parmeter: Sets the number of scattering step positions that are saved for a photon hitting
     ///   a DOM. The last N photons are saved if there are more scattering points than available entries.
     uint32_t photonHistoryEntries_;

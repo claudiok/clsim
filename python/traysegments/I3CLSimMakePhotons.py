@@ -58,6 +58,7 @@ def I3CLSimMakePhotons(tray, name,
                        DOMOversizeFactor=5.,
                        UnshadowedFraction=0.9,
                        UseHoleIceParameterization=True,
+                       OverrideApproximateNumberOfWorkItems=None,
                        ExtraArgumentsToI3CLSimModule=dict(),
                        If=lambda f: True
                        ):
@@ -159,6 +160,9 @@ def I3CLSimMakePhotons(tray, name,
         Fraction of photocathode available to receive light (e.g. unshadowed by the cable)
     :param UseHoleIceParameterization:
         Use an angular acceptance correction for hole ice scattering.
+    :param OverrideApproximateNumberOfWorkItems:
+        Allows to override the auto-detection for the maximum number of parallel work items.
+        You should only change this if you know what you are doing.
     :param If:
         Python function to use as conditional execution test for segment modules.        
     """
@@ -308,16 +312,20 @@ def I3CLSimMakePhotons(tray, name,
         else:
             device.useNativeMath=False
             device.approximateNumberOfWorkItems=10240
+            
+        if OverrideApproximateNumberOfWorkItems is not None:
+            device.approximateNumberOfWorkItems=OverrideApproximateNumberOfWorkItems
 
         if DoNotParallelize and device.cpu:
-            device.approximateNumberOfWorkItems=10240
-            
             # check if we can split this device into individual cores
             try:
                 subDevices = device.SplitDevice()
                 
                 if len(subDevices) > 0:
-                    device.approximateNumberOfWorkItems=10240
+                    if OverrideApproximateNumberOfWorkItems is not None:
+                        subDevices[0].approximateNumberOfWorkItems=OverrideApproximateNumberOfWorkItems
+                    else:
+                        subDevices[0].approximateNumberOfWorkItems=10240
                     openCLDevices.append(subDevices[0])
                 else:
                     print "failed to split CPU device into individual cores", device.platform, device.device, "[using full device with minimal number of work-items to (hopefully) disable parallelization]"

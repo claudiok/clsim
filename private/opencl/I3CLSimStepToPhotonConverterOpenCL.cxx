@@ -81,6 +81,7 @@ doublePrecision_(false),
 stopDetectedPhotons_(false),
 saveAllPhotons_(false),
 saveAllPhotonsPrescale_(0.001), // only save .1% of all photons when in "AllPhotons" mode
+fixedNumberOfAbsorptionLengths_(NAN),
 photonHistoryEntries_(0),
 maxWorkgroupSize_(0),
 workgroupSize_(0),
@@ -430,6 +431,19 @@ std::string I3CLSimStepToPhotonConverterOpenCL::GetPreambleSource()
         preamble = preamble + "#define NUM_PHOTONS_IN_HISTORY " + boost::lexical_cast<std::string>(photonHistoryEntries_) + "\n";
     }
     
+    // Instead of sampling the number of absorption lengths from an
+    // exponential distribution with mean 1, use a fixed defined number
+    // of absorption lengths for table-making. Photonics uses a weight
+    // of 1e-20 corresponding to about 46 absorption lengths.
+    if (!isnan(fixedNumberOfAbsorptionLengths_)) {
+        if (doublePrecision_) {
+            preamble = preamble + "#define PROPAGATE_FOR_FIXED_NUMBER_OF_ABSORPTION_LENGTHS " + boost::lexical_cast<std::string>(fixedNumberOfAbsorptionLengths_) + ".\n";
+        } else {
+            preamble = preamble + "#define PROPAGATE_FOR_FIXED_NUMBER_OF_ABSORPTION_LENGTHS " + boost::lexical_cast<std::string>(fixedNumberOfAbsorptionLengths_) + ".f\n";
+        }
+    }
+
+    
     // are we using double precision?
     if (doublePrecision_) {
         preamble = preamble + "#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n";
@@ -500,10 +514,14 @@ std::string I3CLSimStepToPhotonConverterOpenCL::GetMediumPropertiesSource()
 
 std::string I3CLSimStepToPhotonConverterOpenCL::GetGeometrySource()
 {
-    return I3CLSimHelper::GenerateGeometrySource(*geometry_,
-                                                  geoLayerToOMNumIndexPerStringSetInfo_,
-                                                  stringIndexToStringIDBuffer_,
-                                                  domIndexToDomIDBuffer_perStringIndex_);
+    if (!saveAllPhotons_) {
+        return I3CLSimHelper::GenerateGeometrySource(*geometry_,
+                                                      geoLayerToOMNumIndexPerStringSetInfo_,
+                                                      stringIndexToStringIDBuffer_,
+                                                      domIndexToDomIDBuffer_perStringIndex_);
+    } else {
+        return std::string("");
+    }
 }
 
 static std::string 
@@ -1447,6 +1465,24 @@ void I3CLSimStepToPhotonConverterOpenCL::SetPhotonHistoryEntries(uint32_t value)
 uint32_t I3CLSimStepToPhotonConverterOpenCL::GetPhotonHistoryEntries() const
 {
     return photonHistoryEntries_;
+}
+
+
+void I3CLSimStepToPhotonConverterOpenCL::SetFixedNumberOfAbsorptionLengths(double value)
+{
+    if (initialized_)
+        throw I3CLSimStepToPhotonConverter_exception("I3CLSimStepToPhotonConverterOpenCL already initialized!");
+    
+    compiled_=false;
+    kernel_.clear();
+    queue_.clear();
+    
+    fixedNumberOfAbsorptionLengths_=value;
+}
+
+double I3CLSimStepToPhotonConverterOpenCL::GetFixedNumberOfAbsorptionLengths() const
+{
+    return fixedNumberOfAbsorptionLengths_;
 }
 
 

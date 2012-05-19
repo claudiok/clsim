@@ -295,6 +295,7 @@ namespace I3CLSimModuleHelper {
                                                            bool stopDetectedPhotons,
                                                            bool saveAllPhotons,
                                                            double saveAllPhotonsPrescale,
+                                                           double fixedNumberOfAbsorptionLengths,
                                                            uint32_t photonHistoryEntries)
     {
         I3CLSimStepToPhotonConverterOpenCLPtr conv(new I3CLSimStepToPhotonConverterOpenCL(rng, device.GetUseNativeMath()));
@@ -312,7 +313,9 @@ namespace I3CLSimModuleHelper {
         conv->SetStopDetectedPhotons(stopDetectedPhotons);
         conv->SetSaveAllPhotons(saveAllPhotons);
         conv->SetSaveAllPhotonsPrescale(saveAllPhotonsPrescale);
-        
+
+        conv->SetFixedNumberOfAbsorptionLengths(fixedNumberOfAbsorptionLengths);
+
         conv->SetPhotonHistoryEntries(photonHistoryEntries);
 
         conv->Compile();

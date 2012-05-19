@@ -232,6 +232,13 @@ geometryIsConfigured_(false)
                  "Only this fraction of photons is actually generated.",
                  saveAllPhotonsPrescale_);
 
+    fixedNumberOfAbsorptionLengths_=NAN;
+    AddParameter("FixedNumberOfAbsorptionLengths",
+                 "Sets the number of absorption lengths each photon should be propagated. If set to NaN (the default),\n"
+                 "the number is sampled from an exponential distribution. (This is what you want for \"normal\" propagation.)\n"
+                 "Use this override for table-making.",
+                 fixedNumberOfAbsorptionLengths_);
+
     photonHistoryEntries_=0;
     AddParameter("PhotonHistoryEntries",
                  "Sets the number of scattering step positions that are saved for a photon hitting\n"
@@ -363,6 +370,8 @@ void I3CLSimModule::Configure()
     GetParameter("StopDetectedPhotons", stopDetectedPhotons_);
     GetParameter("SaveAllPhotons", saveAllPhotons_);
     GetParameter("SaveAllPhotonsPrescale", saveAllPhotonsPrescale_);
+
+    GetParameter("FixedNumberOfAbsorptionLengths", fixedNumberOfAbsorptionLengths_);
 
     GetParameter("PhotonHistoryEntries", photonHistoryEntries_);
 
@@ -647,6 +656,7 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
                                               stopDetectedPhotons_,
                                               saveAllPhotons_,
                                               saveAllPhotonsPrescale_,
+                                              fixedNumberOfAbsorptionLengths_,
                                               photonHistoryEntries_);
         if (!openCLStepsToPhotonsConverter)
             log_fatal("Could not initialize OpenCL!");
@@ -803,6 +813,8 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
             outputPhoton.SetStartDir(outStartDir);
         }
 
+        outputPhoton.SetDistanceInAbsorptionLengths(photon.GetDistInAbsLens());
+        
         if (photonHistories) {
             const I3CLSimPhotonHistory &photonHistory = (*photonHistories)[i];
             

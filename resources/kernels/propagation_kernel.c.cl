@@ -445,7 +445,13 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             
             // the photon needs a lifetime. determine distance to next scatter and absorption
             // (this is in units of absorption/scattering lengths)
+#ifdef PROPAGATE_FOR_FIXED_NUMBER_OF_ABSORPTION_LENGTHS
+            // for table-making, use a fixed number of absorbption lengths
+            // (photonics uses a probability of 1e-20, so about 46 absorption lengths)
+            abs_lens_initial = PROPAGATE_FOR_FIXED_NUMBER_OF_ABSORPTION_LENGTHS;
+#else
             abs_lens_initial = -my_log(RNG_CALL_UNIFORM_OC);
+#endif
             abs_lens_left = abs_lens_initial;
             
             //if ((currentPhotonLayer < 0) || (currentPhotonLayer >= MEDIUM_LAYERS)) abs_lens_left=0.f; // outside, do not track

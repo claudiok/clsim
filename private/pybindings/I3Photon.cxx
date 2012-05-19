@@ -107,8 +107,6 @@ namespace I3Photon_python_helper
     }
 }
 
-using namespace I3Photon_python_helper;
-
 void register_I3Photon()
 {
     {
@@ -189,8 +187,8 @@ void register_I3Photon()
 
         .add_property("numPositionListEntries", &I3Photon::GetNumPositionListEntries)
         .def("GetNumPositionListEntries", &I3Photon::GetNumPositionListEntries)
-        .def("GetPositionList", &GetPositionList)
-        .add_property("positionList", &GetPositionList)
+        .def("GetPositionList", &I3Photon_python_helper::GetPositionList)
+        .add_property("positionList", &I3Photon_python_helper::GetPositionList)
         .def("GetPositionListEntry", &I3Photon::GetPositionListEntry)
         .def("GetDistanceInAbsorptionLengthsAtPositionListEntry", &I3Photon::GetDistanceInAbsorptionLengthsAtPositionListEntry)
         .def("AppendToIntermediatePositionList", &I3Photon::AppendToIntermediatePositionList)

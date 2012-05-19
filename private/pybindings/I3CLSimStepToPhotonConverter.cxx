@@ -173,6 +173,9 @@ void register_I3CLSimStepToPhotonConverter()
         .def("SetPhotonHistoryEntries", &I3CLSimStepToPhotonConverterOpenCLWrapper::SetPhotonHistoryEntries)
         .def("GetPhotonHistoryEntries", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetPhotonHistoryEntries)
 
+        .def("SetFixedNumberOfAbsorptionLengths", &I3CLSimStepToPhotonConverterOpenCLWrapper::SetFixedNumberOfAbsorptionLengths)
+        .def("GetFixedNumberOfAbsorptionLengths", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetFixedNumberOfAbsorptionLengths)
+
         .add_property("workgroupSize", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetWorkgroupSize, &I3CLSimStepToPhotonConverterOpenCLWrapper::SetWorkgroupSize)
         .add_property("maxNumWorkitems", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetMaxNumWorkitems, &I3CLSimStepToPhotonConverterOpenCLWrapper::SetMaxNumWorkitems)
         .add_property("enableDoubleBuffering", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetEnableDoubleBuffering, &I3CLSimStepToPhotonConverterOpenCLWrapper::SetEnableDoubleBuffering)
@@ -181,6 +184,7 @@ void register_I3CLSimStepToPhotonConverter()
         .add_property("saveAllPhotons", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetSaveAllPhotons, &I3CLSimStepToPhotonConverterOpenCLWrapper::SetSaveAllPhotons)
         .add_property("saveAllPhotonsPrescale", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetSaveAllPhotonsPrescale, &I3CLSimStepToPhotonConverterOpenCLWrapper::SetSaveAllPhotonsPrescale)
         .add_property("photonHistoryEntries", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetPhotonHistoryEntries, &I3CLSimStepToPhotonConverterOpenCLWrapper::SetPhotonHistoryEntries)
+        .add_property("fixedNumberOfAbsorptionLengths", &I3CLSimStepToPhotonConverterOpenCLWrapper::GetFixedNumberOfAbsorptionLengths, &I3CLSimStepToPhotonConverterOpenCLWrapper::SetFixedNumberOfAbsorptionLengths)
         ;
     }
     

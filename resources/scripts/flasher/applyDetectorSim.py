@@ -175,6 +175,7 @@ else:
 tray.AddModule("I3TimeShifter","timeshifter",
     I3DOMLaunchSeriesMapNames = ["InIceRawData"],
     I3MCPMTResponseMapNames = MCPMTResponseMapNames,
+    FlasherInfoName = "I3FlasherInfo", # the flasher info object needs to be time-shifted
     I3MCTreeNames = [],
     I3MCHitSeriesMapNames = MCHitSeriesMapNames,
     ShiftUntriggeredEvents = False)

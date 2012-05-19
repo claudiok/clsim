@@ -220,6 +220,24 @@ public:
     uint32_t GetPhotonHistoryEntries() const;
 
     /**
+     * Sets the number of absorption lengths each photon
+     * should be propagated. If set to NaN (the default),
+     * the number is sampled from an exponential distribution.
+     * Use this override for table-making.
+     *
+     * Will throw if already initialized.
+     */
+    void SetFixedNumberOfAbsorptionLengths(double value);
+    
+    /**
+     * Returns number of absorption lengths each photon
+     * should be propagated. If set to NaN (the default),
+     * the number is sampled from an exponential distribution.
+     * Use this override for table-making.
+     */
+    double GetFixedNumberOfAbsorptionLengths() const;
+
+    /**
      * Sets the wavelength generators. 
      * The first generator (index 0) is assumed to return a Cherenkov
      * spectrum that may have a bias applied to it. This bias factor
@@ -408,6 +426,7 @@ private:
     bool stopDetectedPhotons_;
     bool saveAllPhotons_;
     double saveAllPhotonsPrescale_;
+    double fixedNumberOfAbsorptionLengths_;
     
     uint32_t photonHistoryEntries_;
     
