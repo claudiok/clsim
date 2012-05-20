@@ -36,39 +36,43 @@
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_const.hpp>
 
+#include "python_gil_holder.h"
+
 using namespace boost::python;
 namespace bp = boost::python;
 
 struct I3CLSimLightSourceToStepConverterWrapper : I3CLSimLightSourceToStepConverter, bp::wrapper<I3CLSimLightSourceToStepConverter>
 {
     // pure virtual
-    virtual void SetBunchSizeGranularity(uint64_t num) {this->get_override("SetBunchSizeGranularity")(num);}
-    virtual void SetMaxBunchSize(uint64_t num) {this->get_override("SetMaxBunchSize")(num);}
-    virtual void SetRandomService(I3RandomServicePtr random) {this->get_override("SetRandomService")(random);}
-    virtual void SetWlenBias(I3CLSimFunctionConstPtr wlenBias) {this->get_override("SetWlenBias")(wlenBias);}
-    virtual void SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties) {this->get_override("SetMediumProperties")(mediumProperties);}
-    virtual void Initialize() {this->get_override("Initialize")();}
-    virtual bool IsInitialized() const {return this->get_override("IsInitialized")();}
-    virtual void EnqueueLightSource(const I3CLSimLightSource &lightSource, uint32_t identifier) {this->get_override("EnqueueLightSource")(lightSource, identifier);}
-    virtual void EnqueueBarrier() {this->get_override("EnqueueLightSource")();}
-    virtual bool BarrierActive() const {return this->get_override("BarrierActive")();}
-    virtual bool MoreStepsAvailable() const {return this->get_override("MoreStepsAvailable")();}
+    virtual void SetBunchSizeGranularity(uint64_t num) {utils::python_gil_holder gil; this->get_override("SetBunchSizeGranularity")(num);}
+    virtual void SetMaxBunchSize(uint64_t num) {utils::python_gil_holder gil; this->get_override("SetMaxBunchSize")(num);}
+    virtual void SetRandomService(I3RandomServicePtr random) {utils::python_gil_holder gil; this->get_override("SetRandomService")(random);}
+    virtual void SetWlenBias(I3CLSimFunctionConstPtr wlenBias) {utils::python_gil_holder gil; this->get_override("SetWlenBias")(wlenBias);}
+    virtual void SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties) {utils::python_gil_holder gil; this->get_override("SetMediumProperties")(mediumProperties);}
+    virtual void Initialize() {utils::python_gil_holder gil; this->get_override("Initialize")();}
+    virtual bool IsInitialized() const {utils::python_gil_holder gil; return this->get_override("IsInitialized")();}
+    virtual void EnqueueLightSource(const I3CLSimLightSource &lightSource, uint32_t identifier) {utils::python_gil_holder gil; this->get_override("EnqueueLightSource")(lightSource, identifier);}
+    virtual void EnqueueBarrier() {utils::python_gil_holder gil; this->get_override("EnqueueLightSource")();}
+    virtual bool BarrierActive() const {utils::python_gil_holder gil; return this->get_override("BarrierActive")();}
+    virtual bool MoreStepsAvailable() const {utils::python_gil_holder gil; return this->get_override("MoreStepsAvailable")();}
     
     virtual I3CLSimStepSeriesConstPtr GetConversionResultWithBarrierInfo(bool &barrierWasReset, double timeout)
-    {return this->get_override("GetConversionResultWithBarrierInfo")(barrierWasReset, timeout);}
+    {utils::python_gil_holder gil; return this->get_override("GetConversionResultWithBarrierInfo")(barrierWasReset, timeout);}
 
     virtual I3CLSimStepSeriesConstPtr GetConversionResult(double timeout)
     {
+        utils::python_gil_holder gil;
         if (override f = this->get_override("GetConversionResult")) {
             return f(timeout);
         } else {
             return I3CLSimLightSourceToStepConverter::GetConversionResult(timeout);
         }
     }
-    I3CLSimStepSeriesConstPtr default_GetConversionResult(double timeout) {return this->get_override("GetConversionResult")(timeout);}
+    I3CLSimStepSeriesConstPtr default_GetConversionResult(double timeout) {utils::python_gil_holder gil; return this->get_override("GetConversionResult")(timeout);}
 
     virtual void SetLightSourceParameterizationSeries(const I3CLSimLightSourceParameterizationSeries &parameterizationSeries_)
     {
+        utils::python_gil_holder gil;
         if (override f = this->get_override("SetLightSourceParameterizationSeries")) {
             f(parameterizationSeries_);
         } else {
@@ -81,6 +85,7 @@ struct I3CLSimLightSourceToStepConverterWrapper : I3CLSimLightSourceToStepConver
 
     virtual const I3CLSimLightSourceParameterizationSeries &GetLightSourceParameterizationSeries() const
     {
+        utils::python_gil_holder gil;
         if (override f = this->get_override("GetLightSourceParameterizationSeries")) {
             return f();
         } else {

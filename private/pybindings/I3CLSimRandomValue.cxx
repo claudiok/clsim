@@ -47,7 +47,7 @@
 
 #include <boost/preprocessor/seq.hpp>
 #include "const_ptr_helpers.h"
-
+#include "python_gil_holder.h"
 
 using namespace boost::python;
 namespace bp = boost::python;
@@ -57,6 +57,7 @@ struct I3CLSimRandomValueWrapper : I3CLSimRandomValue, bp::wrapper<I3CLSimRandom
     // pure virtual
     virtual std::size_t NumberOfParameters() const
     {
+        utils::python_gil_holder gil;
         return this->get_override("NumberOfParameters")();
     }
 
@@ -64,12 +65,14 @@ struct I3CLSimRandomValueWrapper : I3CLSimRandomValue, bp::wrapper<I3CLSimRandom
     virtual double SampleFromDistribution(const I3RandomServicePtr &random,
                                           const std::vector<double> &parameters) const
     {
-        return this->get_override("SampleFromDistribution")(random, I3VectorDoublePtr(new I3VectorDouble(parameters.begin(), parameters.end())));
+        utils::python_gil_holder gil;
+        return this->get_override("SampleFromDistribution")(random, parameters);
     }
 
     // pure virtual
     virtual bool OpenCLFunctionWillOnlyUseASingleRandomNumber() const 
     {
+        utils::python_gil_holder gil;
         return this->get_override("OpenCLFunctionWillOnlyUseASingleRandomNumber")();
     }
 
@@ -79,6 +82,7 @@ struct I3CLSimRandomValueWrapper : I3CLSimRandomValue, bp::wrapper<I3CLSimRandom
                                           const std::string &uniformRandomCall_co,
                                           const std::string &uniformRandomCall_oc) const 
     {
+        utils::python_gil_holder gil;
         return this->get_override("GetOpenCLFunction")(functionName,
                                                        functionArgs,
                                                        functionArgsToCall,
@@ -88,6 +92,7 @@ struct I3CLSimRandomValueWrapper : I3CLSimRandomValue, bp::wrapper<I3CLSimRandom
 
     virtual bool CompareTo(const I3CLSimRandomValue &other) const 
     {
+        utils::python_gil_holder gil;
         return this->get_override("CompareTo")(other);
     }
 

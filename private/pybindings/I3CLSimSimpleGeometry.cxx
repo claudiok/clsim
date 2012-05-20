@@ -33,28 +33,30 @@
 
 #include <boost/preprocessor/seq.hpp>
 
+#include "python_gil_holder.h"
+
 using namespace boost::python;
 namespace bp = boost::python;
 
 struct I3CLSimSimpleGeometryWrapper : I3CLSimSimpleGeometry, bp::wrapper<I3CLSimSimpleGeometry>
 {
     // pure virtual
-    virtual std::size_t size() const {return this->get_override("size")();}
-    virtual double GetOMRadius() const {return this->get_override("GetOMRadius")();}
+    virtual std::size_t size() const {utils::python_gil_holder gil; return this->get_override("size")();}
+    virtual double GetOMRadius() const {utils::python_gil_holder gil; return this->get_override("GetOMRadius")();}
     
-    virtual const std::vector<int32_t> &GetStringIDVector() const {return this->get_override("GetStringIDVector")();}
-    virtual const std::vector<uint32_t> &GetDomIDVector() const {return this->get_override("GetDomIDVector")();}
-    virtual const std::vector<double> &GetPosXVector() const {return this->get_override("GetPosXVector")();}
-    virtual const std::vector<double> &GetPosYVector() const {return this->get_override("GetPosYVector")();}
-    virtual const std::vector<double> &GetPosZVector() const {return this->get_override("GetPosZVector")();}
-    virtual const std::vector<std::string> &GetSubdetectorVector() const  {return this->get_override("GetSubdetectorVector")();}
+    virtual const std::vector<int32_t> &GetStringIDVector() const {utils::python_gil_holder gil; return this->get_override("GetStringIDVector")();}
+    virtual const std::vector<uint32_t> &GetDomIDVector() const {utils::python_gil_holder gil; return this->get_override("GetDomIDVector")();}
+    virtual const std::vector<double> &GetPosXVector() const {utils::python_gil_holder gil; return this->get_override("GetPosXVector")();}
+    virtual const std::vector<double> &GetPosYVector() const {utils::python_gil_holder gil; return this->get_override("GetPosYVector")();}
+    virtual const std::vector<double> &GetPosZVector() const {utils::python_gil_holder gil; return this->get_override("GetPosZVector")();}
+    virtual const std::vector<std::string> &GetSubdetectorVector() const  {utils::python_gil_holder gil; return this->get_override("GetSubdetectorVector")();}
     
-    virtual int32_t GetStringID(std::size_t pos) const {return this->get_override("GetStringID")();}
-    virtual uint32_t GetDomID(std::size_t pos) const {return this->get_override("GetDomID")();}
-    virtual double GetPosX(std::size_t pos) const {return this->get_override("GetPosX")();}
-    virtual double GetPosY(std::size_t pos) const {return this->get_override("GetPosY")();}
-    virtual double GetPosZ(std::size_t pos) const {return this->get_override("GetPosZ")();}
-    virtual std::string GetSubdetector(std::size_t pos) const {return this->get_override("GetSubdetector")();}
+    virtual int32_t GetStringID(std::size_t pos) const {utils::python_gil_holder gil; return this->get_override("GetStringID")();}
+    virtual uint32_t GetDomID(std::size_t pos) const {utils::python_gil_holder gil; return this->get_override("GetDomID")();}
+    virtual double GetPosX(std::size_t pos) const {utils::python_gil_holder gil; return this->get_override("GetPosX")();}
+    virtual double GetPosY(std::size_t pos) const {utils::python_gil_holder gil; return this->get_override("GetPosY")();}
+    virtual double GetPosZ(std::size_t pos) const {utils::python_gil_holder gil; return this->get_override("GetPosZ")();}
+    virtual std::string GetSubdetector(std::size_t pos) const {utils::python_gil_holder gil; return this->get_override("GetSubdetector")();}
 
 };
 

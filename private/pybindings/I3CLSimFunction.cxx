@@ -42,6 +42,7 @@
 
 #include <boost/preprocessor/seq.hpp>
 #include "const_ptr_helpers.h"
+#include "python_gil_holder.h"
 
 
 using namespace boost::python;
@@ -50,17 +51,17 @@ namespace bp = boost::python;
 struct I3CLSimFunctionWrapper : I3CLSimFunction, bp::wrapper<I3CLSimFunction>
 {
     // pure virtual
-    virtual bool HasNativeImplementation() const {return this->get_override("HasNativeImplementation")();}
-    virtual bool HasDerivative() const {return this->get_override("HasDerivative")();}
-    virtual double GetValue(double wlen) const {return this->get_override("GetValue")(wlen);}
-    virtual double GetMinWlen() const {return this->get_override("GetMinWlen")();}
-    virtual double GetMaxWlen() const {return this->get_override("GetMaxWlen")();}
-    virtual std::string GetOpenCLFunction(const std::string &functionName) const {return this->get_override("GetOpenCLFunction")(functionName);}
-    virtual bool CompareTo(const I3CLSimFunction &other) const {return this->get_override("CompareTo")(other);}
+    virtual bool HasNativeImplementation() const {utils::python_gil_holder gil; return this->get_override("HasNativeImplementation")();}
+    virtual bool HasDerivative() const {utils::python_gil_holder gil; return this->get_override("HasDerivative")();}
+    virtual double GetValue(double wlen) const {utils::python_gil_holder gil; return this->get_override("GetValue")(wlen);}
+    virtual double GetMinWlen() const {utils::python_gil_holder gil; return this->get_override("GetMinWlen")();}
+    virtual double GetMaxWlen() const {utils::python_gil_holder gil; return this->get_override("GetMaxWlen")();}
+    virtual std::string GetOpenCLFunction(const std::string &functionName) const {utils::python_gil_holder gil; return this->get_override("GetOpenCLFunction")(functionName);}
+    virtual bool CompareTo(const I3CLSimFunction &other) const {utils::python_gil_holder gil; return this->get_override("CompareTo")(other);}
     
     // default implementation
-    virtual double GetDerivative(double wlen) const {if (override f = this->get_override("GetDerivative")) {return f(wlen);} else {return I3CLSimFunction::GetDerivative(wlen);}}
-    virtual std::string GetOpenCLFunctionDerivative(const std::string &functionName) const {if (override f = this->get_override("GetOpenCLFunctionDerivative")) {return f(functionName);} else {return I3CLSimFunction::GetOpenCLFunctionDerivative(functionName);}}
+    virtual double GetDerivative(double wlen) const {utils::python_gil_holder gil; if (override f = this->get_override("GetDerivative")) {return f(wlen);} else {return I3CLSimFunction::GetDerivative(wlen);}}
+    virtual std::string GetOpenCLFunctionDerivative(const std::string &functionName) const {utils::python_gil_holder gil; if (override f = this->get_override("GetOpenCLFunctionDerivative")) {return f(functionName);} else {return I3CLSimFunction::GetOpenCLFunctionDerivative(functionName);}}
     
     double default_GetDerivative(double wlen) const {return this->I3CLSimFunction::GetDerivative(wlen);}
     std::string default_GetOpenCLFunctionDerivative(const std::string &functionName) const {return this->I3CLSimFunction::GetOpenCLFunctionDerivative(functionName);}

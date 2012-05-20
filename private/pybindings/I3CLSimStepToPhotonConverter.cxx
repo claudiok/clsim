@@ -36,37 +36,41 @@
 
 #include <boost/foreach.hpp>
 
+#include "python_gil_holder.h"
+
 using namespace boost::python;
 namespace bp = boost::python;
 
 struct I3CLSimStepToPhotonConverterWrapper : I3CLSimStepToPhotonConverter, bp::wrapper<I3CLSimStepToPhotonConverter>
 {
     // pure virtual
-    virtual void SetWlenGenerators(const std::vector<I3CLSimRandomValueConstPtr> &wlenGenerators) {this->get_override("SetWlenGenerators")(wlenGenerators);}
-    virtual void SetWlenBias(I3CLSimFunctionConstPtr wlenBias) {this->get_override("SetWlenBias")(wlenBias);}
+    virtual void SetWlenGenerators(const std::vector<I3CLSimRandomValueConstPtr> &wlenGenerators) {utils::python_gil_holder gil; this->get_override("SetWlenGenerators")(wlenGenerators);}
+    virtual void SetWlenBias(I3CLSimFunctionConstPtr wlenBias) {utils::python_gil_holder gil; this->get_override("SetWlenBias")(wlenBias);}
 
-    virtual void SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties) {this->get_override("SetMediumProperties")(mediumProperties);}
-    virtual void SetGeometry(I3CLSimSimpleGeometryConstPtr geometry) {this->get_override("SetGeometry")(geometry);}
+    virtual void SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties) {utils::python_gil_holder gil; this->get_override("SetMediumProperties")(mediumProperties);}
+    virtual void SetGeometry(I3CLSimSimpleGeometryConstPtr geometry) {utils::python_gil_holder gil; this->get_override("SetGeometry")(geometry);}
 
-    virtual void Initialize() {this->get_override("Initialize")();}
-    virtual bool IsInitialized() const {return this->get_override("IsInitialized")();}
+    virtual void Initialize() {utils::python_gil_holder gil; this->get_override("Initialize")();}
+    virtual bool IsInitialized() const {utils::python_gil_holder gil; return this->get_override("IsInitialized")();}
 
-    virtual void EnqueueSteps(I3CLSimStepSeriesConstPtr steps, uint32_t identifier) {this->get_override("EnqueueSteps")(steps, identifier);}
-    virtual std::size_t QueueSize() const {return this->get_override("QueueSize")();}
-    virtual bool MorePhotonsAvailable() const {return this->get_override("MorePhotonsAvailable")();}
-    virtual I3CLSimStepToPhotonConverter::ConversionResult_t GetConversionResult() {return this->get_override("GetConversionResult")();}
+    virtual void EnqueueSteps(I3CLSimStepSeriesConstPtr steps, uint32_t identifier) {utils::python_gil_holder gil; this->get_override("EnqueueSteps")(steps, identifier);}
+    virtual std::size_t QueueSize() const {utils::python_gil_holder gil; return this->get_override("QueueSize")();}
+    virtual bool MorePhotonsAvailable() const {utils::python_gil_holder gil; return this->get_override("MorePhotonsAvailable")();}
+    virtual I3CLSimStepToPhotonConverter::ConversionResult_t GetConversionResult() {utils::python_gil_holder gil; return this->get_override("GetConversionResult")();}
 };
 
 struct I3CLSimStepToPhotonConverterOpenCLWrapper : I3CLSimStepToPhotonConverterOpenCL, bp::wrapper<I3CLSimStepToPhotonConverterOpenCL> {
     I3CLSimStepToPhotonConverterOpenCLWrapper(I3RandomServicePtr rng, bool nm)
         : I3CLSimStepToPhotonConverterOpenCL(rng, nm) {}
     virtual std::string GetGeometrySource() {
+        utils::python_gil_holder gil;
         if (this->get_override("GetGeometrySource"))
             return this->get_override("GetGeometrySource")();
         else
             return I3CLSimStepToPhotonConverterOpenCL::GetGeometrySource();
     }
     virtual std::string GetCollisionDetectionSource(bool header) {
+        utils::python_gil_holder gil;
         if (this->get_override("GetCollisionDetectionSource"))
             return this->get_override("GetCollisionDetectionSource")(header);
         else

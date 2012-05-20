@@ -42,6 +42,8 @@
 #include <boost/preprocessor/seq.hpp>
 #include "const_ptr_helpers.h"
 
+#include "python_gil_holder.h"
+
 
 using namespace boost::python;
 namespace bp = boost::python;
@@ -52,11 +54,13 @@ struct I3ExtraGeometryItemWrapper : I3ExtraGeometryItem, bp::wrapper<I3ExtraGeom
     virtual bool DoesLineIntersect(const I3Position &lineStart,
                                    const I3Position &lineEnd) const
     {
+        utils::python_gil_holder gil;
         return this->get_override("DoesLineIntersect")(lineStart, lineEnd);
     }
 
     virtual std::pair<I3Position, I3Position> GetBoundingBox() const
     {
+        utils::python_gil_holder gil;
         return this->get_override("GetBoundingBox")();
     }
 };

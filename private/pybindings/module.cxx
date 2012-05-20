@@ -26,6 +26,7 @@
 
 #include <icetray/I3FrameObject.h>
 #include <icetray/load_project.h>
+#include <icetray/I3Logging.h>
 
 using namespace boost::python;
 namespace bp = boost::python;
@@ -66,11 +67,17 @@ BOOST_PP_SEQ_FOR_EACH(I3_REGISTRATION_FN_DECL, ~, REGISTER_THESE_THINGS_TOO)
 
 BOOST_PYTHON_MODULE(clsim)
 {
-  load_project("libclsim", false);
+    load_project("libclsim", false);
 
-  BOOST_PP_SEQ_FOR_EACH(I3_REGISTER, ~, REGISTER_THESE_THINGS);
+    if (!PyEval_ThreadsInitialized()) {
+        log_info("Python threading not initialized. Doing it now.");
+        // make sure pyton threading support is active (multiple calls will be no-ops)
+        PyEval_InitThreads();  // this will also acquire the GIL
+    }
+
+    BOOST_PP_SEQ_FOR_EACH(I3_REGISTER, ~, REGISTER_THESE_THINGS);
 #ifndef BUILD_CLSIM_DATACLASSES_ONLY
-  BOOST_PP_SEQ_FOR_EACH(I3_REGISTER, ~, REGISTER_THESE_THINGS_TOO);
+    BOOST_PP_SEQ_FOR_EACH(I3_REGISTER, ~, REGISTER_THESE_THINGS_TOO);
 #endif
 }
 

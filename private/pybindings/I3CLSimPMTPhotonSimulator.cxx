@@ -34,6 +34,7 @@
 
 #include <boost/preprocessor/seq.hpp>
 #include "const_ptr_helpers.h"
+#include "python_gil_holder.h"
 
 
 using namespace boost::python;
@@ -44,21 +45,25 @@ struct I3CLSimPMTPhotonSimulatorWrapper : I3CLSimPMTPhotonSimulator, bp::wrapper
     // pure virtual
     virtual void ApplyAfterPulseLatePulseAndJitterSim(const OMKey &key, const I3MCHit &input_hit, std::vector<I3MCHit> &output_vector) const
     {
+        utils::python_gil_holder gil;
         this->get_override("ApplyAfterPulseLatePulseAndJitterSim")(key, input_hit, output_vector);
     }
     
     virtual void SetCalibration(I3CalibrationConstPtr calibration)
     {
+        utils::python_gil_holder gil;
         this->get_override("SetCalibration")(calibration);
     }
     
     virtual void SetDetectorStatus(I3DetectorStatusConstPtr status)
     {
+        utils::python_gil_holder gil;
         this->get_override("SetDetectorStatus")(status);
     }
 
     virtual void SetRandomService(I3RandomServicePtr random)
     {
+        utils::python_gil_holder gil;
         this->get_override("SetRandomService")(random);
     }
 

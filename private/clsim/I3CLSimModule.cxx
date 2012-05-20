@@ -52,6 +52,27 @@
 #include <set>
 #include <deque>
 
+
+namespace {
+    class ScopedGILRelease
+    {
+    public:
+        inline ScopedGILRelease()
+        {
+            m_thread_state = PyEval_SaveThread();
+        }
+        
+        inline ~ScopedGILRelease()
+        {
+            PyEval_RestoreThread(m_thread_state);
+            m_thread_state = NULL;
+        }
+        
+    private:
+        PyThreadState *m_thread_state;
+    };    
+}
+
 // The module
 I3_MODULE(I3CLSimModule);
 
@@ -864,7 +885,7 @@ void I3CLSimModule::FlushFrameCache()
     // tell the Geant4 converter to not accept any new data until it is finished 
     // with its current work.
     geant4ParticleToStepsConverter_->EnqueueBarrier();
-    
+
     // At this point the thread should keep on passing steps from Geant4 to OpenCL.
     // As soon as the barrier for Geant4 is no longer active and all data has been
     // sent to OpenCL, the thread will finish. We wait for that and then receive
@@ -872,12 +893,16 @@ void I3CLSimModule::FlushFrameCache()
     if (!threadObj_->joinable())
         log_fatal("Thread should be joinable at this point!");
         
-    log_debug("Waiting for thread..");
-    threadObj_->join(); // wait for it indefinitely
-    StopThread(); // stop it completely
-    if (!threadFinishedOK_) log_fatal("Thread was aborted or failed.");
-    log_debug("thread finished.");
+    {
+        // allow other threads to access python
+        ScopedGILRelease scopedGIL;
 
+        log_debug("Waiting for thread..");
+        threadObj_->join(); // wait for it indefinitely
+        StopThread(); // stop it completely
+        if (!threadFinishedOK_) log_fatal("Thread was aborted or failed.");
+        log_debug("thread finished.");
+    }
     
     std::size_t totalNumOutPhotons=0;
     
@@ -1159,7 +1184,7 @@ void I3CLSimModule::Process()
         PushFrame(frame);
         return;
     }
-    
+
     // it's either Physics or something else..
     DigestOtherFrame(frame);
 }
@@ -1194,9 +1219,12 @@ void I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
         frameIsBeingWorkedOn_.push_back(false); // do not touch this frame, just push it later on
         return;
     }
-
+    
     // should we process it? (conditional module)
-    if (!I3ConditionalModule::ShouldDoProcess(frame)) {
+    const bool shouldDoProcess_fromConditionalModule =
+    I3ConditionalModule::ShouldDoProcess(frame);
+    
+    if (!shouldDoProcess_fromConditionalModule) {
         frameIsBeingWorkedOn_.push_back(false); // do not touch this frame, just push it later on
         return;
     }
@@ -1286,7 +1314,6 @@ void I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
         
         log_debug("============== CACHE FLUSHED ================");
     }
-    
 }
 
 void I3CLSimModule::Finish()
@@ -1298,9 +1325,9 @@ void I3CLSimModule::Finish()
 
     totalSimulatedEnergyForFlush_=0.;
     totalNumParticlesForFlush_=0;
-    
+
     FlushFrameCache();
-    
+
     log_info("Flushing I3Tray..");
     Flush();
     
