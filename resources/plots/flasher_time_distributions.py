@@ -33,9 +33,22 @@ import scipy
 import scipy.interpolate
 import scipy.integrate
 
+from os.path import expandvars
 
 from icecube import icetray, dataclasses, clsim, phys_services
 from I3Tray import I3Units
+
+
+scanned_FB_WIDTH15  = numpy.loadtxt(expandvars("$I3_BUILD/clsim/resources/flasher_data/optical_pulse_shape_FB_WIDTH15.txt"),  unpack=True)
+scanned_FB_WIDTH20  = numpy.loadtxt(expandvars("$I3_BUILD/clsim/resources/flasher_data/optical_pulse_shape_FB_WIDTH20.txt"),  unpack=True)
+scanned_FB_WIDTH124 = numpy.loadtxt(expandvars("$I3_BUILD/clsim/resources/flasher_data/optical_pulse_shape_FB_WIDTH124.txt"), unpack=True)
+
+scanned_FB_WIDTH15[1] = scanned_FB_WIDTH15[1] / numpy.max(scanned_FB_WIDTH15[1])    # this one needs some re-scaling
+
+scanned_FB_WIDTH20[1] = scanned_FB_WIDTH20[1] / numpy.max(scanned_FB_WIDTH20[1])    # this one also needs re-scaling
+scanned_FB_WIDTH20[0] = scanned_FB_WIDTH20[0] - 22.88473                            # and has an offset, too
+
+
 
 rng = phys_services.I3SPRNGRandomService(seed=3244, nstreams=2, streamnum=0)
 
@@ -101,7 +114,11 @@ plotProfileAndMC(bx, FB_WIDTH=20.,  color1='k', color2='r', label="width: 20")
 plotProfileAndMC(cx, FB_WIDTH=40.,  color1='k', color2='r', label="width: 40")
 plotProfileAndMC(dx, FB_WIDTH=60.,  color1='k', color2='r', label="width: 60")
 plotProfileAndMC(ex, FB_WIDTH=80.,  color1='k', color2='r', label="width: 80")
-plotProfileAndMC(fx, FB_WIDTH=120., color1='k', color2='r', label="width: 120")
+plotProfileAndMC(fx, FB_WIDTH=124., color1='k', color2='r', label="width: 124")
+
+ax.plot(scanned_FB_WIDTH15[0],  scanned_FB_WIDTH15[1],  linestyle='--', color='b', label="scanned from wiki")
+bx.plot(scanned_FB_WIDTH20[0],  scanned_FB_WIDTH20[1],  linestyle='--', color='b', label="scanned from wiki")
+fx.plot(scanned_FB_WIDTH124[0], scanned_FB_WIDTH124[1], linestyle='--', color='b', label="scanned from wiki")
 
 
 for x in [ax, bx, cx, dx, ex, fx]:

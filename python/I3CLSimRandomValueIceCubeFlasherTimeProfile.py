@@ -45,6 +45,8 @@ class I3CLSimRandomValueIceCubeFlasherTimeProfile(I3CLSimRandomValue):
     
     p = width*0.5*I3Units.ns
     
+    Distributions should be similar to what is found on
+    http://wiki.icecube.wisc.edu/index.php/LED_output_time_profile
     """
     
     ## static data
