@@ -28,10 +28,11 @@ from icecube import icetray, dataclasses
 
 from icecube.clsim import I3CLSimRandomValue
 from icecube.clsim import I3CLSimRandomValueInterpolatedDistribution
+from icecube.clsim.util.interpolate import interp1d
 
 from I3Tray import I3Units
 
-import numpy, math, scipy, scipy.interpolate
+import numpy, math
 
 class I3CLSimRandomValueIceCubeFlasherTimeProfile(I3CLSimRandomValue):
     """
@@ -84,7 +85,7 @@ class I3CLSimRandomValueIceCubeFlasherTimeProfile(I3CLSimRandomValue):
               3.52000000e-03,   4.30000000e-03,   2.74000000e-03]])
     #adjust zero offset and re-scale to one
     _pulse_FB_WIDTH15[1]=(_pulse_FB_WIDTH15[1]-0.00118)/0.49905
-    _pulse_narrow = scipy.interpolate.interp1d(_pulse_FB_WIDTH15[0], _pulse_FB_WIDTH15[1], kind='linear', bounds_error=False, fill_value=0.)
+    _pulse_narrow = interp1d(_pulse_FB_WIDTH15[0], _pulse_FB_WIDTH15[1], kind='linear', bounds_error=False, fill_value=0.)
     
     @staticmethod
     def _pulse_rising_edge(x, width):

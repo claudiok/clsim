@@ -51,6 +51,8 @@ from AutoSetGeant4Environment import AutoSetGeant4Environment
 
 from I3CLSimRandomValueIceCubeFlasherTimeProfile import I3CLSimRandomValueIceCubeFlasherTimeProfile
 
+import util
+
 # import tray segments (if available)
 from traysegments import I3CLSimMakeHits, I3CLSimMakePhotons, I3CLSimMakeHitsFromPhotons
 
