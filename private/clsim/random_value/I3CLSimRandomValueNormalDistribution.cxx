@@ -73,9 +73,9 @@ std::string I3CLSimRandomValueNormalDistribution::GetOpenCLFunction
     "    const float rnd1 = " + uniformRandomCall_oc + ";\n"
     "    const float rnd2 = " + uniformRandomCall_oc + ";\n"
     "#ifdef USE_NATIVE_MATH\n"
-    "    return (sqrt(-2.f*log(rnd1))*sin(2.f*M_PI_F*rnd2))*sigma + mean;\n"
+    "    return (native_sqrt(-2.f*native_log(rnd1))*native_sin(2.f*M_PI_F*rnd2))*sigma + mean;\n"
     "#else\n"
-    "    return (native_sqrt(-2.f*rnd1))*native_sin(2.f*M_PI_F*rnd2))*sigma + mean;\n"
+    "    return (sqrt(-2.f*log(rnd1))*sin(2.f*M_PI_F*rnd2))*sigma + mean;\n"
     "#endif\n"
     "}\n"
     ;

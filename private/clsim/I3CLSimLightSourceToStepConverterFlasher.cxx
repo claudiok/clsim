@@ -30,6 +30,7 @@
 #include <inttypes.h>
 
 #include <cmath>
+#include <boost/lexical_cast.hpp>
 #include <boost/math/special_functions/fpclassify.hpp>
 #include <limits>
 
@@ -49,6 +50,9 @@ const uint32_t I3CLSimLightSourceToStepConverterFlasher::default_photonsPerStep=
 I3CLSimLightSourceToStepConverterFlasher::I3CLSimLightSourceToStepConverterFlasher
 (I3CLSimFunctionConstPtr flasherSpectrumNoBias,
  I3CLSimSpectrumTablePtr spectrumTable,
+ I3CLSimRandomValueConstPtr angularProfileDistributionPolar,
+ I3CLSimRandomValueConstPtr angularProfileDistributionAzimuthal,
+ I3CLSimRandomValueConstPtr timeDelayDistribution,
  uint32_t photonsPerStep)
 :
 initialized_(false),
@@ -56,8 +60,13 @@ barrier_is_enqueued_(false),
 bunchSizeGranularity_(1),
 maxBunchSize_(512000),
 photonsPerStep_(photonsPerStep),
-flasherSpectrumNoBias_(flasherSpectrumNoBias)
+flasherSpectrumNoBias_(flasherSpectrumNoBias),
+angularProfileDistributionPolar_(angularProfileDistributionPolar),
+angularProfileDistributionAzimuthal_(angularProfileDistributionAzimuthal),
+timeDelayDistribution_(timeDelayDistribution)
 {
+    // verify assumptions:
+    
     if (photonsPerStep_<=0)
         throw I3CLSimLightSourceToStepConverter_exception("photonsPerStep may not be <= 0!");
     
@@ -66,6 +75,25 @@ flasherSpectrumNoBias_(flasherSpectrumNoBias)
     
     if (!spectrumTable)
         throw I3CLSimLightSourceToStepConverter_exception("You have to provide a non-NULL spectrum table!");
+
+    if (!angularProfileDistributionPolar_)
+        throw I3CLSimLightSourceToStepConverter_exception("You have to provide a non-NULL angularProfileDistributionPolar distribution!");
+
+    if (!angularProfileDistributionAzimuthal_)
+        throw I3CLSimLightSourceToStepConverter_exception("You have to provide a non-NULL angularProfileDistributionAzimuthal distribution!");
+
+    if (!timeDelayDistribution_)
+        throw I3CLSimLightSourceToStepConverter_exception("You have to provide a non-NULL timeDelayDistribution distribution!");
+
+    if (angularProfileDistributionPolar_->NumberOfParameters() != 1)
+        throw I3CLSimLightSourceToStepConverter_exception(std::string()+"The distribution configured with angularProfileDistributionPolar needs to accept exactly 1 run-time parameter (it accepts " + boost::lexical_cast<std::string>(angularProfileDistributionPolar_->NumberOfParameters()) + ")!");
+
+    if (angularProfileDistributionAzimuthal_->NumberOfParameters() != 1)
+        throw I3CLSimLightSourceToStepConverter_exception(std::string()+"The distribution configured with angularProfileDistributionAzimuthal needs to accept exactly 1 run-time parameter (it accepts " + boost::lexical_cast<std::string>(angularProfileDistributionAzimuthal_->NumberOfParameters()) + ")!");
+
+    if (timeDelayDistribution_->NumberOfParameters() != 1)
+        throw I3CLSimLightSourceToStepConverter_exception(std::string()+"The distribution configured with timeDelayDistribution needs to accept exactly 1 run-time parameter (it accepts " + boost::lexical_cast<std::string>(timeDelayDistribution_->NumberOfParameters()) + ")!");
+
     
     // register the spectrum in the table and retain the index / "source type"
     std::size_t spectrumSourceTypeIndex = spectrumTable->append(flasherSpectrumNoBias_);
@@ -410,9 +438,18 @@ void I3CLSimLightSourceToStepConverterFlasher::FillStep(I3CLSimStep &step,
     const double polarAngle = flasherPulse.GetDir().CalcTheta();
     const double azimuthalAngle = flasherPulse.GetDir().CalcPhi();
     
-    // the smearing angle
-    const double smearPolar     = randomService_->Gaus(0., flasherPulse.GetAngularEmissionSigmaPolar());
-    const double smearAzimuthal = randomService_->Gaus(0., flasherPulse.GetAngularEmissionSigmaAzimuthal());
+    // angular smearing
+    const double smearPolar =
+    angularProfileDistributionPolar_->SampleFromDistribution
+    (randomService_,
+     std::vector<double>(1, flasherPulse.GetAngularEmissionSigmaPolar())
+    );
+
+    const double smearAzimuthal =
+    angularProfileDistributionAzimuthal_->SampleFromDistribution
+    (randomService_,
+     std::vector<double>(1, flasherPulse.GetAngularEmissionSigmaAzimuthal())
+     );
 
     // calculate the new azimuthal angle (in the horizontal plane)
     const double smearedAzimuth = azimuthalAngle + smearAzimuthal;
@@ -428,14 +465,14 @@ void I3CLSimLightSourceToStepConverterFlasher::FillStep(I3CLSimStep &step,
     // now rotate to the polar angle (plus smearing)
     I3Calculator::Rotate(rotAxis, smearedDirection, (90.*I3Units::deg-polarAngle) + smearPolar);
 
+    //////// bunch time delay
+    const double timeDelay =
+    timeDelayDistribution_->SampleFromDistribution
+    (randomService_,
+     std::vector<double>(1, flasherPulse.GetPulseWidth())
+     );
     
-    //////// bunch time
-    
-    const double timeWidthFWHM = flasherPulse.GetPulseWidth();
-    const double timeWidthSigma = timeWidthFWHM / 2.3548; // convert from FWHM to sigma (assuming a gaussian distribution)
-    
-    // Use a gaussian for now. TODO: There is a non-gaussian tail/after-glow, which should be implemented.
-    const double smearedTime = flasherPulse.GetTime() + randomService_->Gaus(0., timeWidthSigma);
+    const double smearedTime = flasherPulse.GetTime() + timeDelay;
     
     //////// done!
     

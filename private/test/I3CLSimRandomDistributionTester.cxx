@@ -36,16 +36,20 @@
 #include "opencl/I3CLSimHelperLoadProgramSource.h"
 #include "opencl/mwcrng_init.h"
 
+#include "clsim/I3CLSimHelperToFloatString.h"
+using namespace I3CLSimHelper;
+
 I3CLSimRandomDistributionTester::I3CLSimRandomDistributionTester
 (const I3CLSimOpenCLDevice &device,
  uint64_t workgroupSize_,
  uint64_t workItemsPerIteration_,
  I3RandomServicePtr randomService,
- I3CLSimRandomValueConstPtr randomDistribution):
+ I3CLSimRandomValueConstPtr randomDistribution,
+ const std::vector<double> &runtimeParameters):
 I3CLSimTesterBase()
 {
     std::vector<std::string> source;
-    FillSource(source, randomDistribution);
+    FillSource(source, randomDistribution, runtimeParameters);
     
     DoSetup(device,
             workgroupSize_,
@@ -56,7 +60,8 @@ I3CLSimTesterBase()
 }
 
 void I3CLSimRandomDistributionTester::FillSource(std::vector<std::string> &source,
-                                                 I3CLSimRandomValueConstPtr randomDistribution)
+                                                 I3CLSimRandomValueConstPtr randomDistribution,
+                                                 const std::vector<double> &runtimeParameters)
 {
     source.clear();
     
@@ -66,13 +71,32 @@ void I3CLSimRandomDistributionTester::FillSource(std::vector<std::string> &sourc
     
     std::string mwcrngSource = I3CLSimHelper::LoadProgramSource(kernelBaseDir+"/mwcrng_kernel.cl");
 
-    std::string randomDistSource = randomDistribution->GetOpenCLFunction("generateRandomNumberAccordingToDistribution",
-                                                                         // these are all defined as macros by the rng code:
-                                                                         "RNG_ARGS",               // function arguments for rng
-                                                                         "RNG_ARGS_TO_CALL",       // if we call anothor function, this is how we pass on the rng state
-                                                                         "RNG_CALL_UNIFORM_CO",    // the call to the rng for creating a uniform number [0;1[
-                                                                         "RNG_CALL_UNIFORM_OC"     // the call to the rng for creating a uniform number ]0;1]
-                                                                         );
+    std::string randomDistSource;
+    
+    if (runtimeParameters.size() > 0) {
+        randomDistSource = randomDistSource +
+        "\n"
+        "#define DISTRIBUTION_ARGS ";
+        
+        for (std::size_t i=0;i<runtimeParameters.size();++i)
+        {
+            if (i>0) randomDistSource = randomDistSource + ", ";
+            
+            randomDistSource = randomDistSource + ToFloatString(runtimeParameters[i]);
+        }
+        "\n";
+    }
+    
+    randomDistSource = randomDistSource +
+    "\n" +
+    randomDistribution->GetOpenCLFunction
+    ("generateRandomNumberAccordingToDistribution",
+     // these are all defined as macros by the rng code:
+     "RNG_ARGS",               // function arguments for rng
+     "RNG_ARGS_TO_CALL",       // if we call anothor function, this is how we pass on the rng state
+     "RNG_CALL_UNIFORM_CO",    // the call to the rng for creating a uniform number [0;1[
+     "RNG_CALL_UNIFORM_OC"     // the call to the rng for creating a uniform number ]0;1]
+    );
     std::string rngDistTestKernelSource = I3CLSimHelper::LoadProgramSource(kernelBaseDir+"/rng_dist_test_kernel.cl");
     
     // collect the program sources

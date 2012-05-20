@@ -28,6 +28,13 @@ from icecube import icetray, dataclasses
 from icecube.clsim import I3CLSimLightSourceParameterization
 from icecube.clsim import I3CLSimFlasherPulse, I3CLSimLightSourceToStepConverterFlasher
 from icecube.clsim import GetIceCubeFlasherSpectrum
+from icecube.clsim import I3CLSimRandomValueNormalDistribution
+from icecube.clsim import I3CLSimRandomValueFixParameter
+
+import I3CLSimRandomValueIceCubeFlasherTimeProfile
+
+# for now, all flasher types get the same time delay profile
+__theFlasherTimeDelayDistribution = I3CLSimRandomValueIceCubeFlasherTimeProfile.I3CLSimRandomValueIceCubeFlasherTimeProfile()
 
 def GetFlasherParameterizationList(spectrumTable):
     spectrumTypes = [I3CLSimFlasherPulse.FlasherPulseType.LED340nm,
@@ -36,10 +43,19 @@ def GetFlasherParameterizationList(spectrumTable):
                      I3CLSimFlasherPulse.FlasherPulseType.LED450nm,
                      I3CLSimFlasherPulse.FlasherPulseType.LED505nm]
     
+    # all flasher types have the same angular smearing profiles (a gaussian
+    # with its width set as a runtime parameter [read from I3CLSimFlasherPulse])
+    normalDistribution = I3CLSimRandomValueFixParameter(I3CLSimRandomValueNormalDistribution(), 0, 0.) # the mean (parameter #0) is fixed to 0.
+    
+    # generate the parameterizations
     parameterizations = []
     for flasherSpectrumType in spectrumTypes:
         theSpectrum = GetIceCubeFlasherSpectrum(spectrumType=flasherSpectrumType)
-        theConverter = I3CLSimLightSourceToStepConverterFlasher(flasherSpectrumNoBias=theSpectrum, spectrumTable=spectrumTable)
+        theConverter = I3CLSimLightSourceToStepConverterFlasher(flasherSpectrumNoBias=theSpectrum,
+                                                                spectrumTable=spectrumTable,
+                                                                angularProfileDistributionPolar=normalDistribution,
+                                                                angularProfileDistributionAzimuthal=normalDistribution,
+                                                                timeDelayDistribution=__theFlasherTimeDelayDistribution)
         parameterization = I3CLSimLightSourceParameterization(converter=theConverter, forFlasherPulseType=flasherSpectrumType)
         parameterizations.append(parameterization)
         

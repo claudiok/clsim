@@ -67,14 +67,15 @@ void register_I3CLSimTester()
                    bases<I3CLSimTesterBase>,
                    boost::noncopyable>
         ("I3CLSimRandomDistributionTester",
-         bp::init<const I3CLSimOpenCLDevice &, uint64_t, uint64_t, I3RandomServicePtr, I3CLSimRandomValueConstPtr>
+         bp::init<const I3CLSimOpenCLDevice &, uint64_t, uint64_t, I3RandomServicePtr, I3CLSimRandomValueConstPtr, const std::vector<double> &>
          (
           (
            bp::arg("device"),
            bp::arg("workgroupSize"),
            bp::arg("workItemsPerIteration"),
            bp::arg("randomService"),
-           bp::arg("randomDistribution")
+           bp::arg("randomDistribution"),
+           bp::arg("runtimeParameters")=std::vector<double>()
           )
          )
         )

@@ -26,6 +26,8 @@
 
 #include <sstream>
 
+#include <dataclasses/I3Vector.h>
+
 #include <clsim/random_value/I3CLSimRandomValue.h>
 #include <clsim/random_value/I3CLSimRandomValueHenyeyGreenstein.h>
 #include <clsim/random_value/I3CLSimRandomValueRayleighScatteringCosAngle.h>
@@ -35,6 +37,7 @@
 #include <clsim/random_value/I3CLSimRandomValueApplyFunction.h>
 #include <clsim/random_value/I3CLSimRandomValueWlenCherenkovNoDispersion.h>
 #include <clsim/random_value/I3CLSimRandomValueNormalDistribution.h>
+#include <clsim/random_value/I3CLSimRandomValueFixParameter.h>
 
 #ifdef NO_PYTHON_DATACLASS_SUITE
 #include "icetray_python_backports/std_vector_indexing_suite.hpp"
@@ -61,7 +64,7 @@ struct I3CLSimRandomValueWrapper : I3CLSimRandomValue, bp::wrapper<I3CLSimRandom
     virtual double SampleFromDistribution(const I3RandomServicePtr &random,
                                           const std::vector<double> &parameters) const
     {
-        return this->get_override("SampleFromDistribution")(random, parameters);
+        return this->get_override("SampleFromDistribution")(random, I3VectorDoublePtr(new I3VectorDouble(parameters.begin(), parameters.end())));
     }
 
     // pure virtual
@@ -99,7 +102,7 @@ void register_I3CLSimRandomValue()
 {
     {
         bp::scope I3CLSimRandomValue_scope =
-        bp::class_<I3CLSimRandomValueWrapper, shared_ptr<I3CLSimRandomValueWrapper>, boost::noncopyable>("I3CLSimRandomValue")
+        bp::class_<I3CLSimRandomValueWrapper, boost::noncopyable>("I3CLSimRandomValue")
         .def("NumberOfParameters", bp::pure_virtual(&I3CLSimRandomValue::NumberOfParameters))
         .def("SampleFromDistribution", bp::pure_virtual(&I3CLSimRandomValue::SampleFromDistribution))
         .def("OpenCLFunctionWillOnlyUseASingleRandomNumber", bp::pure_virtual(&I3CLSimRandomValue::OpenCLFunctionWillOnlyUseASingleRandomNumber))
@@ -115,6 +118,7 @@ void register_I3CLSimRandomValue()
     bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueWrapper>, shared_ptr<const I3CLSimRandomValueWrapper> >();
     utils::register_const_ptr<I3CLSimRandomValue>();
 
+    bp::register_ptr_to_python< shared_ptr<I3CLSimRandomValue> >;
 
     // Henyey-Greenstein
     {
@@ -334,6 +338,36 @@ void register_I3CLSimRandomValue()
     bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueNormalDistribution>, shared_ptr<I3CLSimRandomValue> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueNormalDistribution>, shared_ptr<const I3CLSimRandomValue> >();
     utils::register_const_ptr<I3CLSimRandomValueNormalDistribution>();
+
+    
+    // set a run-time parameter in a distribution to a fixed value
+    {
+        bp::class_<
+        I3CLSimRandomValueFixParameter, 
+        boost::shared_ptr<I3CLSimRandomValueFixParameter>, 
+        bases<I3CLSimRandomValue>,
+        boost::noncopyable
+        >
+        (
+         "I3CLSimRandomValueFixParameter",
+         bp::init<
+         const I3CLSimRandomValuePtr &,
+         std::size_t,
+         double
+         >(
+           (
+            bp::arg("randomDistUsed"),
+            bp::arg("parameterIndex"),
+            bp::arg("parameterValue")
+           )
+          )
+         )
+        ;
+    }
+    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueFixParameter>, shared_ptr<const I3CLSimRandomValueFixParameter> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueFixParameter>, shared_ptr<I3CLSimRandomValue> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueFixParameter>, shared_ptr<const I3CLSimRandomValue> >();
+    utils::register_const_ptr<I3CLSimRandomValueFixParameter>();
 
 
     // a vector of distributions

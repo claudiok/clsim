@@ -57,14 +57,14 @@ void register_I3CLSimFlasherPulse()
         .def("SetType", &I3CLSimFlasherPulse::SetType)
         .add_property("type", &I3CLSimFlasherPulse::GetType, &I3CLSimFlasherPulse::SetType)
 
-        .def("GetPos", (const I3Position& (I3CLSimFlasherPulse::*)()) &I3CLSimFlasherPulse::GetPos, bp::return_internal_reference<1>() )
+        .def("GetPos", (const I3Position& (I3CLSimFlasherPulse::*)()) &I3CLSimFlasherPulse::GetPos, bp::return_value_policy<bp::copy_const_reference>() )
         .def("SetPos", (void (I3CLSimFlasherPulse::*)(const I3Position&)) &I3CLSimFlasherPulse::SetPos)
-        .def("GetDir", (const I3Direction& (I3CLSimFlasherPulse::*)()) &I3CLSimFlasherPulse::GetDir, bp::return_internal_reference<1>() )
+        .def("GetDir", (const I3Direction& (I3CLSimFlasherPulse::*)()) &I3CLSimFlasherPulse::GetDir, bp::return_value_policy<bp::copy_const_reference>() )
         .def("SetDir", (void (I3CLSimFlasherPulse::*)(const I3Direction&)) &I3CLSimFlasherPulse::SetDir)
 
-        .add_property("pos", bp::make_function( (const I3Position& (I3CLSimFlasherPulse::*)()) &I3CLSimFlasherPulse::GetPos, bp::return_internal_reference<1>() ),
+        .add_property("pos", bp::make_function( (const I3Position& (I3CLSimFlasherPulse::*)()) &I3CLSimFlasherPulse::GetPos, bp::return_value_policy<bp::copy_const_reference>() ),
                       (void (I3CLSimFlasherPulse::*)(const I3Position&)) &I3CLSimFlasherPulse::SetPos ) 
-        .add_property("dir", bp::make_function( (const I3Direction& (I3CLSimFlasherPulse::*)()) &I3CLSimFlasherPulse::GetDir, bp::return_internal_reference<1>() ),
+        .add_property("dir", bp::make_function( (const I3Direction& (I3CLSimFlasherPulse::*)()) &I3CLSimFlasherPulse::GetDir, bp::return_value_policy<bp::copy_const_reference>() ),
                       (void (I3CLSimFlasherPulse::*)(const I3Direction&)) &I3CLSimFlasherPulse::SetDir ) 
 
         .def("GetTime", &I3CLSimFlasherPulse::GetTime)

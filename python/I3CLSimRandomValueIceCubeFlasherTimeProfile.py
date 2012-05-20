@@ -96,7 +96,7 @@ class I3CLSimRandomValueIceCubeFlasherTimeProfile(I3CLSimRandomValue):
         scaledX = numpy.where(scaledX<0.,0.,scaledX)
     
         return I3CLSimRandomValueIceCubeFlasherTimeProfile._pulse_narrow(scaledX)
-
+    
     @staticmethod
     def _pulse_falling_edge(x):
         templateStart=7.
@@ -109,25 +109,30 @@ class I3CLSimRandomValueIceCubeFlasherTimeProfile(I3CLSimRandomValue):
     @staticmethod
     def _pulse_plateau_width(FB_WIDTH):
         return (FB_WIDTH-15.)*59.5/(124.-15.)
-
+    
     @staticmethod
     def _pulse_rising_edge_width(FB_WIDTH):
         return numpy.log((FB_WIDTH-12.))*1.91+5.
-
+    
     @staticmethod
     def _the_pulse(x, FB_WIDTH):
+        if isinstance(x, float):
+            useX = numpy.array([x])
+        else:
+            useX = x
+        
         if FB_WIDTH <= 15:
-            return I3CLSimRandomValueIceCubeFlasherTimeProfile._pulse_narrow(x*(15./FB_WIDTH))
+            return I3CLSimRandomValueIceCubeFlasherTimeProfile._pulse_narrow(useX*(15./FB_WIDTH))
         else:
             plateau_width = I3CLSimRandomValueIceCubeFlasherTimeProfile._pulse_plateau_width(FB_WIDTH)
             rising_edge_width = I3CLSimRandomValueIceCubeFlasherTimeProfile._pulse_rising_edge_width(FB_WIDTH)
-            return numpy.where(x<=rising_edge_width,I3CLSimRandomValueIceCubeFlasherTimeProfile._pulse_rising_edge(x,rising_edge_width), numpy.where(x<=rising_edge_width+plateau_width,numpy.ones(len(x)), I3CLSimRandomValueIceCubeFlasherTimeProfile._pulse_falling_edge(x-rising_edge_width-plateau_width) ) )
+            return numpy.where(useX<=rising_edge_width,I3CLSimRandomValueIceCubeFlasherTimeProfile._pulse_rising_edge(useX,rising_edge_width), numpy.where(useX<=rising_edge_width+plateau_width,numpy.ones(len(useX)), I3CLSimRandomValueIceCubeFlasherTimeProfile._pulse_falling_edge(useX-rising_edge_width-plateau_width) ) )
     
     
     def __init__(self):
         I3CLSimRandomValue.__init__(self)
         self.distributionCache=dict()
-    
+        
     def SampleFromDistribution(self, random, parameters):
         if len(parameters) != self.NumberOfParameters():
             raise RuntimeError("Expected %u parameters but got %u." % (self.NumberOfParameters(), len(parameters)))
@@ -146,6 +151,7 @@ class I3CLSimRandomValueIceCubeFlasherTimeProfile(I3CLSimRandomValue):
             xVals = numpy.linspace(0.,maxDuration,int(maxDuration*2),endpoint=False)
             dist = I3CLSimRandomValueInterpolatedDistribution(0., 0.5, I3CLSimRandomValueIceCubeFlasherTimeProfile._the_pulse(xVals, width*2.))
             self.distributionCache[width] = dist
+            
         return self.distributionCache[width].SampleFromDistribution(random, [])
     
     def NumberOfParameters(self):

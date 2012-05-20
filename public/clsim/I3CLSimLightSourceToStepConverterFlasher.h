@@ -30,6 +30,7 @@
 #include "clsim/I3CLSimLightSourceToStepConverter.h"
 #include "clsim/I3CLSimLightSource.h"
 #include "clsim/function/I3CLSimFunction.h"
+#include "clsim/random_value/I3CLSimRandomValue.h"
 #include "clsim/I3CLSimSpectrumTable.h"
 
 #include <string>
@@ -46,8 +47,46 @@ struct I3CLSimLightSourceToStepConverterFlasher : public I3CLSimLightSourceToSte
 public:
     static const uint32_t default_photonsPerStep;
 
+    /**
+     * Initializes a new converter object for a specific flasher type.
+     *
+     * flasherSpectrumNoBias: the flasher wavelength spectrum without any
+     *   bias factors for DOM acceptance.
+     *
+     * spectrumTable: the global spectrum table used for OpenCL code
+     *   generation.
+     *
+     * angularProfileDistributionPolar: a random number distribution of
+     *   polar angles w.r.t. to the flasher orientation used for smearing
+     *   of initial photon directions. The distribution is assumed to take
+     *   a single run-time parameter: the "width" as specified in I3CLSimFlasherPulse.
+     *
+     * angularProfileDistributionAzimuthal: a random number distribution of
+     *   azimuthal angles w.r.t. to the flasher orientation used for smearing
+     *   of initial photon directions. The distribution is assumed to take
+     *   a single run-time parameter: the "width" as specified in I3CLSimFlasherPulse.
+     *
+     * timeDelayDistribution: a distribution of time delays w.r.t. the nominal
+     *   flasher time. Values from this distribution will be added to the nominal
+     *   flasher time to generate photon starting times. The distribution is assumed to take
+     *   a single run-time parameter: the "width" as specified in I3CLSimFlasherPulse.
+     *
+     * photonsPerStep: instead of creating photons directly, this class generates
+     *   so-called steps (bunches of photons described by a single object).
+     *   This controls how many photons there will be per step (some steps may have
+     *   less photons than specified here to accomodate all possible numbers of
+     *   photons).
+     *   All random distributions are only sampled once per step, not once per photon,
+     *   thus having too many photons per step may introduce too much grnaularity.
+     *   This should not be a problem for flashers since they generate a large number
+     *   of photons anyway.
+     * 
+     */
     I3CLSimLightSourceToStepConverterFlasher(I3CLSimFunctionConstPtr flasherSpectrumNoBias,
                                              I3CLSimSpectrumTablePtr spectrumTable,
+                                             I3CLSimRandomValueConstPtr angularProfileDistributionPolar,
+                                             I3CLSimRandomValueConstPtr angularProfileDistributionAzimuthal,
+                                             I3CLSimRandomValueConstPtr timeDelayDistribution,
                                              uint32_t photonsPerStep=default_photonsPerStep);
 
     virtual ~I3CLSimLightSourceToStepConverterFlasher();
@@ -116,6 +155,9 @@ private:
     
     double photonNumberCorrectionFactorForBias_;
     
+    I3CLSimRandomValueConstPtr angularProfileDistributionPolar_;
+    I3CLSimRandomValueConstPtr angularProfileDistributionAzimuthal_;
+    I3CLSimRandomValueConstPtr timeDelayDistribution_;
 
 };
 

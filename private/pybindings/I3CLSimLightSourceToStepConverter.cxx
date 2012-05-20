@@ -166,7 +166,7 @@ void register_I3CLSimLightSourceToStepConverter()
         .def("GetLightSourceParameterizationSeries", 
              &I3CLSimLightSourceToStepConverter::GetLightSourceParameterizationSeries,
              &I3CLSimLightSourceToStepConverterWrapper::default_GetLightSourceParameterizationSeries,
-             bp::return_internal_reference<>())
+             bp::return_value_policy<bp::copy_const_reference>())
         ;
     }
     
@@ -247,11 +247,19 @@ void register_I3CLSimLightSourceToStepConverter()
         (
          "I3CLSimLightSourceToStepConverterFlasher",
          bp::init<
-         I3CLSimFunctionConstPtr, I3CLSimSpectrumTablePtr, uint32_t
+         I3CLSimFunctionConstPtr,
+         I3CLSimSpectrumTablePtr,
+         I3CLSimRandomValueConstPtr,
+         I3CLSimRandomValueConstPtr,
+         I3CLSimRandomValueConstPtr,
+         uint32_t
          >(
            (
             bp::arg("flasherSpectrumNoBias"),
             bp::arg("spectrumTable"),
+            bp::arg("angularProfileDistributionPolar"),
+            bp::arg("angularProfileDistributionAzimuthal"),
+            bp::arg("timeDelayDistribution"),
             bp::arg("photonsPerStep") = I3CLSimLightSourceToStepConverterFlasher::default_photonsPerStep
             )
            )

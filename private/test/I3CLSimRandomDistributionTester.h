@@ -41,13 +41,15 @@ public:
                                     uint64_t workgroupSize_,
                                     uint64_t workItemsPerIteration_,
                                     I3RandomServicePtr randomService,
-                                    I3CLSimRandomValueConstPtr randomDistribution);
+                                    I3CLSimRandomValueConstPtr randomDistribution,
+                                    const std::vector<double> &runtimeParameters=std::vector<double>());
 
     I3VectorFloatPtr GenerateRandomNumbers(uint64_t iterations);
     
 private:
     void FillSource(std::vector<std::string> &source,
-                    I3CLSimRandomValueConstPtr randomDistribution);
+                    I3CLSimRandomValueConstPtr randomDistribution,
+                    const std::vector<double> &runtimeParameters);
     
     void InitBuffers(I3RandomServicePtr randomService);
     
