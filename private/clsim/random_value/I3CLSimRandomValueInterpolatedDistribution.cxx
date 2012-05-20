@@ -79,9 +79,13 @@ I3CLSimRandomValueInterpolatedDistribution::~I3CLSimRandomValueInterpolatedDistr
 
 I3CLSimRandomValueInterpolatedDistribution::I3CLSimRandomValueInterpolatedDistribution() {;}
 
-double I3CLSimRandomValueInterpolatedDistribution::SampleFromDistribution(const I3RandomServicePtr &random) const
+std::size_t I3CLSimRandomValueInterpolatedDistribution::NumberOfParameters() const {return 0;}
+
+double I3CLSimRandomValueInterpolatedDistribution::SampleFromDistribution(const I3RandomServicePtr &random,
+                                                                          const std::vector<double> &parameters) const
 {
     if (!random) log_fatal("random service is NULL!");
+    if (parameters.size() != 0) log_fatal("This distribution expects 0 parameters. Got %zu.", parameters.size());
 
     typedef std::vector<double>::size_type sizeType;
 

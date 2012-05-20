@@ -184,6 +184,7 @@ if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
     private/clsim/random_value/I3CLSimRandomValueRayleighScatteringCosAngle.cxx
     private/clsim/random_value/I3CLSimRandomValueSimplifiedLiu.cxx
     private/clsim/random_value/I3CLSimRandomValueWlenCherenkovNoDispersion.cxx
+    private/clsim/random_value/I3CLSimRandomValueNormalDistribution.cxx
     private/clsim/I3CLSimSimpleGeometryFromI3Geometry.cxx
     private/clsim/I3CLSimSimpleGeometryTextFile.cxx
     private/clsim/I3CLSimSimpleGeometryUserConfigurable.cxx

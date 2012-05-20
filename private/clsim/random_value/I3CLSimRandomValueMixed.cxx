@@ -57,15 +57,30 @@ I3CLSimRandomValueMixed::~I3CLSimRandomValueMixed()
 
 I3CLSimRandomValueMixed::I3CLSimRandomValueMixed() {;}
 
-double I3CLSimRandomValueMixed::SampleFromDistribution(const I3RandomServicePtr &random) const
+std::size_t I3CLSimRandomValueMixed::NumberOfParameters() const
+{
+    return firstDistribution_->NumberOfParameters() + secondDistribution_->NumberOfParameters();
+}
+
+double I3CLSimRandomValueMixed::SampleFromDistribution(const I3RandomServicePtr &random,
+                                                       const std::vector<double> &parameters) const
 {
     if (!random) log_fatal("random service is NULL!");
-
+    const std::size_t expectedNumParams = firstDistribution_->NumberOfParameters() + secondDistribution_->NumberOfParameters();
+    if (parameters.size() != expectedNumParams) log_fatal("This distribution expects %zu parameters. Got %zu.", expectedNumParams, parameters.size());
+    
+    
     const double rr = random->Uniform();
     if (rr < fractionOfFirstDistribution_) {
-        return firstDistribution_->SampleFromDistribution(random);
+        const std::vector<double> paramsVector(parameters.begin(),
+                                               parameters.begin()+firstDistribution_->NumberOfParameters());
+        
+        return firstDistribution_->SampleFromDistribution(random, paramsVector);
     } else {
-        return secondDistribution_->SampleFromDistribution(random);
+        const std::vector<double> paramsVector(parameters.begin()+firstDistribution_->NumberOfParameters(),
+                                               parameters.end());
+
+        return secondDistribution_->SampleFromDistribution(random, paramsVector);
     }
 }
 
@@ -85,6 +100,18 @@ std::string I3CLSimRandomValueMixed::GetOpenCLFunction
 {
     std::string firstFunc, secondFunc, mainFunc;
     
+    std::string parametersInDecl, parametersToCall1, parametersToCall2;
+    for (std::size_t i=0;i<firstDistribution_->NumberOfParameters();++i)
+    {
+        parametersInDecl += ", float a" + boost::lexical_cast<std::string>(i);
+        parametersToCall1 += ", a" + boost::lexical_cast<std::string>(i);
+    }
+    for (std::size_t i=0;i<secondDistribution_->NumberOfParameters();++i)
+    {
+        parametersInDecl += ", float b" + boost::lexical_cast<std::string>(i);
+        parametersToCall2 += ", b" + boost::lexical_cast<std::string>(i);
+    }
+
     if (OpenCLFunctionWillOnlyUseASingleRandomNumber())
     {
         firstFunc = 
@@ -100,18 +127,18 @@ std::string I3CLSimRandomValueMixed::GetOpenCLFunction
                                               "rrrr__",
                                               "(1.f-rrrr__)");
         
-        const std::string functionDecl = std::string("inline float ") + functionName + "(" + functionArgs + ")";
+        const std::string functionDecl = std::string("inline float ") + functionName + "(" + functionArgs + parametersInDecl + ")";
         
         mainFunc = functionDecl + ";\n\n" + functionDecl + "\n"
         "{\n"    
         "    const float rr = " + uniformRandomCall_co + ";\n"
         "    if (rr < " + ToFloatString(fractionOfFirstDistribution_) + ")\n"
         "    {\n"
-        "        return " + functionName + "_mix1(rr/" + ToFloatString(fractionOfFirstDistribution_) + ");\n"
+        "        return " + functionName + "_mix1(rr/" + ToFloatString(fractionOfFirstDistribution_) + parametersToCall1 + ");\n"
         "    }\n"
         "    else\n"
         "    {\n"
-        "        return " + functionName + "_mix2((1.f-rr)/" + ToFloatString(1.-fractionOfFirstDistribution_) + ");\n"
+        "        return " + functionName + "_mix2((1.f-rr)/" + ToFloatString(1.-fractionOfFirstDistribution_) + parametersToCall2 + ");\n"
         "    }\n"
         "}\n"
         ;
@@ -131,18 +158,18 @@ std::string I3CLSimRandomValueMixed::GetOpenCLFunction
                                               uniformRandomCall_co,
                                               uniformRandomCall_oc);
         
-        const std::string functionDecl = std::string("inline float ") + functionName + "(" + functionArgs + ")";
+        const std::string functionDecl = std::string("inline float ") + functionName + "(" + functionArgs + parametersInDecl + ")";
         
         mainFunc = functionDecl + ";\n\n" + functionDecl + "\n"
         "{\n"    
         "    const float rr = " + uniformRandomCall_co + ";\n"
         "    if (rr < " + ToFloatString(fractionOfFirstDistribution_) + ")\n"
         "    {\n"
-        "        return " + functionName + "_mix1(" + functionArgsToCall + ");\n"
+        "        return " + functionName + "_mix1(" + functionArgsToCall + parametersToCall1 + ");\n"
         "    }\n"
         "    else\n"
         "    {\n"
-        "        return " + functionName + "_mix2(" + functionArgsToCall + ");\n"
+        "        return " + functionName + "_mix2(" + functionArgsToCall + parametersToCall2 + ");\n"
         "    }\n"
         "}\n"
         ;

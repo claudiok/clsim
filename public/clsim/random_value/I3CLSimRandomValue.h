@@ -50,9 +50,21 @@ public:
      * Return a random number sampled from the distribution.
      * This runs as host code and is mainly for cross-checking
      * the OpenCL implementation.
+     *
+     * The parameters vector size needs to be the same
+     * as the number returned by NumberOfParameters().
      */
-    virtual double SampleFromDistribution(const I3RandomServicePtr &random) const = 0;
+    virtual double SampleFromDistribution(const I3RandomServicePtr &random,
+                                          const std::vector<double> &parameters
+                                         ) const = 0;
 
+    /**
+     * This should return the number of parameters this distribution
+     * requires. For a gaussian this would be something like the
+     * mean and sigma.
+     */
+    virtual std::size_t NumberOfParameters() const = 0;
+    
     /**
      * If the OpenCL function will only use a single random number,
      * the random number can be passed directly as a value instead of

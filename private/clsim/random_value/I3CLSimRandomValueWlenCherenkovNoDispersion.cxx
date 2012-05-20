@@ -58,10 +58,13 @@ I3CLSimRandomValueWlenCherenkovNoDispersion::~I3CLSimRandomValueWlenCherenkovNoD
 
 I3CLSimRandomValueWlenCherenkovNoDispersion::I3CLSimRandomValueWlenCherenkovNoDispersion() {;}
 
+std::size_t I3CLSimRandomValueWlenCherenkovNoDispersion::NumberOfParameters() const {return 0;}
 
-double I3CLSimRandomValueWlenCherenkovNoDispersion::SampleFromDistribution(const I3RandomServicePtr &random) const
+double I3CLSimRandomValueWlenCherenkovNoDispersion::SampleFromDistribution(const I3RandomServicePtr &random,
+                                                                           const std::vector<double> &parameters) const
 {
     if (!random) log_fatal("random service is NULL!");
+    if (parameters.size() != 0) log_fatal("This distribution expects 0 parameters. Got %zu.", parameters.size());
 
     const double minVal = 1./toWlen_;
     const double range = (1./fromWlen_) - minVal;

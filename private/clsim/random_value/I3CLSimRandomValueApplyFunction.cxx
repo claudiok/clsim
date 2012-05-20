@@ -37,7 +37,7 @@
 #include <limits>
 
 I3CLSimRandomValueApplyFunction::
-I3CLSimRandomValueApplyFunction(I3CLSimRandomValuePtr randomDistUsed,
+I3CLSimRandomValueApplyFunction(const I3CLSimRandomValuePtr &randomDistUsed,
                                 const std::string &applyFunctionName)
 :
 randomDistUsed_(randomDistUsed),
@@ -58,11 +58,17 @@ I3CLSimRandomValueApplyFunction::~I3CLSimRandomValueApplyFunction()
 
 I3CLSimRandomValueApplyFunction::I3CLSimRandomValueApplyFunction() {;}
 
-double I3CLSimRandomValueApplyFunction::SampleFromDistribution(const I3RandomServicePtr &random) const
+std::size_t I3CLSimRandomValueApplyFunction::NumberOfParameters() const
+{
+    return randomDistUsed_->NumberOfParameters();
+}
+
+double I3CLSimRandomValueApplyFunction::SampleFromDistribution(const I3RandomServicePtr &random,
+                                                               const std::vector<double> &parameters) const
 {
     if (!random) log_fatal("random service is NULL!");
     
-    const double sampledValue = randomDistUsed_->SampleFromDistribution(random);
+    const double sampledValue = randomDistUsed_->SampleFromDistribution(random, parameters);
     
     if      (applyFunctionName_=="cos")  return std::cos (sampledValue); 
     else if (applyFunctionName_=="sin")  return std::sin (sampledValue); 
@@ -97,7 +103,14 @@ std::string I3CLSimRandomValueApplyFunction::GetOpenCLFunction
     else if (applyFunctionName_=="exp") applyFunctionNameNativeMath="native_exp";
     else applyFunctionNameNativeMath=applyFunctionName_;
 
-    const std::string functionDecl = std::string("inline float ") + functionName + "(" + functionArgs + ")";
+    std::string parametersInDecl, parametersToCall;
+    for (std::size_t i=0;i<randomDistUsed_->NumberOfParameters();++i)
+    {
+        parametersInDecl += ", float p" + boost::lexical_cast<std::string>(i);
+        parametersToCall += ", p" + boost::lexical_cast<std::string>(i);
+    }
+    
+    const std::string functionDecl = std::string("inline float ") + functionName + "(" + functionArgs + parametersInDecl +")";
     const std::string functionNameUsed = std::string("") + functionName + "_used";
 
     const std::string usedFunctionDecl =
@@ -112,7 +125,7 @@ std::string I3CLSimRandomValueApplyFunction::GetOpenCLFunction
     
     return usedFunctionDecl + "\n\n" + functionDecl + ";\n\n" + functionDecl + "\n"
     "{\n"
-    "    const float number = " + functionNameUsed + "(" + functionArgsToCall + ");\n"
+    "    const float number = " + functionNameUsed + "(" + functionArgsToCall + parametersToCall + ");\n"
     "    \n"
     "#ifdef USE_NATIVE_MATH\n"
     "    return " + applyFunctionNameNativeMath + "(number);\n"

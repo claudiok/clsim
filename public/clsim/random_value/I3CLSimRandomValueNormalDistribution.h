@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2011, 2012
+ * Copyright (c) 2012
  * Claudio Kopper <claudio.kopper@icecube.wisc.edu>
  * and the IceCube Collaboration <http://www.icecube.wisc.edu>
  *
@@ -18,37 +18,31 @@
  *
  * $Id$
  *
- * @file I3CLSimRandomValueSimplifiedLiu.h
+ * @file I3CLSimRandomValueNormalDistribution.h
  * @version $Revision$
  * @date $Date$
  * @author Claudio Kopper
  */
 
-#ifndef I3CLSIMRANDOMVALUESIMPLIFIEDLIU_H_INCLUDED
-#define I3CLSIMRANDOMVALUESIMPLIFIEDLIU_H_INCLUDED
+#ifndef I3CLSIMRANDOMVALUENORMALDISTRIBUTION_H_INCLUDED
+#define I3CLSIMRANDOMVALUENORMALDISTRIBUTION_H_INCLUDED
 
 #include "clsim/random_value/I3CLSimRandomValue.h"
 
 /**
- * @brief A value chosen according to the simplified Liu distribution.
- * (see Pingyu Liu, "A new phase function approximating to mie
- * scattering for radiative transport equations", Phys. Med. Biol.,
- * 39:1025, 1994)
+ * @brief Samples a value from the normal distribution.
  *
- * The distribution looks like this:
- *
- * p(x) propto (1 + x)^alpha
- *
- * where x=cos(theta), alpha=2g/(1-g) and g=<cos(theta)> [the mean cosine].
+ * Also serves as an example of a distribution taking
+ * parameters (in this case: mean and sigma).
  */
-static const unsigned i3clsimrandomvaluesimplifiedliu_version_ = 0;
+static const unsigned i3clsimrandomvaluenormaldistribution_version_ = 0;
 
-struct I3CLSimRandomValueSimplifiedLiu : public I3CLSimRandomValue
+struct I3CLSimRandomValueNormalDistribution : public I3CLSimRandomValue
 {
 public:
     
-    I3CLSimRandomValueSimplifiedLiu(double meanCosine);
-    virtual ~I3CLSimRandomValueSimplifiedLiu();
+    I3CLSimRandomValueNormalDistribution();
+    virtual ~I3CLSimRandomValueNormalDistribution();
 
     virtual std::size_t NumberOfParameters() const;
 
@@ -67,17 +61,15 @@ public:
     virtual bool CompareTo(const I3CLSimRandomValue &other) const;
     
 private:
-    I3CLSimRandomValueSimplifiedLiu();
-
-    double meanCosine_;
+    //I3CLSimRandomValueNormalDistribution();
     
     friend class boost::serialization::access;
     template <class Archive> void serialize(Archive & ar, unsigned version);
 };
 
 
-BOOST_CLASS_VERSION(I3CLSimRandomValueSimplifiedLiu, i3clsimrandomvaluesimplifiedliu_version_);
+BOOST_CLASS_VERSION(I3CLSimRandomValueNormalDistribution, i3clsimrandomvaluenormaldistribution_version_);
 
-I3_POINTER_TYPEDEFS(I3CLSimRandomValueSimplifiedLiu);
+I3_POINTER_TYPEDEFS(I3CLSimRandomValueNormalDistribution);
 
-#endif //I3CLSIMRANDOMVALUESIMPLIFIEDLIU_H_INCLUDED
+#endif //I3CLSIMRANDOMVALUENORMALDISTRIBUTION_H_INCLUDED

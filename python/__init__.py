@@ -49,6 +49,8 @@ from GetFlasherParameterizationList import GetFlasherParameterizationList
 from AsyncTap import AsyncTap
 from AutoSetGeant4Environment import AutoSetGeant4Environment
 
+from I3CLSimRandomValueIceCubeFlasherTimeProfile import I3CLSimRandomValueIceCubeFlasherTimeProfile
+
 # import tray segments (if available)
 from traysegments import I3CLSimMakeHits, I3CLSimMakePhotons, I3CLSimMakeHitsFromPhotons
 

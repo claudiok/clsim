@@ -42,12 +42,15 @@ struct I3CLSimRandomValueApplyFunction : public I3CLSimRandomValue
 {
 public:
     
-    I3CLSimRandomValueApplyFunction(I3CLSimRandomValuePtr randomDistUsed,
+    I3CLSimRandomValueApplyFunction(const I3CLSimRandomValuePtr &randomDistUsed,
                                     const std::string &functionName);
 
     virtual ~I3CLSimRandomValueApplyFunction();
 
-    virtual double SampleFromDistribution(const I3RandomServicePtr &random) const;
+    virtual std::size_t NumberOfParameters() const;
+
+    virtual double SampleFromDistribution(const I3RandomServicePtr &random,
+                                          const std::vector<double> &parameters) const;
 
     virtual bool OpenCLFunctionWillOnlyUseASingleRandomNumber() const {return randomDistUsed_->OpenCLFunctionWillOnlyUseASingleRandomNumber();}
 

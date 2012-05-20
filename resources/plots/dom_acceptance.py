@@ -137,9 +137,9 @@ def applyOpenCLWlenDependentFunction(xValues, functionOpenCL, getDerivative=Fals
     #print "         number of values:", len(xValues)
     
     tester = clsim.I3CLSimFunctionTester(device=openCLDevice,
-                                                   workgroupSize=workgroupSize,
-                                                   workItemsPerIteration=workItemsPerIteration,
-                                                   wlenDependentValue=functionOpenCL)
+                                         workgroupSize=workgroupSize,
+                                         workItemsPerIteration=workItemsPerIteration,
+                                         wlenDependentValue=functionOpenCL)
     
     #print "maxWorkgroupSizeForKernel:", tester.maxWorkgroupSize
     
@@ -195,7 +195,7 @@ def genMCHistogramsHost(distribution, hist_range, iterations=10000000, numBins=1
 
     values = []
     for i in range(iterations):
-        values.append(distribution.SampleFromDistribution(rng))
+        values.append(distribution.SampleFromDistribution(rng, []))
     samples = len(values)
     print "generated (host)"
     

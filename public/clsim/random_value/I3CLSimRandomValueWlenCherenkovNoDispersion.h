@@ -47,7 +47,10 @@ public:
 
     virtual ~I3CLSimRandomValueWlenCherenkovNoDispersion();
 
-    virtual double SampleFromDistribution(const I3RandomServicePtr &random) const;
+    virtual std::size_t NumberOfParameters() const;
+
+    virtual double SampleFromDistribution(const I3RandomServicePtr &random,
+                                          const std::vector<double> &parameters) const;
 
     virtual bool OpenCLFunctionWillOnlyUseASingleRandomNumber() const {return true;}
 

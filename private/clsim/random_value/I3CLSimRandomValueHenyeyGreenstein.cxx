@@ -47,9 +47,13 @@ I3CLSimRandomValueHenyeyGreenstein::~I3CLSimRandomValueHenyeyGreenstein()
 
 I3CLSimRandomValueHenyeyGreenstein::I3CLSimRandomValueHenyeyGreenstein() {;}
 
-double I3CLSimRandomValueHenyeyGreenstein::SampleFromDistribution(const I3RandomServicePtr &random) const
+std::size_t I3CLSimRandomValueHenyeyGreenstein::NumberOfParameters() const {return 0;}
+
+double I3CLSimRandomValueHenyeyGreenstein::SampleFromDistribution(const I3RandomServicePtr &random,
+                                                                  const std::vector<double> &parameters) const
 {
     if (!random) log_fatal("random service is NULL!");
+    if (parameters.size() != 0) log_fatal("This distribution expects 0 parameters. Got %zu.", parameters.size());
 
     const double g = meanCosine_;
     const double g2 = meanCosine_*meanCosine_;

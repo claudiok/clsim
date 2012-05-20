@@ -40,9 +40,13 @@ I3CLSimRandomValueRayleighScatteringCosAngle::~I3CLSimRandomValueRayleighScatter
 
 }
 
-double I3CLSimRandomValueRayleighScatteringCosAngle::SampleFromDistribution(const I3RandomServicePtr &random) const
+std::size_t I3CLSimRandomValueRayleighScatteringCosAngle::NumberOfParameters() const {return 0;}
+
+double I3CLSimRandomValueRayleighScatteringCosAngle::SampleFromDistribution(const I3RandomServicePtr &random,
+                                                                            const std::vector<double> &parameters) const
 {
     if (!random) log_fatal("random service is NULL!");
+    if (parameters.size() != 0) log_fatal("This distribution expects 0 parameters. Got %zu.", parameters.size());
 
     const double b = 0.835;
     const double p = 1./0.835;

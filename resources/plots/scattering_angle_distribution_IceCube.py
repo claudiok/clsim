@@ -114,7 +114,7 @@ def genMCHistogramsHost(distribution, rng, iterations=10000000, numBins=1000):
 
     angles = []
     for i in range(iterations):
-        angles.append(distribution.SampleFromDistribution(rng))
+        angles.append(distribution.SampleFromDistribution(rng, []))
     samples = len(angles)
 
     print "generated (host)"
