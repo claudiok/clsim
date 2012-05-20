@@ -107,7 +107,7 @@ void register_I3CLSimRandomValue()
 {
     {
         bp::scope I3CLSimRandomValue_scope =
-        bp::class_<I3CLSimRandomValueWrapper, boost::noncopyable>("I3CLSimRandomValue")
+        bp::class_<I3CLSimRandomValueWrapper, shared_ptr<I3CLSimRandomValueWrapper>, boost::noncopyable>("I3CLSimRandomValue")
         .def("NumberOfParameters", bp::pure_virtual(&I3CLSimRandomValue::NumberOfParameters))
         .def("SampleFromDistribution", bp::pure_virtual(&I3CLSimRandomValue::SampleFromDistribution))
         .def("OpenCLFunctionWillOnlyUseASingleRandomNumber", bp::pure_virtual(&I3CLSimRandomValue::OpenCLFunctionWillOnlyUseASingleRandomNumber))
@@ -122,8 +122,6 @@ void register_I3CLSimRandomValue()
     bp::implicitly_convertible<shared_ptr<I3CLSimRandomValue>, shared_ptr<const I3CLSimRandomValue> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueWrapper>, shared_ptr<const I3CLSimRandomValueWrapper> >();
     utils::register_const_ptr<I3CLSimRandomValue>();
-
-    bp::register_ptr_to_python< shared_ptr<I3CLSimRandomValue> >;
 
     // Henyey-Greenstein
     {
