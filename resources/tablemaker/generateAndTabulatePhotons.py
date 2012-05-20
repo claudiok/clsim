@@ -16,6 +16,10 @@ parser.add_option("-s", "--seed",type="int",default=12345,
                   dest="SEED", help="Initial seed for the random number generator")
 parser.add_option("-r", "--runnumber", type="int", default=1,
                   dest="RUNNUMBER", help="The run number for this simulation (used for the RNG seed)")
+parser.add_option("-d", "--dump-photons", default=None,
+                  dest="DUMPFILE", help="Dump photons to an .i3 file instead of tabulating")
+parser.add_option("-u", "--unweighted-photons", action="store_true", default=False,
+                  dest="UNWEIGHTEDPHOTONS", help="Do not pre-weight photons according to DOM spectral acceptance")
 
 # parse cmd line args, bail out if anything is not understood
 (options,args) = parser.parse_args()
@@ -152,6 +156,7 @@ tray.AddSegment(clsim.I3CLSimMakePhotons, "makeCLSimPhotons",
     MMCTrackListName = None,    # do NOT use MMC
     ParallelEvents = 1,         # only work at one event at a time (it'll take long enough)
     RandomService = randomService,
+    UnweightedPhotons=options.UNWEIGHTEDPHOTONS,
     UseGPUs=False,              # table-making is not a workload particularly suited to GPUs
     UseCPUs=True,               # it should work fine on CPUs, though
     UnshadowedFraction=1.0,     # no cable shadow
@@ -167,20 +172,20 @@ tray.AddSegment(clsim.I3CLSimMakePhotons, "makeCLSimPhotons",
                                        LimitWorkgroupSize=1,                # this effectively disables all parallelism (there should be only one OpenCL worker thread)
                                                                             #  it also should save LOTS of memory
                                       ),
-    IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos094.11jul2011.txt"),
+    #IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos094.11jul2011.txt"),
     #IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
+    IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/photonics_spice_1/Ice_table.spice.i3coords.cos080.10feb2010.txt"),
     )
 
-
-if os.path.exists(options.OUTFILE):
-    os.unlink(options.OUTFILE)
-tray.AddModule(tabulator.I3TabulatorModule, 'tabulator',
-    Photons='PropagatedPhotons', Source='Source', Statistics='I3CLSimStatistics',
-    Filename=options.OUTFILE)
-
-
-#tray.AddModule("I3Writer","writer",
-#    Filename = "photon_dump.i3")
+if not options.DUMPFILE:
+    if os.path.exists(options.OUTFILE):
+        os.unlink(options.OUTFILE)
+    tray.AddModule(tabulator.I3TabulatorModule, 'tabulator',
+        Photons='PropagatedPhotons', Source='Source', Statistics='I3CLSimStatistics',
+        Filename=options.OUTFILE)
+else:
+    tray.AddModule("I3Writer","writer",
+        Filename = options.DUMPFILE)
 
 tray.AddModule("TrashCan", "the can")
 
