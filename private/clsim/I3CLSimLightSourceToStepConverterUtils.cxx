@@ -27,6 +27,7 @@
 #include "clsim/I3CLSimLightSourceToStepConverterUtils.h"
 
 #include "clsim/function/I3CLSimFunction.h"
+#include "clsim/function/I3CLSimFunctionDeltaPeak.h"
 #include "icetray/I3Units.h"
 #include "dataclasses/I3Constants.h"
 
@@ -144,6 +145,16 @@ namespace I3CLSimLightSourceToStepConverterUtils {
                                                  const I3CLSimFunction &wavelengthGenerationBias,
                                                  double fromWlen, double toWlen)
     {
+        try {
+            // special handling for delta peaks
+            const I3CLSimFunctionDeltaPeak &deltaPeak = dynamic_cast<const I3CLSimFunctionDeltaPeak &>(unbiasedSpectrum);
+            return wavelengthGenerationBias.GetValue(deltaPeak.GetPeakPosition());
+        } catch (const std::bad_cast& e) {
+            log_debug("Not a delta peak. Doing standard handling.");
+        }
+
+        // if we get here, it's not a delta peak
+        
         log_trace("integrating in range [%f;%f]nm",
                   fromWlen/I3Units::nanometer,
                   toWlen/I3Units::nanometer);

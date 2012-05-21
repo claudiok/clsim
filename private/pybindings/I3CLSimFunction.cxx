@@ -29,6 +29,7 @@
 #include <clsim/function/I3CLSimFunction.h>
 
 #include <clsim/function/I3CLSimFunctionConstant.h>
+#include <clsim/function/I3CLSimFunctionDeltaPeak.h>
 
 #include <clsim/function/I3CLSimFunctionFromTable.h>
 #include <clsim/function/I3CLSimFunctionRefIndexQuanFry.h>
@@ -121,6 +122,33 @@ void register_I3CLSimFunction()
     bp::implicitly_convertible<shared_ptr<I3CLSimFunctionConstant>, shared_ptr<I3CLSimFunction> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimFunctionConstant>, shared_ptr<const I3CLSimFunction> >();
     utils::register_const_ptr<I3CLSimFunctionConstant>();
+
+
+    // a delta peak
+    {
+        bp::class_<
+        I3CLSimFunctionDeltaPeak, 
+        boost::shared_ptr<I3CLSimFunctionDeltaPeak>, 
+        bases<I3CLSimFunction>,
+        boost::noncopyable
+        >
+        (
+         "I3CLSimFunctionDeltaPeak",
+         bp::init<
+         double
+         >(
+           (
+            bp::arg("peakPosition")
+            )
+           )
+         )
+        .def("GetPeakPosition", &I3CLSimFunctionDeltaPeak::GetPeakPosition)
+        ;
+    }
+    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionDeltaPeak>, shared_ptr<const I3CLSimFunctionDeltaPeak> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionDeltaPeak>, shared_ptr<I3CLSimFunction> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionConstant>, shared_ptr<const I3CLSimFunction> >();
+    utils::register_const_ptr<I3CLSimFunctionDeltaPeak>();
 
     
     // from table

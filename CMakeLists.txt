@@ -186,12 +186,15 @@ if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
     private/clsim/random_value/I3CLSimRandomValueWlenCherenkovNoDispersion.cxx
     private/clsim/random_value/I3CLSimRandomValueNormalDistribution.cxx
     private/clsim/random_value/I3CLSimRandomValueFixParameter.cxx
+    private/clsim/random_value/I3CLSimRandomValueConstant.cxx
+    private/clsim/random_value/I3CLSimRandomValueUniform.cxx
     private/clsim/I3CLSimSimpleGeometryFromI3Geometry.cxx
     private/clsim/I3CLSimSimpleGeometryTextFile.cxx
     private/clsim/I3CLSimSimpleGeometryUserConfigurable.cxx
     private/clsim/I3CLSimStep.cxx
     private/clsim/function/I3CLSimFunctionAbsLenIceCube.cxx
     private/clsim/function/I3CLSimFunctionConstant.cxx
+    private/clsim/function/I3CLSimFunctionDeltaPeak.cxx
     private/clsim/function/I3CLSimFunction.cxx
     private/clsim/function/I3CLSimFunctionFromTable.cxx
     private/clsim/function/I3CLSimFunctionPolynomial.cxx

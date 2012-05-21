@@ -46,6 +46,7 @@ def I3CLSimMakeHits(tray, name,
                     UseGPUs=True,
                     MCTreeName="I3MCTree",
                     FlasherInfoVectName=None,
+                    FlasherPulseSeriesName=None,
                     MMCTrackListName="MMCTrackList",
                     MCHitSeriesName="MCHitSeriesMap",
                     PhotonSeriesName=None,
@@ -93,10 +94,17 @@ def I3CLSimMakeHits(tray, name,
         purposes and you don't want it to slow down.
     :param MCTreeName:
         The name of the I3MCTree containing the particles to propagate.
-    :param FlasherPulseSeriesName:
-        Set this to the name of I3FlasherInfoVect objects in the frame to
+    :param FlasherInfoVectName:
+        Set this to the name of an I3FlasherInfoVect object in the frame to
         enable flasher simulation. The module will read I3FlasherInfoVect objects
         and generate photons according to assumed parameterizations.
+    :param FlasherPulseSeriesName:
+        Set this to the name of an I3CLSimFlasherPulseSeries object in the frame to
+        enable flasher/Standard Candle simulation.
+        This cannot be used at the same time as FlasherInfoVectName.
+        (I3CLSimFlasherPulseSeries objects are clsim's internal flasher
+        representation, if "FlasherInfoVectName" is used, the I3FlasherInfoVect
+        objects are converted to I3CLSimFlasherPulseSeries objects.)
     :param MMCTrackListName:
         Only used if *ChopMuons* is active. Set it to the name
         of the I3MMCTrackList object that contains additional
@@ -210,6 +218,7 @@ def I3CLSimMakeHits(tray, name,
                                      MCTreeName=MCTreeName,
                                      OutputMCTreeName=clSimMCTreeName,
                                      FlasherInfoVectName=FlasherInfoVectName,
+                                     FlasherPulseSeriesName=FlasherPulseSeriesName,
                                      MMCTrackListName=MMCTrackListName,
                                      PhotonSeriesName=photonsName,
                                      ParallelEvents=ParallelEvents,

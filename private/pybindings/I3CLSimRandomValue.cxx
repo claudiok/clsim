@@ -38,6 +38,8 @@
 #include <clsim/random_value/I3CLSimRandomValueWlenCherenkovNoDispersion.h>
 #include <clsim/random_value/I3CLSimRandomValueNormalDistribution.h>
 #include <clsim/random_value/I3CLSimRandomValueFixParameter.h>
+#include <clsim/random_value/I3CLSimRandomValueConstant.h>
+#include <clsim/random_value/I3CLSimRandomValueUniform.h>
 
 #ifdef NO_PYTHON_DATACLASS_SUITE
 #include "icetray_python_backports/std_vector_indexing_suite.hpp"
@@ -371,6 +373,61 @@ void register_I3CLSimRandomValue()
     bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueFixParameter>, shared_ptr<I3CLSimRandomValue> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueFixParameter>, shared_ptr<const I3CLSimRandomValue> >();
     utils::register_const_ptr<I3CLSimRandomValueFixParameter>();
+
+    
+    // a single, constant value
+    {
+        bp::class_<
+        I3CLSimRandomValueConstant, 
+        boost::shared_ptr<I3CLSimRandomValueConstant>, 
+        bases<I3CLSimRandomValue>,
+        boost::noncopyable
+        >
+        (
+         "I3CLSimRandomValueConstant",
+         bp::init<
+         double
+         >(
+           (
+            bp::arg("value")
+            )
+           )
+         )
+        .def(init<>()) // this one also has a default constructor
+        ;
+    }
+    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueConstant>, shared_ptr<const I3CLSimRandomValueConstant> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueConstant>, shared_ptr<I3CLSimRandomValue> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueConstant>, shared_ptr<const I3CLSimRandomValue> >();
+    utils::register_const_ptr<I3CLSimRandomValueConstant>();
+
+    
+    // a uniformly distributed value
+    {
+        bp::class_<
+        I3CLSimRandomValueUniform, 
+        boost::shared_ptr<I3CLSimRandomValueUniform>, 
+        bases<I3CLSimRandomValue>,
+        boost::noncopyable
+        >
+        (
+         "I3CLSimRandomValueUniform",
+         bp::init<
+         double, double
+         >(
+           (
+            bp::arg("from"),
+            bp::arg("to")
+            )
+           )
+         )
+        .def(init<>()) // this one also has a default constructor
+        ;
+    }
+    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueUniform>, shared_ptr<const I3CLSimRandomValueUniform> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueUniform>, shared_ptr<I3CLSimRandomValue> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueUniform>, shared_ptr<const I3CLSimRandomValue> >();
+    utils::register_const_ptr<I3CLSimRandomValueUniform>();
 
 
     // a vector of distributions

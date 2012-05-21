@@ -26,8 +26,9 @@
 
 from icecube import icetray, dataclasses
 
-from . import I3CLSimFunctionFromTable
-from . import I3CLSimFlasherPulse
+from icecube.clsim import I3CLSimFunctionFromTable
+from icecube.clsim import I3CLSimFunctionDeltaPeak
+from icecube.clsim import I3CLSimFlasherPulse
 
 from I3Tray import I3Units
 
@@ -69,6 +70,12 @@ def GetIceCubeFlasherSpectrumData(spectrumType):
     return data
 
 def GetIceCubeFlasherSpectrum(spectrumType = I3CLSimFlasherPulse.FlasherPulseType.LED405nm):
-    data = GetIceCubeFlasherSpectrumData(spectrumType)
-    spectrum = I3CLSimFunctionFromTable(data[0], data[1])
-    return spectrum
+    if spectrumType in [I3CLSimFlasherPulse.FlasherPulseType.SC1, I3CLSimFlasherPulse.FlasherPulseType.SC2]:
+        # special handling for Standard Candles:
+        # these currently have single-wavelength spectra
+        spectrum = I3CLSimFunctionDeltaPeak(337.*I3Units.nanometer)
+        return spectrum
+    else:
+        data = GetIceCubeFlasherSpectrumData(spectrumType)
+        spectrum = I3CLSimFunctionFromTable(data[0], data[1])
+        return spectrum

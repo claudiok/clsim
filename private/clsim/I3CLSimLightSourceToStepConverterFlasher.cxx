@@ -45,6 +45,7 @@ using namespace I3CLSimLightSourceToStepConverterUtils;
 
 
 const uint32_t I3CLSimLightSourceToStepConverterFlasher::default_photonsPerStep=400;
+const bool I3CLSimLightSourceToStepConverterFlasher::default_interpretAngularDistributionsInPolarCoordinates=false;
 
 
 I3CLSimLightSourceToStepConverterFlasher::I3CLSimLightSourceToStepConverterFlasher
@@ -53,6 +54,7 @@ I3CLSimLightSourceToStepConverterFlasher::I3CLSimLightSourceToStepConverterFlash
  I3CLSimRandomValueConstPtr angularProfileDistributionPolar,
  I3CLSimRandomValueConstPtr angularProfileDistributionAzimuthal,
  I3CLSimRandomValueConstPtr timeDelayDistribution,
+ bool interpretAngularDistributionsInPolarCoordinates,
  uint32_t photonsPerStep)
 :
 initialized_(false),
@@ -63,7 +65,8 @@ photonsPerStep_(photonsPerStep),
 flasherSpectrumNoBias_(flasherSpectrumNoBias),
 angularProfileDistributionPolar_(angularProfileDistributionPolar),
 angularProfileDistributionAzimuthal_(angularProfileDistributionAzimuthal),
-timeDelayDistribution_(timeDelayDistribution)
+timeDelayDistribution_(timeDelayDistribution),
+interpretAngularDistributionsInPolarCoordinates_(interpretAngularDistributionsInPolarCoordinates)
 {
     // verify assumptions:
     
@@ -433,38 +436,88 @@ void I3CLSimLightSourceToStepConverterFlasher::FillStep(I3CLSimStep &step,
                                                         uint32_t identifier)
 {
     //////// bunch direction
-    
-    // smear the direction
-    const double polarAngle = flasherPulse.GetDir().CalcTheta();
-    const double azimuthalAngle = flasherPulse.GetDir().CalcPhi();
-    
+
     // angular smearing
+
     const double smearPolar =
     angularProfileDistributionPolar_->SampleFromDistribution
     (randomService_,
      std::vector<double>(1, flasherPulse.GetAngularEmissionSigmaPolar())
-    );
-
+     );
+    
     const double smearAzimuthal =
     angularProfileDistributionAzimuthal_->SampleFromDistribution
     (randomService_,
      std::vector<double>(1, flasherPulse.GetAngularEmissionSigmaAzimuthal())
      );
 
-    // calculate the new azimuthal angle (in the horizontal plane)
-    const double smearedAzimuth = azimuthalAngle + smearAzimuthal;
+    
     
     I3Direction smearedDirection;
-    // no polar direction yet (theta==0 <=> + x-axis)
-    smearedDirection.SetThetaPhi(90.*I3Units::deg, smearedAzimuth);
     
-    // this is the rotation axis 
-    I3Direction rotAxis;
-    rotAxis.SetThetaPhi(90.*I3Units::deg, smearedAzimuth-90.*I3Units::deg);
-    
-    // now rotate to the polar angle (plus smearing)
-    I3Calculator::Rotate(rotAxis, smearedDirection, (90.*I3Units::deg-polarAngle) + smearPolar);
+    if (!interpretAngularDistributionsInPolarCoordinates_) 
+    {
+        // smear the direction
+        const double polarAngle = flasherPulse.GetDir().CalcTheta();
+        const double azimuthalAngle = flasherPulse.GetDir().CalcPhi();
+        
+        // calculate the new azimuthal angle (in the horizontal plane)
+        const double smearedAzimuth = azimuthalAngle + smearAzimuthal;
+        
+        // no polar direction yet (theta==0 <=> + x-axis)
+        smearedDirection.SetThetaPhi(90.*I3Units::deg, smearedAzimuth);
+        
+        // this is the rotation axis 
+        I3Direction rotAxis;
+        rotAxis.SetThetaPhi(90.*I3Units::deg, smearedAzimuth-90.*I3Units::deg);
+        
+        // now rotate to the polar angle (plus smearing)
+        I3Calculator::Rotate(rotAxis, smearedDirection, (90.*I3Units::deg-polarAngle) + smearPolar);
+    }
+    else
+    {
+        // a different interpretation of the angular shift:
+        // polar: how far away from the current direction
+        // azimuthal: at which orientation w.r.t. the old direction
+        
+        double dirx = flasherPulse.GetDir().GetX();
+        double diry = flasherPulse.GetDir().GetY();
+        double dirz = flasherPulse.GetDir().GetZ();
+        
+        const double cosa = std::cos(smearPolar);
+        const double sina = std::sin(smearPolar);
+        
+        const double cosb = std::cos(smearAzimuthal);
+        const double sinb = std::sin(smearAzimuthal);
+        
+        // Rotate new direction into absolute frame of reference 
+        const double sinth = std::sqrt(std::max(0., 1.-dirz*dirz));
+        
+        if(sinth>0.){  // Current direction not vertical, so rotate 
+            const double olddirx = dirx;
+            const double olddiry = diry;
+            const double olddirz = dirz;
+            
+            dirx=olddirx*cosa-((olddiry*cosb+olddirz*olddirx*sinb)*sina/sinth);
+            diry=olddiry*cosa+((olddirx*cosb-olddirz*olddiry*sinb)*sina/sinth);
+            dirz=olddirz*cosa+sina*sinb*sinth;
+        }else{         // Current direction is vertical, so this is trivial
+            dirx=sina*cosb;
+            diry=sina*sinb;
+            dirz=cosa*((dirz<0.)?-1.:1.);
+        }
+        
+        {
+            const double recip_length = 1./std::sqrt(dirx*dirx + diry*diry + dirz*dirz);
+            
+            dirx *= recip_length;
+            diry *= recip_length;
+            dirz *= recip_length;
+        }
 
+        smearedDirection.SetDir(dirx, diry, dirz);
+    }
+        
     //////// bunch time delay
     const double timeDelay =
     timeDelayDistribution_->SampleFromDistribution

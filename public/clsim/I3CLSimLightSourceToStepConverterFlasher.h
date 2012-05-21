@@ -46,6 +46,7 @@ struct I3CLSimLightSourceToStepConverterFlasher : public I3CLSimLightSourceToSte
 {
 public:
     static const uint32_t default_photonsPerStep;
+    static const bool default_interpretAngularDistributionsInPolarCoordinates;
 
     /**
      * Initializes a new converter object for a specific flasher type.
@@ -71,6 +72,14 @@ public:
      *   flasher time to generate photon starting times. The distribution is assumed to take
      *   a single run-time parameter: the "width" as specified in I3CLSimFlasherPulse.
      *
+     * interpretAngularDistributionsInPolarCoordinates: interpret the
+     *   angularProfileDistributionPolar and angularProfileDistributionAzimuthal
+     *   distributions in polar coordinates. Instead of a shift in the polar
+     *   and azimuthal directions, the polar shift is a shift perpendicular from the
+     *   current direction. The azimuthal shift is a rotation around the old axis.
+     *   Since the origin of this rotation is undefined, it is best to use a uniform
+     *   range of angles from 0deg to 360deg for the azimuthal shift in this case.
+     *
      * photonsPerStep: instead of creating photons directly, this class generates
      *   so-called steps (bunches of photons described by a single object).
      *   This controls how many photons there will be per step (some steps may have
@@ -87,6 +96,7 @@ public:
                                              I3CLSimRandomValueConstPtr angularProfileDistributionPolar,
                                              I3CLSimRandomValueConstPtr angularProfileDistributionAzimuthal,
                                              I3CLSimRandomValueConstPtr timeDelayDistribution,
+                                             bool interpretAngularDistributionsInPolarCoordinates=default_interpretAngularDistributionsInPolarCoordinates,
                                              uint32_t photonsPerStep=default_photonsPerStep);
 
     virtual ~I3CLSimLightSourceToStepConverterFlasher();
@@ -159,6 +169,8 @@ private:
     I3CLSimRandomValueConstPtr angularProfileDistributionAzimuthal_;
     I3CLSimRandomValueConstPtr timeDelayDistribution_;
 
+    bool interpretAngularDistributionsInPolarCoordinates_;
+    
 };
 
 I3_POINTER_TYPEDEFS(I3CLSimLightSourceToStepConverterFlasher);

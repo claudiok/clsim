@@ -257,6 +257,7 @@ void register_I3CLSimLightSourceToStepConverter()
          I3CLSimRandomValueConstPtr,
          I3CLSimRandomValueConstPtr,
          I3CLSimRandomValueConstPtr,
+         bool,
          uint32_t
          >(
            (
@@ -265,6 +266,7 @@ void register_I3CLSimLightSourceToStepConverter()
             bp::arg("angularProfileDistributionPolar"),
             bp::arg("angularProfileDistributionAzimuthal"),
             bp::arg("timeDelayDistribution"),
+            bp::arg("interpretAngularDistributionsInPolarCoordinates") = I3CLSimLightSourceToStepConverterFlasher::default_interpretAngularDistributionsInPolarCoordinates,
             bp::arg("photonsPerStep") = I3CLSimLightSourceToStepConverterFlasher::default_photonsPerStep
             )
            )

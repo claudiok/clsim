@@ -30,8 +30,12 @@ from icecube.clsim import I3CLSimFlasherPulse, I3CLSimLightSourceToStepConverter
 from icecube.clsim import GetIceCubeFlasherSpectrum
 from icecube.clsim import I3CLSimRandomValueNormalDistribution
 from icecube.clsim import I3CLSimRandomValueFixParameter
+from icecube.clsim import I3CLSimRandomValueConstant
+from icecube.clsim import I3CLSimRandomValueUniform
 
 import I3CLSimRandomValueIceCubeFlasherTimeProfile
+
+from I3Tray import I3Units
 
 # for now, all flasher types get the same time delay profile
 __theFlasherTimeDelayDistribution = I3CLSimRandomValueIceCubeFlasherTimeProfile.I3CLSimRandomValueIceCubeFlasherTimeProfile()
@@ -42,20 +46,45 @@ def GetFlasherParameterizationList(spectrumTable):
                      I3CLSimFlasherPulse.FlasherPulseType.LED405nm,
                      I3CLSimFlasherPulse.FlasherPulseType.LED450nm,
                      I3CLSimFlasherPulse.FlasherPulseType.LED505nm]
+
+    spectrumTypesSC = [I3CLSimFlasherPulse.FlasherPulseType.SC1,
+                       I3CLSimFlasherPulse.FlasherPulseType.SC2]
     
     # all flasher types have the same angular smearing profiles (a gaussian
     # with its width set as a runtime parameter [read from I3CLSimFlasherPulse])
     normalDistribution = I3CLSimRandomValueFixParameter(I3CLSimRandomValueNormalDistribution(), 0, 0.) # the mean (parameter #0) is fixed to 0.
     
+    # Standard Candle angular distributions
+    # (mean[parameter #1] fixed to 2ns)
+    standardCandleTimeDelayDistribution =  I3CLSimRandomValueFixParameter(I3CLSimRandomValueNormalDistribution(), 0, 2.*I3Units.ns)
+    standardCandlePolarDistribution = I3CLSimRandomValueConstant()
+    standardCandleAzimuthalDistribution =  I3CLSimRandomValueUniform(0., float('NaN')) # make the "to" parameter a run-time setting
+    
+    
     # generate the parameterizations
     parameterizations = []
+    
+    # (for flashers)
     for flasherSpectrumType in spectrumTypes:
         theSpectrum = GetIceCubeFlasherSpectrum(spectrumType=flasherSpectrumType)
         theConverter = I3CLSimLightSourceToStepConverterFlasher(flasherSpectrumNoBias=theSpectrum,
                                                                 spectrumTable=spectrumTable,
                                                                 angularProfileDistributionPolar=normalDistribution,
                                                                 angularProfileDistributionAzimuthal=normalDistribution,
-                                                                timeDelayDistribution=__theFlasherTimeDelayDistribution)
+                                                                timeDelayDistribution=__theFlasherTimeDelayDistribution,
+                                                                interpretAngularDistributionsInPolarCoordinates=False)
+        parameterization = I3CLSimLightSourceParameterization(converter=theConverter, forFlasherPulseType=flasherSpectrumType)
+        parameterizations.append(parameterization)
+
+    # for the standard candles
+    for flasherSpectrumType in spectrumTypesSC:
+        theSpectrum = GetIceCubeFlasherSpectrum(spectrumType=flasherSpectrumType)
+        theConverter = I3CLSimLightSourceToStepConverterFlasher(flasherSpectrumNoBias=theSpectrum,
+                                                                spectrumTable=spectrumTable,
+                                                                angularProfileDistributionPolar=standardCandlePolarDistribution,
+                                                                angularProfileDistributionAzimuthal=standardCandleAzimuthalDistribution,
+                                                                timeDelayDistribution=standardCandleTimeDelayDistribution,
+                                                                interpretAngularDistributionsInPolarCoordinates=True)
         parameterization = I3CLSimLightSourceParameterization(converter=theConverter, forFlasherPulseType=flasherSpectrumType)
         parameterizations.append(parameterization)
         

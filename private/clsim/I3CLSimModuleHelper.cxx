@@ -33,8 +33,10 @@
 
 #include "clsim/function/I3CLSimFunctionConstant.h"
 #include "clsim/function/I3CLSimFunctionFromTable.h"
+#include "clsim/function/I3CLSimFunctionDeltaPeak.h"
 #include "clsim/random_value/I3CLSimRandomValueInterpolatedDistribution.h"
 #include "clsim/random_value/I3CLSimRandomValueWlenCherenkovNoDispersion.h"
+#include "clsim/random_value/I3CLSimRandomValueConstant.h"
 
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
@@ -74,6 +76,20 @@ namespace I3CLSimModuleHelper {
                             I3CLSimFunctionConstPtr wavelengthGenerationBias,
                             I3CLSimMediumPropertiesPtr mediumProperties)
     {
+        {
+            // special handling for delta peaks
+            I3CLSimFunctionDeltaPeakConstPtr deltaPeak =
+            dynamic_pointer_cast<const I3CLSimFunctionDeltaPeak>(unbiasedSpectrum);
+            if (deltaPeak) {
+                const double peakPosition = deltaPeak->GetPeakPosition();
+                
+                return I3CLSimRandomValueConstantConstPtr
+                (new I3CLSimRandomValueConstant(peakPosition));
+            }
+        }
+
+        // if we get here, it's not a delta peak
+        
         double minWlen = unbiasedSpectrum->GetMinWlen();
         double maxWlen = unbiasedSpectrum->GetMaxWlen();
         

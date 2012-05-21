@@ -45,6 +45,7 @@ def I3CLSimMakePhotons(tray, name,
                        MCTreeName="I3MCTree",
                        OutputMCTreeName=None,
                        FlasherInfoVectName=None,
+                       FlasherPulseSeriesName=None,
                        MMCTrackListName="MMCTrackList",
                        PhotonSeriesName="PhotonSeriesMap",
                        ParallelEvents=1000,
@@ -99,6 +100,13 @@ def I3CLSimMakePhotons(tray, name,
         Set this to the name of I3FlasherInfoVect objects in the frame to
         enable flasher simulation. The module will read I3FlasherInfoVect objects
         and generate photons according to assumed parameterizations.
+    :param FlasherPulseSeriesName:
+        Set this to the name of an I3CLSimFlasherPulseSeries object in the frame to
+        enable flasher/Standard Candle simulation.
+        This cannot be used at the same time as FlasherInfoVectName.
+        (I3CLSimFlasherPulseSeries objects are clsim's internal flasher
+        representation, if "FlasherInfoVectName" is used, the I3FlasherInfoVect
+        objects are converted to I3CLSimFlasherPulseSeries objects.)
     :param MMCTrackListName:
         Only used if *ChopMuons* is active. Set it to the name
         of the I3MMCTrackList object that contains additional
@@ -198,10 +206,18 @@ def I3CLSimMakePhotons(tray, name,
         clSimMCTreeName=MCTreeName
 
     if FlasherInfoVectName is None or FlasherInfoVectName=="":
-        SimulateFlashers=False
-        clSimFlasherPulseSeriesName = ""
-        clSimOMKeyMaskName = ""
+        if (FlasherPulseSeriesName is not None) and (FlasherPulseSeriesName!=""):
+            SimulateFlashers=True
+            clSimFlasherPulseSeriesName = FlasherPulseSeriesName
+            clSimOMKeyMaskName = ""
+        else:
+            SimulateFlashers=False
+            clSimFlasherPulseSeriesName = ""
+            clSimOMKeyMaskName = ""
     else:
+        if (FlasherPulseSeriesName is not None) and (FlasherPulseSeriesName!=""):
+            raise RuntimeError("You cannot use the FlasherPulseSeriesName and FlasherInfoVectName parameters at the same time!")
+        
         SimulateFlashers=True
         clSimFlasherPulseSeriesName = FlasherInfoVectName + "_pulses"
         clSimOMKeyMaskName = FlasherInfoVectName + "_OMKeys"
