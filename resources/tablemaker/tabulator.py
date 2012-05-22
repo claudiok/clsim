@@ -2,8 +2,8 @@
 
 from icecube.icetray import I3Units, I3Module, traysegment
 from icecube.dataclasses import I3Position, I3Particle, I3MCTree, I3Direction, I3Constants
-from icecube.phys_services import I3Calculator
-from icecube.clsim import I3Photon, GetIceCubeDOMAcceptance, GetIceCubeDOMAngularSensitivity
+from icecube.phys_services import I3Calculator, I3GSLRandomService
+from icecube.clsim import I3Photon, I3CLSimTabulator, GetIceCubeDOMAcceptance, GetIceCubeDOMAngularSensitivity
 import numpy, math
 from icecube.photospline import numpy_extensions # meshgrid_nd
 	
@@ -78,36 +78,59 @@ class PhotoTable(object):
 		return cls(binedges, values, weights, n_photons)
 	
 class Tabulator(object):
+	_dtype = numpy.float32
 	
-	def __init__(self, nbins=(200, 36, 100, 105)):
-		self.binedges = [
-		    numpy.linspace(0, numpy.sqrt(580), nbins[0]+1)**2,
-		    numpy.linspace(0, 180, nbins[1]+1),
-		    numpy.linspace(-1, 1, nbins[2]+1),
-		    numpy.linspace(0, numpy.sqrt(7e3), nbins[3]+1)**2,
-		]
-		self._dtype = numpy.float32
+	
+	def SetBins(self, binedges, step_length=1.*I3Units.m):
+		self.binedges = binedges
 		self.values = numpy.zeros(tuple([len(v)-1 for v in self.binedges]), dtype=self._dtype)
 		self.weights = numpy.zeros(self.values.shape, dtype=self._dtype)
-		self.n_photons = 0
-		self._step_length = 1.*I3Units.m
-		self._angularEfficiency = GetIceCubeDOMAngularSensitivity()
 		
-		# The efficiency returned by I3CLSimMakePhotons() is the effective
-		# area of a standard DOM as a function of wavelength, divided by the
-		# projected area of the DOM to make it unitless, and multiplied by
-		# 1.35 to ensure that detection probabilities for high-QE DOMs are
-		# always <= 1. When making hits from photon-DOM collisions these factors
-		# drop out, but we have to correct for them in volume-density mode. 
-		efficiency = GetIceCubeDOMAcceptance()
-		domRadius = 0.16510*I3Units.m
+		self._step_length = step_length
+		
+	def SetEfficiencies(self, wavelengthAcceptance=GetIceCubeDOMAcceptance(), angularAcceptance=GetIceCubeDOMAngularSensitivity(), domRadius=0.16510*I3Units.m):
+		self._angularEfficiency = angularAcceptance
 		domArea = numpy.pi*domRadius**2
 		
-		self._effectiveArea = lambda wvl: domRadius*efficiency.GetValue(wvl)/1.35
+		self._effectiveArea = lambda wvl: domArea*wavelengthAcceptance.GetValue(wvl)
+	
+	def SetRandomService(self, rng):
+		self.rng = rng
+	
+	def GetValues(self):
+		return self.values, self.weights	
+		
+	# def __init__(self, nbins=(200, 36, 100, 105)):
+	# 	self.binedges = [
+	# 	    numpy.linspace(0, numpy.sqrt(580), nbins[0]+1)**2,
+	# 	    numpy.linspace(0, 180, nbins[1]+1),
+	# 	    numpy.linspace(-1, 1, nbins[2]+1),
+	# 	    numpy.linspace(0, numpy.sqrt(7e3), nbins[3]+1)**2,
+	# 	]
+	# 	self._dtype = numpy.float32
+	# 	self.values = numpy.zeros(tuple([len(v)-1 for v in self.binedges]), dtype=self._dtype)
+	# 	self.weights = numpy.zeros(self.values.shape, dtype=self._dtype)
+	# 	self.n_photons = 0
+	# 	self._step_length = 1*I3Units.m
+	# 	self._angularEfficiency = GetIceCubeDOMAngularSensitivity()
+	# 	
+	# 	# The efficiency returned by I3CLSimMakePhotons() is the effective
+	# 	# area of a standard DOM as a function of wavelength, divided by the
+	# 	# projected area of the DOM to make it unitless, and multiplied by
+	# 	# 1.35 to ensure that detection probabilities for high-QE DOMs are
+	# 	# always <= 1. When making hits from photon-DOM collisions these factors
+	# 	# drop out, but we have to correct for them in volume-density mode. 
+	# 	# efficiency = GetIceCubeDOMAcceptance(efficiency=1.35*0.75*1.01)
+	# 	efficiency = GetIceCubeDOMAcceptance()
+	# 	domRadius = 0.16510*I3Units.m
+	# 	domArea = numpy.pi*domRadius**2
+	# 	
+	# 	self._effectiveArea = lambda wvl: domArea*efficiency.GetValue(wvl)
 		
 	def save(self, fname):
 		# normalize to a photon flux, but not the number of photons (for later stacking)
 		area = self._getBinAreas()
+		print "Total weights:", self.n_photons
 		PhotoTable(self.binedges, self.values/area, self.weights/(area*area), self.n_photons).save(fname)
 	
 	def _getBinAreas(self):
@@ -118,13 +141,27 @@ class Tabulator(object):
 		# The effective area of the bin is its volume divided by
 		# the sampling frequency. 
 		# NB: since we're condensing onto a half-sphere, the azimuthal extent of each bin is doubled.
-		area = ((far[0]**3-near[0]**3)/3.)*(2*(far[1]-near[1])*I3Units.degree)*(far[2]-near[2])/self._dtype(self._step_length)
-		area = area.reshape(area.shape + (1,))
+		area = ((far[0]**3-near[0]**3)/3.)*(2*(far[1]-near[1])*I3Units.degree)*(far[2]-near[2])
+		print 'Total volume:', area.sum()
+		area = area.reshape(area.shape + (1,))/self._dtype(self._step_length)
 		return area
-	
-	def _normalize(self):
 		
-		area = self._getBinAreas()
+	@staticmethod
+	def GetBinVolumes(binedges, dtype=numpy.float32):
+		
+		near = numpy.meshgrid_nd(*[b[:-1].astype(dtype) for b in binedges[:-1]], lex_order=True)
+		far = numpy.meshgrid_nd(*[b[1:].astype(dtype) for b in binedges[:-1]], lex_order=True)
+		
+		# The effective area of the bin is its volume divided by
+		# the sampling frequency. 
+		# NB: since we're condensing onto a half-sphere, the azimuthal extent of each bin is doubled.
+		volumes = ((far[0]**3-near[0]**3)/3.)*(2*(far[1]-near[1])*I3Units.degree)*(far[2]-near[2])
+		volumes = volumes.reshape(volumes.shape + (1,))
+		return volumes
+	
+	def Normalize(self):
+		
+		fluxconst = self._getBinAreas()/self._step_length
 		
 		# convert each weight (in units of photons * m^2) to a probability
 		self.values /= fluxconst
@@ -178,7 +215,7 @@ class Tabulator(object):
 				idx[j] = len(self.binedges[j])-2
 		return tuple(idx)
 
-	def recordPhoton(self, source, photon, n_photons=1):
+	def RecordPhoton(self, source, photon):
 		"""
 		:param nphotons: number of photons to add to the total tally
 		after recording. Set this to zero if you're going to do your own counting.
@@ -218,7 +255,11 @@ class Tabulator(object):
 			impact_weight = wlen_weight*self._angularEfficiency.GetValue(impact)
 			
 			# FIXME: this samples at fixed distances. Randomize instead?
-			for d in numpy.arange(0, distance, self._step_length):
+			nsamples = int(numpy.floor(distance/self._step_length))
+			nsamples += int(self.rng.uniform(0,1) < (distance/self._step_length - nsamples))
+			for i in xrange(nsamples):
+				d = distance*self.rng.uniform(0,1)
+			# for d in numpy.arange(0, distance, self._step_length):
 				# Which bin did we land in?
 				pos = I3Position(*(numpy.array(start) + d*pdir))
 				indices = self._getBinIndices(source, pos, t + d/photon.groupVelocity)
@@ -232,12 +273,14 @@ class Tabulator(object):
 				self.weights[indices] += weight*weight
 			
 			t += distance/photon.groupVelocity
-		self.n_photons += n_photons
+
+# tabulator = Tabulator
+tabulator = I3CLSimTabulator
 		
-class I3TabulatorModule(I3Module, Tabulator):
+class I3TabulatorModule(I3Module, tabulator):
 	def __init__(self, ctx):
 		I3Module.__init__(self, ctx)
-		Tabulator.__init__(self)
+		tabulator.__init__(self)
 		
 		self.AddParameter("Filename", "Output filename", "foo.fits")
 		self.AddParameter("Photons", "Name of I3PhotonSeriesMap in the frame", "I3PhotonSeriesMap")
@@ -252,13 +295,35 @@ class I3TabulatorModule(I3Module, Tabulator):
 		self.stats = self.GetParameter("Statistics")
 		self.source = self.GetParameter("Source")
 		
+		self.n_photons = 0
+		
+		nbins=(200, 36, 100, 105)
+		self.binedges = [
+		    numpy.linspace(0, numpy.sqrt(580), nbins[0]+1)**2,
+		    numpy.linspace(0, 180, nbins[1]+1),
+		    numpy.linspace(-1, 1, nbins[2]+1),
+		    numpy.linspace(0, numpy.sqrt(7e3), nbins[3]+1)**2,
+		]
+		
+		self.domRadius = 0.16510*I3Units.m
+		self.stepLength = 1*I3Units.m
+		
+		self.SetBins(self.binedges, self.stepLength)
+		self.SetEfficiencies(GetIceCubeDOMAcceptance(), GetIceCubeDOMAngularSensitivity(), self.domRadius)
+		self.SetRandomService(I3GSLRandomService(12345))
+		
 	def DAQ(self, frame):
 		source = frame[self.source]
 		photonmap = frame[self.photons]
 		
 		for photons in photonmap.itervalues():
+			# wtot = sum([photon.weight for photon in photons])
+			wsum = 0
 			for photon in photons:
-				self.recordPhoton(source, photon, 0)
+				self.RecordPhoton(source, photon)
+				# wsum += photon.weight
+				# if int(wsum/wtot)*100 % 10 == 0:
+				# 	print 'Tabulated weights %f/%f' % (wsum,wtot)
 		
 		# Each I3Photon can only carry a fixed number of intermediate
 		# steps, so there may be more than one I3Photon for each generated
@@ -273,8 +338,19 @@ class I3TabulatorModule(I3Module, Tabulator):
 		self.PushFrame(frame)
 		
 	def Finish(self):
+		# pass
 		
-		self.save(self.fname)
+		# self.Normalize()
+		values, weights = self.GetValues()
+		# print values, weights
+		print values.shape, weights.shape
+		
+		domArea = numpy.pi*self.domRadius**2
+		
+		norm = Tabulator.GetBinVolumes(self.binedges)/(domArea*self.stepLength)
+		print values.max(), weights.max()
+		table = PhotoTable(self.binedges, values/norm, weights/(norm**2), self.n_photons)
+		table.save(self.fname)
 
 class MakeParticle(I3Module):
     def __init__(self, context):
@@ -368,7 +444,7 @@ def PhotonGenerator(tray, name, Seed=12345, NEvents=100):
 	tray.AddModule(MakeParticle, name+"MakeParticle",
 	    Zenith = 90.*I3Units.deg,
 	    ZCoordinate = 0.*I3Units.m,
-	    Energy = 0.01*I3Units.GeV, # the longitudinal profile parameterization from PPC breaks down at this energy (the cascade will be point-like). The angular parameteriztion will still work okay. This might be exactly what we want for table-making (it should become an option to the PPC parameterization eventually).
+	    # Energy = 0.01*I3Units.GeV, # the longitudinal profile parameterization from PPC breaks down at this energy (the cascade will be point-like). The angular parameteriztion will still work okay. This might be exactly what we want for table-making (it should become an option to the PPC parameterization eventually).
 	    NEvents = NEvents)
 
 
@@ -378,6 +454,7 @@ def PhotonGenerator(tray, name, Seed=12345, NEvents=100):
 	    MMCTrackListName = None,    # do NOT use MMC
 	    ParallelEvents = 1,         # only work at one event at a time (it'll take long enough)
 	    RandomService = randomService,
+	    # UnWeightedPhotons=True,
 	    UseGPUs=False,              # table-making is not a workload particularly suited to GPUs
 	    UseCPUs=True,               # it should work fine on CPUs, though
 	    UnshadowedFraction=1.0,     # no cable shadow

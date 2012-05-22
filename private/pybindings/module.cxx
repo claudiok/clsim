@@ -36,7 +36,7 @@ namespace bp = boost::python;
     (I3Photon)(I3CLSimEventStatistics)              \
     (I3CLSimPMTPhotonSimulator)(I3Converters)       \
     (I3CLSimFlasherPulse)(I3ShadowedPhotonRemover)  \
-    (I3ExtraGeometryItem)
+    (I3ExtraGeometryItem)(I3CLSimTabulator)
 
 #ifndef BUILD_CLSIM_DATACLASSES_ONLY
 // all these do depend on either OpenCL and/or Geant4

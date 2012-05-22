@@ -1,3 +1,28 @@
+/**
+ * Copyright (c) 2012
+ * Jakob van Santen <jvansanten@icecube.wisc.edu>
+ * and the IceCube Collaboration <http://www.icecube.wisc.edu>
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+ * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+ * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ *
+ * $Id$
+ *
+ * @file I3CLSimTabulator.cxx
+ * @version $Revision$
+ * @date $Date$
+ * @author Jakob van Santen
+ */
 
 #include <clsim/tabulator/I3CLSimTabulator.h>
 #include <phys-services/I3Calculator.h>
@@ -11,26 +36,74 @@
 #include <boost/numeric/ublas/vector.hpp>
 namespace ublas = boost::numeric::ublas;
 
-I3Tabulator::I3Tabulator(const std::vector<std::vector<double> > &binEdges)
-    : binEdges_(binEdges), strides_(binEdges_.size())
+#include <boost/python/tuple.hpp>
+namespace bp = boost::python;
+
+#ifdef USE_NUMPY
+#define PY_ARRAY_UNIQUE_SYMBOL clsim_PyArray_API
+#define NO_IMPORT_ARRAY /* Just use the headers */
+#include <numpy/ndarrayobject.h>
+#endif
+
+void
+I3CLSimTabulator::SetBins(boost::python::object binEdges, double stepLength)
 {
-	size_t tableSize = 1;
-	for (int i = binEdges_.size()-1; i >= 0 ; i--) {
+	stepLength_ = stepLength;
+	
+	Py_XDECREF(values_);
+	Py_XDECREF(weights_);
+	binEdges_.clear();
+	
+	for (int i = 0; i < bp::len(binEdges); i++)
+		binEdges_.push_back(bp::extract<std::vector<double> >(binEdges[i]));	
+	
+	npy_intp dims[binEdges_.size()];
+	for (unsigned i = 0; i < binEdges_.size(); i++) {
 		const std::vector<double> &edges = binEdges_[i];
-		assert(edges.size() >= 2);
-		dims_[i] = edges.size()-1;
-		strides_[i] = tableSize;
-		tableSize *= dims_[i];
+		if (!edges.size() >= 2)
+			log_fatal("Edge array in dimension %d has only %zu entries!", i, edges.size());
+		
+		dims[i] = edges.size()-1;
 	}
 	
-	values_ = new float[tableSize];
-	weights_ = new float[tableSize];
+	#ifdef USE_NUMPY
+	values_ = PyArray_ZEROS(binEdges_.size(), dims, NPY_FLOAT, 0);
+	weights_ = PyArray_ZEROS(binEdges_.size(), dims, NPY_FLOAT, 0);
+	Py_INCREF(values_);
+	Py_INCREF(weights_);
+	#endif
 }
 
-I3Tabulator::~I3Tabulator()
+I3CLSimTabulator::~I3CLSimTabulator()
 {
-	delete values_;
-	delete weights_;
+	Py_XDECREF(values_);
+	Py_XDECREF(weights_);
+}
+
+bp::object
+I3CLSimTabulator::GetValues() const
+{
+#ifdef USE_NUMPY
+	return bp::make_tuple(bp::object(bp::handle<>(values_)),
+	    bp::object(bp::handle<>(weights_)));
+#else
+	return bp::object()
+#endif	
+}
+
+void
+I3CLSimTabulator::SetEfficiencies(I3CLSimFunctionConstPtr wavelengthAcceptance,
+    I3CLSimFunctionConstPtr angularAcceptance, double domRadius)
+{
+	wavelengthAcceptance_ = wavelengthAcceptance;
+	angularAcceptance_ = angularAcceptance;
+	domArea_ = M_PI*domRadius*domRadius;
+}
+
+void
+I3CLSimTabulator::SetRandomService(I3RandomServicePtr rng)
+{
+	rng_ = rng;
 }
 
 ublas::vector<double>
@@ -60,7 +133,7 @@ inline I3Position
 operator+(const I3Position &p1, const ublas::vector<double> p2)
 {
 	assert(p2.size() == 3);
-	return I3Position(p1.GetX()+p2[0], p1.GetY()+p2[0], p1.GetZ()+p2[3]);
+	return I3Position(p1.GetX()+p2[0], p1.GetY()+p2[1], p1.GetZ()+p2[2]);
 }
 
 inline ublas::vector<double>
@@ -70,11 +143,9 @@ operator-(const I3Position &p1, const I3Position &p2)
 }
 
 void
-I3Tabulator::Normalize()
+I3CLSimTabulator::Normalize()
 {
-	size_t tableSize = 1;
-	BOOST_FOREACH(size_t dim, dims_)
-		tableSize *= dim;
+	size_t tableSize = PyArray_SIZE(values_);
 	
 	// The collection efficiency of a bin is effectively the
 	// number of chances a photon has to be collected within
@@ -82,30 +153,33 @@ I3Tabulator::Normalize()
 	// sampling frequency. We divide by this factor to turn
 	// a sum of weights into a detection probability for a
 	// DOM in this spatial bin.
+
 	for (size_t i = 0; i < tableSize; i++) {
 		double norm = GetBinVolume(i)/(stepLength_*domArea_);
-		values_[i] /= norm;
-		weights_[i] /= (norm*norm);
+		((float*)PyArray_DATA(values_))[i] /= norm;
+		((float*)PyArray_DATA(weights_))[i] /= (norm*norm);
 	}
 }
 
 double
-I3Tabulator::GetBinVolume(off_t idx) const
+I3CLSimTabulator::GetBinVolume(off_t idx) const
 {
 	// First, unravel the flattened index.
 	off_t idxs[4];
-	for (int i = 0; i < 4; i++)
-		idxs[i] = idx/strides_[i] % dims_[i];
+	for (int i = 0; i < 4; i++) {
+		idxs[i] = idx/(PyArray_STRIDE(values_, i)/sizeof(float)) % PyArray_DIM(values_, i);
+		// printf("%d stride: %zd dim: %zd\n", i, PyArray_STRIDE(values_, i)/sizeof(float), PyArray_DIM(values_, i));
+	}
 	
 	// NB: since we combine the bins at azimuth > 180 degrees with the other half of
 	// the sphere, the true volume of an azimuthal bin is twice its nominal value.
 	return ((std::pow(binEdges_[0][idxs[0]+1], 3) - std::pow(binEdges_[0][idxs[0]], 3))/3.)
 	    * 2*I3Units::degree*(binEdges_[1][idxs[1]+1] - binEdges_[1][idxs[1]])
-	    * (binEdges_[2][idxs[1]+1] - binEdges_[2][idxs[1]]);
+	    * (binEdges_[2][idxs[2]+1] - binEdges_[2][idxs[2]]);
 }
 
 off_t
-I3Tabulator::GetBinIndex(const I3Particle &source, const I3Position &pos, double t) const
+I3CLSimTabulator::GetBinIndex(const I3Particle &source, const I3Position &pos, double t) const
 {
 	typedef ublas::vector<double> vector;
 	
@@ -131,6 +205,10 @@ I3Tabulator::GetBinIndex(const I3Particle &source, const I3Position &pos, double
 	coords[2] = (coords[0] > 0) ? l/coords[0] : 1.;
 	coords[3] = I3Calculator::TimeResidual(source, pos, t);
 	
+	// Bail if the photon is too delayed at this point to be recorded
+	if (coords[3] > binEdges_[3].back())
+		return -1;
+	
 	// Find the index of the appropriate bin for each dimension,
 	// and compute an index into the flattened table array.
 	off_t idx = 0;
@@ -145,15 +223,17 @@ I3Tabulator::GetBinIndex(const I3Particle &source, const I3Position &pos, double
 		else
 			dimidx = std::distance(edges.begin(),
 			    std::lower_bound(edges.begin(), edges.end(), coords[i]))-1;
+		assert(dimidx >= 0);
+		assert(dimidx < PyArray_DIM(values_, i));
 		
-		idx += strides_[i]*dimidx;
+		idx += (PyArray_STRIDE(values_, i)/sizeof(float))*dimidx;
 	}
 	
 	return idx;
 }
 
 void
-I3Tabulator::RecordPhoton(const I3Particle &source, const I3Photon &photon)
+I3CLSimTabulator::RecordPhoton(const I3Particle &source, const I3Photon &photon)
 {
 	typedef ublas::vector<double> vector;
 	
@@ -162,7 +242,7 @@ I3Tabulator::RecordPhoton(const I3Particle &source, const I3Photon &photon)
 	    wavelengthAcceptance_->GetValue(photon.GetWavelength())*photon.GetWeight();
 	
 	uint32_t nsteps = photon.GetNumPositionListEntries();
-	for (uint32_t i = 0; i < nsteps; i++) {
+	for (uint32_t i = 0; i+1 < nsteps; i++) {
 		I3PositionConstPtr p0 = photon.GetPositionListEntry(i);
 		I3PositionConstPtr p1 = photon.GetPositionListEntry(i+1);
 		if (!p0 || !p1)
@@ -188,7 +268,12 @@ I3Tabulator::RecordPhoton(const I3Particle &source, const I3Photon &photon)
 		for (int i = 0; i < nsamples; i++) {
 			double d = distance*rng_->Uniform();
 			off_t idx = GetBinIndex(source, (*p0) + d*pdir, t + d/photon.GetGroupVelocity());
-			// TODO: bail if we're outside the recording volume
+			// Once the photon has accumulated enough delay time
+			// to run off the end of the table, there's no going back. Bail.
+			if (idx < 0) {
+				i = nsteps;
+				break;
+			}
 			
 			// Weight the photon by its probability of:
 			// 1) Being detected, given its wavelength
@@ -197,8 +282,8 @@ I3Tabulator::RecordPhoton(const I3Particle &source, const I3Photon &photon)
 			double weight = impactWeight*std::exp(-(absLengths[0] +
 			    (d/distance)*(absLengths[1]-absLengths[0])));
 			
-			values_[idx] += weight;
-			weights_[idx] += weight*weight;
+			((float*)PyArray_DATA(values_))[idx] += weight;
+			((float*)PyArray_DATA(weights_))[idx] += weight*weight;
 		}
 		t += distance/photon.GetGroupVelocity();
 	}

@@ -34,6 +34,7 @@ if(BUILD_PYBINDINGS)
     I3Converters.cxx
     I3ShadowedPhotonRemover.cxx
     I3ExtraGeometryItem.cxx
+    I3CLSimTabulator.cxx
     module.cxx
   )
 
