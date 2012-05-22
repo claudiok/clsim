@@ -1,4 +1,27 @@
-#!/usr/bin/env python
+# Copyright (c) 2012
+# Jakob van Santen <jvansanten@icecube.wisc.edu>
+# Claudio Kopper <claudio.kopper@icecube.wisc.edu>
+# and the IceCube Collaboration <http://www.icecube.wisc.edu>
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+# OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+# CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#
+#
+# $Id$
+#
+# @file tabulator.py
+# @version $Revision: 88539 $
+# @date $Date: 2012-05-21 20:18:46 -0500 (Mon, 21 May 2012) $
+# @author Jakob van Santen
 
 from icecube.icetray import I3Units, I3Module, traysegment
 from icecube.dataclasses import I3Position, I3Particle, I3MCTree, I3Direction, I3Constants
@@ -6,22 +29,42 @@ from icecube.phys_services import I3Calculator, I3GSLRandomService
 from icecube.clsim import I3Photon, I3CLSimTabulator, GetIceCubeDOMAcceptance, GetIceCubeDOMAngularSensitivity
 import numpy, math
 from icecube.photospline import numpy_extensions # meshgrid_nd
+from icecube.photospline.pyphotonics.photonics_table import photonics_table, Efficiency, Geometry
+
+# A default header. This contains the same keys as the one created in photo2numpy from photospline.
+empty_header = {
+	'n_photon':   0,
+	'efficiency': Efficiency.NONE,
+	'geometry':   Geometry.SPHERICAL,
+	'zenith':     0.,
+	'z':          0.,
+	'energy':     0.,
+	'type':       int(I3Particle.ParticleType.EMinus),
+	'level':      1,
+	# FIXME: this is almost always incorrect. Be sure to set these to the minimum
+	# values found in the ice properties!
+	'n_group':    I3Constants.n_ice_group,
+	'n_phase':    I3Constants.n_ice_phase,
+}
+
+class PhotoTable(photonics_table, object):
+	"""
+	A (mostly) drop-in replacement for the Photonics table wrapper from photospline.
+	"""
 	
-class PhotoTable(object):
-	
-	def __init__(self, binedges, values, weights, n_photons=0):
-		self.binedges = binedges
+	def __init__(self, binedges, values, weights, header=empty_header):
+		self.bin_edges = binedges
 		self.values = values
 		self.weights = weights
-		self.bincenters = [(edges[1:]+edges[:-1])/2. for edges in self.binedges]
-		self.n_photons = n_photons
+		self.bin_centers = [(edges[1:]+edges[:-1])/2. for edges in self.bin_edges]
+		self.bin_widths = [numpy.diff(edges) for edges in self.bin_edges]
+		self.header = header
 		
 	def __iadd__(self, other):
-		if not isinstance(other, self.__class__):
-			raise TypeError, "Can only add another %s" % (self.__class__.__name__)
+		self.raise_if_incompatible(other)
 		self.values += other.values
 		self.weights += other.weights
-		self.n_photons += other.n_photons
+		self.header['n_photons'] += other.header['n_photons']
 		
 		return self
 	
@@ -34,16 +77,47 @@ class PhotoTable(object):
 		
 		return self
 		
-	def normalize(self):
-		self /= self.n_photons
+	def raise_if_incompatible(self, other):
+		"""
+		Check for generalized brokenness.
+		"""
+		if not isinstance(other, self.__class__):
+			raise TypeError, "Can't combine a %s with this %s" % (other.__class__.__name__, self.__class__.__name__)
+		if self.values.shape != other.values.shape:
+			raise ValueError, "Shape mismatch in data arrays!"
+		nans = self.values.size - numpy.isfinite(self.values).sum()
+		if nans != 0:
+			raise ValueError, "This table has %d NaN values. You might want to see to that."
+		nans = other.values.size - numpy.isfinite(other.values).sum()
+		if nans != 0:
+			raise ValueError, "Other table has %d NaN values. You might want to see to that."
+		for k, v in self.header.iteritems():
+			if k == 'n_photons':
+				continue
+			if other.header[k] != v:
+				raise ValueError, "Can't combine tables with %s=%s and %s" % (k, v, other.header[k])
 		
-	def save(self, fname):
-		import pyfits
+	def normalize(self):
+		if not self.header['efficiency'] & Efficiency.N_PHOTON:
+			self /= self.header['n_photons']
+			self.header['efficiency'] |= Efficiency.N_PHOTON
+		
+	def save(self, fname, overwrite=False):
+		import pyfits, os
+		
+		if os.path.exists(fname):
+			if overwrite:
+				os.unlink(fname)
+			else:
+				raise IOError, "File '%s' exists!" % fname
 		
 		data = pyfits.PrimaryHDU(self.values)
 		data.header.update('TYPE', 'Photon detection probability table')
 		
-		data.header.update('NPHOTONS', self.n_photons)
+		for k, v in self.header.iteritems():
+			# work around 8-char limit in FITS keywords
+			tag = 'hierarch _i3_' + k
+			data.header.update(tag, v)
 		
 		hdulist = pyfits.HDUList([data])
 		
@@ -52,7 +126,7 @@ class PhotoTable(object):
 			hdulist.append(errors)
 		
 		for i in xrange(self.values.ndim):
-			edgehdu = pyfits.ImageHDU(self.binedges[i],name='EDGES%d' % i)
+			edgehdu = pyfits.ImageHDU(self.bin_edges[i],name='EDGES%d' % i)
 			hdulist.append(edgehdu)
 			
 		hdulist.writeto(fname)
@@ -72,14 +146,16 @@ class PhotoTable(object):
 			weights = hdulist['ERRORS'].data
 		except KeyError:
 			weights = None
+		
+		header = dict()
+		for k in data.header.keys():
+			if k.startswith('_i3_'):
+				header[k[4:]] = data.header[k]
 			
-		n_photons = data.header['NPHOTONS']
-			
-		return cls(binedges, values, weights, n_photons)
+		return cls(binedges, values, weights, header)
 	
 class Tabulator(object):
 	_dtype = numpy.float32
-	
 	
 	def SetBins(self, binedges, step_length=1.*I3Units.m):
 		self.binedges = binedges
@@ -98,34 +174,7 @@ class Tabulator(object):
 		self.rng = rng
 	
 	def GetValues(self):
-		return self.values, self.weights	
-		
-	# def __init__(self, nbins=(200, 36, 100, 105)):
-	# 	self.binedges = [
-	# 	    numpy.linspace(0, numpy.sqrt(580), nbins[0]+1)**2,
-	# 	    numpy.linspace(0, 180, nbins[1]+1),
-	# 	    numpy.linspace(-1, 1, nbins[2]+1),
-	# 	    numpy.linspace(0, numpy.sqrt(7e3), nbins[3]+1)**2,
-	# 	]
-	# 	self._dtype = numpy.float32
-	# 	self.values = numpy.zeros(tuple([len(v)-1 for v in self.binedges]), dtype=self._dtype)
-	# 	self.weights = numpy.zeros(self.values.shape, dtype=self._dtype)
-	# 	self.n_photons = 0
-	# 	self._step_length = 1*I3Units.m
-	# 	self._angularEfficiency = GetIceCubeDOMAngularSensitivity()
-	# 	
-	# 	# The efficiency returned by I3CLSimMakePhotons() is the effective
-	# 	# area of a standard DOM as a function of wavelength, divided by the
-	# 	# projected area of the DOM to make it unitless, and multiplied by
-	# 	# 1.35 to ensure that detection probabilities for high-QE DOMs are
-	# 	# always <= 1. When making hits from photon-DOM collisions these factors
-	# 	# drop out, but we have to correct for them in volume-density mode. 
-	# 	# efficiency = GetIceCubeDOMAcceptance(efficiency=1.35*0.75*1.01)
-	# 	efficiency = GetIceCubeDOMAcceptance()
-	# 	domRadius = 0.16510*I3Units.m
-	# 	domArea = numpy.pi*domRadius**2
-	# 	
-	# 	self._effectiveArea = lambda wvl: domArea*efficiency.GetValue(wvl)
+		return self.values, self.weights
 		
 	def save(self, fname):
 		# normalize to a photon flux, but not the number of photons (for later stacking)
@@ -276,7 +325,7 @@ class Tabulator(object):
 
 # tabulator = Tabulator
 tabulator = I3CLSimTabulator
-		
+
 class I3TabulatorModule(I3Module, tabulator):
 	def __init__(self, ctx):
 		I3Module.__init__(self, ctx)
@@ -286,16 +335,9 @@ class I3TabulatorModule(I3Module, tabulator):
 		self.AddParameter("Photons", "Name of I3PhotonSeriesMap in the frame", "I3PhotonSeriesMap")
 		self.AddParameter("Statistics", "Name of the CLSimStatistics object in the frame", "")
 		self.AddParameter("Source", "Name of the source I3Particle in the frame", "")
-		self.AddOutBox("OutBox")
-		
-	def Configure(self):
-		
-		self.fname = self.GetParameter("Filename")
-		self.photons = self.GetParameter("Photons")
-		self.stats = self.GetParameter("Statistics")
-		self.source = self.GetParameter("Source")
-		
-		self.n_photons = 0
+		self.AddParameter("RandomService", "A random number service", None)
+		self.AddParameter("StepLength", "The mean step size for volume sampling", 1*I3Units.m)
+		self.AddParameter("TableHeader", "A dictionary of source depth, orientation, etc", empty_header)
 		
 		nbins=(200, 36, 100, 105)
 		self.binedges = [
@@ -304,26 +346,39 @@ class I3TabulatorModule(I3Module, tabulator):
 		    numpy.linspace(-1, 1, nbins[2]+1),
 		    numpy.linspace(0, numpy.sqrt(7e3), nbins[3]+1)**2,
 		]
+		self.AddParameter("BinEdges", "A list of the bin edges in each dimension", self.binedges)
+		
+		self.AddOutBox("OutBox")
+		
+	def Configure(self):
+		
+		self.fname = self.GetParameter("Filename")
+		self.photons = self.GetParameter("Photons")
+		self.stats = self.GetParameter("Statistics")
+		self.source = self.GetParameter("Source")
+		self.rng = self.GetParameter("RandomService")
+		self.stepLength = self.GetParameter("StepLength")
+		self.header = self.GetParameter("TableHeader")
+		
+		self.n_photons = 0
+		
+		self.binedges = self.GetParameter("BinEdges")
 		
 		self.domRadius = 0.16510*I3Units.m
 		self.stepLength = 1*I3Units.m
 		
 		self.SetBins(self.binedges, self.stepLength)
-		self.SetEfficiencies(GetIceCubeDOMAcceptance(), GetIceCubeDOMAngularSensitivity(), self.domRadius)
-		self.SetRandomService(I3GSLRandomService(12345))
+		# XXX magic scaling factor used in CLSim weighted-photon generation
+		self.SetEfficiencies(GetIceCubeDOMAcceptance(efficiency=0.75*1.35 * 1.01), GetIceCubeDOMAngularSensitivity(), self.domRadius)
+		self.SetRandomService(self.rng)
 		
 	def DAQ(self, frame):
 		source = frame[self.source]
 		photonmap = frame[self.photons]
 		
 		for photons in photonmap.itervalues():
-			# wtot = sum([photon.weight for photon in photons])
-			wsum = 0
 			for photon in photons:
 				self.RecordPhoton(source, photon)
-				# wsum += photon.weight
-				# if int(wsum/wtot)*100 % 10 == 0:
-				# 	print 'Tabulated weights %f/%f' % (wsum,wtot)
 		
 		# Each I3Photon can only carry a fixed number of intermediate
 		# steps, so there may be more than one I3Photon for each generated
@@ -338,19 +393,16 @@ class I3TabulatorModule(I3Module, tabulator):
 		self.PushFrame(frame)
 		
 	def Finish(self):
-		# pass
-		
-		# self.Normalize()
+		self.Normalize()
 		values, weights = self.GetValues()
-		# print values, weights
-		print values.shape, weights.shape
-		
-		domArea = numpy.pi*self.domRadius**2
-		
-		norm = Tabulator.GetBinVolumes(self.binedges)/(domArea*self.stepLength)
-		print values.max(), weights.max()
-		table = PhotoTable(self.binedges, values/norm, weights/(norm**2), self.n_photons)
+		self.header['n_photons'] = self.n_photons
+		table = PhotoTable(self.binedges, values, weights, self.header)
 		table.save(self.fname)
+
+def generate_seed():
+	import struct
+	with open('/dev/random') as rand:
+		return struct.unpack('i', rand.read(4))[0]
 
 class MakeParticle(I3Module):
     def __init__(self, context):
@@ -411,9 +463,21 @@ class MakeParticle(I3Module):
         if self.emittedEvents >= self.nEvents:
             self.RequestSuspension()
 
-		
+def get_minimum_refractive_index(IceModelLocation):
+	# FIXME: make this actual find the minima
+	return (I3Constants.n_ice_group, I3Constants.n_ice_phase)
+
 @traysegment
-def PhotonGenerator(tray, name, Seed=12345, NEvents=100):
+def PhotonGenerator(tray, name, Zenith=90.*I3Units.degree, ZCoordinate = 0.*I3Units.m,
+    Energy=0.01*I3Units.GeV, Seed=12345, NEvents=100,
+    IceModel='spice_mie'):
+	"""
+	
+	:param IceModel: the path to an ice model in $I3_SRC/clsim/resources/ice. Likely values include:
+	    'spice_mie' ppc-style SPICE-Mie parametrization
+	    'photonics_spice_1/Ice_table.spice.i3coords.cos080.10feb2010.txt' Photonics-style SPICE1 table
+	    'photonics_wham/Ice_table.wham.i3coords.cos094.11jul2011.txt' Photonics-style WHAM! table
+	"""
 	from icecube import icetray, dataclasses, dataio, phys_services, sim_services, clsim
 	from os.path import expandvars
 	
@@ -440,13 +504,10 @@ def PhotonGenerator(tray, name, Seed=12345, NEvents=100):
 	    InstallStatus=True)
 	tray.AddModule("I3MetaSynth", name+"synth")
 
-
+	ptype = I3Particle.ParticleType.EMinus
 	tray.AddModule(MakeParticle, name+"MakeParticle",
-	    Zenith = 90.*I3Units.deg,
-	    ZCoordinate = 0.*I3Units.m,
-	    # Energy = 0.01*I3Units.GeV, # the longitudinal profile parameterization from PPC breaks down at this energy (the cascade will be point-like). The angular parameteriztion will still work okay. This might be exactly what we want for table-making (it should become an option to the PPC parameterization eventually).
-	    NEvents = NEvents)
-
+	    Zenith=Zenith, ZCoordinate=ZCoordinate, Energy=Energy,
+	    Type=ptype, NEvents=NEvents)
 
 	tray.AddSegment(clsim.I3CLSimMakePhotons, name+"makeCLSimPhotons",
 	    PhotonSeriesName = "PropagatedPhotons",
@@ -470,71 +531,17 @@ def PhotonGenerator(tray, name, Seed=12345, NEvents=100):
 	                                       LimitWorkgroupSize=1,                # this effectively disables all parallelism (there should be only one OpenCL worker thread)
 	                                                                            #  it also should save LOTS of memory
 	                                      ),
-	    # IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos094.11jul2011.txt"),
-	    IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/photonics_spice_1/Ice_table.spice.i3coords.cos080.10feb2010.txt"),
-	    #IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
+	    IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/" + IceModel),
 	    )
-
-def potemkin_photon():
-	ph = I3Photon()
-	ph.numScattered = 1
-	ph.groupVelocity = I3Constants.c/I3Constants.n_ice_group
-	ph.startPos = I3Position(0,0,0)
-	ph.startTime = 0.
-	ph.pos = I3Position(100., 100., 100.,)
-	ph.AppendToIntermediatePositionList(I3Position(100., 0., 0.,), 1)
-	ph.distanceInAbsorptionLengths = 2
-	ph.wavelength = 450.
-	ph.weight = 1.
 	
-	return ph
-
-def potemkin_source():
-	p = I3Particle()
-	p.pos = I3Position(0,0,0)
-	p.dir = I3Direction(0,0,1)
-	p.time = 0
-	p.shape = p.Cascade
-	p.energy = 1e3
+	n_group, n_phase = get_minimum_refractive_index(expandvars("$I3_SRC/clsim/resources/ice/" + IceModel))
 	
-	return p
-
-def test_tray():
-	from I3Tray import I3Tray
-	from icecube import dataio, phys_services
-	from icecube.clsim import I3PhotonSeries, I3PhotonSeriesMap, I3CLSimEventStatistics
-	from icecube.icetray import OMKey, I3Frame
+	header = dict(empty_header)
+	header['zenith'] = Zenith/I3Units.degree
+	header['z'] = ZCoordinate
+	header['energy'] = Energy
+	header['type'] = int(ptype)
+	header['n_group'] = n_group
+	header['n_phase'] = n_phase
 	
-	tray = I3Tray()
-	
-	tray.AddModule('I3InfiniteSource', 'maw')
-	
-	def inserty(frame):
-		source = potemkin_source()
-		psm = I3PhotonSeriesMap()
-		psm[OMKey(0,0)] = I3PhotonSeries([potemkin_photon()])
-		
-		stats = I3CLSimEventStatistics()
-		stats.AddNumPhotonsGeneratedWithWeights(numPhotons=1, weightsForPhotons=1, majorID=0, minorID=0)
-		
-		frame['Source'] = source
-		frame['Photons'] = psm
-		frame['Statistics'] = stats
-		
-	tray.AddModule(inserty, 'inserty', Streams=[I3Frame.DAQ])
-	
-	import os
-	if os.path.exists('potemkin.fits'):
-		os.unlink('potemkin.fits')
-	tray.AddModule(I3TabulatorModule, 'tabbycat',
-	    Photons='Photons', Source='Source', Statistics='Statistics',
-	    Filename='potemkin.fits')
-	
-	tray.AddModule('TrashCan', 'YesWeCan')
-	tray.Execute(1)
-	tray.Finish()
-	
-if __name__ == "__main__":
-	test_tray()
-	 
-
+	return randomService, header
