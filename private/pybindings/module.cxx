@@ -36,7 +36,7 @@ namespace bp = boost::python;
     (I3Photon)(I3CLSimEventStatistics)              \
     (I3CLSimPMTPhotonSimulator)(I3Converters)       \
     (I3CLSimFlasherPulse)(I3ShadowedPhotonRemover)  \
-    (I3ExtraGeometryItem)(I3CLSimTabulator)
+    (I3ExtraGeometryItem)
 
 #ifndef BUILD_CLSIM_DATACLASSES_ONLY
 // all these do depend on either OpenCL and/or Geant4
@@ -59,6 +59,10 @@ namespace bp = boost::python;
 #define I3_REGISTRATION_FN_DECL(r, data, t) void BOOST_PP_CAT(register_,t)();
 #define I3_REGISTER(r, data, t) BOOST_PP_CAT(register_,t)();
 
+#ifdef USE_TABULATOR
+void register_I3CLSimTabulator();
+#endif
+
 
 BOOST_PP_SEQ_FOR_EACH(I3_REGISTRATION_FN_DECL, ~, REGISTER_THESE_THINGS)
 #ifndef BUILD_CLSIM_DATACLASSES_ONLY
@@ -79,5 +83,10 @@ BOOST_PYTHON_MODULE(clsim)
 #ifndef BUILD_CLSIM_DATACLASSES_ONLY
     BOOST_PP_SEQ_FOR_EACH(I3_REGISTER, ~, REGISTER_THESE_THINGS_TOO);
 #endif
+    
+#ifdef USE_TABULATOR
+    register_I3CLSimTabulator();
+#endif
+
 }
 

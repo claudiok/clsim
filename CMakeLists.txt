@@ -92,10 +92,17 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
 SET(LIB_${PROJECT_NAME}_PROJECTS icetray dataio dataclasses phys-services tableio simclasses)
 SET(LIB_${PROJECT_NAME}_TOOLS python boost log4cplus gsl)
 
+# check for numpy. The C++ part of the tabulator needs it.
 if(NUMPY_FOUND)
-	LIST(APPEND LIB_${PROJECT_NAME}_TOOLS numpy)
-	ADD_DEFINITIONS(-DUSE_NUMPY)
-	colormsg(GREEN "+-- numpy support")
+  ADD_DEFINITIONS(-DUSE_NUMPY)
+
+  LIST(APPEND LIB_${PROJECT_NAME}_TOOLS numpy)
+  ADD_DEFINITIONS(-DUSE_TABULATOR)
+  SET(BUILD_TABULATOR YES)
+  colormsg(GREEN "+-- numpy support (for tabulator)")
+else(NUMPY_FOUND)
+  SET(BUILD_TABULATOR NO)
+  colormsg(GREEN "+-- no numpy support (tabulator will not be built)")
 endif(NUMPY_FOUND)
 
 # The icecube master header file I3.h seems to include inttypes.h without setting

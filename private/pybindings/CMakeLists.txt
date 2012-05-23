@@ -34,7 +34,6 @@ if(BUILD_PYBINDINGS)
     I3Converters.cxx
     I3ShadowedPhotonRemover.cxx
     I3ExtraGeometryItem.cxx
-    I3CLSimTabulator.cxx
     module.cxx
   )
 
@@ -61,6 +60,12 @@ if(BUILD_PYBINDINGS)
       I3CLSimSpectrumTable.cxx
     )
   endif(BUILD_CLSIM_DATACLASSES_ONLY)
+
+  if(BUILD_TABULATOR)
+    LIST(APPEND LIB_${PROJECT_NAME}_PYBINDINGS_SOURCEFILES
+      I3CLSimTabulator.cxx
+    )
+  endif(BUILD_TABULATOR)
 
   i3_add_pybindings(clsim
     ${LIB_${PROJECT_NAME}_PYBINDINGS_SOURCEFILES}
