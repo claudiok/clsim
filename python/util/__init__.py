@@ -25,5 +25,6 @@
 #
 
 from interpolate import *
+from GetMaximumGroupRefractiveIndex import GetMaximumGroupRefractiveIndex
 
 __all__ = filter(lambda s:not s.startswith('_'),dir())
