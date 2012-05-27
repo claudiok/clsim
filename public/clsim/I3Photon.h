@@ -34,9 +34,9 @@
 #include "dataclasses/I3Vector.h"
 #include "dataclasses/I3Map.h"
 #ifdef GRANULAR_GEOMETRY_SUPPORT
-#include "icetray/OMKey.h"
-#else
 #include "dataclasses/ModuleKey.h"
+#else
+#include "icetray/OMKey.h"
 #endif
 #include "dataclasses/I3Direction.h"
 #include "dataclasses/I3Position.h"

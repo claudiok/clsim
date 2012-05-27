@@ -84,6 +84,8 @@ void I3CLSimRandomDistributionTester::FillSource(std::vector<std::string> &sourc
             
             randomDistSource = randomDistSource + ToFloatString(runtimeParameters[i]);
         }
+
+        randomDistSource = randomDistSource +
         "\n";
     }
     
