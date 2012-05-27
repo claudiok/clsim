@@ -42,7 +42,6 @@
 #include <glshovel/gl.h>
 #include <glshovel/util.h>
 #include <glshovel/render_dispatch.h>
-#include <dataclasses/geometry/I3Geometry.h>
 #include <glshovel/Configurable.h>
 
 

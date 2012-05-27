@@ -283,7 +283,13 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
     
     BOOST_FOREACH(const I3PhotonSeriesMap::value_type &it, *inputPhotonSeriesMap)
     {
+#ifdef GRANULAR_GEOMETRY_SUPPORT
+        const ModuleKey &module_key = it.first;
+        // assume this is IceCube (i.e. one PMT with index 0 per DOM)
+        const OMKey key(module_key.GetString(), module_key.GetOM(), 0);        
+#else
         const OMKey &key = it.first;
+#endif
         const I3PhotonSeries &photons = it.second;
 
         if (ignoreDOMsWithoutDetectorStatusEntry_) {

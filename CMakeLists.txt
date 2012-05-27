@@ -110,6 +110,19 @@ endif(NUMPY_FOUND)
 # so it needs those macros. Add the definition right here to work around this.
 ADD_DEFINITIONS(-D__STDC_FORMAT_MACROS)
 
+
+# check for granular geometry support
+if(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3ModuleGeo.h)
+  # assume that the existence of this header means that there are
+  # granular geometry objects in the G frame (and not only a single
+  # I3Geomtry)
+  ADD_DEFINITIONS(-DGRANULAR_GEOMETRY_SUPPORT)
+  colormsg(GREEN "+-- has support for granular geometry")
+else(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3ModuleGeo.h)
+  colormsg(YELLOW "+-- only supports I3Geometry-only G-frames")
+endif(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3ModuleGeo.h)
+
+
 # check for Q-Frame support
 if(EXISTS ${CMAKE_SOURCE_DIR}/dataio/private/dataio/QConverter.cxx)
   # we assume that the existence of this module means that we have

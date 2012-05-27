@@ -177,7 +177,12 @@ def I3CLSimMakePhotons(tray, name,
         Python function to use as conditional execution test for segment modules.        
     """
 
-    from icecube import icetray, dataclasses, clsim
+    from icecube import icetray, dataclasses, phys_services, clsim
+
+    # make sure the geometry is updated to the new granular format (in case it is supported)
+    if hasattr(dataclasses, "I3ModuleGeo"):
+        tray.AddModule("I3GeometryDecomposer", name + "_decomposeGeometry",
+                       If=lambda frame: If(frame) and ("I3OMGeoMap" not in frame))
 
     AutoSetGeant4Environment()
 
@@ -225,7 +230,7 @@ def I3CLSimMakePhotons(tray, name,
         clSimOMKeyMaskName = FlasherInfoVectName + "_OMKeys"
         
         tray.AddModule(clsim.FlasherInfoVectToFlasherPulseSeriesConverter,
-                       "FlasherInfoVectToFlasherPulseSeriesConverter",
+                       name + "_FlasherInfoVectToFlasherPulseSeriesConverter",
                        FlasherInfoVectName = FlasherInfoVectName,
                        FlasherPulseSeriesName = clSimFlasherPulseSeriesName,
                        FlasherOMKeyVectName = clSimOMKeyMaskName,

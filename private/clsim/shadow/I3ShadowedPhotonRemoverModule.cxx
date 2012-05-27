@@ -35,7 +35,7 @@
 
 #include "clsim/I3Photon.h"
 
-#include "dataclasses/geometry/I3Geometry.h"
+//#include "dataclasses/geometry/I3Geometry.h"
 
 #include "dataclasses/I3Constants.h"
 
@@ -101,7 +101,11 @@ void I3ShadowedPhotonRemoverModule::Physics(I3FramePtr frame)
     
     BOOST_FOREACH(const I3PhotonSeriesMap::value_type &it, *inputPhotonSeriesMap)
     {
+#ifdef GRANULAR_GEOMETRY_SUPPORT
+        const ModuleKey &key = it.first;
+#else
         const OMKey &key = it.first;
+#endif
         const I3PhotonSeries &photons = it.second;
 
         //// Find the current OM in the geometry map

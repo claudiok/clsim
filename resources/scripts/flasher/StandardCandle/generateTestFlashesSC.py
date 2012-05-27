@@ -77,7 +77,7 @@ tray.AddModule(clsim.StandardCandleFlasherPulseSeriesGenerator, "StandardCandleF
                # PhotonsPerPulse = 2.2e12,  # @ 50.0% nominal output (SC1)
                # PhotonsPerPulse = 4.0e12,  # @  100% nominal output (SC1)
                FlashTime = 0.*I3Units.ns, # this time is arbitrary (the trigger modules should time-shift this anyway)
-               CandleNumber = 2)          # simulate SC1
+               CandleNumber = 2)          # simulate SC2
 
 
 tray.AddModule("I3Writer","writer",

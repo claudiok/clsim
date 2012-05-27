@@ -33,6 +33,12 @@
 #include "dataclasses/I3Vector.h"
 #include "dataclasses/physics/I3MCTree.h"
 
+#include "icetray/OMKey.h"
+
+#ifdef GRANULAR_GEOMETRY_SUPPORT
+#include "dataclasses/ModuleKey.h"
+#endif
+
 #include "phys-services/I3RandomService.h"
 
 #include "clsim/I3CLSimOpenCLDevice.h"
@@ -314,7 +320,11 @@ private:
     std::vector<I3PhotonSeriesMapPtr> photonsForFrameList_;
     std::vector<int32_t> currentPhotonIdForFrame_;
     std::vector<bool> frameIsBeingWorkedOn_;
+#ifdef GRANULAR_GEOMETRY_SUPPORT
+    std::vector<std::set<ModuleKey> > maskedOMKeys_;
+#else
     std::vector<std::set<OMKey> > maskedOMKeys_;
+#endif
     
     struct particleCacheEntry
     {

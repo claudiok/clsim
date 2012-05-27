@@ -32,6 +32,13 @@
 #include <icetray/I3Units.h>
 #include "clsim/I3CLSimSimpleGeometryFromI3Geometry.h"
 
+#include "dataclasses/geometry/I3Geometry.h"
+#include "dataclasses/geometry/I3OMGeo.h"
+
+#ifdef GRANULAR_GEOMETRY_SUPPORT
+#include "dataclasses/geometry/I3ModuleGeo.h"
+#endif
+
 #include <stdexcept>
 #include <limits>
 
@@ -51,7 +58,7 @@ const bool I3CLSimSimpleGeometryFromI3Geometry::default_useHardcodedDeepCoreSubd
 
 I3CLSimSimpleGeometryFromI3Geometry::
 I3CLSimSimpleGeometryFromI3Geometry(double OMRadius,
-                                    const I3GeometryConstPtr &geometry,
+                                    const I3FramePtr &frame,
                                     const std::set<int> &ignoreStrings,
                                     const std::set<unsigned int> &ignoreDomIDs,
                                     const std::set<std::string> &ignoreSubdetectors,
@@ -73,7 +80,7 @@ ignoreDomIDsSmallerThan_(ignoreDomIDsSmallerThan),
 ignoreDomIDsLargerThan_(ignoreDomIDsLargerThan),
 useHardcodedDeepCoreSubdetector_(useHardcodedDeepCoreSubdetector)
 {
-    if (!geometry) throw std::runtime_error("Received NULL geometry pointer!");
+    if (!frame) throw std::runtime_error("Received NULL frame pointer!");
     
     log_debug("Ignoring StringNum<%" PRIi32 ", StringNum>%" PRIi32 ", OMNum<%" PRIu32 ", OMNum>%" PRIu32 ".",
               ignoreStringIDsSmallerThan, ignoreStringIDsLargerThan,
@@ -86,6 +93,9 @@ useHardcodedDeepCoreSubdetector_(useHardcodedDeepCoreSubdetector)
     std::map<OMKey, unsigned int> omKeyToDetectorPart;
     std::map<int64_t, std::vector<std::pair<double, double> > > modifiedStringNumToXYPosList;
     unsigned int numParts;
+    
+    I3GeometryConstPtr geometry = frame->Get<I3GeometryConstPtr>();
+    if (!geometry) log_fatal("No I3Geometry object in frame");
     
     unsigned int maxOMsPerFloor = geometry->layout.GetMaxOMCountPerFloor();
     if (maxOMsPerFloor <= 1)
@@ -159,14 +169,46 @@ useHardcodedDeepCoreSubdetector_(useHardcodedDeepCoreSubdetector)
 #endif
     
     numOMs_=0;
+    
+#ifdef GRANULAR_GEOMETRY_SUPPORT
+    I3ModuleGeoMapConstPtr moduleGeoMap = frame->Get<I3ModuleGeoMapConstPtr>("I3ModuleGeoMap");
+    
+    if (!moduleGeoMap) {
+        if (frame->Has("I3Geometry")) {
+            log_fatal("No I3ModuleGeoMap found in frame. There *is* an I3Geometry object. Please run the \"I3GeometryDecomposer\" module before this.");
+        } else {
+            log_fatal("No I3ModuleGeoMap found in frame. There does not seem to be a geometry.");
+        }
+    }
+
+    I3MapModuleKeyStringConstPtr subdetectors = frame->Get<I3MapModuleKeyStringConstPtr>("Subdetectors");
+    if (!subdetectors) log_error("No subdetector configuration in frame. Missing a \"Subdetectors\" object. Assuming all modules are on the same detector.");
+    
+    BOOST_FOREACH(const I3ModuleGeoMap::value_type &i, *moduleGeoMap)
+    {
+        const ModuleKey &key = i.first;
+        const I3ModuleGeo &geo = i.second;
+        
+        std::string subdetectorName = "Unknown"; // use this if there is no Subdetectors object
+        if (subdetectors) {
+            I3MapModuleKeyString::const_iterator subdetector_it =
+            subdetectors->find(key);
+            if (subdetector_it == subdetectors->end()) {
+                log_fatal("ModuleKey(%i/%u) not found in \"Subdetectors\".",
+                          key.GetString(), key.GetOM());
+            }
+            subdetectorName = subdetector_it->second;
+        }
+        
+#else
+    I3GeometryConstPtr geometry = frame->Get<I3GeometryConstPtr>();
+    if (!geometry) log_fatal("No I3Geometry object in frame");
+
     BOOST_FOREACH(const I3OMGeoMap::value_type &i, geometry->omgeo)
     {
         const OMKey &key = i.first;
         const I3OMGeo &geo = i.second;
         
-        int32_t string=key.GetString();
-        uint32_t dom=key.GetOM();
-
 #ifdef HAS_MULTIPMT_SUPPORT
         std::string subdetectorName = geo.subdetector;
 #else
@@ -180,14 +222,23 @@ useHardcodedDeepCoreSubdetector_(useHardcodedDeepCoreSubdetector)
             default: subdetectorName = "(unknown)"; break;
         }
 #endif
-        
+
+#endif
+      
+        int32_t string=key.GetString();
+        uint32_t dom=key.GetOM();
+
         if (useHardcodedDeepCoreSubdetector_) {
             // special hack for DeepCore
-            if (subdetectorName=="IceCube")
+            if ((subdetectorName=="IceCube") || (subdetectorName=="DeepCore"))
             {
                 if ((string>=79) && (string<=86)) // these are the DeepCore strings
                 {
+#ifdef GRANULAR_GEOMETRY_SUPPORT
+                    if (geo.GetPos().GetZ()>-30.*I3Units::m) // z=30m is about halfway between the upper and lower parts of DeepCore
+#else
                     if (geo.position.GetZ()>-30.*I3Units::m) // z=30m is about halfway between the upper and lower parts of DeepCore
+#endif
                         subdetectorName="DeepCoreUpper";
                     else
                         subdetectorName="DeepCoreLower";
@@ -222,9 +273,15 @@ useHardcodedDeepCoreSubdetector_(useHardcodedDeepCoreSubdetector)
         
         stringIDs_.push_back(string);
         domIDs_.push_back(dom);
+#ifdef GRANULAR_GEOMETRY_SUPPORT
+        posX_.push_back(geo.GetPos().GetX());
+        posY_.push_back(geo.GetPos().GetY());
+        posZ_.push_back(geo.GetPos().GetZ());
+#else
         posX_.push_back(geo.position.GetX());
         posY_.push_back(geo.position.GetY());
         posZ_.push_back(geo.position.GetZ());
+#endif
         subdetectors_.push_back(subdetectorName);
 
         ++numOMs_;

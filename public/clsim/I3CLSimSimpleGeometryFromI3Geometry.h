@@ -28,7 +28,8 @@
 #define I3CLSIMSIMPLEGEOMETRYFROMI3GEOMETRY_H_INCLUDED
 
 #include "clsim/I3CLSimSimpleGeometry.h"
-#include "dataclasses/geometry/I3Geometry.h"
+
+#include "icetray/I3Frame.h"
 
 #include <string>
 #include <set>
@@ -52,7 +53,7 @@ public:
     static const bool default_useHardcodedDeepCoreSubdetector;
 
     I3CLSimSimpleGeometryFromI3Geometry(double OMRadius, 
-                                        const I3GeometryConstPtr &geometry,
+                                        const I3FramePtr &frame,
                                         const std::set<int> &ignoreStrings=default_ignoreStrings,
                                         const std::set<unsigned int> &ignoreDomIDs=default_ignoreDomIDs,
                                         const std::set<std::string> &ignoreSubdetectors=default_ignoreSubdetectors,

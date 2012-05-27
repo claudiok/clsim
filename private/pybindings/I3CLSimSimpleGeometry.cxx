@@ -172,7 +172,7 @@ void register_I3CLSimSimpleGeometry()
         (
          "I3CLSimSimpleGeometryFromI3Geometry",
          bp::init<
-         double, const I3GeometryConstPtr &,
+         double, const I3FramePtr &,
          const std::set<int> &,
          const std::set<unsigned int> &,
          const std::set<std::string> &,
@@ -182,7 +182,7 @@ void register_I3CLSimSimpleGeometry()
          >(
            (
             bp::arg("OMRadius"),
-            bp::arg("geometry"),
+            bp::arg("frame"),
             bp::arg("ignoreStrings"), //=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreStrings,
             bp::arg("ignoreDomIDs"), //=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreDomIDs,
             bp::arg("ignoreSubdetectors"), //=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreSubdetectors,

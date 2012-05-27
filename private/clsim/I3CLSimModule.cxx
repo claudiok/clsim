@@ -143,7 +143,7 @@ geometryIsConfigured_(false)
 
     omKeyMaskName_="";
     AddParameter("OMKeyMaskName",
-                 "Name of a I3VectorOMKey with masked OMKeys. DOMs in this list will not record I3Photons.",
+                 "Name of a I3VectorOMKey or I3VectorModuleKey with masked DOMs. DOMs in this list will not record I3Photons.",
                  omKeyMaskName_);
 
     ignoreMuons_=false;
@@ -618,9 +618,9 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
     if (geometryIsConfigured_)
         log_fatal("This module currently supports only a single geometry per input file.");
     
-    log_debug("Retrieving geometry..");
-    I3GeometryConstPtr geometryObject = frame->Get<I3GeometryConstPtr>();
-    if (!geometryObject) log_fatal("Geometry frame does not have an I3Geometry object!");
+    //log_debug("Retrieving geometry..");
+    //I3GeometryConstPtr geometryObject = frame->Get<I3GeometryConstPtr>();
+    //if (!geometryObject) log_fatal("Geometry frame does not have an I3Geometry object!");
     
     log_debug("Converting geometry..");
     
@@ -632,7 +632,7 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
     {    
         geometry_ = I3CLSimSimpleGeometryFromI3GeometryPtr
         (
-         new I3CLSimSimpleGeometryFromI3Geometry(DOMRadius_, geometryObject,
+         new I3CLSimSimpleGeometryFromI3Geometry(DOMRadius_, frame,
                                                  ignoreStringsSet,
                                                  ignoreDomIDsSet,
                                                  ignoreSubdetectorsSet,
@@ -648,7 +648,7 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
     {
         geometry_ = I3CLSimSimpleGeometryFromI3GeometryPtr
         (
-         new I3CLSimSimpleGeometryFromI3Geometry(DOMRadius_, geometryObject,
+         new I3CLSimSimpleGeometryFromI3Geometry(DOMRadius_, frame,
                                                  ignoreStringsSet,
                                                  ignoreDomIDsSet,
                                                  ignoreSubdetectorsSet,
@@ -756,11 +756,17 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
 }
 
 namespace {
+#ifdef GRANULAR_GEOMETRY_SUPPORT
+    static inline ModuleKey ModuleKeyFromOpenCLSimIDs(int16_t stringID, uint16_t domID)
+    {
+        return ModuleKey(stringID, domID);
+    }
+#endif
+
     static inline OMKey OMKeyFromOpenCLSimIDs(int16_t stringID, uint16_t domID)
     {
         return OMKey(stringID, domID);
     }
-    
 }
 
 void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
@@ -800,11 +806,19 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
         // get the current photon id
         int32_t &currentPhotonId = currentPhotonIdForFrame_[cacheEntry.frameListEntry];
         
+#ifdef GRANULAR_GEOMETRY_SUPPORT
         // generate the OMKey
+        const ModuleKey key = ModuleKeyFromOpenCLSimIDs(photon.stringID, photon.omID);
+#else
         const OMKey key = OMKeyFromOpenCLSimIDs(photon.stringID, photon.omID);
+#endif
         
         // get the OMKey mask
+#ifdef GRANULAR_GEOMETRY_SUPPORT
+        const std::set<ModuleKey> &keyMask = maskedOMKeys_[cacheEntry.frameListEntry];
+#else
         const std::set<OMKey> &keyMask = maskedOMKeys_[cacheEntry.frameListEntry];
+#endif
         if (keyMask.count(key) > 0) continue; // ignore masked DOMs
         
         // this either inserts a new vector or retrieves an existing one
@@ -1198,8 +1212,12 @@ void I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
     photonsForFrameList_.push_back(I3PhotonSeriesMapPtr(new I3PhotonSeriesMap()));
     currentPhotonIdForFrame_.push_back(0);
     std::size_t currentFrameListIndex = frameList_.size()-1;
+#ifdef GRANULAR_GEOMETRY_SUPPORT
+    maskedOMKeys_.push_back(std::set<ModuleKey>()); // insert an empty ModuleKey mask
+#else
     maskedOMKeys_.push_back(std::set<OMKey>()); // insert an empty OMKey mask
-
+#endif
+    
     // check if we got a geometry before starting to work
     if (!geometryIsConfigured_)
         log_fatal("Received Physics frame before Geometry frame");
@@ -1245,8 +1263,17 @@ void I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
     }
 
     I3VectorOMKeyConstPtr omKeyMask;
+#ifdef GRANULAR_GEOMETRY_SUPPORT
+    I3VectorModuleKeyConstPtr moduleKeyMask;
+#endif
     if (omKeyMaskName_ != "") {
         omKeyMask = frame->Get<I3VectorOMKeyConstPtr>(omKeyMaskName_);
+        
+#ifdef GRANULAR_GEOMETRY_SUPPORT
+        if (!omKeyMask) {
+            moduleKeyMask = frame->Get<I3VectorModuleKeyConstPtr>(omKeyMaskName_);
+        }
+#endif
     }
 
     
@@ -1259,12 +1286,31 @@ void I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
     if (MCTree) ConvertMCTreeToLightSources(*MCTree, lightSources);
     if (flasherPulses) ConvertFlasherPulsesToLightSources(*flasherPulses, lightSources);
     
+#ifdef GRANULAR_GEOMETRY_SUPPORT
+    // support both vectors of OMKeys and vectors of ModuleKeys
+    
+    if (omKeyMask) {
+        // assign the current OMKey mask if there is one
+        BOOST_FOREACH(const OMKey &key, *omKeyMask) {
+            maskedOMKeys_.back().insert(ModuleKey(key.GetString(), key.GetOM()));
+        }
+    }
+    
+    if (moduleKeyMask) {
+        // assign the current ModuleKey mask if there is one
+        BOOST_FOREACH(const ModuleKey &key, *moduleKeyMask) {
+            maskedOMKeys_.back().insert(key);
+        }
+    }
+   
+#else
     if (omKeyMask) {
         // assign the current OMKey mask if there is one
         BOOST_FOREACH(const OMKey &key, *omKeyMask) {
             maskedOMKeys_.back().insert(key);
         }
     }
+#endif
     
     
     BOOST_FOREACH(const I3CLSimLightSource &lightSource, lightSources)
