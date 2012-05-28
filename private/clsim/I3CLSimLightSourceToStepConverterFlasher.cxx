@@ -151,7 +151,7 @@ void I3CLSimLightSourceToStepConverterFlasher::Initialize()
                                           *(wlenBias_),
                                           minWlen,
                                           maxWlen);
-    log_warn("photon number correction factor for spectrum and bias is %f (from %fnm to %fnm)",
+    log_trace("photon number correction factor for spectrum and bias is %f (from %fnm to %fnm)",
         photonNumberCorrectionFactorForBias_,
         minWlen/I3Units::nanometer,
         maxWlen/I3Units::nanometer);
