@@ -58,6 +58,7 @@ const bool I3CLSimSimpleGeometryFromI3Geometry::default_useHardcodedDeepCoreSubd
 
 I3CLSimSimpleGeometryFromI3Geometry::
 I3CLSimSimpleGeometryFromI3Geometry(double OMRadius,
+                                    double oversizeFactor,
                                     const I3FramePtr &frame,
                                     const std::set<int> &ignoreStrings,
                                     const std::set<unsigned int> &ignoreDomIDs,
@@ -70,6 +71,7 @@ I3CLSimSimpleGeometryFromI3Geometry(double OMRadius,
                                     bool useHardcodedDeepCoreSubdetector)
 :
 OMRadius_(OMRadius),
+oversizeFactor_(oversizeFactor),
 splitIntoPartsAccordingToPosition_(splitIntoPartsAccordingToPosition),
 ignoreStrings_(ignoreStrings),
 ignoreDomIDs_(ignoreDomIDs),
@@ -269,6 +271,13 @@ useHardcodedDeepCoreSubdetector_(useHardcodedDeepCoreSubdetector)
         std::map<OMKey, unsigned int>::const_iterator it = omKeyToDetectorPart.find(key);
         if (it == omKeyToDetectorPart.end()) log_fatal("internal error: OMKey not in detector part list");
         subdetectorName = subdetectorName + "_" + boost::lexical_cast<std::string>(it->second);
+#endif
+        
+#ifdef GRANULAR_GEOMETRY_SUPPORT
+        // sanity check
+        if (std::abs(geo.GetRadius()-OMRadius_) > 0.001*I3Units::mm)
+            log_fatal("This version of clsim does only support DOMs with one single size. Configured size=%fmm, size in geometry=%fmm",
+                      OMRadius_/I3Units::mm, geo.GetRadius()/I3Units::mm);
 #endif
         
         stringIDs_.push_back(string);

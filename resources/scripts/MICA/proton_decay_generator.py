@@ -4,7 +4,7 @@ from I3Tray import I3Units
 import math
 
 def I3SimpleProtonDecayGenerator(frame,
-                                 posZRange=(-500.*I3Units.m,500.*I3Units.m),
+                                 posZRange=(-327.*I3Units.m,-502.*I3Units.m),
                                  radius=50.*I3Units.m,
                                  randomService=None,
                                  centerX=0.*I3Units.m,
@@ -52,7 +52,7 @@ def I3SimpleProtonDecayGenerator(frame,
     primaryProton.type = dataclasses.I3Particle.ParticleType.PPlus
     primaryProton.speed = 0.
     primaryProton.energy = 0.*I3Units.GeV
-    primaryProton.time = 0.*I3Units.ns
+    primaryProton.time = 10.*I3Units.ns
     primaryProton.pos = dataclasses.I3Position(posX, posY, posZ)
     primaryProton.dir = dataclasses.I3Direction(dirZenith, dirAzimuth)
     mcTree.add_primary(primaryProton)

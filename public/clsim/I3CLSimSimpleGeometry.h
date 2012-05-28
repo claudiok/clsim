@@ -41,6 +41,8 @@ class I3CLSimSimpleGeometry
     
 public:
     virtual std::size_t size() const = 0;
+    
+    /// This is the radius *with* oversizing applied!
     virtual double GetOMRadius() const = 0;
 
     virtual const std::vector<int32_t> &GetStringIDVector() const = 0;

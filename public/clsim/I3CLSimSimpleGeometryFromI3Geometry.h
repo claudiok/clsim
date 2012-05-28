@@ -52,7 +52,7 @@ public:
     static const bool default_splitIntoPartsAccordingToPosition;
     static const bool default_useHardcodedDeepCoreSubdetector;
 
-    I3CLSimSimpleGeometryFromI3Geometry(double OMRadius, 
+    I3CLSimSimpleGeometryFromI3Geometry(double OMRadius, double oversizeFactor,
                                         const I3FramePtr &frame,
                                         const std::set<int> &ignoreStrings=default_ignoreStrings,
                                         const std::set<unsigned int> &ignoreDomIDs=default_ignoreDomIDs,
@@ -67,7 +67,8 @@ public:
 
     virtual std::size_t size() const {return numOMs_;}
 
-    virtual double GetOMRadius() const {return OMRadius_;}
+    /// This is the radius *with* oversizing applied!
+    virtual double GetOMRadius() const {return OMRadius_*oversizeFactor_;}
     
     virtual const std::vector<int32_t> &GetStringIDVector() const {return stringIDs_;}
     virtual const std::vector<uint32_t> &GetDomIDVector() const {return domIDs_;}
@@ -85,6 +86,8 @@ public:
     
 private:
     double OMRadius_;
+    double oversizeFactor_;
+    
     bool splitIntoPartsAccordingToPosition_;
     std::size_t numOMs_;
     

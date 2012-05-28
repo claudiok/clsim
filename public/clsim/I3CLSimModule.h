@@ -164,6 +164,9 @@ private:
     /// Parameter: The DOM radius used during photon tracking.
     double DOMRadius_;
 
+    /// Parameter: Specifiy the "oversize factor" (i.e. DOM radius scaling factor).
+    double DOMOversizeFactor_;
+
     /// Parameter: Ignore string numbers < 1 and OM numbers > 60. (AMANDA and IceTop)
     bool ignoreNonIceCubeOMNumbers_;
 

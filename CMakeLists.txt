@@ -116,6 +116,10 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3ModuleGe
   # assume that the existence of this header means that there are
   # granular geometry objects in the G frame (and not only a single
   # I3Geomtry)
+  LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
+       private/clsim/dom/I3PhotonToMCHitConverterForMDOMs.cxx
+       )
+
   ADD_DEFINITIONS(-DGRANULAR_GEOMETRY_SUPPORT)
   colormsg(GREEN "+-- has support for granular geometry")
 else(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3ModuleGeo.h)
@@ -236,7 +240,6 @@ if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
     private/geant4/TrkCerenkov.cxx
     private/geant4/TrkDetectorConstruction.cxx
     private/geant4/TrkEMPhysicsUHE.cxx
-    private/geant4/TrkEnergyCut.cxx
     private/geant4/TrkEventAction.cxx
     private/geant4/TrkOpticalPhysics.cxx
     private/geant4/TrkPrimaryGeneratorAction.cxx

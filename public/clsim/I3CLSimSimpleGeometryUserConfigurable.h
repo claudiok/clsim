@@ -44,6 +44,7 @@ public:
 
     virtual std::size_t size() const {return numOMs_;}
 
+    /// This is the radius *with* oversizing applied!
     virtual double GetOMRadius() const {return OMRadius_;}
     
     virtual const std::vector<int32_t> &GetStringIDVector() const {return stringIDs_;}

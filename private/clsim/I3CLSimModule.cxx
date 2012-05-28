@@ -160,6 +160,11 @@ geometryIsConfigured_(false)
                  "The DOM radius used during photon tracking.",
                  DOMRadius_);
 
+    DOMOversizeFactor_=1.; // no oversizing
+    AddParameter("DOMOversizeFactor",
+                 "Specifiy the \"oversize factor\" (i.e. DOM radius scaling factor).",
+                 DOMOversizeFactor_);
+
     ignoreNonIceCubeOMNumbers_=false;
     AddParameter("IgnoreNonIceCubeOMNumbers",
                  "Ignore string numbers < 1 and OM numbers > 60. (AMANDA and IceTop)",
@@ -375,6 +380,8 @@ void I3CLSimModule::Configure()
     GetParameter("OpenCLDeviceList", openCLDeviceList_);
 
     GetParameter("DOMRadius", DOMRadius_);
+    GetParameter("DOMOversizeFactor", DOMOversizeFactor_);
+
     GetParameter("IgnoreNonIceCubeOMNumbers", ignoreNonIceCubeOMNumbers_);
 
     GetParameter("Geant4PhysicsListName", geant4PhysicsListName_);
@@ -632,7 +639,9 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
     {    
         geometry_ = I3CLSimSimpleGeometryFromI3GeometryPtr
         (
-         new I3CLSimSimpleGeometryFromI3Geometry(DOMRadius_, frame,
+         new I3CLSimSimpleGeometryFromI3Geometry(DOMRadius_,
+                                                 DOMOversizeFactor_,
+                                                 frame,
                                                  ignoreStringsSet,
                                                  ignoreDomIDsSet,
                                                  ignoreSubdetectorsSet,
@@ -648,7 +657,9 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
     {
         geometry_ = I3CLSimSimpleGeometryFromI3GeometryPtr
         (
-         new I3CLSimSimpleGeometryFromI3Geometry(DOMRadius_, frame,
+         new I3CLSimSimpleGeometryFromI3Geometry(DOMRadius_,
+                                                 DOMOversizeFactor_,
+                                                 frame,
                                                  ignoreStringsSet,
                                                  ignoreDomIDsSet,
                                                  ignoreSubdetectorsSet,

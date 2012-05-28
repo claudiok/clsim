@@ -37,7 +37,13 @@
 
 #include "clsim/I3Photon.h"
 
+#ifdef GRANULAR_GEOMETRY_SUPPORT
+#include "dataclasses/geometry/I3OMGeo.h"
+#include "dataclasses/geometry/I3ModuleGeo.h"
+#else
 #include "dataclasses/geometry/I3Geometry.h"
+#endif
+
 #include "dataclasses/physics/I3MCHit.h"
 #include "dataclasses/physics/I3MCTree.h"
 
@@ -232,9 +238,20 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
 {
     log_trace("%s", __PRETTY_FUNCTION__);
     
+#ifdef GRANULAR_GEOMETRY_SUPPORT
+    // First we need to get our geometry
+    I3OMGeoMapConstPtr omgeo = frame->Get<I3OMGeoMapConstPtr>("I3OMGeoMap");
+    I3ModuleGeoMapConstPtr modulegeo = frame->Get<I3ModuleGeoMapConstPtr>("I3ModuleGeoMap");
+    
+    if (!omgeo)
+        log_fatal("Missing geometry information! (No \"I3OMGeoMap\")");
+    if (!modulegeo)
+        log_fatal("Missing geometry information! (No \"I3ModuleGeoMap\")");
+#else
     // First we need to get our geometry
     const I3Geometry& geometry = frame->Get<I3Geometry>();
-
+#endif
+    
     if (!replaceRelativeDOMEfficiencyWithDefault_) {
         // no need to check for exitsing calibration frames if the efficiency
         // will be replaced with a default value anyway
@@ -274,7 +291,7 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
         }
     }    
     
-#ifndef HAS_MULTIPMT_SUPPORT    
+#if !defined(HAS_MULTIPMT_SUPPORT) && !defined(GRANULAR_GEOMETRY_SUPPORT)
     // DOM is looking downwards
     const double DOMDir_x = 0.;
     const double DOMDir_y = 0.;
@@ -298,12 +315,49 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
             if (om_stat->second.pmtHV==0.) continue; // ignore pmtHV==0
         }
         
+#ifdef GRANULAR_GEOMETRY_SUPPORT
+        // Find the current OM in the omgeo map
+        I3OMGeoMap::const_iterator geo_it = omgeo->find(key);
+        if (geo_it == omgeo->end())
+            log_fatal("OM (%i/%u%u) not found in the current geometry map!",
+                      key.GetString(), key.GetOM(), static_cast<unsigned int>(key.GetPMT()));
+        const I3OMGeo &om = geo_it->second;
+
+        // Find the current OM in the module map
+        I3ModuleGeoMap::const_iterator module_geo_it = modulegeo->find(module_key);
+        if (module_geo_it == modulegeo->end())
+            log_fatal("ModuleKey (%i/%u) not found in the current geometry map!",
+                      module_key.GetString(), module_key.GetOM());
+        const I3ModuleGeo &module = module_geo_it->second;
+
+        // this module assumes that all DOMs are IceCube-style with a single PMT per DOM
+        if ((std::abs(om.position.GetX() - module.GetPos().GetX()) > .01*I3Units::mm) ||
+            (std::abs(om.position.GetY() - module.GetPos().GetY()) > .01*I3Units::mm) ||
+            (std::abs(om.position.GetZ() - module.GetPos().GetZ()) > .01*I3Units::mm))
+            log_fatal("Module(%i/%u) has a PMT that is not in the center of the DOM!",
+                      module_key.GetString(), module_key.GetOM());
+            
+#else
         // Find the current OM in the geometry map
         I3OMGeoMap::const_iterator geo_it = geometry.omgeo.find(key);
         if (geo_it == geometry.omgeo.end())
             log_fatal("OM (%i/%u) not found in the current geometry map!", key.GetString(), key.GetOM());
         const I3OMGeo &om = geo_it->second;
-
+#endif
+        
+#ifdef GRANULAR_GEOMETRY_SUPPORT
+        const I3Direction pmtDir = om.GetDirection();
+        const I3Direction domDir = module.GetDir();
+        
+        const double DOMDir_x = pmtDir.GetX();
+        const double DOMDir_y = pmtDir.GetY();
+        const double DOMDir_z = pmtDir.GetZ();
+        
+        if ((std::abs(DOMDir_x - domDir.GetX()) > 1e-5) ||
+            (std::abs(DOMDir_y - domDir.GetY()) > 1e-5) ||
+            (std::abs(DOMDir_z - domDir.GetZ()) > 1e-5))
+            log_fatal("PMT and DOM directions are not aligned!");
+#else
 #ifdef HAS_MULTIPMT_SUPPORT    
         // get DOM (PMT) direction from geometry
         const I3OMTypeInfo &omTypeInfo = geometry.GetOMTypeInfo(key);
@@ -316,6 +370,7 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
         const double DOMDir_x = pmtDir.GetX();
         const double DOMDir_y = pmtDir.GetY();
         const double DOMDir_z = pmtDir.GetZ();
+#endif
 #endif
         
         // Find the current OM in the calibration map

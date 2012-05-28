@@ -65,9 +65,8 @@ storeDataAsHalfPrecision_(storeDataAsHalfPrecision)
 {
     if (wlens_.size() < 2) throw std::range_error("wlens must contain at least 2 elements!");
     if (wlens_.size() != values_.size()) throw std::range_error("wlens and values must have the same size!");
-    
+
     startWlen_ = wlens_[0];
-    if (startWlen_ < 0.) throw std::range_error("startWlen must not be < 0!");
 }
 
 I3CLSimFunctionFromTable::
@@ -82,7 +81,6 @@ values_(values),
 equalSpacingMode_(true),
 storeDataAsHalfPrecision_(storeDataAsHalfPrecision)
 {
-    if (startWlen_ < 0.) throw std::range_error("startWlen must not be < 0!");
     if (wlenStep_ <= 0.) throw std::range_error("wlenStep must not be <= 0!");
     if (values_.size() < 2) throw std::length_error("values must contain at least 2 elements!");
 
@@ -104,7 +102,7 @@ namespace {
         iptr = trunc(value);
         return copysign(std::isinf(value) ? 0.0 : value - iptr, value);
     }
-    
+
     inline static double mix(double min, double max, double t)
     {
         return min+(max-min)*t;
@@ -134,7 +132,7 @@ double I3CLSimFunctionFromTable::GetValue(double wlen) const
         if (wlen <= wlens_[0]) {
             return values_[0];
         }
-        
+
         std::size_t bin;
         double fraction;
         for (std::size_t i=1;i<wlens_.size();++i) {
@@ -148,7 +146,7 @@ double I3CLSimFunctionFromTable::GetValue(double wlen) const
                            fraction);
             }
         }
-        
+
         // nothing in range
         return values_[wlens_.size()-1];
     }
@@ -176,7 +174,7 @@ std::string I3CLSimFunctionFromTable::GetOpenCLFunction(const std::string &funct
 {
     if (!equalSpacingMode_)
         log_fatal("GetOpenCLFunction() has not yet been implemented for non-equal bin spacings.");
-    
+
     // some names
     const std::string dataName = functionName + "_data";
     const std::string interpHelperName = functionName + "_getInterpolationBinAndFraction";
@@ -184,7 +182,7 @@ std::string I3CLSimFunctionFromTable::GetOpenCLFunction(const std::string &funct
 #ifndef USE_OPENCL_HALF_PRECISION
     double smallestEntry=0., largestEntry=0.;
 #endif
-    
+
     std::string dataDef;
     if (storeDataAsHalfPrecision_)
     {
@@ -213,11 +211,11 @@ std::string I3CLSimFunctionFromTable::GetOpenCLFunction(const std::string &funct
                 largestEntry=val;
                 continue;
             }
-            
+
             if (val < smallestEntry) smallestEntry=val;
             if (val > largestEntry) largestEntry=val;
         }
-        
+
         // define the actual data
         dataDef = dataDef +
         "#define " + dataName + "_SMALLEST_ENTRY " + ToFloatString(smallestEntry) + " \n" +
@@ -266,10 +264,10 @@ std::string I3CLSimFunctionFromTable::GetOpenCLFunction(const std::string &funct
     "    *bin = ibin;\n"
     "}\n\n"
     ;
-    
+
     std::string funcDef = 
     std::string("inline float ") + functionName + std::string("(float wavelength)\n");
-    
+
     std::string funcBody;
     if (storeDataAsHalfPrecision_)
     {
@@ -310,7 +308,7 @@ std::string I3CLSimFunctionFromTable::GetOpenCLFunction(const std::string &funct
         "}\n"
         ;
     }
-    
+
     return funcDef + ";\n" + interpHelperDef + ";\n" + dataDef + interpHelperDef + interpHelperBody + funcDef + funcBody;
 }
 
@@ -322,12 +320,12 @@ bool I3CLSimFunctionFromTable::CompareTo(const I3CLSimFunction &other) const
         if ((other_.equalSpacingMode_ != equalSpacingMode_) ||
             (other_.values_.size() != values_.size()))
             return false;
-        
+
         for (std::size_t i=0;i<values_.size();++i)
         {
             if (other_.values_[i] != values_[i]) return false;
         }
-        
+
         if (equalSpacingMode_) {
             if (other_.startWlen_ != startWlen_) return false;
             if (other_.wlenStep_ != wlenStep_) return false;
@@ -337,7 +335,7 @@ bool I3CLSimFunctionFromTable::CompareTo(const I3CLSimFunction &other) const
                 if (other_.wlens_[i] != wlens_[i]) return false;
             }
         }
-        
+
         return true;
     }
     catch (const std::bad_cast& e)
@@ -345,7 +343,7 @@ bool I3CLSimFunctionFromTable::CompareTo(const I3CLSimFunction &other) const
         // not of the same type, treat it as non-equal
         return false;
     }
-    
+
 }
 
 
@@ -363,7 +361,7 @@ void I3CLSimFunctionFromTable::serialize(Archive &ar, unsigned version)
     ar & make_nvp("wlens", wlens_);
     ar & make_nvp("values", values_);
     ar & make_nvp("equalSpacingMode", equalSpacingMode_);
-}     
+}
 
 
 I3_SERIALIZABLE(I3CLSimFunctionFromTable);

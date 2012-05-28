@@ -48,7 +48,6 @@
 
 #include "TrkEMPhysicsUHE.hh"
 #include "TrkOpticalPhysics.hh"
-#include "TrkEnergyCut.hh"
 
 #include "TrkDetectorConstruction.hh"
 #include "TrkPrimaryGeneratorAction.hh"
@@ -354,7 +353,6 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
                                                    maxNumPhotonsPerStep_,
                                                    wlenBias_));
     //physics->RegisterPhysics(new TrkEMPhysicsUHE("EMUHE"));
-    //physics->RegisterPhysics(new TrkEnergyCut("TrkEnergyCut"));
     
     physics->SetDefaultCutValue(0.25*mm);
     runManager->SetUserInitialization(physics);

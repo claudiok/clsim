@@ -75,7 +75,7 @@ G4ClassificationOfNewTrack TrkStackingAction::ClassifyNewTrack(const G4Track * a
     const I3Particle::ParticleType trackI3ParticleType =
     I3CLSimI3ParticleGeantConverter::ConvertPDGEncodingToI3ParticleType(aTrack->GetDefinition()->GetPDGEncoding());
 #endif
-    
+
     const G4double trackEnergy = aTrack->GetKineticEnergy();
 
 #ifndef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
