@@ -38,7 +38,7 @@ def addAnnotationToPlot(plot, text, loc=1, size=8., rotation=0., bbox_transform=
     at.patch.set_boxstyle("round,pad=0.,rounding_size=0.2")
     plot.add_artist(at)
 
-def plotDOMs(fig, frame, radius, minZ, maxZ, pi0Only=False, eplusOnly=False, subdetectorName="MICA"):
+def plotDOMs(fig, frame, meanPosX, meanPosY, radius, minZ, maxZ, pi0Only=False, eplusOnly=False, subdetectorName="MICA"):
     #propagatedPhotons = frame["PhotonsOnDOMs"]
     #isHits = False
     
@@ -110,7 +110,7 @@ def plotDOMs(fig, frame, radius, minZ, maxZ, pi0Only=False, eplusOnly=False, sub
     numPhotons=0
     numDOMs=0
     
-    protonR = math.sqrt(primaries[0].pos.x**2 + primaries[0].pos.y**2)
+    protonR = math.sqrt((primaries[0].pos.x-meanPosX)**2 + (primaries[0].pos.y-meanPosY)**2)
     protonZ = primaries[0].pos.z
     
     #print "firstTime =", firstTime
@@ -186,9 +186,9 @@ def plotDOMs(fig, frame, radius, minZ, maxZ, pi0Only=False, eplusOnly=False, sub
     fig.subplots_adjust(left=0.02, bottom=0.055, top=0.93, right=0.98)
     
     
-    mc_pi0_phi = math.atan2(pi0Particle.dir.y, pi0Particle.dir.x)
+    mc_pi0_phi = math.atan2((pi0Particle.dir.y-meanPosY), (pi0Particle.dir.x-meanPosX))
     mc_pi0_theta = math.acos(pi0Particle.dir.z)-math.pi/2.
-    mc_eplus_phi = math.atan2(eplusParticle.dir.y, eplusParticle.dir.x)
+    mc_eplus_phi = math.atan2((eplusParticle.dir.y-meanPosY), (eplusParticle.dir.x-meanPosX))
     mc_eplus_theta = math.acos(eplusParticle.dir.z)-math.pi/2.
 
     ax = fig.add_subplot(1, 2, 1, projection='lambert', center_longitude=mc_pi0_phi, center_latitude=mc_pi0_theta)
@@ -339,6 +339,18 @@ class eventPlotter2(icetray.I3Module):
         domZSpacing = None
         numDOMs=0
 
+        meanPosX = 0.
+        meanPosY = 0.
+        counter = 0
+        for key, modulegeo in moduleGeoMap:
+            if subdetectors[key] != self.subdetectorName: continue
+
+            meanPosX += modulegeo.pos.x
+            meanPosY += modulegeo.pos.y
+            counter += 1
+        meanPosX /= float(counter)
+        meanPosY /= float(counter)
+
         for key, modulegeo in moduleGeoMap:
             if subdetectors[key] != self.subdetectorName: continue
             
@@ -357,7 +369,7 @@ class eventPlotter2(icetray.I3Module):
                 if modulegeo.pos.z > maxZ: maxZ=modulegeo.pos.z
                 if modulegeo.pos.z < minZ: minZ=modulegeo.pos.z
                
-            radius = math.sqrt(modulegeo.pos.x**2. + modulegeo.pos.y**2.)
+            radius = math.sqrt((modulegeo.pos.x-meanPosX)**2. + (modulegeo.pos.y-meanPosY)**2.)
             if radius > maxR: maxR=radius
             meanR += radius
             entries += 1
@@ -375,7 +387,7 @@ class eventPlotter2(icetray.I3Module):
         #ax = fig.add_subplot(1, 1, 1, projection='lambert', center_longitude=math.pi/4., center_latitude=math.pi/4.)
         #ax = fig.add_subplot(1, 1, 1, projection='lambert')
 
-        plotDOMs(fig, frame, maxR, minZ, maxZ, self.subdetectorName)
+        plotDOMs(fig, frame, meanPosX, meanPosY, maxR, minZ, maxZ, self.subdetectorName)
 
         extraString=""
         if self.pi0Only: extraString += r"$\pi^0$ only; "

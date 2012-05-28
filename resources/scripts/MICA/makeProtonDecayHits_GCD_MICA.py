@@ -57,15 +57,15 @@ tray.AddModule("Delete", "cleanup", Keys=["MCTimeIncEventID"])
 
 # decay some protons
 tray.AddModule(I3SimpleProtonDecayGenerator, "I3SimpleProtonDecayGenerator",
-               posZRange=(-327.*I3Units.m,-502.*I3Units.m),
-               radius=50.*I3Units.m,
-               centerX=0.*I3Units.m,
-               centerY=0.*I3Units.m,
+               #posZRange=(-327.*I3Units.m,-502.*I3Units.m),
+               #radius=50.*I3Units.m,
+               #centerX=0.*I3Units.m,
+               #centerY=0.*I3Units.m,
 
-               #posZRange=(-500.*I3Units.m,-100.*I3Units.m),
-               #radius=60.*I3Units.m,
-               #centerX=45.771827*I3Units.m,
-               #centerY=-34.411053*I3Units.m,
+               posZRange=(-500.*I3Units.m,-100.*I3Units.m),
+               radius=60.*I3Units.m,
+               centerX=45.771827*I3Units.m,
+               centerY=-34.411053*I3Units.m,
    
                randomService=randomService,
                Streams=[icetray.I3Frame.DAQ])
