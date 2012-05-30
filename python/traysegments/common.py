@@ -59,7 +59,7 @@ def configureOpenCLDevices(UseGPUs=True, UseCPUs=False, OverrideApproximateNumbe
     return openCLDevices
 
 def parseIceModel(IceModelLocation):
-    from os.path import exists, isdir, expandvars
+    from os.path import exists, isdir, isfile, expandvars
     from icecube.clsim.MakeIceCubeMediumProperties import MakeIceCubeMediumProperties
     from icecube.clsim.MakeIceCubeMediumPropertiesPhotonics import MakeIceCubeMediumPropertiesPhotonics
     
