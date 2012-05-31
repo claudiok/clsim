@@ -257,6 +257,17 @@ private:
     ///   Use this override for table-making.
     double fixedNumberOfAbsorptionLengths_;
 
+    /// Parameter:  Sets the "pancake" factor for DOMs. For standard
+    ///  oversized-DOM simulations, this should be the
+    ///  radius oversizing factor. This will flatten the
+    ///  DOM in the direction parallel to the photon.
+    ///  The DOM will have a pancake-like shape, elongated
+    ///  in the directions perpendicular to the photon direction.
+    ///
+    ///  The DOM radius (supplied by the geometry) must also include
+    ///  the oversizing factor.
+    double pancakeFactor_;
+    
     /// Parmeter: Sets the number of scattering step positions that are saved for a photon hitting
     ///   a DOM. The last N photons are saved if there are more scattering points than available entries.
     uint32_t photonHistoryEntries_;

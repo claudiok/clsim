@@ -98,83 +98,95 @@ inline void checkForCollision_OnString(
         if (domNum==0xFFFF) continue; // empty layer for this string
 
 #ifndef STOP_PHOTONS_ON_DETECTION
-            // prevent strings from being checked twice
-            if (dom_bitmask[stringNum/64] & (1 << convert_ulong(domNum%64))) continue;  // already check this string
-            dom_bitmask[stringNum/64] |= (1 << convert_ulong(domNum%64));               // mark this string as checked
+        // prevent strings from being checked twice
+        if (dom_bitmask[stringNum/64] & (1 << convert_ulong(domNum%64))) continue;  // already check this string
+        dom_bitmask[stringNum/64] |= (1 << convert_ulong(domNum%64));               // mark this string as checked
 #endif
         
         floating_t domPosX, domPosY, domPosZ;
         geometryGetDomPosition(stringNum, domNum, &domPosX, &domPosY, &domPosZ);
 
-        const floating4_t drvec = (const floating4_t)(photonPosAndTime.x - domPosX,
-            photonPosAndTime.y - domPosY,
-            photonPosAndTime.z - domPosZ,
-            ZERO);
-
-        const floating_t dr2     = dot(drvec,drvec);
-        const floating_t urdot   = dot(drvec, photonDirAndWlen); // this assumes drvec.w==0
-
-        floating_t discr   = sqr(urdot) - dr2 + OM_RADIUS*OM_RADIUS;   // (discr)^2
-
-        //if (dr2 < OM_RADIUS*OM_RADIUS) // start point inside the OM
-        //{
-        //    *thisStepLength=0.f;
-        //
-        //    // record a hit
-        //    *hitOnString=stringNum;
-        //    *hitOnDom=domNum;
-        //
-        //    *hitRecorded=true;
-        //}
-        //else
-        if ((discr >= ZERO) && (dr2 > OM_RADIUS*OM_RADIUS)) // the second part allows photons starting inside a DOM to leave (necessary for flashers)
+        floating_t urdot, discr;
         {
-            discr = my_sqrt(discr);
+            const floating4_t drvec = (const floating4_t)(domPosX - photonPosAndTime.x,
+                                                          domPosY - photonPosAndTime.y,
+                                                          domPosZ - photonPosAndTime.z,
+                                                          ZERO);
+            const floating_t dr2 = dot(drvec,drvec);
 
-            floating_t smin = -urdot - discr;
-            if (smin < ZERO) smin = -urdot + discr;
-
-            // check if distance to intersection <= thisStepLength; if not then no detection 
-#ifdef STOP_PHOTONS_ON_DETECTION
-            if ((smin >= ZERO) && (smin < *thisStepLength))
-#else
-            if ((smin >= ZERO) && (smin < thisStepLength))
-#endif
-            {
-#ifdef STOP_PHOTONS_ON_DETECTION
-                // record a hit (for later, the actual recording is done
-                // in checkForCollision().)
-                *thisStepLength=smin; // limit step length
-                *hitOnString=stringNum;
-                *hitOnDom=domNum;
-                *hitRecorded=true;
-                // continue searching, maybe we hit a closer OM..
-                // (in that case, no hit will be saved for this one)
-#else //STOP_PHOTONS_ON_DETECTION
-                // save the hit right here
-                saveHit(photonPosAndTime,
-                        photonDirAndWlen,
-                        smin, // this is the limited thisStepLength
-                        inv_groupvel,
-                        photonTotalPathLength,
-                        photonNumScatters,
-                        distanceTraveledInAbsorptionLengths,
-                        photonStartPosAndTime,
-                        photonStartDirAndWlen,
-                        step,
-                        stringNum,
-                        domNum,
-                        hitIndex,
-                        maxHitIndex,
-                        outputPhotons
-#ifdef SAVE_PHOTON_HISTORY
-                      , photonHistory,
-                        currentPhotonHistory
-#endif //SAVE_PHOTON_HISTORY
-                        );
-#endif //STOP_PHOTONS_ON_DETECTION
-            }
+            urdot = dot(drvec, photonDirAndWlen); // this assumes drvec.w==0
+            discr   = sqr(urdot) - dr2 + OM_RADIUS*OM_RADIUS;   // (discr)^2
         }
+        
+        if (discr < ZERO) continue; // no intersection with this DOM
+        
+#ifdef PANCAKE_FACTOR        
+        discr = my_sqrt(discr)/PANCAKE_FACTOR;
+#else
+        discr = my_sqrt(discr);
+#endif        
+
+        // by construction: smin1 < smin2
+
+        {
+            // distance from current point along the track to second intersection
+            const floating_t smin2 = urdot + discr;
+            if (smin2 < ZERO) continue; // implies smin1 < 0, so no intersection
+        }
+
+        // distance from current point along the track to first intersection
+        const floating_t smin1 = urdot - discr;
+
+        // smin2 > 0 && smin1 < 0 means that there *is* an intersection, but we are starting inside the DOM. 
+        // This allows photons starting inside a DOM to leave (necessary for flashers):
+        if (smin1 < ZERO) continue;
+
+        // if we get here, there *is* an intersection with the DOM (there are two actually, one for
+        // the ray enetering the DOM and one when it leaves again). We are interested in the one where enters
+        // the ray enters the DOM.
+        
+        
+        // check if distance to intersection <= thisStepLength; if not then no detection 
+#ifdef STOP_PHOTONS_ON_DETECTION
+        if (smin1 < *thisStepLength)
+#else
+        if (smin1 < thisStepLength)
+#endif
+        {
+#ifdef STOP_PHOTONS_ON_DETECTION
+            // record a hit (for later, the actual recording is done
+            // in checkForCollision().)
+            *thisStepLength=smin1; // limit step length
+            *hitOnString=stringNum;
+            *hitOnDom=domNum;
+            *hitRecorded=true;
+            // continue searching, maybe we hit a closer OM..
+            // (in that case, no hit will be saved for this one)
+#else //STOP_PHOTONS_ON_DETECTION
+            // save the hit right here
+            saveHit(photonPosAndTime,
+                    photonDirAndWlen,
+                    smin1, // this is the limited thisStepLength
+                    inv_groupvel,
+                    photonTotalPathLength,
+                    photonNumScatters,
+                    distanceTraveledInAbsorptionLengths,
+                    photonStartPosAndTime,
+                    photonStartDirAndWlen,
+                    step,
+                    stringNum,
+                    domNum,
+                    hitIndex,
+                    maxHitIndex,
+                    outputPhotons
+#ifdef SAVE_PHOTON_HISTORY
+                    , photonHistory,
+                    currentPhotonHistory
+#endif //SAVE_PHOTON_HISTORY
+                    );
+#endif //STOP_PHOTONS_ON_DETECTION
+        }
+
     }
 
 }

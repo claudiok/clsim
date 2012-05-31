@@ -238,6 +238,26 @@ public:
     double GetFixedNumberOfAbsorptionLengths() const;
 
     /**
+     * Sets the "pancake" factor for DOMs. For standard
+     * oversized-DOM simulations, this should be the
+     * radius oversizing factor. This will flatten the
+     * DOM in the direction parallel to the photon.
+     * The DOM will have a pancake-like shape, elongated
+     * in the directions perpendicular to the photon direction.
+     *
+     * The DOM radius (supplied by the geometry) must also include
+     * the oversizing factor.
+     *
+     * Will throw if already initialized.
+     */
+    void SetDOMPancakeFactor(double value);
+    
+    /**
+     * Returns the "pancake" factor for DOMs.
+     */
+    double GetDOMPancakeFactor() const;
+
+    /**
      * Sets the wavelength generators. 
      * The first generator (index 0) is assumed to return a Cherenkov
      * spectrum that may have a bias applied to it. This bias factor
@@ -427,6 +447,7 @@ private:
     bool saveAllPhotons_;
     double saveAllPhotonsPrescale_;
     double fixedNumberOfAbsorptionLengths_;
+    double pancakeFactor_;
     
     uint32_t photonHistoryEntries_;
     

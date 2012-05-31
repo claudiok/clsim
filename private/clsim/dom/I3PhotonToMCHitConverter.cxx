@@ -89,6 +89,14 @@ I3PhotonToMCHitConverter::I3PhotonToMCHitConverter(const I3Context& context)
                  "become ellipsoids.",
                  DOMOversizeFactor_);
 
+    DOMPancakeFactor_=1.;
+    AddParameter("DOMPancakeFactor",
+                 "Specifiy the \"pancake factor\" of a DOM. This is the factor a DOM has been *shrunk* again\n"
+                 "(in the direction of the photon) after oversizing. You should set this to whatever\n"
+                 "value you used during running I3CLSimModule. And most of the time this is the same as the\n"
+                 "oversize factor.",
+                 DOMPancakeFactor_);
+
     DOMRadiusWithoutOversize_=0.16510*I3Units::m; // 13 inch diameter
     AddParameter("DOMRadiusWithoutOversize",
                  "Specifiy the DOM radius. Do not include oversize factors here.",
@@ -146,6 +154,7 @@ void I3PhotonToMCHitConverter::Configure()
     GetParameter("AngularAcceptance", angularAcceptance_);
 
     GetParameter("DOMOversizeFactor", DOMOversizeFactor_);
+    GetParameter("DOMPancakeFactor", DOMPancakeFactor_);
     GetParameter("DOMRadiusWithoutOversize", DOMRadiusWithoutOversize_);
 
     GetParameter("PMTPhotonSimulator", pmtPhotonSimulator_);
@@ -155,6 +164,9 @@ void I3PhotonToMCHitConverter::Configure()
 
     GetParameter("OnlyWarnAboutInvalidPhotonPositions", onlyWarnAboutInvalidPhotonPositions_);
 
+    if (DOMOversizeFactor_ != DOMPancakeFactor_)
+        log_warn("You chose \"DOMOversizeFactor\" and \"DOMPancakeFactor\" to be different. Be sure you know whot you are doing! You probably don't want this.");
+    
     if (replaceRelativeDOMEfficiencyWithDefault_)
     {
         if (std::isnan(defaultRelativeDOMEfficiency_))
@@ -450,39 +462,44 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
                                       dz * DOMDir_z);
             photonCosAngle = std::max(-1., std::min(1., photonCosAngle));
             
-            // sanity check: are photons on the OM's surface?
             const double distFromDOMCenter = std::sqrt(pr2);
-            if (std::abs(distFromDOMCenter - DOMOversizeFactor_*DOMRadiusWithoutOversize_) > 3.*I3Units::cm) {
-                if (onlyWarnAboutInvalidPhotonPositions_) {
-                    log_warn("distance not %f*%f=%fmm.. it is %fmm (diff=%gmm) (OMKey=(%i,%u) (photon @ pos=(%g,%g,%g)m) (DOM @ pos=(%g,%g,%g)m)",
-                             DOMOversizeFactor_,
-                             DOMRadiusWithoutOversize_/I3Units::mm,
-                             DOMOversizeFactor_*DOMRadiusWithoutOversize_/I3Units::mm,
-                             distFromDOMCenter/I3Units::mm,
-                             (distFromDOMCenter-DOMOversizeFactor_*DOMRadiusWithoutOversize_)/I3Units::mm,
-                             key.GetString(), key.GetOM(),
-                             photon.GetPos().GetX()/I3Units::m,
-                             photon.GetPos().GetY()/I3Units::m,
-                             photon.GetPos().GetZ()/I3Units::m,
-                             om.position.GetX()/I3Units::m,
-                             om.position.GetY()/I3Units::m,
-                             om.position.GetZ()/I3Units::m
-                             );
-                } else {
-                    log_fatal("distance not %f*%f=%fmm.. it is %fmm (diff=%gmm) (OMKey=(%i,%u) (photon @ pos=(%g,%g,%g)m) (DOM @ pos=(%g,%g,%g)m)",
-                              DOMOversizeFactor_,
-                              DOMRadiusWithoutOversize_/I3Units::mm,
-                              DOMOversizeFactor_*DOMRadiusWithoutOversize_/I3Units::mm,
-                              distFromDOMCenter/I3Units::mm,
-                              (distFromDOMCenter-DOMOversizeFactor_*DOMRadiusWithoutOversize_)/I3Units::mm,
-                              key.GetString(), key.GetOM(),
-                              photon.GetPos().GetX()/I3Units::m,
-                              photon.GetPos().GetY()/I3Units::m,
-                              photon.GetPos().GetZ()/I3Units::m,
-                              om.position.GetX()/I3Units::m,
-                              om.position.GetY()/I3Units::m,
-                              om.position.GetZ()/I3Units::m
-                              );
+
+            // do this only if DOMs are spherical
+            if (DOMPancakeFactor_ == 1.)
+            {
+                // sanity check: are photons on the OM's surface?
+                if (std::abs(distFromDOMCenter - DOMOversizeFactor_*DOMRadiusWithoutOversize_) > 3.*I3Units::cm) {
+                    if (onlyWarnAboutInvalidPhotonPositions_) {
+                        log_warn("distance not %f*%f=%fmm.. it is %fmm (diff=%gmm) (OMKey=(%i,%u) (photon @ pos=(%g,%g,%g)m) (DOM @ pos=(%g,%g,%g)m)",
+                                 DOMOversizeFactor_,
+                                 DOMRadiusWithoutOversize_/I3Units::mm,
+                                 DOMOversizeFactor_*DOMRadiusWithoutOversize_/I3Units::mm,
+                                 distFromDOMCenter/I3Units::mm,
+                                 (distFromDOMCenter-DOMOversizeFactor_*DOMRadiusWithoutOversize_)/I3Units::mm,
+                                 key.GetString(), key.GetOM(),
+                                 photon.GetPos().GetX()/I3Units::m,
+                                 photon.GetPos().GetY()/I3Units::m,
+                                 photon.GetPos().GetZ()/I3Units::m,
+                                 om.position.GetX()/I3Units::m,
+                                 om.position.GetY()/I3Units::m,
+                                 om.position.GetZ()/I3Units::m
+                                 );
+                    } else {
+                        log_fatal("distance not %f*%f=%fmm.. it is %fmm (diff=%gmm) (OMKey=(%i,%u) (photon @ pos=(%g,%g,%g)m) (DOM @ pos=(%g,%g,%g)m)",
+                                  DOMOversizeFactor_,
+                                  DOMRadiusWithoutOversize_/I3Units::mm,
+                                  DOMOversizeFactor_*DOMRadiusWithoutOversize_/I3Units::mm,
+                                  distFromDOMCenter/I3Units::mm,
+                                  (distFromDOMCenter-DOMOversizeFactor_*DOMRadiusWithoutOversize_)/I3Units::mm,
+                                  key.GetString(), key.GetOM(),
+                                  photon.GetPos().GetX()/I3Units::m,
+                                  photon.GetPos().GetY()/I3Units::m,
+                                  photon.GetPos().GetZ()/I3Units::m,
+                                  om.position.GetX()/I3Units::m,
+                                  om.position.GetY()/I3Units::m,
+                                  om.position.GetZ()/I3Units::m
+                                  );
+                    }
                 }
             }
             
@@ -580,7 +597,7 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
             double correctedTime = photon.GetTime();
             {
                 const double dot = px*dx + py*dy + pz*dz;
-                const double bringForward = dot*(1.-1./DOMOversizeFactor_);
+                const double bringForward = dot*(1.-DOMPancakeFactor_/DOMOversizeFactor_);
                 correctedTime += bringForward/photon.GetGroupVelocity();
             }
             

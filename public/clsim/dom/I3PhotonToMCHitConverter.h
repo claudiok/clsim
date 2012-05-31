@@ -111,9 +111,14 @@ private:
     I3CLSimFunctionConstPtr angularAcceptance_;
 
     /// Parameter: Specifiy the \"oversize factor\" (i.e. DOM radius scaling factor) you used during the
-    ///            CLSim run. The photon arrival times will be corrected. In practice this means your
-    ///            large spherical DOMs will become ellipsoids.
+    ///            CLSim run. The photon arrival times will be corrected.
     double DOMOversizeFactor_;
+
+    /// Parameter: Specifiy the \"pancake factor\" of a DOM. This is the factor a DOM has been *shrunk* again
+    ///            (in the direction of the photon) after oversizing. You should set this to whatever
+    ///            value you used during running I3CLSimModule. And most of the time this is the same as the
+    ///            oversize factor.
+    double DOMPancakeFactor_;
 
     /// Parameter: Specifiy the DOM radius. Do not include oversize factors here.
     double DOMRadiusWithoutOversize_;

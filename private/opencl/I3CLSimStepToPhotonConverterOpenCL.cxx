@@ -47,6 +47,8 @@
 
 #include <icetray/I3Units.h>
 
+#include "clsim/I3CLSimHelperToFloatString.h"
+
 #include "opencl/I3CLSimHelperLoadProgramSource.h"
 #include "opencl/I3CLSimHelperGenerateMediumPropertiesSource.h"
 #include "opencl/I3CLSimHelperGenerateGeometrySource.h"
@@ -55,6 +57,8 @@
 
 #define __CL_ENABLE_EXCEPTIONS
 #include "clsim/cl.hpp"
+
+using namespace I3CLSimHelper;
 
 const bool I3CLSimStepToPhotonConverterOpenCL::default_useNativeMath=true;
 
@@ -82,6 +86,7 @@ stopDetectedPhotons_(false),
 saveAllPhotons_(false),
 saveAllPhotonsPrescale_(0.001), // only save .1% of all photons when in "AllPhotons" mode
 fixedNumberOfAbsorptionLengths_(NAN),
+pancakeFactor_(1.),
 photonHistoryEntries_(0),
 maxWorkgroupSize_(0),
 workgroupSize_(0),
@@ -420,7 +425,11 @@ std::string I3CLSimStepToPhotonConverterOpenCL::GetPreambleSource()
     // This also turns off all collision detection in the kernel.
     if (saveAllPhotons_) {
         preamble = preamble + "#define SAVE_ALL_PHOTONS\n";
-        preamble = preamble + "#define SAVE_ALL_PHOTONS_PRESCALE " + boost::lexical_cast<std::string>(saveAllPhotonsPrescale_) + "\n";
+        if (doublePrecision_) {
+            preamble = preamble + "#define SAVE_ALL_PHOTONS_PRESCALE " + ToDoubleString(saveAllPhotonsPrescale_) + "\n";
+        } else {
+            preamble = preamble + "#define SAVE_ALL_PHOTONS_PRESCALE " + ToFloatString(saveAllPhotonsPrescale_) + "\n";
+        }
         
     }
     
@@ -437,12 +446,21 @@ std::string I3CLSimStepToPhotonConverterOpenCL::GetPreambleSource()
     // of 1e-20 corresponding to about 46 absorption lengths.
     if (!isnan(fixedNumberOfAbsorptionLengths_)) {
         if (doublePrecision_) {
-            preamble = preamble + "#define PROPAGATE_FOR_FIXED_NUMBER_OF_ABSORPTION_LENGTHS " + boost::lexical_cast<std::string>(fixedNumberOfAbsorptionLengths_) + ".\n";
+            preamble = preamble + "#define PROPAGATE_FOR_FIXED_NUMBER_OF_ABSORPTION_LENGTHS " + ToDoubleString(fixedNumberOfAbsorptionLengths_) + "\n";
         } else {
-            preamble = preamble + "#define PROPAGATE_FOR_FIXED_NUMBER_OF_ABSORPTION_LENGTHS " + boost::lexical_cast<std::string>(fixedNumberOfAbsorptionLengths_) + ".f\n";
+            preamble = preamble + "#define PROPAGATE_FOR_FIXED_NUMBER_OF_ABSORPTION_LENGTHS " + ToFloatString(fixedNumberOfAbsorptionLengths_) + "\n";
         }
     }
 
+    if (pancakeFactor_ != 1.) {
+        if (doublePrecision_) {
+            preamble = preamble + "#define PANCAKE_FACTOR " + ToDoubleString(pancakeFactor_) + "\n";
+        } else {
+            preamble = preamble + "#define PANCAKE_FACTOR " + ToFloatString(pancakeFactor_) + "\n";
+        }
+    }
+    
+    
     
     // are we using double precision?
     if (doublePrecision_) {
@@ -1484,6 +1502,25 @@ double I3CLSimStepToPhotonConverterOpenCL::GetFixedNumberOfAbsorptionLengths() c
 {
     return fixedNumberOfAbsorptionLengths_;
 }
+
+
+void I3CLSimStepToPhotonConverterOpenCL::SetDOMPancakeFactor(double value)
+{
+    if (initialized_)
+        throw I3CLSimStepToPhotonConverter_exception("I3CLSimStepToPhotonConverterOpenCL already initialized!");
+    
+    compiled_=false;
+    kernel_.clear();
+    queue_.clear();
+    
+    pancakeFactor_=value;
+}
+
+double I3CLSimStepToPhotonConverterOpenCL::GetDOMPancakeFactor() const
+{
+    return pancakeFactor_;
+}
+
 
 
 void I3CLSimStepToPhotonConverterOpenCL::SetWlenGenerators(const std::vector<I3CLSimRandomValueConstPtr> &wlenGenerators)

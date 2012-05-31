@@ -60,6 +60,7 @@ namespace I3CLSimModuleHelper {
                      bool saveAllPhotons,
                      double saveAllPhotonsPrescale,
                      double fixedNumberOfAbsorptionLengths,
+                     double pancakeFactor,
                      uint32_t photonHistoryEntries,
                      uint32_t limitWorkgroupSize);
     

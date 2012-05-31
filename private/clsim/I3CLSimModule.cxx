@@ -165,6 +165,20 @@ geometryIsConfigured_(false)
                  "Specifiy the \"oversize factor\" (i.e. DOM radius scaling factor).",
                  DOMOversizeFactor_);
 
+    pancakeFactor_=1.; // no oversizing
+    AddParameter("DOMPancakeFactor",
+                 "Sets the \"pancake\" factor for DOMs. For standard\n"
+                 "oversized-DOM simulations, this should be the\n"
+                 "radius oversizing factor. This will flatten the\n"
+                 "DOM in the direction parallel to the photon.\n"
+                 "The DOM will have a pancake-like shape, elongated\n"
+                 "in the directions perpendicular to the photon direction.\n"
+                 "\n"
+                 "The DOM radius (supplied by the geometry) must also include\n"
+                 "the oversizing factor. Most of the time you will want to set this\n"
+                 "to be the same as the \"DOMOversizeFactor\".",
+                 pancakeFactor_);
+
     ignoreNonIceCubeOMNumbers_=false;
     AddParameter("IgnoreNonIceCubeOMNumbers",
                  "Ignore string numbers < 1 and OM numbers > 60. (AMANDA and IceTop)",
@@ -381,6 +395,7 @@ void I3CLSimModule::Configure()
 
     GetParameter("DOMRadius", DOMRadius_);
     GetParameter("DOMOversizeFactor", DOMOversizeFactor_);
+    GetParameter("DOMPancakeFactor", pancakeFactor_);
 
     GetParameter("IgnoreNonIceCubeOMNumbers", ignoreNonIceCubeOMNumbers_);
 
@@ -411,6 +426,10 @@ void I3CLSimModule::Configure()
 
     GetParameter("LimitWorkgroupSize", limitWorkgroupSize_);
 
+    if (pancakeFactor_ != DOMOversizeFactor_) {
+        log_warn("***** You set the \"DOMOversizeFactor\" to a different value than the \"DOMPancakeFactor\". Be sure you know what you are doing!");
+    }
+    
     if ((saveAllPhotons_) && (stopDetectedPhotons_)) {
         log_fatal("The \"SaveAllPhotons\" option cannot be used when \"StopDetectedPhotons\" is active.");
     }
@@ -697,6 +716,7 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
                                               saveAllPhotons_,
                                               saveAllPhotonsPrescale_,
                                               fixedNumberOfAbsorptionLengths_,
+                                              pancakeFactor_,
                                               photonHistoryEntries_,
                                               limitWorkgroupSize_);
         if (!openCLStepsToPhotonsConverter)
