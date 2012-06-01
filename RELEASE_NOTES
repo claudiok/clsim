@@ -2,6 +2,23 @@
 # $Author$
 # $Date$
 
+May 31, 2012 Claudio Kopper  (ckopper@icecube.wisc.edu)
+--------------------------------------------------------------------
+Release V00-02-00
+
+* fixes a bug where particles that fall below the Cherenkov threshold are immediately killed in Geant4
+* allows "device fission" to be used to make the photon propagator only use a fixed number of cores
+* can send statistics to a I3SummaryService
+* includes a new propagation mode where absorption is ignored (for generating photon-tables)
+* comes with a preliminary version of photon-tabulation code
+* flashers now have the appropriate time delay distributions
+* allows Standard Candle simulation
+* I3PhotonSeriesMap is now based on ModuleKey instead of OMKey (if available)
+* support mDOM simulations when compatible dataclasses are available
+* the safeprimes auto-downloader should be compatible with more systems now
+* oversized DOMs are compressed to ellipsoids to get better timing distributions
+
+
 April 18, 2012 Claudio Kopper  (ckopper@icecube.wisc.edu)
 --------------------------------------------------------------------
 Release V00-01-05
