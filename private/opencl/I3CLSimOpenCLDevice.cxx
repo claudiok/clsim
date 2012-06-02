@@ -38,11 +38,9 @@
 #include <CL/cl_ext.h>
 #endif
 
-// use this instead once cl.hpp is updated to version 1.2:
-//#if defined(CL_VERSION_1_1) && !defined(CL_VERSION_1_2) && defined(cl_ext_device_fission)
-#if defined(cl_ext_device_fission)
-// 1. enable the C++ bindings for Device Fission
-// (OpenCL 1.1 extension version)
+// device fission is available on OpenCL 1.1 (with the cl_ext_device_fission extension)
+// or on OpenCL 1.2. It is not available on OpenCL 1.0
+#if defined(cl_ext_device_fission) || (!defined(CL_VERSION_1_1) && !defined(CL_VERSION_1_0))
 #define USE_CL_DEVICE_FISSION 1
 #endif
 
@@ -146,11 +144,11 @@ I3CLSimOpenCLDeviceSeriesPtr I3CLSimOpenCLDevice::SplitDevice() const
     if (!device_) throw std::runtime_error("no valid device");
 
 #ifdef USE_CL_DEVICE_FISSION
-    // this is using the OpenCL 1.1 extension version of device fission
+#if defined(CL_VERSION_1_0) || defined(CL_VERSION_1_1)
+    // On OpenCL < 1.2, we need an extension
     if (device_->getInfo<CL_DEVICE_EXTENSIONS>().find("cl_ext_device_fission") == std::string::npos) {
         throw std::runtime_error("device does not support fission (extension \"cl_ext_device_fission\" is not available)");
     }
-
     // the extension is available! let's split it up!
     
     // this configures how the device should be split
@@ -161,6 +159,18 @@ I3CLSimOpenCLDeviceSeriesPtr I3CLSimOpenCLDevice::SplitDevice() const
         CL_PROPERTIES_LIST_END_EXT,
         0
     };
+#else
+    // we have OpenCL 1.2!
+    
+    // this configures how the device should be split
+    cl_device_partition_property subDeviceProperties[] =
+    {
+        CL_DEVICE_PARTITION_EQUALLY,
+        1,
+        0
+    };
+#endif
+    
     std::vector<cl::Device> subDevices;
     
     try {
@@ -200,16 +210,8 @@ I3CLSimOpenCLDeviceSeriesPtr I3CLSimOpenCLDevice::SplitDevice() const
         ++split_counter;
     }
 
-    #else
-#if defined(CL_VERSION_1_2)
-    // TODO: implement OpenCL 1.2 device fission as soon as the 1.2 version of cl.hpp is available
-    
-    // NOT AVAILABLE YET! (will use the 1.1 extension version instead if available)
-
-    throw std::runtime_error("Your OpenCL implementation does not support the \"cl_ext_device_fission\" extension. OpenCL 1.2 device fission support is not implemented yet.");
 #else
     throw std::runtime_error("Your OpenCL implementation does neither support the \"cl_ext_device_fission\" extension nor is it version 1.2 or later");
-#endif
 #endif    
     
     return retval;
