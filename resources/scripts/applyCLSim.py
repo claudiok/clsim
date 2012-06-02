@@ -156,7 +156,6 @@ if hasattr(icetray, "traysegment"):
         MMCTrackListName = MMCTrackListName,
         ParallelEvents = options.MAXPARALLELEVENTS,
         RandomService = randomService,
-        DoNotParallelize=True,
         UseGPUs=False,
         UseCPUs=True,
         #IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos090.11jul2011.txt"))
