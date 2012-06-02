@@ -165,7 +165,10 @@
 #include <CL/cl_ext.h>
 #endif
 
-#define CL_USE_DEPRECATED_OPENCL_1_1_APIS 
+#ifndef CL_USE_DEPRECATED_OPENCL_1_1_APIS
+#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
+#endif
+ 
 #if defined(__APPLE__) || defined(__MACOSX)
 #include <OpenGL/OpenGL.h>
 #include <OpenCL/opencl.h>
