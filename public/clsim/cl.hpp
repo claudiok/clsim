@@ -1816,7 +1816,7 @@ public:
 /**
  * Deprecated APIs for 1.2
  */
-#if defined(CL_VERSION_1_1)
+#if defined(CL_VERSION_1_1) && !defined(CL_VERSION_1_2)
 /**
  * Unload the OpenCL compiler.
  * \note Deprecated for OpenCL 1.2. Use Platform::unloadCompiler instead.
@@ -4836,7 +4836,7 @@ public:
 /**
  * Deprecated APIs for 1.2
  */
-#if defined(CL_VERSION_1_1)
+#if defined(CL_VERSION_1_1) && !defined(CL_VERSION_1_2)
     cl_int enqueueMarker(Event* event = NULL) const
     {
         return detail::errHandler(
@@ -4979,7 +4979,7 @@ typedef CL_API_ENTRY cl_int (CL_API_CALL *PFN_clEnqueueReleaseD3D10ObjectsKHR)(
 /**
  * Deprecated APIs for 1.2
  */
-#if defined(CL_VERSION_1_1)
+#if defined(CL_VERSION_1_1) && !defined(CL_VERSION_1_2)
     cl_int enqueueBarrier() const
     {
         return detail::errHandler(

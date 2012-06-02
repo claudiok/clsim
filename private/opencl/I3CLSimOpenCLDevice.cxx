@@ -41,7 +41,10 @@
 // device fission is available on OpenCL 1.1 (with the cl_ext_device_fission extension)
 // or on OpenCL 1.2. It is not available on OpenCL 1.0
 #if defined(cl_ext_device_fission) || (!defined(CL_VERSION_1_1) && !defined(CL_VERSION_1_0))
+#define HAS_CL_DEVICE_FISSION 1
+#if defined(CL_VERSION_1_1)
 #define USE_CL_DEVICE_FISSION 1
+#endif
 #endif
 
 #define __CL_ENABLE_EXCEPTIONS
@@ -143,7 +146,7 @@ I3CLSimOpenCLDeviceSeriesPtr I3CLSimOpenCLDevice::SplitDevice() const
     I3CLSimOpenCLDeviceSeriesPtr retval(new I3CLSimOpenCLDeviceSeries(allDevices_));
     if (!device_) throw std::runtime_error("no valid device");
 
-#ifdef USE_CL_DEVICE_FISSION
+#ifdef HAS_CL_DEVICE_FISSION
 #if defined(CL_VERSION_1_0) || defined(CL_VERSION_1_1)
     // On OpenCL < 1.2, we need an extension
     if (device_->getInfo<CL_DEVICE_EXTENSIONS>().find("cl_ext_device_fission") == std::string::npos) {
