@@ -2,6 +2,15 @@
 # $Author$
 # $Date$
 
+June 14, 2012 Claudio Kopper  (ckopper@icecube.wisc.edu)
+--------------------------------------------------------------------
+Release V00-02-01
+
+* replaces the OpenCL 1.1 version of the cl.hpp OpenCL C++ bindings
+  with the 1.2 version. This currently breaks compatibility with
+  some older OpenCL 1.0 implementations (notably Mac OS X 10.6 Snow Leopard),
+  but allows clsim to be compiled with newer versions of the AMD APP SDK.
+
 May 31, 2012 Claudio Kopper  (ckopper@icecube.wisc.edu)
 --------------------------------------------------------------------
 Release V00-02-00
