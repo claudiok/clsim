@@ -86,7 +86,7 @@ import sys
 
 from icecube import icetray, dataclasses, dataio, phys_services
 
-from icecube.BadDomList import bad_dom_list_static
+from icecube.sim_services import bad_dom_list_static
 from icecube import WaveCalibrator
 #from icecube import DomTools
 icetray.load("DomTools", False)
@@ -102,7 +102,7 @@ if options.DYNAMICBADDOMS:
     dbserver="dbs2.icecube.wisc.edu"
     username="www"
 
-    from icecube.BadDomList.bad_dom_list_static import IC86_static_bad_dom_list, IC86_static_bad_dom_list_HLC
+    from icecube.sim_services.bad_dom_list_static import IC86_static_bad_dom_list, IC86_static_bad_dom_list_HLC
     xmlfile = os.path.expandvars('$I3_SRC') + '/BadDomList/resources/scripts/QueryConfiguration.xml'
     staticBadDomListOnly = False
 

@@ -93,7 +93,7 @@ import sys
 
 from icecube import icetray, dataclasses, dataio, phys_services
 from icecube import noise_generator, trigger_sim
-from icecube.BadDomList import bad_dom_list_static
+from icecube.sim_services import bad_dom_list_static
 
 if options.USEDOMLAUNCHER:
     from icecube import DOMLauncher
