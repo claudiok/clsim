@@ -301,9 +301,11 @@ private:
     void AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
                             I3CLSimPhotonHistorySeriesConstPtr photonHistories);
     void ConvertMCTreeToLightSources(const I3MCTree &mcTree,
-                                     std::deque<I3CLSimLightSource> &lightSources);
+                                     std::deque<I3CLSimLightSource> &lightSources,
+                                     std::deque<double> &timeOffsets);
     void ConvertFlasherPulsesToLightSources(const I3CLSimFlasherPulseSeries &flasherPulses,
-                                            std::deque<I3CLSimLightSource> &lightSources);
+                                            std::deque<I3CLSimLightSource> &lightSources,
+                                            std::deque<double> &timeOffsets);
 
     
     // statistics will be collected here:
@@ -345,6 +347,7 @@ private:
         std::size_t frameListEntry; // pointer to the frame list by entry number
         uint64_t particleMajorID;
         int particleMinorID;
+        double timeShift; // optional time that needs to be added to the final output photon
     };
     
     // list of all particles (with pointrs to their frames)

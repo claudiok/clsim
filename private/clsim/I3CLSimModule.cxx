@@ -862,7 +862,7 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
         I3Photon &outputPhoton = outputPhotonSeries.back();
 
         // fill the photon data
-        outputPhoton.SetTime(photon.GetTime());
+        outputPhoton.SetTime(photon.GetTime() + cacheEntry.timeShift);
         outputPhoton.SetID(currentPhotonId); // per-frame ID for every photon
         outputPhoton.SetWeight(photon.GetWeight());
         outputPhoton.SetParticleMinorID(cacheEntry.particleMinorID);
@@ -879,7 +879,7 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
             outputPhoton.SetDir(outDir);
         }
 
-        outputPhoton.SetStartTime(photon.GetStartTime());
+        outputPhoton.SetStartTime(photon.GetStartTime() + cacheEntry.timeShift);
 
         outputPhoton.SetStartPos(I3Position(photon.GetStartPosX(), photon.GetStartPosY(), photon.GetStartPosZ()));
         {
@@ -1314,8 +1314,9 @@ void I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
     frameListPhysicsFrameCounter_++;
     
     std::deque<I3CLSimLightSource> lightSources;
-    if (MCTree) ConvertMCTreeToLightSources(*MCTree, lightSources);
-    if (flasherPulses) ConvertFlasherPulsesToLightSources(*flasherPulses, lightSources);
+    std::deque<double> timeOffsets;
+    if (MCTree) ConvertMCTreeToLightSources(*MCTree, lightSources, timeOffsets);
+    if (flasherPulses) ConvertFlasherPulsesToLightSources(*flasherPulses, lightSources, timeOffsets);
     
 #ifdef GRANULAR_GEOMETRY_SUPPORT
     // support both vectors of OMKeys and vectors of ModuleKeys
@@ -1343,9 +1344,11 @@ void I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
     }
 #endif
     
-    
-    BOOST_FOREACH(const I3CLSimLightSource &lightSource, lightSources)
+    for (std::size_t i=0;i<lightSources.size();++i)
     {
+        const I3CLSimLightSource &lightSource = lightSources[i];
+        const double timeOffset = timeOffsets[i];
+
         if (lightSource.GetType() == I3CLSimLightSource::Particle)
         {
             const I3Particle &particle = lightSource.GetParticle();
@@ -1363,6 +1366,7 @@ void I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
         particleCache_.insert(std::make_pair(currentParticleCacheIndex_, particleCacheEntry())).first->second;
         
         cacheEntry.frameListEntry = currentFrameListIndex;
+        cacheEntry.timeShift = timeOffset;
         if (lightSource.GetType() == I3CLSimLightSource::Particle) {
             cacheEntry.particleMajorID = lightSource.GetParticle().GetMajorID();
             cacheEntry.particleMinorID = lightSource.GetParticle().GetMinorID();
@@ -1444,7 +1448,8 @@ void I3CLSimModule::Finish()
 //////////////
 
 void I3CLSimModule::ConvertMCTreeToLightSources(const I3MCTree &mcTree,
-                                                std::deque<I3CLSimLightSource> &lightSources)
+                                                std::deque<I3CLSimLightSource> &lightSources,
+                                                std::deque<double> &timeOffsets)
 {
     for (I3MCTree::iterator particle_it = mcTree.begin();
          particle_it != mcTree.end(); ++particle_it)
@@ -1547,7 +1552,12 @@ void I3CLSimModule::ConvertMCTreeToLightSources(const I3MCTree &mcTree,
             }
         }
         
+        // simulate the particle around time 0, add the offset later
+        const double particleTime = particle.GetTime();
+        particle.SetTime(0.);
+        
         lightSources.push_back(I3CLSimLightSource(particle));
+        timeOffsets.push_back(particleTime);
     }
     
     
@@ -1555,10 +1565,12 @@ void I3CLSimModule::ConvertMCTreeToLightSources(const I3MCTree &mcTree,
 
 
 void I3CLSimModule::ConvertFlasherPulsesToLightSources(const I3CLSimFlasherPulseSeries &flasherPulses,
-                                                       std::deque<I3CLSimLightSource> &lightSources)
+                                                       std::deque<I3CLSimLightSource> &lightSources,
+                                                       std::deque<double> &timeOffsets)
 {
     BOOST_FOREACH(const I3CLSimFlasherPulse &flasherPulse, flasherPulses)
     {
         lightSources.push_back(I3CLSimLightSource(flasherPulse));
+        timeOffsets.push_back(0.);
     }
 }
