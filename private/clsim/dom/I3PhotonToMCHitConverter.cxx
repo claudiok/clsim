@@ -524,7 +524,7 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
                 }
             }
             
-#ifndef I3_OPTIMIZE
+#ifndef NDEBUG
             const double photonAngle = std::acos(photonCosAngle);
             log_trace("Photon (lambda=%fnm, angle=%fdeg, dist=%fm) has weight %g",
                      photon.GetWavelength()/I3Units::nanometer,
