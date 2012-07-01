@@ -268,6 +268,10 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLight
     (particle.GetType()==I3Particle::MuMinus) ||
     (particle.GetType()==I3Particle::MuPlus);
 
+    const bool isTau =
+    (particle.GetType()==I3Particle::TauMinus) ||
+    (particle.GetType()==I3Particle::TauPlus);
+
     const double E = particle.GetEnergy()/I3Units::GeV;
     const double logE = std::max(0., std::log(E)); // protect against extremely low energies
     const double Lrad=0.358*(I3Units::g/I3Units::cm3)/density;
@@ -386,7 +390,11 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLight
         stepGenerationQueue_.push_back(cascadeStepGenInfo);
 
         log_trace("Generate %lu steps for E=%fGeV. (hadron)", static_cast<unsigned long>(numSteps+1), E);
-    } else if (isMuon) {
+    } else if (isMuon || isTau) {
+        // TODO: for now, treat muons and taus (with lengths after MMC) the same.
+        // This is compatible to what hit-maker does, but is of course not the right thing
+        // to do. (Hit-maker treats all "tracks" the same and uses muon-tables for them.)
+        
         const double length = isnan(particle.GetLength())?(2000.*I3Units::m):(particle.GetLength());
         
         if (isnan(particle.GetLength()))

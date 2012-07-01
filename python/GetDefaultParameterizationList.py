@@ -37,6 +37,9 @@ def GetDefaultParameterizationList(theConverter, muonOnly=False):
     muons    = [dataclasses.I3Particle.MuMinus,
                 dataclasses.I3Particle.MuPlus]
 
+    taus     = [dataclasses.I3Particle.TauMinus,
+                dataclasses.I3Particle.TauPlus]
+
     cascades = [dataclasses.I3Particle.Neutron,
                 dataclasses.I3Particle.Hadrons,
                 dataclasses.I3Particle.Pi0,
@@ -58,6 +61,17 @@ def GetDefaultParameterizationList(theConverter, muonOnly=False):
 
     parameterizationsMuon = []
     for type in muons:
+        converter = \
+          I3CLSimLightSourceParameterization(
+            converter=theConverter,
+            forParticleType=type,
+            fromEnergy=fromEnergy,
+            toEnergy=toEnergy, 
+            needsLength=True)
+        parameterizationsMuon.append(converter)
+
+    # treat taus as muons for purposes of the converter
+    for type in taus:
         converter = \
           I3CLSimLightSourceParameterization(
             converter=theConverter,
