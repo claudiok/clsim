@@ -87,8 +87,8 @@ I3PhotonConverter::FillRows
     
     rows->Set<double>  ("start_time",         photon.GetStartTime()/I3Units::ns);
     rows->Set<double>  ("start_x",            photon.GetStartPos().GetX()/I3Units::m);
-    rows->Set<double>  ("start_y",            photon.GetStartPos().GetX()/I3Units::m);
-    rows->Set<double>  ("start_z",            photon.GetStartPos().GetX()/I3Units::m);
+    rows->Set<double>  ("start_y",            photon.GetStartPos().GetY()/I3Units::m);
+    rows->Set<double>  ("start_z",            photon.GetStartPos().GetZ()/I3Units::m);
     
     rows->Set<double>  ("start_zen",          photon.GetStartDir().GetZenith()/I3Units::rad);
     rows->Set<double>  ("start_azi",          photon.GetStartDir().GetAzimuth()/I3Units::rad);
