@@ -61,7 +61,11 @@ def configureOpenCLDevices(UseGPUs=True, UseCPUs=False, OverrideApproximateNumbe
 def parseIceModel(IceModelLocation):
     from os.path import exists, isdir, isfile, expandvars
     from icecube.clsim.MakeIceCubeMediumProperties import MakeIceCubeMediumProperties
+    from icecube.clsim.MakeAntaresMediumProperties import MakeAntaresMediumProperties
     from icecube.clsim.MakeIceCubeMediumPropertiesPhotonics import MakeIceCubeMediumPropertiesPhotonics
+    
+    if IceModelLocation=="ANTARES":
+        return MakeAntaresMediumProperties()
     
     if not exists(IceModelLocation):
         raise RuntimeError("The specified ice model path \"%s\" does not exist" % IceModelLocation)
