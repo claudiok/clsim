@@ -237,6 +237,7 @@ void I3CLSimStepToPhotonConverterOpenCL::Initialize()
         // start with a maximum number of output photons of the same size as the number of
         // input steps. Should be plenty..
         maxNumOutputPhotons_ = static_cast<uint32_t>(std::min(maxNumWorkitems_*10, static_cast<std::size_t>(std::numeric_limits<uint32_t>::max())));
+        if (maxNumOutputPhotons_ < 1000) maxNumOutputPhotons_=1000; // use a sane minimum output buffer size
     } else {
         // we need a lot more space for photon storage in case all photons are to be saved
         std::size_t sizeIncreaseFactor = 10000.*saveAllPhotonsPrescale_;
