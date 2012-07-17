@@ -499,7 +499,7 @@ private:
     // Size of output photon storage (maximum amount of photons per step bunch)
     uint32_t maxNumOutputPhotons_;
     
-    
+    SET_LOGGER("I3CLSimStepToPhotonConverterOpenCL");
 };
 
 I3_POINTER_TYPEDEFS(I3CLSimStepToPhotonConverterOpenCL);
