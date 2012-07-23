@@ -45,6 +45,10 @@ else (OPENCL_FOUND AND GEANT4_FOUND)
   set (BUILD_CLSIM_DATACLASSES_ONLY YES)
 endif (OPENCL_FOUND AND GEANT4_FOUND)
 
+if (APPLE AND (CMAKE_SYSTEM_VERSION VERSION_LESS "11.0.0"))
+  colormsg(RED   "+-- OpenCL is not compatible with clsim in this version of OS X. Only building the clsim dataclasses.")
+  set (BUILD_CLSIM_DATACLASSES_ONLY YES)
+endif (APPLE AND (CMAKE_SYSTEM_VERSION VERSION_LESS "11.0.0"))
 
 # The IceTray project definition
 if (BUILD_CLSIM_DATACLASSES_ONLY)
