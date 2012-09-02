@@ -578,7 +578,7 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
             }
             
             const I3Particle &particle = lightSource->GetParticle();
-            
+
             // configure the Geant4 particle gun
             {
                 G4ParticleGun *particleGun = thePrimaryGenerator->GetParticleGun();
