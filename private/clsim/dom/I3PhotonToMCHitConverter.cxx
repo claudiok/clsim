@@ -37,6 +37,8 @@
 
 #include "clsim/I3Photon.h"
 
+#include "phys-services/I3SummaryService.h"
+
 #ifdef GRANULAR_GEOMETRY_SUPPORT
 #include "dataclasses/geometry/I3OMGeo.h"
 #include "dataclasses/geometry/I3ModuleGeo.h"
@@ -130,6 +132,8 @@ I3PhotonToMCHitConverter::I3PhotonToMCHitConverter(const I3Context& context)
 
     // add an outbox
     AddOutBox("OutBox");
+    
+    numGeneratedHits_=0;
 
 }
 
@@ -646,6 +650,9 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
         if (hits) {
             // sort the photons in each hit series by time
             std::sort(hits->begin(), hits->end(), MCHitTimeLess);
+            
+            // keep track of the number of hits generated
+            numGeneratedHits_ += static_cast<uint64_t>(hits->size());
         }
     }
     
@@ -654,4 +661,16 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
     
     // that's it!
     PushFrame(frame);
+}
+
+void I3PhotonToMCHitConverter::Finish()
+{
+    // add some summary information to a potential I3SummaryService
+    I3SummaryServicePtr summary = context_.Get<I3SummaryServicePtr>();
+    if (summary) {
+        const std::string prefix = "I3PhotonToMCHitConverter_" + GetName() + "_";
+        
+        (*summary)[prefix+"NumGeneratedHits"] = numGeneratedHits_;
+    }
+    
 }

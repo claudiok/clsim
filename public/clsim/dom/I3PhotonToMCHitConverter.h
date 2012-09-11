@@ -88,6 +88,8 @@ public:
      */
     virtual void Calibration(I3FramePtr frame);
 
+    virtual void Finish();
+
     
 private:
     // parameters
@@ -147,6 +149,9 @@ private:
 
     I3CalibrationConstPtr calibration_;
     I3DetectorStatusConstPtr status_;
+    
+    // record some statistics
+    uint64_t numGeneratedHits_;
     
     SET_LOGGER("I3PhotonToMCHitConverter");
 };
