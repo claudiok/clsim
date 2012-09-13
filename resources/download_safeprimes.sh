@@ -4,7 +4,7 @@ set -e
 # helper script to automatically download and extract safeprimes_base32.txt
 # (it takes a long time to build this file..)
 
-BASE_URL="http://www.icecube.wisc.edu/~ckopper"
+BASE_URL="http://icecube.wisc.edu/~ckopper"
 MD5_SUM_EXPECTED="295ae93631b7ff627ae42c1a4b2a7d75"
 
 # require exactly one argument
@@ -70,7 +70,7 @@ fi
 # download
 echo "  downloading $BASE_URL/$FILENAME ..."
 if [ $USE_CURL -eq 1 ]; then
-    curl -o $RESOURCES_DIR/$FILENAME $BASE_URL/$FILENAME
+    curl -L -o $RESOURCES_DIR/$FILENAME $BASE_URL/$FILENAME
 else
     wget -O $RESOURCES_DIR/$FILENAME $BASE_URL/$FILENAME
 fi
