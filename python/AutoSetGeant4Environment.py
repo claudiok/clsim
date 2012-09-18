@@ -88,7 +88,7 @@ def AutoSetGeant4Environment(force=True):
                 raise RuntimeError("Cannot automatically set missing environment variables. ($I3_PORTS/bin/geant4.sh is missing.) Please set them yourself.")
 
             # get the environment after loading geant4.sh
-            source = os.path.expandvars(". $I3_PORTS/bin/gea2nt4.sh")
+            source = os.path.expandvars(". $I3_PORTS/bin/geant4.sh")
             dump = '/usr/bin/env python -c "import os,pickle;print pickle.dumps(os.environ)"'
             penv = subprocess.Popen('%s && %s' %(source,dump), stdout=subprocess.PIPE, shell=True).communicate()[0]
             #penv = subprocess.check_output('%s && %s' %(source,dump), shell=True)
