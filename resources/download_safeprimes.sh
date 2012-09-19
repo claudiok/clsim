@@ -4,7 +4,7 @@ set -e
 # helper script to automatically download and extract safeprimes_base32.txt
 # (it takes a long time to build this file..)
 
-BASE_URL="http://icecube.wisc.edu/~ckopper"
+BASE_URL="http://code.icecube.wisc.edu/tools/clsim"
 MD5_SUM_EXPECTED="295ae93631b7ff627ae42c1a4b2a7d75"
 
 # require exactly one argument
