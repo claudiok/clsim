@@ -24,7 +24,7 @@
  * @author Claudio Kopper
  */
 
-#include "tableio/I3ConverterFactory.h"
+#include "tableio/I3Converter.h"
 #include "tableio/converter/I3MapConverter.h"
 
 #include "clsim/I3Photon.h"

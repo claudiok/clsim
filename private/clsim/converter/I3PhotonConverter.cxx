@@ -109,8 +109,8 @@ void I3PhotonConverter::FillSingleRow(const value_type& val, I3TableRowPtr row)
     FillRows(val, row);
 }
 
-I3_CONVERTER(I3PhotonConverter, I3Photon);
-I3_CONVERTER(I3PhotonSeriesMapConverter, I3PhotonSeriesMap); 
+//I3_CONVERTER(I3PhotonConverter, I3Photon);
+//I3_CONVERTER(I3PhotonSeriesMapConverter, I3PhotonSeriesMap); 
 
 
 

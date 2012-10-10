@@ -28,7 +28,7 @@
 /// id. This is a similar converter that also stores hit ids
 /// and particle ids.
 
-#include "tableio/I3ConverterFactory.h"
+#include "tableio/I3Converter.h"
 #include "tableio/converter/I3MapConverter.h"
 
 #include "dataclasses/physics/I3MCHit.h"

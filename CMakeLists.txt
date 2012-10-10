@@ -35,20 +35,19 @@ if(NOT COMMAND colormsg)
   endfunction()
 endif(NOT COMMAND colormsg)
 
-
-
 # Do we have OpenCL and Geant4 installed on this system? If not,
 # build a simple version of clsim with dataclasses only.
-if (OPENCL_FOUND AND GEANT4_FOUND)
+if (OPENCL_FOUND)
   set (BUILD_CLSIM_DATACLASSES_ONLY NO)
-else (OPENCL_FOUND AND GEANT4_FOUND)
+else (OPENCL_FOUND)
   set (BUILD_CLSIM_DATACLASSES_ONLY YES)
-endif (OPENCL_FOUND AND GEANT4_FOUND)
+endif (OPENCL_FOUND)
 
 if (APPLE AND (CMAKE_SYSTEM_VERSION VERSION_LESS "11.0.0"))
   colormsg(RED   "+-- OpenCL is not compatible with clsim in this version of OS X. Only building the clsim dataclasses.")
   set (BUILD_CLSIM_DATACLASSES_ONLY YES)
 endif (APPLE AND (CMAKE_SYSTEM_VERSION VERSION_LESS "11.0.0"))
+
 
 # The IceTray project definition
 if (BUILD_CLSIM_DATACLASSES_ONLY)
@@ -56,15 +55,11 @@ if (BUILD_CLSIM_DATACLASSES_ONLY)
     DOCS_DIR resources/docs
   )
 
-  if (OPENCL_FOUND AND GEANT4_FOUND)
-    colormsg(RED   "+-- Only building the clsim dataclasses. (manual override, Geant4 and OpenCL *are* available)")
-  elseif (NOT OPENCL_FOUND AND GEANT4_FOUND)
+  if (OPENCL_FOUND)
+    colormsg(RED   "+-- Only building the clsim dataclasses. (manual override, OpenCL *is* available)")
+  else (OPENCL_FOUND)
     colormsg(RED   "+-- OpenCL is not installed on your system. Only building the clsim dataclasses.")
-  elseif (OPENCL_FOUND AND NOT GEANT4_FOUND)
-    colormsg(RED   "+-- Geant4 is not installed on your system. Only building the clsim dataclasses.")
-  else (NOT OPENCL_FOUND AND NOT GEANT4_FOUND)
-    colormsg(RED   "+-- Neither OpenCL nor Geant4 are not installed on your system. Only building the clsim dataclasses.")
-  endif (OPENCL_FOUND AND GEANT4_FOUND)
+  endif (OPENCL_FOUND)
 else (BUILD_CLSIM_DATACLASSES_ONLY)
   i3_project(clsim
     PYTHON_DIR python
@@ -96,6 +91,30 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
 
 SET(LIB_${PROJECT_NAME}_PROJECTS icetray dataio dataclasses phys-services tableio simclasses)
 SET(LIB_${PROJECT_NAME}_TOOLS python boost log4cplus gsl)
+
+
+# check for Geant4
+if (GEANT4_FOUND)
+    ADD_DEFINITIONS(-DHAS_GEANT4)
+
+    LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
+        private/geant4/TrkCerenkov.cxx
+        private/geant4/TrkDetectorConstruction.cxx
+        private/geant4/TrkEMPhysicsUHE.cxx
+        private/geant4/TrkEventAction.cxx
+        private/geant4/TrkOpticalPhysics.cxx
+        private/geant4/TrkPrimaryGeneratorAction.cxx
+        private/geant4/TrkStackingAction.cxx
+        private/geant4/TrkUISessionToQueue.cxx
+        private/geant4/TrkUserEventInformation.cxx
+    )
+    LIST(APPEND LIB_${PROJECT_NAME}_TOOLS clhep geant4)
+
+    colormsg(GREEN "+-- Geant4 support")
+else (GEANT4_FOUND)
+    colormsg(RED   "+-- Geant4 is not installed on your system. clsim will fail if it is not used with parameterizations.")
+endif (GEANT4_FOUND)
+
 
 # check for numpy. The C++ part of the tabulator needs it.
 if(NUMPY_FOUND)
@@ -242,15 +261,6 @@ if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
 
     # private/geant4
     private/geant4/I3CLSimLightSourceToStepConverterGeant4.cxx
-    private/geant4/TrkCerenkov.cxx
-    private/geant4/TrkDetectorConstruction.cxx
-    private/geant4/TrkEMPhysicsUHE.cxx
-    private/geant4/TrkEventAction.cxx
-    private/geant4/TrkOpticalPhysics.cxx
-    private/geant4/TrkPrimaryGeneratorAction.cxx
-    private/geant4/TrkStackingAction.cxx
-    private/geant4/TrkUISessionToQueue.cxx
-    private/geant4/TrkUserEventInformation.cxx
 
     # private/opencl/
     private/opencl/I3CLSimHelperGenerateGeometrySource.cxx
@@ -268,7 +278,7 @@ if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
   )
 
   #LIST(APPEND LIB_${PROJECT_NAME}_PROJECTS )
-  LIST(APPEND LIB_${PROJECT_NAME}_TOOLS clhep geant4 opencl)
+  LIST(APPEND LIB_${PROJECT_NAME}_TOOLS opencl)
 
   if(NOT EXISTS ${CMAKE_SOURCE_DIR}/clsim/resources/safeprimes_base32.txt)
     colormsg(RED   "+-- Downloading and unpacking the safeprimes_base32.txt data file...")

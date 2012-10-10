@@ -35,6 +35,7 @@
 #include <deque>
 #include <boost/tuple/tuple.hpp>
 
+#ifdef HAS_GEANT4
 // geant4 stuff
 #include "G4RunManager.hh"
 #include "G4UImanager.hh"
@@ -57,9 +58,13 @@
 #include "TrkUISessionToQueue.hh"
 
 #include "I3CLSimI3ParticleGeantConverter.hh"
+#endif
+
 #include "clsim/I3CLSimStepStore.h"
 
+#ifdef HAS_GEANT4
 #include "Randomize.hh"
+#endif
 
 // other headers
 #include <stdlib.h>
@@ -72,7 +77,7 @@ bool I3CLSimLightSourceToStepConverterGeant4::thereCanBeOnlyOneGeant4=false;
 
 const uint32_t I3CLSimLightSourceToStepConverterGeant4::default_maxQueueItems=5;
 const std::string I3CLSimLightSourceToStepConverterGeant4::default_physicsListName="QGSP_BERT_EMV";
-const double I3CLSimLightSourceToStepConverterGeant4::default_maxBetaChangePerStep=10.*perCent;
+const double I3CLSimLightSourceToStepConverterGeant4::default_maxBetaChangePerStep=10.*I3Units::perCent;
 const uint32_t I3CLSimLightSourceToStepConverterGeant4::default_maxNumPhotonsPerStep=200;
 
 
@@ -277,6 +282,8 @@ namespace {
     }
 }
 
+#ifdef HAS_GEANT4
+
 #include "G4VStateDependent.hh"
 
 class UserHookForAbortState : public G4VStateDependent
@@ -297,6 +304,7 @@ public:
     }
 };
 
+#endif
 
 
 void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread()
@@ -326,7 +334,7 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
     shared_ptr<std::deque<boost::tuple<I3CLSimLightSourceConstPtr, uint32_t, const I3CLSimLightSourceParameterization> > > sendToParameterizationQueue
     (new std::deque<boost::tuple<I3CLSimLightSourceConstPtr, uint32_t, const I3CLSimLightSourceParameterization> >());
     
-    
+#ifdef HAS_GEANT4
     // keep this around to "catch" G4Eceptions and throw real exceptions
     UserHookForAbortState *theUserHookForAbortState = new UserHookForAbortState();
     G4StateManager *theStateManager = G4StateManager::GetStateManager();
@@ -384,6 +392,7 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
     //UI->ApplyCommand("/run/particle/dumpCutValues");
     
     CLHEP::HepRandom::setTheSeed(randomSeed_); // value [0,900000000]
+#endif
     
     // notify the main thread that everything is set up
     {
@@ -424,7 +433,7 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
             }
             catch(boost::thread_interrupted &i)
             {
-                G4cout << "G4 thread was interrupted. closing." << G4endl;
+                log_debug("G4 thread was interrupted. closing.");
                 break;
             }
         }
@@ -442,7 +451,7 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
                     try {
                         queueFromGeant4_->Put(std::make_pair(steps, false));
                     } catch(boost::thread_interrupted &i) {
-                        G4cout << "G4 thread was interrupted. shutting down Geant4!" << G4endl;
+                        log_debug("G4 thread was interrupted. shutting down Geant4!");
                         
                         interruptionOccured = true;
                         break;
@@ -467,7 +476,7 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
                     try {
                         queueFromGeant4_->Put(std::make_pair(steps, true /* this is the LAST reply before the barrier is reached! */));
                     } catch(boost::thread_interrupted &i) {
-                        G4cout << "G4 thread was interrupted. closing." << G4endl;
+                        log_debug("G4 thread was interrupted. closing.");
                         break;
                     }
 
@@ -493,7 +502,7 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
                     try {
                         queueFromGeant4_->Put(std::make_pair(steps, false));
                     } catch(boost::thread_interrupted &i) {
-                        G4cout << "G4 thread was interrupted. shutting down Geant4!" << G4endl;
+                        log_debug("G4 thread was interrupted. shutting down Geant4!");
                         
                         interruptionOccured = true;
                         break;
@@ -523,7 +532,7 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
                 try {
                     queueFromGeant4_->Put(std::make_pair(steps, true /* this is the LAST reply before the barrier is reached! */));
                 } catch(boost::thread_interrupted &i) {
-                    G4cout << "G4 thread was interrupted. closing." << G4endl;
+                    log_debug("G4 thread was interrupted. closing.");
                     break;
                 }
             }
@@ -536,13 +545,13 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
 
         if (lightSource->GetType() == I3CLSimLightSource::Unknown)
         {
-        G4cerr << "Ignoring a light source with type \"Unknown\"." << std::endl;
-        continue;
+            log_warn("Ignoring a light source with type \"Unknown\".");
+            continue;
         }
         
         if ((lightSource->GetType() == I3CLSimLightSource::Particle) && (lightSource->GetParticle().GetType() == I3Particle::unknown))
         {
-            G4cerr << "Ignoring a particle with type \"unknown\"." << std::endl;
+            log_warn("Ignoring a particle with type \"unknown\".");
             continue;
         }
 
@@ -569,6 +578,7 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
         
         if (!parameterizationIsAvailable) 
         {
+#ifdef HAS_GEANT4
             // no parameterization was found, use default Geant4
             if (lightSource->GetType() != I3CLSimLightSource::Particle)
             {
@@ -610,6 +620,9 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
             
             // check if AbortRun was requested beacause of a thread interruption.
             if (theEventAction->AbortWasRequested()) break;
+#else
+            log_fatal("Geant4 is not available, but there is no parameterization for the current particle.");
+#endif
         }
         else
         {
@@ -652,7 +665,7 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
                         // parameterization code is still working.
                         res = parameterization.converter->GetConversionResultWithBarrierInfo(barrierHasBeenReached);
                     } catch(boost::thread_interrupted &i) {
-                        G4cout << "G4 thread was interrupted. shutting down Geant4!" << G4endl;
+                        log_debug("G4 thread was interrupted. shutting down Geant4!");
                         interruptionOccured = true;
                         break;
                     }
@@ -685,7 +698,7 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
                             // OpenCL is full.
                             queueFromGeant4_->Put(std::make_pair(steps, false));
                         } catch(boost::thread_interrupted &i) {
-                            G4cout << "G4 thread was interrupted. shutting down Geant4!" << G4endl;
+                            log_debug("G4 thread was interrupted. shutting down Geant4!");
                             interruptionOccured = true;
                             break;
                         }
@@ -707,6 +720,7 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
         
     }
 
+#ifdef HAS_GEANT4
     G4cout << "G4 thread terminating..." << G4endl;
 
     UI->SetCoutDestination(NULL);
@@ -714,6 +728,7 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
     
     // job termination
     delete runManager;
+#endif
 
     log_debug("G4 thread terminated.");
 }

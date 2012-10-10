@@ -33,11 +33,11 @@
 #include <boost/preprocessor/seq.hpp>
 
 #ifdef NO_PYTHON_DATACLASS_SUITE
-#include "icetray_python_backports/std_vector_indexing_suite.hpp"
+#include "icetray_python_backports/list_indexing_suite.hpp"
 #include "icetray_python_backports/copy_suite.hpp"
 #include "icetray_python_backports/boost_serializable_pickle_suite.hpp"
 #else
-#include <icetray/python/std_vector_indexing_suite.hpp>
+#include <icetray/python/list_indexing_suite.hpp>
 #include <icetray/python/copy_suite.hpp>
 #include <icetray/python/boost_serializable_pickle_suite.hpp>
 #endif
@@ -120,7 +120,7 @@ void register_I3CLSimStep()
 
 
     bp::class_<I3CLSimStepSeries, bp::bases<I3FrameObject>, I3CLSimStepSeriesPtr>("I3CLSimStepSeries")
-    .def(bp::std_vector_indexing_suite<I3CLSimStepSeries>())
+    .def(bp::list_indexing_suite<I3CLSimStepSeries>())
     .def_pickle(bp::boost_serializable_pickle_suite<I3CLSimStepSeries>())
     ;
 

@@ -42,9 +42,9 @@
 #include <clsim/random_value/I3CLSimRandomValueUniform.h>
 
 #ifdef NO_PYTHON_DATACLASS_SUITE
-#include "icetray_python_backports/std_vector_indexing_suite.hpp"
+#include "icetray_python_backports/list_indexing_suite.hpp"
 #else
-#include <icetray/python/std_vector_indexing_suite.hpp>
+#include <icetray/python/list_indexing_suite.hpp>
 #endif
 
 #include <boost/preprocessor/seq.hpp>
@@ -434,7 +434,7 @@ void register_I3CLSimRandomValue()
     {
         typedef std::vector<I3CLSimRandomValueConstPtr> Series;
         bp::class_<Series, shared_ptr<Series> >("I3CLSimRandomValuePtrSeries")
-            .def(bp::std_vector_indexing_suite<Series>())
+            .def(bp::list_indexing_suite<Series>())
         ;
     }
 

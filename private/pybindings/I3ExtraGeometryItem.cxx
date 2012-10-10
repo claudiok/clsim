@@ -32,10 +32,10 @@
 #include <clsim/shadow/I3ExtraGeometryItemCylinder.h>
 
 #ifdef NO_PYTHON_DATACLASS_SUITE
-#include "icetray_python_backports/std_vector_indexing_suite.hpp"
+#include "icetray_python_backports/list_indexing_suite.hpp"
 #include "icetray_python_backports/dataclass_suite.hpp"
 #else
-#include <icetray/python/std_vector_indexing_suite.hpp>
+#include <icetray/python/list_indexing_suite.hpp>
 #include <icetray/python/dataclass_suite.hpp>
 #endif
 
@@ -127,7 +127,7 @@ void register_I3ExtraGeometryItem()
     std_pair_to_python_converter<I3Position, I3Position>();
     
     class_<std::vector<I3ExtraGeometryItemConstPtr> >("I3ExtraGeometryItemConstPtrVect")
-    .def(bp::std_vector_indexing_suite<std::vector<I3ExtraGeometryItemConstPtr> >())
+    .def(bp::list_indexing_suite<std::vector<I3ExtraGeometryItemConstPtr> >())
     ;
 
     

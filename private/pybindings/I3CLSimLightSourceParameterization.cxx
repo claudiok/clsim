@@ -30,10 +30,10 @@
 #include "clsim/I3CLSimLightSourceToStepConverter.h"
 
 #ifdef NO_PYTHON_DATACLASS_SUITE
-#include "icetray_python_backports/std_vector_indexing_suite.hpp"
+#include "icetray_python_backports/list_indexing_suite.hpp"
 #include "icetray_python_backports/copy_suite.hpp"
 #else
-#include <icetray/python/std_vector_indexing_suite.hpp>
+#include <icetray/python/list_indexing_suite.hpp>
 #include <icetray/python/copy_suite.hpp>
 #endif
 
@@ -115,7 +115,7 @@ void register_I3CLSimLightSourceParameterization()
     }
 
     class_<I3CLSimLightSourceParameterizationSeries, I3CLSimLightSourceParameterizationSeriesPtr>("I3CLSimLightSourceParameterizationSeries")
-    .def(std_vector_indexing_suite<I3CLSimLightSourceParameterizationSeries>())
+    .def(list_indexing_suite<I3CLSimLightSourceParameterizationSeries>())
     ;
     
     bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceParameterization>, shared_ptr<const I3CLSimLightSourceParameterization> >();

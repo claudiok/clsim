@@ -53,7 +53,7 @@ I3MCHitConverterWithIDs::FillSingleRow
     row->Set<int>     ("partminorid", hit.GetParticleMinorID());
 }
 
-I3_CONVERTER(I3MCHitSeriesMapConverterWithIDs, I3MCHitSeriesMapWithIDs); 
+//I3_CONVERTER(I3MCHitSeriesMapConverterWithIDs, I3MCHitSeriesMapWithIDs); 
 
 
 
