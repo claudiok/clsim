@@ -1,0 +1,71 @@
+JOB  job0 applyCLSim.submit
+VARS job0 runnumber="0"
+VARS job0  inputpath="/data/sim/IceCube/2011/generated/GENIE-in-ice/PINGU/numu/60010"
+VARS job0 outputpath="/net/user/ckopper/genie_clsim"
+VARS job0    gcdfile="GeoCalibDetectorStatus_PINGU.55697_corrected_V3_113.i3.gz"
+VARS job0  inputfile="genie_ic.60010.000000.L3.i3.gz"
+VARS job0 outputfile="genie_ic.60010.000000.L1.clsim.i3.gz"
+
+JOB  job1 applyCLSim.submit
+VARS job1 runnumber="1"
+VARS job1  inputpath="/data/sim/IceCube/2011/generated/GENIE-in-ice/PINGU/numu/60010"
+VARS job1 outputpath="/net/user/ckopper/genie_clsim"
+VARS job1    gcdfile="GeoCalibDetectorStatus_PINGU.55697_corrected_V3_113.i3.gz"
+VARS job1  inputfile="genie_ic.60010.000001.L3.i3.gz"
+VARS job1 outputfile="genie_ic.60010.000001.L1.clsim.i3.gz"
+
+JOB  job2 applyCLSim.submit
+VARS job2 runnumber="2"
+VARS job2  inputpath="/data/sim/IceCube/2011/generated/GENIE-in-ice/PINGU/numu/60010"
+VARS job2 outputpath="/net/user/ckopper/genie_clsim"
+VARS job2    gcdfile="GeoCalibDetectorStatus_PINGU.55697_corrected_V3_113.i3.gz"
+VARS job2  inputfile="genie_ic.60010.000002.L3.i3.gz"
+VARS job2 outputfile="genie_ic.60010.000002.L1.clsim.i3.gz"
+
+JOB  job3 applyCLSim.submit
+VARS job3 runnumber="3"
+VARS job3  inputpath="/data/sim/IceCube/2011/generated/GENIE-in-ice/PINGU/numu/60010"
+VARS job3 outputpath="/net/user/ckopper/genie_clsim"
+VARS job3    gcdfile="GeoCalibDetectorStatus_PINGU.55697_corrected_V3_113.i3.gz"
+VARS job3  inputfile="genie_ic.60010.000003.L3.i3.gz"
+VARS job3 outputfile="genie_ic.60010.000003.L1.clsim.i3.gz"
+
+JOB  job4 applyCLSim.submit
+VARS job4 runnumber="4"
+VARS job4  inputpath="/data/sim/IceCube/2011/generated/GENIE-in-ice/PINGU/numu/60010"
+VARS job4 outputpath="/net/user/ckopper/genie_clsim"
+VARS job4    gcdfile="GeoCalibDetectorStatus_PINGU.55697_corrected_V3_113.i3.gz"
+VARS job4  inputfile="genie_ic.60010.000004.L3.i3.gz"
+VARS job4 outputfile="genie_ic.60010.000004.L1.clsim.i3.gz"
+
+JOB  job5 applyCLSim.submit
+VARS job5 runnumber="5"
+VARS job5  inputpath="/data/sim/IceCube/2011/generated/GENIE-in-ice/PINGU/numu/60010"
+VARS job5 outputpath="/net/user/ckopper/genie_clsim"
+VARS job5    gcdfile="GeoCalibDetectorStatus_PINGU.55697_corrected_V3_113.i3.gz"
+VARS job5  inputfile="genie_ic.60010.000005.L3.i3.gz"
+VARS job5 outputfile="genie_ic.60010.000005.L1.clsim.i3.gz"
+
+JOB  job6 applyCLSim.submit
+VARS job6 runnumber="6"
+VARS job6  inputpath="/data/sim/IceCube/2011/generated/GENIE-in-ice/PINGU/numu/60010"
+VARS job6 outputpath="/net/user/ckopper/genie_clsim"
+VARS job6    gcdfile="GeoCalibDetectorStatus_PINGU.55697_corrected_V3_113.i3.gz"
+VARS job6  inputfile="genie_ic.60010.000006.L3.i3.gz"
+VARS job6 outputfile="genie_ic.60010.000006.L1.clsim.i3.gz"
+
+JOB  job7 applyCLSim.submit
+VARS job7 runnumber="7"
+VARS job7  inputpath="/data/sim/IceCube/2011/generated/GENIE-in-ice/PINGU/numu/60010"
+VARS job7 outputpath="/net/user/ckopper/genie_clsim"
+VARS job7    gcdfile="GeoCalibDetectorStatus_PINGU.55697_corrected_V3_113.i3.gz"
+VARS job7  inputfile="genie_ic.60010.000007.L3.i3.gz"
+VARS job7 outputfile="genie_ic.60010.000007.L1.clsim.i3.gz"
+
+JOB  job8 applyCLSim.submit
+VARS job8 runnumber="8"
+VARS job8  inputpath="/data/sim/IceCube/2011/generated/GENIE-in-ice/PINGU/numu/60010"
+VARS job8 outputpath="/net/user/ckopper/genie_clsim"
+VARS job8    gcdfile="GeoCalibDetectorStatus_PINGU.55697_corrected_V3_113.i3.gz"
+VARS job8  inputfile="genie_ic.60010.000008.L3.i3.gz"
+VARS job8 outputfile="genie_ic.60010.000008.L1.clsim.i3.gz"

@@ -1,0 +1,2 @@
+This directory contains scripts for submission of clsim jobs to various clusters.
+(Where "various" currently means npx3 in Madison.)

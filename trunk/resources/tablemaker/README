@@ -1,0 +1,9 @@
+This is an attempt to make clsim tabulate photon detection probabilities in a 
+manner similar to photonics. It does not yet work.
+
+The general idea (partially implemented in stepgenerator.py) is as follows:
+1. Replace I3CLSimStepToPhotonConverterOpenCL's realistic DOM arrangement with a grid of detectors centered on the source and aligned with its direction. All other elements of tracking remain the same.
+2. Generate steps for some source, keeping track of the total number of photons
+3. Inject these into clsim and harvest the results, adding an entry to some histogram for each detected photon 
+4. Normalize the detection probability in each bin to the number of propagated photons.
+5. Profit!
