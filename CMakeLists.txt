@@ -94,7 +94,7 @@ SET(LIB_${PROJECT_NAME}_TOOLS python boost log4cplus gsl)
 
 
 # check for Geant4
-if (GEANT4_FOUND)
+if (GEANT4_FOUND AND OPENCL_FOUND)
     ADD_DEFINITIONS(-DHAS_GEANT4)
 
     LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
@@ -111,9 +111,9 @@ if (GEANT4_FOUND)
     LIST(APPEND LIB_${PROJECT_NAME}_TOOLS clhep geant4)
 
     colormsg(GREEN "+-- Geant4 support")
-else (GEANT4_FOUND)
+else (GEANT4_FOUND AND OPENCL_FOUND)
     colormsg(RED   "+-- Geant4 is not installed on your system. clsim will fail if it is not used with parameterizations.")
-endif (GEANT4_FOUND)
+endif (GEANT4_FOUND AND OPENCL_FOUND)
 
 
 # check for numpy. The C++ part of the tabulator needs it.
