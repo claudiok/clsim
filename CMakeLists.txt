@@ -46,6 +46,8 @@ endif (OPENCL_FOUND)
 if (APPLE AND (CMAKE_SYSTEM_VERSION VERSION_LESS "11.0.0"))
   colormsg(RED   "+-- OpenCL is not compatible with clsim in this version of OS X. Only building the clsim dataclasses.")
   set (BUILD_CLSIM_DATACLASSES_ONLY YES)
+  set (tmp_OPENCL_FOUND ${OPENCL_FOUND})
+  set(OPENCL_FOUND False)
 endif (APPLE AND (CMAKE_SYSTEM_VERSION VERSION_LESS "11.0.0"))
 
 
@@ -310,3 +312,6 @@ endif(GMP_FOUND)
 
 
 add_subdirectory(private/pybindings)
+
+## restore OPENCL_FOUND
+set(OPENCL_FOUND ${tmp_OPENCL_FOUND})
