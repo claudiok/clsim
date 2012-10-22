@@ -30,6 +30,7 @@
 #include <clsim/I3CLSimLightSourceToStepConverterGeant4.h>
 #include <clsim/I3CLSimLightSourceToStepConverterPPC.h>
 #include <clsim/I3CLSimLightSourceToStepConverterFlasher.h>
+#include <clsim/I3CLSimLightSourceToStepConverterPointSource.h>
 
 #include <boost/preprocessor/seq.hpp>
 
@@ -277,5 +278,31 @@ void register_I3CLSimLightSourceToStepConverter()
     bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterFlasher>, shared_ptr<const I3CLSimLightSourceToStepConverterFlasher> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterFlasher>, shared_ptr<I3CLSimLightSourceToStepConverter> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterFlasher>, shared_ptr<const I3CLSimLightSourceToStepConverter> >();
+
+        // I3CLSimLightSourceToStepConverterPointSource
+    {
+        bp::class_<
+        I3CLSimLightSourceToStepConverterPointSource, 
+        boost::shared_ptr<I3CLSimLightSourceToStepConverterPointSource>,
+        bases<I3CLSimLightSourceToStepConverter>,
+        boost::noncopyable
+        >
+        (
+         "I3CLSimLightSourceToStepConverterPointSource",
+         bp::init<uint32_t>
+        (
+           (
+            bp::arg("photonsPerStep") = I3CLSimLightSourceToStepConverterPointSource::default_photonsPerStep
+            )
+           )
+         )
+        ;
+    }
+    
+    bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterPointSource>, shared_ptr<const I3CLSimLightSourceToStepConverterPointSource> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterPointSource>, shared_ptr<I3CLSimLightSourceToStepConverter> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterPointSource>, shared_ptr<const I3CLSimLightSourceToStepConverter> >();
+
+
 
 }

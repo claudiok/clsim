@@ -31,6 +31,7 @@ from icecube import icetray, dataclasses
 
 from icecube.clsim import GetDefaultParameterizationList
 from icecube.clsim import GetFlasherParameterizationList
+from icecube.clsim import GetPointSourceParameterizationList
 
 from icecube.clsim import AutoSetGeant4Environment
 
@@ -48,6 +49,8 @@ def I3CLSimMakePhotons(tray, name,
                        OutputMCTreeName=None,
                        FlasherInfoVectName=None,
                        FlasherPulseSeriesName=None,
+                       SimulatePointSource=None,
+                       SimulatePointSource=None,
                        MMCTrackListName="MMCTrackList",
                        PhotonSeriesName="PhotonSeriesMap",
                        ParallelEvents=1000,
@@ -194,6 +197,14 @@ def I3CLSimMakePhotons(tray, name,
         print "If this is what you want, you can safely ignore this warning."
         print "********************"
 
+
+    if SimulatePointSource and SimulateFlashers:
+        raise RuntimeError("Flasher and Point Sources being used")
+
+    if SimulatePointSource is not None and (not SimulatePointSource==""):
+        particleParameterizations += GetPointSourceParameterizationList()
+        clSimFlasherPulseSeriesName = SimulatePointSource
+
     # some constants
     DOMRadius = 0.16510*icetray.I3Units.m # 13" diameter
     Jitter = 2.*icetray.I3Units.ns
@@ -318,6 +329,7 @@ def I3CLSimMakePhotons(tray, name,
                    MediumProperties=mediumProperties,
                    SpectrumTable=spectrumTable,
                    FlasherPulseSeriesName=clSimFlasherPulseSeriesName,
+                   SimulatePointSource=None,
                    OMKeyMaskName=clSimOMKeyMaskName,
                    # ignore IceTop
                    IgnoreSubdetectors = ["IceTop"],
