@@ -60,7 +60,7 @@ I3CLSimTabulator::SetBins(boost::python::object binEdges, double stepLength)
 	npy_intp dims[binEdges_.size()];
 	for (unsigned i = 0; i < binEdges_.size(); i++) {
 		const std::vector<double> &edges = binEdges_[i];
-		if (!edges.size() >= 2)
+		if (!(edges.size() >= 2))
 			log_fatal("Edge array in dimension %d has only %zu entries!", i, edges.size());
 		
 		dims[i] = edges.size()-1;
