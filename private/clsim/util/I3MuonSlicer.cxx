@@ -547,7 +547,7 @@ void I3MuonSlicer::Physics(I3FramePtr frame)
     BOOST_FOREACH(const I3Particle &primary, primaries)
     {
         if ((primary.GetShape() != I3Particle::Primary) && (primary.GetShape() != I3Particle::Null) && (primary.GetShape() != I3Particle::Dark))
-            log_fatal("Input tree contains a particle with shape!=(Primary or Null or Dark) at its root. (shape=%s, type=%s)",
+            log_warn("Input tree contains a particle with shape!=(Primary or Null or Dark) at its root. (shape=%s, type=%s)",
                       primary.GetShapeString().c_str(), primary.GetTypeString().c_str());
         
         // have to use I3TreeUtils here, I3MCTreeUtils::AddPrimary expects a non-const I3Particle..

@@ -184,7 +184,14 @@ def I3CLSimMakePhotons(tray, name,
         tray.AddModule("I3GeometryDecomposer", name + "_decomposeGeometry",
                        If=lambda frame: If(frame) and ("I3OMGeoMap" not in frame))
 
-    AutoSetGeant4Environment()
+    if UseGeant4:
+        if not clsim.I3CLSimLightSourceToStepConverterGeant4.can_use_geant4:
+            raise RuntimeError("You have requested to use Geant 4, but clsim was compiled without Geant 4 support")
+    
+    # at the moment the Geant4 paths need to be set, even if it isn't used
+    # TODO: fix this
+    if clsim.I3CLSimLightSourceToStepConverterGeant4.can_use_geant4:
+        AutoSetGeant4Environment()
 
     # warn the user in case they might have done something they probably don't want
     if UnWeightedPhotons and (DOMOversizeFactor != 1.):

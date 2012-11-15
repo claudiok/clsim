@@ -79,6 +79,11 @@ const uint32_t I3CLSimLightSourceToStepConverterGeant4::default_maxQueueItems=5;
 const std::string I3CLSimLightSourceToStepConverterGeant4::default_physicsListName="QGSP_BERT_EMV";
 const double I3CLSimLightSourceToStepConverterGeant4::default_maxBetaChangePerStep=10.*I3Units::perCent;
 const uint32_t I3CLSimLightSourceToStepConverterGeant4::default_maxNumPhotonsPerStep=200;
+#ifdef HAS_GEANT4
+const bool I3CLSimLightSourceToStepConverterGeant4::canUseGeant4=true;
+#else
+const bool I3CLSimLightSourceToStepConverterGeant4::canUseGeant4=false;
+#endif
 
 
 I3CLSimLightSourceToStepConverterGeant4::I3CLSimLightSourceToStepConverterGeant4(std::string physicsListName,

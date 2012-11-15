@@ -205,6 +205,7 @@ void register_I3CLSimLightSourceToStepConverter()
            )
           )
         )
+        .add_static_property("can_use_geant4",bp::make_getter(I3CLSimLightSourceToStepConverterGeant4::canUseGeant4))
         ;
     }
     

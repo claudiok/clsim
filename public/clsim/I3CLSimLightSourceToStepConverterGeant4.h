@@ -56,6 +56,7 @@ public:
     static const double default_maxBetaChangePerStep;
     static const uint32_t default_maxNumPhotonsPerStep;
     static const uint32_t default_maxQueueItems;
+    static const bool canUseGeant4;
     
     I3CLSimLightSourceToStepConverterGeant4(std::string physicsListName=default_physicsListName,
                                          double maxBetaChangePerStep=default_maxBetaChangePerStep,
