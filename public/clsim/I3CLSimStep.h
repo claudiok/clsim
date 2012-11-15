@@ -51,8 +51,10 @@
 #include "dataclasses/I3Direction.h"
 #include "dataclasses/I3Position.h"
 
-#include <boost/archive/portable_binary_iarchive.hpp>
-#include <boost/archive/portable_binary_oarchive.hpp>
+ namespace boost { namespace archive {
+     class portable_binary_iarchive;
+     class portable_binary_oarchive;
+ } }
 
 
 /**

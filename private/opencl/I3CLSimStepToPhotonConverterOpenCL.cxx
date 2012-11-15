@@ -747,6 +747,7 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
         
         if (nvidiaVerboseCompile) {
             std::string deviceName = device.getInfo<CL_DEVICE_NAME>();
+#ifdef I3_LOG4CPLUS_LOGGING
             // using LOG_IMPL will make this work even in Release build mode:
             LOG_IMPL(INFO, "  * build status on %s\"", deviceName.c_str());
             LOG_IMPL(INFO, "==============================");
@@ -754,6 +755,20 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
             LOG_IMPL(INFO, "Build Options: %s", boost::lexical_cast<std::string>(program.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(device)).c_str());
             LOG_IMPL(INFO, "Build Log: %s", boost::lexical_cast<std::string>(program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device)).c_str());
             LOG_IMPL(INFO, "==============================");
+#else
+            I3_LOGGER(LOG_INFO, __icetray_logger_id(), __FILE__, __LINE__, __PRETTY_FUNCTION__,
+                      "  * build status on %s\"", deviceName.c_str());
+            I3_LOGGER(LOG_INFO, __icetray_logger_id(), __FILE__, __LINE__, __PRETTY_FUNCTION__,
+                      "==============================");
+            I3_LOGGER(LOG_INFO, __icetray_logger_id(), __FILE__, __LINE__, __PRETTY_FUNCTION__,
+                      "Build Status: %s", boost::lexical_cast<std::string>(program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(device)).c_str());
+            I3_LOGGER(LOG_INFO, __icetray_logger_id(), __FILE__, __LINE__, __PRETTY_FUNCTION__,
+                      "Build Options: %s", boost::lexical_cast<std::string>(program.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(device)).c_str());
+            I3_LOGGER(LOG_INFO, __icetray_logger_id(), __FILE__, __LINE__, __PRETTY_FUNCTION__,
+                      "Build Log: %s", boost::lexical_cast<std::string>(program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device)).c_str());
+            I3_LOGGER(LOG_INFO, __icetray_logger_id(), __FILE__, __LINE__, __PRETTY_FUNCTION__,
+                      "==============================");
+#endif
         }
     } catch (cl::Error &err) {
         log_error("OpenCL ERROR (compile): %s (%i)", err.what(), err.err());
@@ -1074,7 +1089,12 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl_downloadPhotons(boost
             waitForOpenCLEventYield(copyComplete);
         }
         
+#ifdef I3_LOG4CPLUS_LOGGING
         LOG_IMPL(INFO, "Num photons to copy (buffer %u): %" PRIu32, bufferIndex, numberOfGeneratedPhotons);
+#else
+        I3_LOGGER(LOG_INFO, __icetray_logger_id(), __FILE__, __LINE__, __PRETTY_FUNCTION__,
+                  "Num photons to copy (buffer %u): %" PRIu32, bufferIndex, numberOfGeneratedPhotons);
+#endif
 
 #ifdef DUMP_STATISTICS
         {
@@ -1177,6 +1197,7 @@ I3CLSimStepToPhotonConverterOpenCL::DumpStatistics(const cl::Event &kernelFinish
     
     const double utilization = static_cast<double>(kernel_duration_in_nanoseconds)/static_cast<double>(host_duration_in_nanoseconds);
     
+#ifdef I3_LOG4CPLUS_LOGGING
     // use LOG_IMPL here to make it log this even when in Release build mode.
     LOG_IMPL(INFO, "kernel statistics: %s%g nanoseconds/photon (util: %.0f%%) (%s %s) %s",
              (timeStart==timeEnd)?"<=":"",
@@ -1184,6 +1205,15 @@ I3CLSimStepToPhotonConverterOpenCL::DumpStatistics(const cl::Event &kernelFinish
              utilization*100.,
              platformName.c_str(), deviceName.c_str(),
              (starving?"[starving]":""));
+#else
+    I3_LOGGER(LOG_INFO, __icetray_logger_id(), __FILE__, __LINE__, __PRETTY_FUNCTION__,
+              "kernel statistics: %s%g nanoseconds/photon (util: %.0f%%) (%s %s) %s",
+              (timeStart==timeEnd)?"<=":"",
+              static_cast<double>(kernel_duration_in_nanoseconds)/static_cast<double>(totalNumberOfPhotons),
+              utilization*100.,
+              platformName.c_str(), deviceName.c_str(),
+              (starving?"[starving]":""));
+#endif
 #endif
     
     return this_timestamp;

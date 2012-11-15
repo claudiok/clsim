@@ -164,6 +164,15 @@ else(EXISTS ${CMAKE_SOURCE_DIR}/dataio/private/dataio/QConverter.cxx)
 endif(EXISTS ${CMAKE_SOURCE_DIR}/dataio/private/dataio/QConverter.cxx)
 
 
+# check for portable binary archive in "icetray" (instead of cmake/boost)
+if(EXISTS ${CMAKE_SOURCE_DIR}/icetray/public/icetray/portable_binary_archive.hpp)
+  ADD_DEFINITIONS(-DHAS_PBA_IN_ICETRAY)
+  colormsg(GREEN "+-- portable_binary_archive is in the icetray project")
+else(EXISTS ${CMAKE_SOURCE_DIR}/icetray/public/icetray/portable_binary_archive.hpp)
+  colormsg(YELLOW "+-- portable_binary_archive is *not* in the icetray project")
+endif(EXISTS ${CMAKE_SOURCE_DIR}/icetray/public/icetray/portable_binary_archive.hpp)
+
+
 # add some things if hit-maker is available (IceCube-specific)
 if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/hit-maker)
   LIST(APPEND LIB_${PROJECT_NAME}_PROJECTS hit-maker)
