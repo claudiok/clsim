@@ -704,9 +704,8 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
         LOG_IMPL(INFO, " -> platform: %s device: %s",
                  openCLdevice.GetPlatformName().c_str(), openCLdevice.GetDeviceName().c_str());
 #else
-        I3_LOGGER(LOG_INFO, __icetray_logger_id(), __FILE__, __LINE__, __PRETTY_FUNCTION__,
-                  " -> platform: %s device: %s",
-                  openCLdevice.GetPlatformName().c_str(), openCLdevice.GetDeviceName().c_str());
+        log_info(" -> platform: %s device: %s",
+                 openCLdevice.GetPlatformName().c_str(), openCLdevice.GetDeviceName().c_str());
 #endif
         
         I3CLSimStepToPhotonConverterOpenCLPtr openCLStepsToPhotonsConverter =
@@ -747,9 +746,8 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
                 LOG_IMPL(INFO, "new OpenCL device work group size is not compatible (%" PRIu64 "), changing granularity from %" PRIu64 " to %" PRIu64,
                          currentGranularity, granularity, newGranularity);
 #else
-                I3_LOGGER(LOG_INFO, __icetray_logger_id(), __FILE__, __LINE__, __PRETTY_FUNCTION__,
-                          "new OpenCL device work group size is not compatible (%" PRIu64 "), changing granularity from %" PRIu64 " to %" PRIu64,
-                          currentGranularity, granularity, newGranularity);
+                log_info("new OpenCL device work group size is not compatible (%" PRIu64 "), changing granularity from %" PRIu64 " to %" PRIu64,
+                         currentGranularity, granularity, newGranularity);
 #endif
             }
             
@@ -769,9 +767,8 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
                 LOG_IMPL(INFO, "maximum bunch size decreased from %" PRIu64 " to %" PRIu64 " because of new devices maximum request of %" PRIu64 " and a granularity of %" PRIu64,
                          maxBunchSize, newMaxBunchSizeWithGranularity, currentMaxBunchSize, granularity);
 #else
-                I3_LOGGER(LOG_INFO, __icetray_logger_id(), __FILE__, __LINE__, __PRETTY_FUNCTION__,
-                          "maximum bunch size decreased from %" PRIu64 " to %" PRIu64 " because of new devices maximum request of %" PRIu64 " and a granularity of %" PRIu64,
-                          maxBunchSize, newMaxBunchSizeWithGranularity, currentMaxBunchSize, granularity);
+                log_info("maximum bunch size decreased from %" PRIu64 " to %" PRIu64 " because of new devices maximum request of %" PRIu64 " and a granularity of %" PRIu64,
+                         maxBunchSize, newMaxBunchSizeWithGranularity, currentMaxBunchSize, granularity);
 #endif
             }
 
