@@ -31,7 +31,7 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
-#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
+//#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
 #if defined(__APPLE__) || defined(__MACOSX)
 #include <OpenCL/cl_ext.h>
 #else
