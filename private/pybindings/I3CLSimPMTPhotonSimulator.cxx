@@ -102,13 +102,15 @@ void register_I3CLSimPMTPhotonSimulator()
          double,
          double,
          double,
-         double
+         double,
+         bool
          >(
            (
             bp::arg("jitter")=I3CLSimPMTPhotonSimulatorIceCube::DEFAULT_jitter,
             bp::arg("pre_pulse_probability")=I3CLSimPMTPhotonSimulatorIceCube::DEFAULT_pre_pulse_probability,
             bp::arg("late_pulse_probability")=I3CLSimPMTPhotonSimulatorIceCube::DEFAULT_late_pulse_probability,
-            bp::arg("after_pulse_probability")=I3CLSimPMTPhotonSimulatorIceCube::DEFAULT_after_pulse_probability
+            bp::arg("after_pulse_probability")=I3CLSimPMTPhotonSimulatorIceCube::DEFAULT_after_pulse_probability,
+            bp::arg("ppc_jitter_mode")=I3CLSimPMTPhotonSimulatorIceCube::DEFAULT_ppc_jitter_mode
            )
           )
         )

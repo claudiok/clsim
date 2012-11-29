@@ -35,21 +35,27 @@ const double I3CLSimPMTPhotonSimulatorIceCube::DEFAULT_jitter = 2.*I3Units::ns;
 const double I3CLSimPMTPhotonSimulatorIceCube::DEFAULT_pre_pulse_probability=0.007;
 const double I3CLSimPMTPhotonSimulatorIceCube::DEFAULT_late_pulse_probability=0.035;
 const double I3CLSimPMTPhotonSimulatorIceCube::DEFAULT_after_pulse_probability=0.0593;
+const bool I3CLSimPMTPhotonSimulatorIceCube::DEFAULT_ppc_jitter_mode=false;
 
 
 I3CLSimPMTPhotonSimulatorIceCube::I3CLSimPMTPhotonSimulatorIceCube(double jitter,
                                                                    double pre_pulse_probability,
                                                                    double late_pulse_probability,
-                                                                   double after_pulse_probability)
+                                                                   double after_pulse_probability,
+                                                                   bool ppc_jitter_mode)
 :
 //randomService_(randomService),
 jitter_(jitter),
 pre_pulse_probability_(pre_pulse_probability),
 late_pulse_probability_(late_pulse_probability),
-after_pulse_probability_(after_pulse_probability)
+after_pulse_probability_(after_pulse_probability),
+ppc_jitter_mode_(ppc_jitter_mode)
 { 
     log_trace("pre_pulse_probability=%g, late_pulse_probability=%g, after_pulse_probability=%g",
               pre_pulse_probability_, late_pulse_probability_, after_pulse_probability_);
+
+    if ((ppc_jitter_mode) && (jitter != DEFAULT_jitter))
+        log_fatal("You need to disable ppc_jitter_mode in order to use non-default jitter values!");
 
 }
 
@@ -75,12 +81,38 @@ void I3CLSimPMTPhotonSimulatorIceCube::SetRandomService(I3RandomServicePtr rando
 
 double I3CLSimPMTPhotonSimulatorIceCube::GenerateJitter() const
 {
-    for(;;) 
+    if (ppc_jitter_mode_)
     {
-        const double time = randomService_->Gaus(0.,jitter_);
-        
-        if ((time >= -5.*I3Units::ns) && (time <= 25.*I3Units::ns))
-            return time;
+        // PPC samples from a cut-off gaussian distribution
+        for(;;) 
+        {
+            const double time = randomService_->Gaus(0.,jitter_);
+            
+            if ((time >= -5.*I3Units::ns) && (time <= 25.*I3Units::ns))
+                return time;
+        }
+    }
+    else
+    {
+        // this is taken from hit-maker:
+
+        // Quoting hit-maker: 
+        // """
+        // Fisher-Tippett variables for well behaved time
+        // distribtutions.  This replaces the truncated gaussian
+        // These values were obtained by fits to Bricktop running
+        // at 1345 during DFL studies by C. Wendt.  The fits were
+        // performed by R.Porrata.
+        // """
+
+        const double FT_BETA(1.9184 * I3Units::nanosecond);                
+        const double FT_MU(0.15304 * I3Units::nanosecond);                 
+                                                                   
+        const double FT_LN_TIME_UPPER_BOUND(0.999998); // Upper bound also needed for FT. tmax ~ 25 ns.
+        const double FT_LN_TIME_LOWER_BOUND(1e-7);     // Lower bound ~ 5 ns.
+        //const double EARLIEST_TIME(FT_MU - FT_BETA * std::log(-std::log(FT_LN_TIME_LOWER_BOUND)));
+
+        return FT_MU - FT_BETA * log(-log(randomService_->Uniform(FT_LN_TIME_LOWER_BOUND,FT_LN_TIME_UPPER_BOUND)));
     }
 }
 

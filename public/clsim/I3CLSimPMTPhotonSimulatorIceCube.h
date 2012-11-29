@@ -48,11 +48,13 @@ public:
     static const double DEFAULT_pre_pulse_probability;
     static const double DEFAULT_late_pulse_probability;
     static const double DEFAULT_after_pulse_probability;
+    static const bool DEFAULT_ppc_jitter_mode;
     
     I3CLSimPMTPhotonSimulatorIceCube(double jitter=DEFAULT_jitter,
                                      double pre_pulse_probability=DEFAULT_pre_pulse_probability,
                                      double late_pulse_probability=DEFAULT_late_pulse_probability,
-                                     double after_pulse_probability=DEFAULT_after_pulse_probability);
+                                     double after_pulse_probability=DEFAULT_after_pulse_probability,
+                                     bool ppc_jitter_mode=DEFAULT_ppc_jitter_mode);
     virtual ~I3CLSimPMTPhotonSimulatorIceCube();
 
     /**
@@ -86,6 +88,7 @@ private:
     double pre_pulse_probability_;
     double late_pulse_probability_;
     double after_pulse_probability_;
+    bool ppc_jitter_mode_;
     
     mutable shared_ptr<AfterPulseGenerator> afterPulseGenerator_;
     mutable shared_ptr<LatePulseGenerator> latePulseGenerator_;
