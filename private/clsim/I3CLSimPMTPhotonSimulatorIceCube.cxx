@@ -54,7 +54,7 @@ ppc_jitter_mode_(ppc_jitter_mode)
     log_trace("pre_pulse_probability=%g, late_pulse_probability=%g, after_pulse_probability=%g",
               pre_pulse_probability_, late_pulse_probability_, after_pulse_probability_);
 
-    if ((ppc_jitter_mode) && (jitter != DEFAULT_jitter))
+    if ((!ppc_jitter_mode) && (jitter != DEFAULT_jitter))
         log_fatal("You need to disable ppc_jitter_mode in order to use non-default jitter values!");
 
 }

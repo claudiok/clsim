@@ -63,6 +63,10 @@ public:
      */
     virtual void Configure();
     
+	virtual void Calibration(I3FramePtr frame);
+	
+	virtual void DetectorStatus(I3FramePtr frame);
+	
     /**
      * The module needs to process Physics frames
      */
@@ -142,7 +146,7 @@ void I3ApplyCLSimPMTPhotonSimulator::Configure()
     GetParameter("PMTPhotonSimulator", pmtPhotonSimulator_);
     GetParameter("InputMCHitSeriesMapName", inputMCHitSeriesMapName_);
     GetParameter("OutputMCHitSeriesMapName", outputMCHitSeriesMapName_);
-    GetParameter("RandomService", randomService_);
+    randomService_ = context_.Get<I3RandomServicePtr>("I3RandomService");
 
     if (inputMCHitSeriesMapName_=="")
         log_fatal("The \"InputMCHitSeriesMapName\" parameter must not be empty.");
@@ -152,11 +156,20 @@ void I3ApplyCLSimPMTPhotonSimulator::Configure()
 
     if (!pmtPhotonSimulator_)
         log_fatal("The \"OutputMCHitSeriesMapName\" parameter must not be empty.");
-
-    if (!randomService_)
-        log_fatal("The \"RandomService\" parameter must not be empty.");
+	
+	pmtPhotonSimulator_->SetRandomService(randomService_);
 }
 
+
+void I3ApplyCLSimPMTPhotonSimulator::Calibration(I3FramePtr frame){
+	pmtPhotonSimulator_->SetCalibration(frame->Get<boost::shared_ptr<const I3Calibration> >());
+	PushFrame(frame);
+}
+
+void I3ApplyCLSimPMTPhotonSimulator::DetectorStatus(I3FramePtr frame){
+	pmtPhotonSimulator_->SetDetectorStatus(frame->Get<boost::shared_ptr<const I3DetectorStatus> >());
+	PushFrame(frame);
+}
 
 #ifdef IS_Q_FRAME_ENABLED
 void I3ApplyCLSimPMTPhotonSimulator::DAQ(I3FramePtr frame)
