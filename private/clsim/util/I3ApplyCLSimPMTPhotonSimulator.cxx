@@ -146,7 +146,7 @@ void I3ApplyCLSimPMTPhotonSimulator::Configure()
     GetParameter("PMTPhotonSimulator", pmtPhotonSimulator_);
     GetParameter("InputMCHitSeriesMapName", inputMCHitSeriesMapName_);
     GetParameter("OutputMCHitSeriesMapName", outputMCHitSeriesMapName_);
-    randomService_ = context_.Get<I3RandomServicePtr>("I3RandomService");
+    GetParameter("RandomService", randomService_);
 
     if (inputMCHitSeriesMapName_=="")
         log_fatal("The \"InputMCHitSeriesMapName\" parameter must not be empty.");
@@ -157,17 +157,25 @@ void I3ApplyCLSimPMTPhotonSimulator::Configure()
     if (!pmtPhotonSimulator_)
         log_fatal("The \"OutputMCHitSeriesMapName\" parameter must not be empty.");
 	
+    if (!randomService_)
+        randomService_ = context_.Get<I3RandomServicePtr>("I3RandomService");
+
+    if (!randomService_)
+        log_fatal("The \"RandomService\" parameter must be configured or you must provided a random service on the context.");
+
 	pmtPhotonSimulator_->SetRandomService(randomService_);
 }
 
 
-void I3ApplyCLSimPMTPhotonSimulator::Calibration(I3FramePtr frame){
-	pmtPhotonSimulator_->SetCalibration(frame->Get<boost::shared_ptr<const I3Calibration> >());
+void I3ApplyCLSimPMTPhotonSimulator::Calibration(I3FramePtr frame)
+{
+	pmtPhotonSimulator_->SetCalibration(frame->Get<I3CalibrationConstPtr>());
 	PushFrame(frame);
 }
 
-void I3ApplyCLSimPMTPhotonSimulator::DetectorStatus(I3FramePtr frame){
-	pmtPhotonSimulator_->SetDetectorStatus(frame->Get<boost::shared_ptr<const I3DetectorStatus> >());
+void I3ApplyCLSimPMTPhotonSimulator::DetectorStatus(I3FramePtr frame)
+{
+	pmtPhotonSimulator_->SetDetectorStatus(frame->Get<I3DetectorStatusConstPtr>());
 	PushFrame(frame);
 }
 
@@ -243,7 +251,6 @@ void I3ApplyCLSimPMTPhotonSimulator::Physics(I3FramePtr frame)
         }
 
     }
-
 
 
     frame->Put(outputMCHitSeriesMapName_, outputHits);
