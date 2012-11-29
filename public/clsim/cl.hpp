@@ -179,7 +179,7 @@
 #include <OpenCL/opencl.h>
 #include <libkern/OSAtomic.h>
 #else
-#include <GL/gl.h>
+//#include <GL/gl.h>
 #include <CL/opencl.h>
 #endif // !__APPLE__
 
@@ -3239,7 +3239,7 @@ public:
     BufferGL(
         const Context& context,
         cl_mem_flags flags,
-        GLuint bufobj,
+        cl_GLuint bufobj,
         cl_int * err = NULL)
     {
         cl_int error;
@@ -3295,7 +3295,7 @@ public:
     //! \brief Wrapper for clGetGLObjectInfo().
     cl_int getObjectInfo(
         cl_gl_object_type *type,
-        GLuint * gl_object_name)
+        cl_GLuint * gl_object_name)
     {
         return detail::errHandler(
             ::clGetGLObjectInfo(object_,type,gl_object_name),
@@ -3322,7 +3322,7 @@ public:
     BufferRenderGL(
         const Context& context,
         cl_mem_flags flags,
-        GLuint bufobj,
+        cl_GLuint bufobj,
         cl_int * err = NULL)
     {
         cl_int error;
@@ -3378,7 +3378,7 @@ public:
     //! \brief Wrapper for clGetGLObjectInfo().
     cl_int getObjectInfo(
         cl_gl_object_type *type,
-        GLuint * gl_object_name)
+        cl_GLuint * gl_object_name)
     {
         return detail::errHandler(
             ::clGetGLObjectInfo(object_,type,gl_object_name),
@@ -3775,9 +3775,9 @@ public:
     Image2DGL(
         const Context& context,
         cl_mem_flags flags,
-        GLenum target,
-        GLint  miplevel,
-        GLuint texobj,
+        cl_GLenum target,
+        cl_GLint  miplevel,
+        cl_GLuint texobj,
         cl_int * err = NULL)
     {
         cl_int error;
@@ -4020,9 +4020,9 @@ public:
     Image3DGL(
         const Context& context,
         cl_mem_flags flags,
-        GLenum target,
-        GLint  miplevel,
-        GLuint texobj,
+        cl_GLenum target,
+        cl_GLint  miplevel,
+        cl_GLuint texobj,
         cl_int * err = NULL)
     {
         cl_int error;
@@ -4092,9 +4092,9 @@ public:
     ImageGL(
         const Context& context,
         cl_mem_flags flags,
-        GLenum target,
-        GLint  miplevel,
-        GLuint texobj,
+        cl_GLenum target,
+        cl_GLint  miplevel,
+        cl_GLuint texobj,
         cl_int * err = NULL)
     {
         cl_int error;
