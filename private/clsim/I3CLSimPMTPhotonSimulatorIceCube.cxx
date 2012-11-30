@@ -44,18 +44,18 @@ I3CLSimPMTPhotonSimulatorIceCube::I3CLSimPMTPhotonSimulatorIceCube(double jitter
                                                                    double after_pulse_probability,
                                                                    bool ppc_jitter_mode)
 :
-//randomService_(randomService),
 jitter_(jitter),
 pre_pulse_probability_(pre_pulse_probability),
 late_pulse_probability_(late_pulse_probability),
 after_pulse_probability_(after_pulse_probability),
 ppc_jitter_mode_(ppc_jitter_mode)
 { 
-    log_trace("pre_pulse_probability=%g, late_pulse_probability=%g, after_pulse_probability=%g",
-              pre_pulse_probability_, late_pulse_probability_, after_pulse_probability_);
+    log_trace("pre_pulse_probability=%g, late_pulse_probability=%g, after_pulse_probability=%g, jitter=%gns",
+              pre_pulse_probability_, late_pulse_probability_, after_pulse_probability_, jitter_/I3Units::ns);
 
-    if ((!ppc_jitter_mode) && (jitter != DEFAULT_jitter))
-        log_fatal("You need to disable ppc_jitter_mode in order to use non-default jitter values!");
+    if ((!ppc_jitter_mode) && (jitter_ != DEFAULT_jitter) && (jitter_ > 0.))
+        log_fatal("You need to enable ppc_jitter_mode in order to use non-default jitter values! jitter=%f, expected_jitter=%f",
+                jitter_/I3Units::ns, DEFAULT_jitter/I3Units::ns);
 
 }
 
@@ -81,6 +81,8 @@ void I3CLSimPMTPhotonSimulatorIceCube::SetRandomService(I3RandomServicePtr rando
 
 double I3CLSimPMTPhotonSimulatorIceCube::GenerateJitter() const
 {
+    if (jitter_<=0.) return 0.;
+
     if (ppc_jitter_mode_)
     {
         // PPC samples from a cut-off gaussian distribution
