@@ -336,7 +336,7 @@ namespace {
                 BOOST_FOREACH(I3Particle daughter, daughters) // make a copy of the particle here (we might need to change it later)
                 {
                     if (currentEnergy<0.) {
-                        log_error("Muon loses more energy than it has. Ecurrent=%gGeV, now reset to E=0", currentEnergy/I3Units::GeV);
+                        log_error("Muon loses more energy than it has. Ecurrent=%gGeV, Ei=%fGeV, now reset to E=0", currentEnergy/I3Units::GeV, Ei/I3Units::GeV);
                         currentEnergy=0.;
                     }
 
