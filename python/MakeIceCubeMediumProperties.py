@@ -25,13 +25,15 @@
 #
 
 from icecube import icetray, dataclasses
-from icecube.clsim import I3CLSimMediumProperties, \
-                          I3CLSimRandomValueMixed, \
-                          I3CLSimRandomValueHenyeyGreenstein, \
-                          I3CLSimRandomValueSimplifiedLiu, \
-                          I3CLSimFunctionRefIndexIceCube, \
-                          I3CLSimFunctionAbsLenIceCube, \
-                          I3CLSimFunctionScatLenIceCube
+from icecube.clsim import I3CLSimMediumProperties
+from icecube.clsim import I3CLSimRandomValueMixed
+from icecube.clsim import I3CLSimRandomValueHenyeyGreenstein
+from icecube.clsim import I3CLSimRandomValueSimplifiedLiu
+from icecube.clsim import I3CLSimFunctionRefIndexIceCube
+from icecube.clsim import I3CLSimFunctionAbsLenIceCube
+from icecube.clsim import I3CLSimFunctionScatLenIceCube
+from icecube.clsim import I3CLSimScalarFieldConstant
+from icecube.clsim import I3CLSimVectorTransformConstant
 
 from I3Tray import I3Units
 
@@ -150,6 +152,11 @@ def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m,
         fractionOfFirstDistribution=liuScatteringFraction)
     m.SetScatteringCosAngleDistribution(iceCubeScatModel)
     
+    # no ice/water anisotropy. all of these three are no-ops
+    m.SetDirectionalAbsorptionLengthCorrection(I3CLSimScalarFieldConstant(1.))
+    m.SetPreScatterDirectionTransform(I3CLSimVectorTransformConstant())
+    m.SetPostScatterDirectionTransform(I3CLSimVectorTransformConstant())
+
     phaseRefIndex = I3CLSimFunctionRefIndexIceCube(mode="phase")
     groupRefIndex = I3CLSimFunctionRefIndexIceCube(mode="group")
     for i in range(len(layerZStart)):

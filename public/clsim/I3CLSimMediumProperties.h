@@ -33,6 +33,8 @@
 #include <vector>
 
 #include "clsim/function/I3CLSimFunction.h"
+#include "clsim/function/I3CLSimScalarField.h"
+#include "clsim/function/I3CLSimVectorTransform.h"
 #include "clsim/random_value/I3CLSimRandomValue.h"
 
 /**
@@ -40,7 +42,7 @@
  * ice) with all its properties like refractive index,
  * absorption length, scattering length, ..
  */
-static const unsigned i3clsimmediumproperties_version_ = 0;
+static const unsigned i3clsimmediumproperties_version_ = 1;
 
 struct I3CLSimMediumProperties 
 {
@@ -76,12 +78,18 @@ public:
     I3CLSimFunctionConstPtr GetPhaseRefractiveIndex(uint32_t layer) const;
     I3CLSimFunctionConstPtr GetGroupRefractiveIndexOverride(uint32_t layer) const;
     I3CLSimRandomValueConstPtr GetScatteringCosAngleDistribution() const;
+    I3CLSimScalarFieldConstPtr GetDirectionalAbsorptionLengthCorrection() const;
+    I3CLSimVectorTransformConstPtr GetPreScatterDirectionTransform() const;
+    I3CLSimVectorTransformConstPtr GetPostScatterDirectionTransform() const;
 
     void SetAbsorptionLength(uint32_t layer, I3CLSimFunctionConstPtr ptr);
     void SetScatteringLength(uint32_t layer, I3CLSimFunctionConstPtr ptr);
     void SetPhaseRefractiveIndex(uint32_t layer, I3CLSimFunctionConstPtr ptr);
     void SetGroupRefractiveIndexOverride(uint32_t layer, I3CLSimFunctionConstPtr ptr);
     void SetScatteringCosAngleDistribution(I3CLSimRandomValueConstPtr ptr);
+    void SetDirectionalAbsorptionLengthCorrection(I3CLSimScalarFieldConstPtr ptr);
+    void SetPreScatterDirectionTransform(I3CLSimVectorTransformConstPtr ptr);
+    void SetPostScatterDirectionTransform(I3CLSimVectorTransformConstPtr ptr);
 
     double GetMinWavelength() const;
     double GetMaxWavelength() const;
@@ -120,7 +128,10 @@ private:
     std::vector<I3CLSimFunctionConstPtr> phaseRefractiveIndex_;
     std::vector<I3CLSimFunctionConstPtr> groupRefractiveIndexOverride_;
     I3CLSimRandomValueConstPtr scatteringCosAngleDist_;
-    
+    I3CLSimScalarFieldConstPtr directionalAbsorptionLengthCorrection_;
+    I3CLSimVectorTransformConstPtr preScatterDirectionTransform_;
+    I3CLSimVectorTransformConstPtr postScatterDirectionTransform_;
+
 private:
     friend class boost::serialization::access;
     template <class Archive> void load(Archive & ar, unsigned version);

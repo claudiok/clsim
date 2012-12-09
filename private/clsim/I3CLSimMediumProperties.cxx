@@ -190,6 +190,9 @@ bool I3CLSimMediumProperties::IsReady() const
     }
     
     if (!scatteringCosAngleDist_) return false;
+    if (!directionalAbsorptionLengthCorrection_) return false;
+    if (!preScatterDirectionTransform_) return false;
+    if (!postScatterDirectionTransform_) return false;
     
     return true;
 }
@@ -244,6 +247,21 @@ I3CLSimRandomValueConstPtr I3CLSimMediumProperties::GetScatteringCosAngleDistrib
     return scatteringCosAngleDist_;
 }
 
+I3CLSimScalarFieldConstPtr I3CLSimMediumProperties::GetDirectionalAbsorptionLengthCorrection() const
+{
+    return directionalAbsorptionLengthCorrection_;
+}
+
+I3CLSimVectorTransformConstPtr I3CLSimMediumProperties::GetPreScatterDirectionTransform() const
+{
+    return preScatterDirectionTransform_;
+}
+
+I3CLSimVectorTransformConstPtr I3CLSimMediumProperties::GetPostScatterDirectionTransform() const
+{
+    return postScatterDirectionTransform_;
+}
+
 void I3CLSimMediumProperties::SetAbsorptionLength(uint32_t layer, I3CLSimFunctionConstPtr ptr)
 {
     if (layer >= layersNum_) log_fatal("Invalid layer num: %" PRIu32, layer);
@@ -271,6 +289,21 @@ void I3CLSimMediumProperties::SetGroupRefractiveIndexOverride(uint32_t layer, I3
 void I3CLSimMediumProperties::SetScatteringCosAngleDistribution(I3CLSimRandomValueConstPtr ptr)
 {
     scatteringCosAngleDist_=ptr;
+}
+
+void I3CLSimMediumProperties::SetDirectionalAbsorptionLengthCorrection(I3CLSimScalarFieldConstPtr ptr)
+{
+    directionalAbsorptionLengthCorrection_=ptr;
+}
+
+void I3CLSimMediumProperties::SetPreScatterDirectionTransform(I3CLSimVectorTransformConstPtr ptr)
+{
+    preScatterDirectionTransform_=ptr;
+}
+
+void I3CLSimMediumProperties::SetPostScatterDirectionTransform(I3CLSimVectorTransformConstPtr ptr)
+{
+    postScatterDirectionTransform_=ptr;
 }
 
 
@@ -313,6 +346,14 @@ void I3CLSimMediumProperties::load(Archive &ar, unsigned version)
     LoadFromArchiveIntoVectorConstPtr(ar, "phaseRefractiveIndex", phaseRefractiveIndex_);
     LoadFromArchiveIntoVectorConstPtr(ar, "groupRefractiveIndexOverride", groupRefractiveIndexOverride_);
     LoadFromArchiveIntoConstPtr(ar, "scatteringCosAngleDist", scatteringCosAngleDist_);
+
+    if (version>=1) {
+        LoadFromArchiveIntoConstPtr(ar, "directionalAbsorptionLengthCorrection", directionalAbsorptionLengthCorrection_);
+        LoadFromArchiveIntoConstPtr(ar, "preScatterDirectionTransform", preScatterDirectionTransform_);
+        LoadFromArchiveIntoConstPtr(ar, "postScatterDirectionTransform", postScatterDirectionTransform_);
+    } else {
+        log_fatal("Cannot load version 0 of I3CLSimMediumProperties at this time.");
+    }
 }     
 
 
@@ -334,6 +375,11 @@ void I3CLSimMediumProperties::save(Archive &ar, unsigned version) const
     ar << make_nvp("phaseRefractiveIndex", phaseRefractiveIndex_);
     ar << make_nvp("groupRefractiveIndexOverride", groupRefractiveIndexOverride_);
     ar << make_nvp("scatteringCosAngleDist", scatteringCosAngleDist_);
+
+    // version 1:
+    ar << make_nvp("directionalAbsorptionLengthCorrection", directionalAbsorptionLengthCorrection_);
+    ar << make_nvp("preScatterDirectionTransform", preScatterDirectionTransform_);
+    ar << make_nvp("postScatterDirectionTransform", postScatterDirectionTransform_);
 }     
 
 

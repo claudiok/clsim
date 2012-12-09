@@ -25,14 +25,16 @@
 #
 
 from icecube import icetray, dataclasses
-from icecube.clsim import I3CLSimMediumProperties, \
-                          I3CLSimRandomValueApplyFunction, \
-                          I3CLSimRandomValueInterpolatedDistribution, \
-                          I3CLSimRandomValueRayleighScatteringCosAngle, \
-                          I3CLSimFunctionScatLenPartic, \
-                          I3CLSimFunctionRefIndexQuanFry, \
-                          I3CLSimFunctionFromTable, \
-                          I3CLSimRandomValueMixed
+from icecube.clsim import I3CLSimMediumProperties
+from icecube.clsim import I3CLSimRandomValueApplyFunction
+from icecube.clsim import I3CLSimRandomValueInterpolatedDistribution
+from icecube.clsim import I3CLSimRandomValueRayleighScatteringCosAngle
+from icecube.clsim import I3CLSimFunctionScatLenPartic
+from icecube.clsim import I3CLSimFunctionRefIndexQuanFry
+from icecube.clsim import I3CLSimFunctionFromTable
+from icecube.clsim import I3CLSimRandomValueMixed
+from icecube.clsim import I3CLSimScalarFieldConstant
+from icecube.clsim import I3CLSimVectorTransformConstant
 
 from I3Tray import I3Units
 
@@ -101,7 +103,12 @@ def MakeAntaresMediumProperties():
     
     antaresScatModel = GetAntaresScatteringCosAngleDistribution()
     m.SetScatteringCosAngleDistribution(antaresScatModel)
-    
+
+    # no ice/water anisotropy. all of these three are no-ops
+    m.SetDirectionalAbsorptionLengthCorrection(I3CLSimScalarFieldConstant(1.))
+    m.SetPreScatterDirectionTransform(I3CLSimVectorTransformConstant())
+    m.SetPostScatterDirectionTransform(I3CLSimVectorTransformConstant())
+
     antaresScattering = I3CLSimFunctionScatLenPartic(volumeConcentrationSmallParticles=0.0075*I3Units.perMillion, volumeConcentrationLargeParticles=0.0075*I3Units.perMillion)
     antaresPhaseRefIndex = I3CLSimFunctionRefIndexQuanFry(pressure=215.82225*I3Units.bar, temperature=13.1, salinity=38.44*I3Units.perThousand)
     

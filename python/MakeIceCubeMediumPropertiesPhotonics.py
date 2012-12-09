@@ -31,6 +31,8 @@ from icecube.clsim import I3CLSimRandomValueHenyeyGreenstein
 from icecube.clsim import I3CLSimRandomValueSimplifiedLiu
 from icecube.clsim import I3CLSimFunctionFromTable
 from icecube.clsim import I3CLSimFunctionRefIndexIceCube
+from icecube.clsim import I3CLSimScalarFieldConstant
+from icecube.clsim import I3CLSimVectorTransformConstant
 
 from I3Tray import I3Units
 
@@ -191,6 +193,11 @@ def MakeIceCubeMediumPropertiesPhotonics(tableFile,
 
     iceCubeScatModel = I3CLSimRandomValueHenyeyGreenstein(meanCosine=meanCos)
     m.SetScatteringCosAngleDistribution(iceCubeScatModel)
+
+    # no ice/water anisotropy. all of these three are no-ops
+    m.SetDirectionalAbsorptionLengthCorrection(I3CLSimScalarFieldConstant(1.))
+    m.SetPreScatterDirectionTransform(I3CLSimVectorTransformConstant())
+    m.SetPostScatterDirectionTransform(I3CLSimVectorTransformConstant())
 
     phaseRefIndex = I3CLSimFunctionFromTable(startWavelength, stepWavelength, layers[0]['N_PHASE'])
     groupRefIndex = I3CLSimFunctionFromTable(startWavelength, stepWavelength, layers[0]['N_GROUP'])

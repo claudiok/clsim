@@ -341,6 +341,39 @@ namespace I3CLSimHelper
             code << "\n";        
         }
         
+        // directional absorption length correction
+        {
+            code << "///////////////// START directional absorption length correction function ////////////////\n";
+            code << "\n";
+            I3CLSimScalarFieldConstPtr dirAbsLenCorr = mediumProperties.GetDirectionalAbsorptionLengthCorrection();
+            if (!dirAbsLenCorr) log_fatal("directional absorption length correction function is (null).");
+            code << dirAbsLenCorr->GetOpenCLFunction("getDirectionalAbsLenCorrFactor"); // name
+            code << "///////////////// END directional absorption length correction function ////////////////\n";
+            code << "\n";        
+        }
+
+        // pre-scattering direction transformation
+        {
+            code << "///////////////// START pre-scattering direction transformation ////////////////\n";
+            code << "\n";
+            I3CLSimVectorTransformConstPtr preScatterDirTransform = mediumProperties.GetPreScatterDirectionTransform();
+            if (!preScatterDirTransform) log_fatal("pre-scattering direction transformation is (null).");
+            code << preScatterDirTransform->GetOpenCLFunction("transformDirectionPreScatter"); // name
+            code << "///////////////// END pre-scattering direction transformation ////////////////\n";
+            code << "\n";        
+        }
+
+        // post-scattering direction transformation
+        {
+            code << "///////////////// START post-scattering direction transformation ////////////////\n";
+            code << "\n";
+            I3CLSimVectorTransformConstPtr postScatterDirTransform = mediumProperties.GetPostScatterDirectionTransform();
+            if (!postScatterDirTransform) log_fatal("post-scattering direction transformation is (null).");
+            code << postScatterDirTransform->GetOpenCLFunction("transformDirectionPostScatter"); // name
+            code << "///////////////// END post-scattering direction transformation ////////////////\n";
+            code << "\n";        
+        }
+
         
         return code.str();
     }

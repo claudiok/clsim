@@ -470,7 +470,7 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             // before the photon is absorbed. This factor will be taken out after this
             // propagation step. Usually the factor is 1 and thus has no effect, but it
             // is used in a direction-dependent way for our model of ice anisotropy.
-            const floating_t abs_len_correction_factor = ONE;
+            const floating_t abs_len_correction_factor = getDirectionalAbsLenCorrFactor(photonDirAndWlen);
 
             abs_lens_left *= abs_len_correction_factor;
 
@@ -664,10 +664,18 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
                 photonDirAndWlen.w/1e-9f);
 #endif
 
+            // optional direction transformation (for ice anisotropy)
+            transformDirectionPreScatter(&photonDirAndWlen);
+
+            // choose a scattering angle
             const floating_t cosScatAngle = makeScatteringCosAngle(RNG_ARGS_TO_CALL);
             const floating_t sinScatAngle = my_sqrt(ONE - sqr(cosScatAngle));
 
+            // change the current direction by that angle
             scatterDirectionByAngle(cosScatAngle, sinScatAngle, &photonDirAndWlen, RNG_CALL_UNIFORM_CO);
+
+            // optional direction transformation (for ice anisotropy)
+            transformDirectionPostScatter(&photonDirAndWlen);
 
 #ifdef PRINTF_ENABLED
             dbg_printf("    . cos(scat_angle)=%f sin(scat_angle)=%f\n",
