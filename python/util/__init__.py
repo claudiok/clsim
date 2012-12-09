@@ -26,5 +26,6 @@
 
 from interpolate import *
 from GetMaximumGroupRefractiveIndex import GetMaximumGroupRefractiveIndex
+from GetSpiceLeaAnisotropyTransforms import GetSpiceLeaAnisotropyTransforms
 
 __all__ = filter(lambda s:not s.startswith('_'),dir())

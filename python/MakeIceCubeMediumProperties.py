@@ -35,6 +35,8 @@ from icecube.clsim import I3CLSimFunctionScatLenIceCube
 from icecube.clsim import I3CLSimScalarFieldConstant
 from icecube.clsim import I3CLSimVectorTransformConstant
 
+import util
+
 from I3Tray import I3Units
 
 import numpy, math
@@ -70,11 +72,24 @@ def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m,
         E     = 0.
     else:
         raise RuntimeError(iceDataDirectory+"/icemodel.par is not a valid Dima-icemodel file. (needs either 4 or 6 entries, this one has %u entries)" % len(icemodel_par))
-        
+    
+    if len(icemodel_cfg) < 4:
+        raise RuntimeError(iceDataDirectory+"/cfg.txt does not have enough configuration lines. It needs at least 4.")
+
     oversizeScaling       = icemodel_cfg[0] # currently ignored
     efficiencyCorrection  = icemodel_cfg[1] # currently ignored
     liuScatteringFraction = icemodel_cfg[2]
     meanCosineTheta       = icemodel_cfg[3]
+
+    hasAnisotropy = False
+    if len(icemodel_cfg) > 4 and len(icemodel_cfg) < 7:
+        raise RuntimeError(iceDataDirectory+"/cfg.txt has more than 4 lines (this means you probably get ice anisotropy), but it needs at least 7 lines in this case.")
+    elif len(icemodel_cfg) > 4:
+        hasAnisotropy = True
+        anisotropyDirAzimuth  = icemodel_cfg[4]*I3Units.deg # direction of ice tilt (perp. to flow)
+        magnitudeAlongDir     = icemodel_cfg[5]             # magnitude of ice anisotropy along tilt
+        magnitudePerpToDir    = icemodel_cfg[6]             # magnitude of ice anisotropy along flow
+
 
     if liuScatteringFraction<0. or liuScatteringFraction>1.:
         raise RuntimeError("Invalid Liu(SAM) scattering fraction configured in cfg.txt: value=%g" % liuScatteringFraction)
@@ -152,10 +167,25 @@ def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m,
         fractionOfFirstDistribution=liuScatteringFraction)
     m.SetScatteringCosAngleDistribution(iceCubeScatModel)
     
-    # no ice/water anisotropy. all of these three are no-ops
-    m.SetDirectionalAbsorptionLengthCorrection(I3CLSimScalarFieldConstant(1.))
-    m.SetPreScatterDirectionTransform(I3CLSimVectorTransformConstant())
-    m.SetPostScatterDirectionTransform(I3CLSimVectorTransformConstant())
+    if not hasAnisotropy:
+        # no ice/water anisotropy. all of these three are no-ops
+        m.SetDirectionalAbsorptionLengthCorrection(I3CLSimScalarFieldConstant(1.))
+        m.SetPreScatterDirectionTransform(I3CLSimVectorTransformConstant())
+        m.SetPostScatterDirectionTransform(I3CLSimVectorTransformConstant())
+    else:
+        print "Anisotropy! Whooo!", anisotropyDirAzimuth/I3Units.deg, magnitudeAlongDir, magnitudePerpToDir
+
+        absLenScaling, preScatterTransform, postScatterTransform = \
+            util.GetSpiceLeaAnisotropyTransforms(
+                anisotropyDirAzimuth,
+                magnitudeAlongDir,
+                magnitudePerpToDir
+                )
+
+        m.SetDirectionalAbsorptionLengthCorrection(absLenScaling)
+        m.SetPreScatterDirectionTransform(preScatterTransform)
+        m.SetPostScatterDirectionTransform(postScatterTransform)
+
 
     phaseRefIndex = I3CLSimFunctionRefIndexIceCube(mode="phase")
     groupRefIndex = I3CLSimFunctionRefIndexIceCube(mode="group")
