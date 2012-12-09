@@ -111,10 +111,10 @@ std::string I3CLSimVectorTransformMatrix::GetOpenCLFunction(const std::string &f
     funcBody = funcBody +
     "    *vec = (float4)\n"
     "    (\n"
-    "        (" + ToFloatString(matrix_(0,0)) + "*vec->x)+(" + ToFloatString(matrix_(0,1)) + "*vec->y)+(" + ToFloatString(matrix_(0,2)) + "*vec->z),\n"
-    "        (" + ToFloatString(matrix_(1,0)) + "*vec->x)+(" + ToFloatString(matrix_(1,1)) + "*vec->y)+(" + ToFloatString(matrix_(1,2)) + "*vec->z),\n"
-    "        (" + ToFloatString(matrix_(2,0)) + "*vec->x)+(" + ToFloatString(matrix_(2,1)) + "*vec->y)+(" + ToFloatString(matrix_(2,2)) + "*vec->z),\n"
-    "        vec->w\n"
+    "        (" + ToFloatString(matrix_(0,0)) + "*(*vec).x)+(" + ToFloatString(matrix_(0,1)) + "*(*vec).y)+(" + ToFloatString(matrix_(0,2)) + "*(*vec).z),\n"
+    "        (" + ToFloatString(matrix_(1,0)) + "*(*vec).x)+(" + ToFloatString(matrix_(1,1)) + "*(*vec).y)+(" + ToFloatString(matrix_(1,2)) + "*(*vec).z),\n"
+    "        (" + ToFloatString(matrix_(2,0)) + "*(*vec).x)+(" + ToFloatString(matrix_(2,1)) + "*(*vec).y)+(" + ToFloatString(matrix_(2,2)) + "*(*vec).z),\n"
+    "        (*vec).w\n"
     "    );\n";
 
     if (renormalize_) {
