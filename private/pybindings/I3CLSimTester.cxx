@@ -30,6 +30,7 @@
 #include <test/I3CLSimRandomDistributionTester.h>
 #include <test/I3CLSimFunctionTester.h>
 #include <test/I3CLSimScalarFieldTester.h>
+#include <test/I3CLSimVectorTransformTester.h>
 #include <test/I3CLSimMediumPropertiesTester.h>
 
 #include <boost/preprocessor/seq.hpp>
@@ -44,6 +45,37 @@ struct I3CLSimTesterBaseWrapper : I3CLSimTesterBase, bp::wrapper<I3CLSimTesterBa
 {
 
 };
+
+bp::list I3CLSimVectorTransformTester_EvaluateFunction(
+    I3CLSimVectorTransformTester &tester,
+    I3VectorFloatConstPtr xValues,
+    I3VectorFloatConstPtr yValues,
+    I3VectorFloatConstPtr zValues)
+{
+    const std::vector<I3VectorFloatPtr> retval =
+        tester.EvaluateFunction(xValues, yValues, zValues);
+
+    bp::list retList;
+    for (std::size_t i=0;i<retval.size();++i)
+        retList.append(retval[i]);
+    return retList;
+}
+
+bp::list I3CLSimVectorTransformTester_EvaluateReferenceFunction(
+    I3CLSimVectorTransformTester &tester,
+    I3VectorFloatConstPtr xValues,
+    I3VectorFloatConstPtr yValues,
+    I3VectorFloatConstPtr zValues)
+{
+    const std::vector<I3VectorFloatPtr> retval =
+        tester.EvaluateReferenceFunction(xValues, yValues, zValues);
+
+    bp::list retList;
+    for (std::size_t i=0;i<retval.size();++i)
+        retList.append(retval[i]);
+    return retList;
+}
+
 
 void register_I3CLSimTester()
 {
@@ -143,6 +175,33 @@ void register_I3CLSimTester()
     bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldTester>, shared_ptr<const I3CLSimScalarFieldTester> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldTester>, shared_ptr<I3CLSimTesterBase> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldTester>, shared_ptr<const I3CLSimTesterBase> >();
+
+
+    // I3CLSimVectorTransformTester
+    {
+        bp::scope I3CLSimVectorTransformTester_scope = 
+        bp::class_<I3CLSimVectorTransformTester, 
+        boost::shared_ptr<I3CLSimVectorTransformTester>,
+        bases<I3CLSimTesterBase>,
+        boost::noncopyable>
+        ("I3CLSimVectorTransformTester",
+         bp::init<const I3CLSimOpenCLDevice &, uint64_t, uint64_t, I3CLSimVectorTransformConstPtr>
+         (
+          (
+           bp::arg("device"),
+           bp::arg("workgroupSize"),
+           bp::arg("workItemsPerIteration"),
+           bp::arg("vectorTransform")
+           )
+          )
+         )
+        .def("EvaluateFunction", &I3CLSimVectorTransformTester_EvaluateFunction, bp::arg("xValues"), bp::arg("yValues"), bp::arg("zValues"))
+        .def("EvaluateReferenceFunction", &I3CLSimVectorTransformTester_EvaluateReferenceFunction, bp::arg("xValues"), bp::arg("yValues"), bp::arg("zValues"))
+        ;
+    }
+    bp::implicitly_convertible<shared_ptr<I3CLSimVectorTransformTester>, shared_ptr<const I3CLSimVectorTransformTester> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimVectorTransformTester>, shared_ptr<I3CLSimTesterBase> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimVectorTransformTester>, shared_ptr<const I3CLSimTesterBase> >();
 
     
     // I3CLSimMediumPropertiesTester

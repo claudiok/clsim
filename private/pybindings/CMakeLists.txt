@@ -47,6 +47,7 @@ if(BUILD_PYBINDINGS)
       I3CLSimPhotonHistory.cxx
       I3CLSimFunction.cxx
       I3CLSimScalarField.cxx
+      I3CLSimVectorTransform.cxx
       I3CLSimRandomValue.cxx
       I3CLSimMediumProperties.cxx
       I3CLSimLightSourceToStepConverter.cxx

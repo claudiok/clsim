@@ -270,6 +270,9 @@ if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
     private/clsim/function/I3CLSimScalarField.cxx
     private/clsim/function/I3CLSimScalarFieldConstant.cxx
     private/clsim/function/I3CLSimScalarFieldAnisotropyAbsLenScaling.cxx
+    private/clsim/function/I3CLSimVectorTransform.cxx
+    private/clsim/function/I3CLSimVectorTransformConstant.cxx
+    private/clsim/function/I3CLSimVectorTransformMatrix.cxx
     private/clsim/I3CLSimLightSource.cxx
     private/clsim/I3CLSimSpectrumTable.cxx
     private/clsim/I3CLSimLightSourceToStepConverterFlasher.cxx
@@ -291,6 +294,7 @@ if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
     private/test/I3CLSimTesterBase.cxx
     private/test/I3CLSimFunctionTester.cxx
     private/test/I3CLSimScalarFieldTester.cxx
+    private/test/I3CLSimVectorTransformTester.cxx
   )
 
   #LIST(APPEND LIB_${PROJECT_NAME}_PROJECTS )
