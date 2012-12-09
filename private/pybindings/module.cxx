@@ -53,7 +53,7 @@ namespace bp = boost::python;
     (I3CLSimTester)(I3ModuleHelper)                 \
     (I3CLSimLightSourceToStepConverterUtils)        \
     (I3CLSimOpenCLDevice)(I3CLSimLightSource)       \
-    (I3CLSimSpectrumTable)
+    (I3CLSimSpectrumTable)(I3CLSimScalarField)
 #endif
 
 #define I3_REGISTRATION_FN_DECL(r, data, t) void BOOST_PP_CAT(register_,t)();

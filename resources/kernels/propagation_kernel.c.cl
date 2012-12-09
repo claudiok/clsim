@@ -466,6 +466,14 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
         {
             const floating_t photon_dz=photonDirAndWlen.z;
             
+            // add a correction factor to the number of absorption lengths abs_lens_left
+            // before the photon is absorbed. This factor will be taken out after this
+            // propagation step. Usually the factor is 1 and thus has no effect, but it
+            // is used in a direction-dependent way for our model of ice anisotropy.
+            const floating_t abs_len_correction_factor = ONE;
+
+            abs_lens_left *= abs_len_correction_factor;
+
             // the "next" medium boundary (either top or bottom, depending on step direction)
             floating_t mediumBoundary = (photon_dz<ZERO)?(mediumLayerBoundary(currentPhotonLayer)):(mediumLayerBoundary(currentPhotonLayer)+(floating_t)MEDIUM_LAYER_THICKNESS);
 
@@ -529,6 +537,10 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             } else {
                 abs_lens_left=my_divide(distanceToAbsorption-distancePropagated, currentAbsLen);
             }
+
+            // hoist the correction factor back out of the absorption length
+            abs_lens_left=my_divide(abs_lens_left, abs_len_correction_factor);
+
         }
 
 

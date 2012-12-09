@@ -29,6 +29,7 @@
 #include <test/I3CLSimTesterBase.h>
 #include <test/I3CLSimRandomDistributionTester.h>
 #include <test/I3CLSimFunctionTester.h>
+#include <test/I3CLSimScalarFieldTester.h>
 #include <test/I3CLSimMediumPropertiesTester.h>
 
 #include <boost/preprocessor/seq.hpp>
@@ -115,6 +116,33 @@ void register_I3CLSimTester()
     bp::implicitly_convertible<shared_ptr<I3CLSimFunctionTester>, shared_ptr<const I3CLSimFunctionTester> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimFunctionTester>, shared_ptr<I3CLSimTesterBase> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimFunctionTester>, shared_ptr<const I3CLSimTesterBase> >();
+
+
+    // I3CLSimScalarFieldTester
+    {
+        bp::scope I3CLSimScalarFieldTester_scope = 
+        bp::class_<I3CLSimScalarFieldTester, 
+        boost::shared_ptr<I3CLSimScalarFieldTester>,
+        bases<I3CLSimTesterBase>,
+        boost::noncopyable>
+        ("I3CLSimScalarFieldTester",
+         bp::init<const I3CLSimOpenCLDevice &, uint64_t, uint64_t, I3CLSimScalarFieldConstPtr>
+         (
+          (
+           bp::arg("device"),
+           bp::arg("workgroupSize"),
+           bp::arg("workItemsPerIteration"),
+           bp::arg("scalarField")
+           )
+          )
+         )
+        .def("EvaluateFunction", &I3CLSimScalarFieldTester::EvaluateFunction, bp::arg("xValues"), bp::arg("yValues"), bp::arg("zValues"))
+        .def("EvaluateReferenceFunction", &I3CLSimScalarFieldTester::EvaluateReferenceFunction, bp::arg("xValues"), bp::arg("yValues"), bp::arg("zValues"))
+        ;
+    }
+    bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldTester>, shared_ptr<const I3CLSimScalarFieldTester> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldTester>, shared_ptr<I3CLSimTesterBase> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldTester>, shared_ptr<const I3CLSimTesterBase> >();
 
     
     // I3CLSimMediumPropertiesTester
