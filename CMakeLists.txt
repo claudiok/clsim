@@ -285,6 +285,7 @@ if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
     private/clsim/function/I3CLSimScalarField.cxx
     private/clsim/function/I3CLSimScalarFieldConstant.cxx
     private/clsim/function/I3CLSimScalarFieldAnisotropyAbsLenScaling.cxx
+    private/clsim/function/I3CLSimScalarFieldIceTiltZShift.cxx
     private/clsim/function/I3CLSimVectorTransform.cxx
     private/clsim/function/I3CLSimVectorTransformConstant.cxx
     private/clsim/function/I3CLSimVectorTransformMatrix.cxx

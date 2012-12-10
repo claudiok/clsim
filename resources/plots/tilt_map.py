@@ -45,7 +45,7 @@ wlens=numpy.linspace(300.,600.,num=100)
 detectorCenterDepth = 1948.07*I3Units.m
 
 
-tilt_distance_from_origin_in_flow_dir = numpy.loadtxt(expandvars("$I3_SRC/clsim/resources/ice/TILT_data/tilt.par"), unpack=True)[1]*I3Units.m
+tilt_distance_from_origin_in_tilt_dir = numpy.loadtxt(expandvars("$I3_SRC/clsim/resources/ice/TILT_data/tilt.par"), unpack=True)[1]*I3Units.m
 
 tilt_dat = numpy.loadtxt(expandvars("$I3_SRC/clsim/resources/ice/TILT_data/tilt.dat"), unpack=True)
 tilt_zcoords = (detectorCenterDepth-tilt_dat[0])[::-1]
@@ -54,21 +54,21 @@ tilt_zcoord_diffs = tilt_zcoords[1:]-tilt_zcoords[:-1]
 z_offset = numpy.mean(tilt_zcoord_diffs)
 
 tilt_shift = []
-for i in xrange(len(tilt_distance_from_origin_in_flow_dir)):
+for i in xrange(len(tilt_distance_from_origin_in_tilt_dir)):
     tilt_shift.append(tilt_dat[i+1][::-1])
 tilt_shift = numpy.array(tilt_shift)
 
-# print "dist:", tilt_distance_from_origin_in_flow_dir
+# print "dist:", tilt_distance_from_origin_in_tilt_dir
 # print "zcoords:", tilt_zcoords
 # #print "zcoord_diffs:", tilt_zcoord_diffs
 # print "shift:", tilt_shift
 
-# direction of ice flow
-flowAngle = 225.*I3Units.deg
+# direction of ice tilt
+tiltAngle = 225.*I3Units.deg
 
 # (x,y) position of string 50
-lnx = numpy.cos(flowAngle)
-lny = numpy.sin(flowAngle)
+lnx = numpy.cos(tiltAngle)
+lny = numpy.sin(tiltAngle)
 
 
 def zshift(rx, ry, rz):
@@ -80,10 +80,10 @@ def zshift(rx, ry, rz):
 
     nr = lnx*rx + lny*ry
 
-    for j in range(1,len(tilt_distance_from_origin_in_flow_dir)):
-        if (nr < tilt_distance_from_origin_in_flow_dir[j]) or (j==len(tilt_distance_from_origin_in_flow_dir)-1):
-            frac_at_lower = (tilt_distance_from_origin_in_flow_dir[j] - nr  )/(tilt_distance_from_origin_in_flow_dir[j] - tilt_distance_from_origin_in_flow_dir[j-1])
-            frac_at_upper = (nr - tilt_distance_from_origin_in_flow_dir[j-1])/(tilt_distance_from_origin_in_flow_dir[j] - tilt_distance_from_origin_in_flow_dir[j-1])
+    for j in range(1,len(tilt_distance_from_origin_in_tilt_dir)):
+        if (nr < tilt_distance_from_origin_in_tilt_dir[j]) or (j==len(tilt_distance_from_origin_in_tilt_dir)-1):
+            frac_at_lower = (tilt_distance_from_origin_in_tilt_dir[j] - nr  )/(tilt_distance_from_origin_in_tilt_dir[j] - tilt_distance_from_origin_in_tilt_dir[j-1])
+            frac_at_upper = (nr - tilt_distance_from_origin_in_tilt_dir[j-1])/(tilt_distance_from_origin_in_tilt_dir[j] - tilt_distance_from_origin_in_tilt_dir[j-1])
 
             val_at_lower = (tilt_shift[j-1][l]*(z-k) + tilt_shift[j-1][k]*(l-z))
             val_at_upper = (tilt_shift[j]  [l]*(z-k) + tilt_shift[j]  [k]*(l-z));
@@ -94,6 +94,8 @@ def zshift(rx, ry, rz):
 zshift_vectorized = numpy.vectorize(zshift)
 
 
+iceTiltCLSim = clsim.util.GetIceTiltZShift()
+zshiftCLSim_vectorized = numpy.vectorize(lambda x,y,z: iceTiltCLSim.GetValue(x,y,z))
 
 
 def plotAtDepth(plot, scanDepth):
@@ -104,12 +106,32 @@ def plotAtDepth(plot, scanDepth):
     y = numpy.arange(-600.0, 600.0+delta, delta)
     X, Y = numpy.meshgrid(x, y)
 
-    Z = zshift_vectorized(X, Y, scanZ)
+    Z_reference = zshift_vectorized(X, Y, scanZ)
+    Z = zshiftCLSim_vectorized(X, Y, scanZ)
+
+    comp = numpy.array([numpy.ravel(Z), numpy.ravel(Z_reference)]).T
+    for a, b in comp:
+        diff = numpy.abs(a-b)
+        if diff > 1e-10:
+            raise RuntimeError("reference and c++ results differ!")
+    del comp
 
     level_delta = 2.
-    levels = numpy.arange(-30.,50.+level_delta,level_delta)
+    level_from = -30.
+    level_to = 50.
 
-    plot.contourf(X, Y, Z, levels=levels, cmap=matplotlib.pyplot.cm.copper)
+    levels = numpy.arange(level_from,level_to+level_delta,level_delta)
+
+    extent = [x[0], x[-1], y[0], y[-1]]
+    im = plot.imshow(
+        Z.T,
+        extent=extent,
+        interpolation='nearest',
+        origin='lower',
+        cmap=matplotlib.pyplot.cm.hot,
+        norm=matplotlib.colors.Normalize(vmin=level_from, vmax=level_to))
+    # cbar = fig.colorbar(im, ax=plot)
+
     CS = plot.contour(X, Y, Z, levels=levels, colors='k')
     plot.clabel(CS, inline=1, fontsize=10, fmt=r'$%+1.1f\,\mathrm{m}$')
 

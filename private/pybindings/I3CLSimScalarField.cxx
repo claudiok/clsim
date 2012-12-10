@@ -30,6 +30,7 @@
 
 #include <clsim/function/I3CLSimScalarFieldConstant.h>
 #include <clsim/function/I3CLSimScalarFieldAnisotropyAbsLenScaling.h>
+#include <clsim/function/I3CLSimScalarFieldIceTiltZShift.h>
 
 #include <boost/preprocessor/seq.hpp>
 #include "const_ptr_helpers.h"
@@ -127,5 +128,34 @@ void register_I3CLSimScalarField()
     bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldAnisotropyAbsLenScaling>, shared_ptr<I3CLSimScalarField> >();
     bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldConstant>, shared_ptr<const I3CLSimScalarField> >();
     utils::register_const_ptr<I3CLSimScalarFieldAnisotropyAbsLenScaling>();
+
+
+    // ice tilt z-shifts
+    {
+        bp::class_<
+        I3CLSimScalarFieldIceTiltZShift, 
+        boost::shared_ptr<I3CLSimScalarFieldIceTiltZShift>, 
+        bases<I3CLSimScalarField>,
+        boost::noncopyable
+        >
+        (
+         "I3CLSimScalarFieldIceTiltZShift",
+         bp::init<
+         const std::vector<double> &, const std::vector<double> &, const I3Matrix &, double
+         >(
+           (
+            bp::arg("distancesFromOriginAlongTilt"),
+            bp::arg("zCoordinates"),
+            bp::arg("zCorrections"),
+            bp::arg("directionOfTiltAzimuth") = I3CLSimScalarFieldIceTiltZShift::default_directionOfTiltAzimuth
+            )
+           )
+         )
+        ;
+    }
+    bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldIceTiltZShift>, shared_ptr<const I3CLSimScalarFieldIceTiltZShift> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldIceTiltZShift>, shared_ptr<I3CLSimScalarField> >();
+    bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldConstant>, shared_ptr<const I3CLSimScalarField> >();
+    utils::register_const_ptr<I3CLSimScalarFieldIceTiltZShift>();
 
 }
