@@ -199,6 +199,9 @@ def MakeIceCubeMediumPropertiesPhotonics(tableFile,
     m.SetPreScatterDirectionTransform(I3CLSimVectorTransformConstant())
     m.SetPostScatterDirectionTransform(I3CLSimVectorTransformConstant())
 
+    # no ice tilt
+    m.SetIceTiltZShift(I3CLSimScalarFieldConstant(0.))
+
     phaseRefIndex = I3CLSimFunctionFromTable(startWavelength, stepWavelength, layers[0]['N_PHASE'])
     groupRefIndex = I3CLSimFunctionFromTable(startWavelength, stepWavelength, layers[0]['N_GROUP'])
     #phaseRefIndex = I3CLSimFunctionRefIndexIceCube(mode="phase")

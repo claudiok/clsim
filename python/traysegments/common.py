@@ -58,7 +58,7 @@ def configureOpenCLDevices(UseGPUs=True, UseCPUs=False, OverrideApproximateNumbe
     
     return openCLDevices
 
-def parseIceModel(IceModelLocation):
+def parseIceModel(IceModelLocation, disableTilt=False):
     from os.path import exists, isdir, isfile, expandvars
     from icecube.clsim.MakeIceCubeMediumProperties import MakeIceCubeMediumProperties
     from icecube.clsim.MakeAntaresMediumProperties import MakeAntaresMediumProperties
@@ -72,7 +72,7 @@ def parseIceModel(IceModelLocation):
     
     if isdir(IceModelLocation):
         # it's a PPC ice description directory
-        mediumProperties = MakeIceCubeMediumProperties(iceDataDirectory=IceModelLocation)
+        mediumProperties = MakeIceCubeMediumProperties(iceDataDirectory=IceModelLocation, useTiltIfAvailable=not disableTilt)
     elif isfile(IceModelLocation):
         # it's a photonics ice description file
         mediumProperties = MakeIceCubeMediumPropertiesPhotonics(tableFile=IceModelLocation)

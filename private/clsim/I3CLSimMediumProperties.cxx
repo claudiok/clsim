@@ -193,6 +193,7 @@ bool I3CLSimMediumProperties::IsReady() const
     if (!directionalAbsorptionLengthCorrection_) return false;
     if (!preScatterDirectionTransform_) return false;
     if (!postScatterDirectionTransform_) return false;
+    if (!iceTiltZShift_) return false;
     
     return true;
 }
@@ -262,6 +263,11 @@ I3CLSimVectorTransformConstPtr I3CLSimMediumProperties::GetPostScatterDirectionT
     return postScatterDirectionTransform_;
 }
 
+I3CLSimScalarFieldConstPtr I3CLSimMediumProperties::GetIceTiltZShift() const
+{
+    return iceTiltZShift_;
+}
+
 void I3CLSimMediumProperties::SetAbsorptionLength(uint32_t layer, I3CLSimFunctionConstPtr ptr)
 {
     if (layer >= layersNum_) log_fatal("Invalid layer num: %" PRIu32, layer);
@@ -304,6 +310,11 @@ void I3CLSimMediumProperties::SetPreScatterDirectionTransform(I3CLSimVectorTrans
 void I3CLSimMediumProperties::SetPostScatterDirectionTransform(I3CLSimVectorTransformConstPtr ptr)
 {
     postScatterDirectionTransform_=ptr;
+}
+
+void I3CLSimMediumProperties::SetIceTiltZShift(I3CLSimScalarFieldConstPtr ptr)
+{
+    iceTiltZShift_=ptr;
 }
 
 
@@ -351,6 +362,7 @@ void I3CLSimMediumProperties::load(Archive &ar, unsigned version)
         LoadFromArchiveIntoConstPtr(ar, "directionalAbsorptionLengthCorrection", directionalAbsorptionLengthCorrection_);
         LoadFromArchiveIntoConstPtr(ar, "preScatterDirectionTransform", preScatterDirectionTransform_);
         LoadFromArchiveIntoConstPtr(ar, "postScatterDirectionTransform", postScatterDirectionTransform_);
+        LoadFromArchiveIntoConstPtr(ar, "iceTiltZShift", iceTiltZShift_);
     } else {
         log_fatal("Cannot load version 0 of I3CLSimMediumProperties at this time.");
     }
@@ -380,6 +392,8 @@ void I3CLSimMediumProperties::save(Archive &ar, unsigned version) const
     ar << make_nvp("directionalAbsorptionLengthCorrection", directionalAbsorptionLengthCorrection_);
     ar << make_nvp("preScatterDirectionTransform", preScatterDirectionTransform_);
     ar << make_nvp("postScatterDirectionTransform", postScatterDirectionTransform_);
+    ar << make_nvp("iceTiltZShift", iceTiltZShift_);
+
 }     
 
 

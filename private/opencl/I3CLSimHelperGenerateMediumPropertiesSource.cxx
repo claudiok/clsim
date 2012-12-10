@@ -374,6 +374,16 @@ namespace I3CLSimHelper
             code << "\n";        
         }
 
+        // ice tilt z-shift
+        {
+            code << "///////////////// START ice tilt z-shift ////////////////\n";
+            code << "\n";
+            I3CLSimScalarFieldConstPtr iceTiltZShift = mediumProperties.GetIceTiltZShift();
+            if (!iceTiltZShift) log_fatal("ice tilt z-shift (null).");
+            code << iceTiltZShift->GetOpenCLFunction("getTiltZShift"); // name
+            code << "///////////////// END ice tilt z-shift ////////////////\n";
+            code << "\n";        
+        }
         
         return code.str();
     }

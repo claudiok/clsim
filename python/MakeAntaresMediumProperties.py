@@ -109,6 +109,9 @@ def MakeAntaresMediumProperties():
     m.SetPreScatterDirectionTransform(I3CLSimVectorTransformConstant())
     m.SetPostScatterDirectionTransform(I3CLSimVectorTransformConstant())
 
+    # no "ice" tilt
+    m.SetIceTiltZShift(I3CLSimScalarFieldConstant(0.))
+
     antaresScattering = I3CLSimFunctionScatLenPartic(volumeConcentrationSmallParticles=0.0075*I3Units.perMillion, volumeConcentrationLargeParticles=0.0075*I3Units.perMillion)
     antaresPhaseRefIndex = I3CLSimFunctionRefIndexQuanFry(pressure=215.82225*I3Units.bar, temperature=13.1, salinity=38.44*I3Units.perThousand)
     

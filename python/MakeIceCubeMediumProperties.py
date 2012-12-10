@@ -40,13 +40,27 @@ import util
 from I3Tray import I3Units
 
 import numpy, math
+import os
 from os.path import expandvars
 
 
 def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m,
-                                iceDataDirectory=expandvars("$I3_SRC/clsim/resources/ice/spice_mie")):
+                                iceDataDirectory=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
+                                useTiltIfAvailable=True):
     ### read ice information from PPC-compatible tables
     
+    # do we have tilt descripton files?
+    useTilt=False
+    if useTiltIfAvailable:
+        hasTiltPar = os.path.isfile(iceDataDirectory+"/tilt.par")
+        hasTiltDat = os.path.isfile(iceDataDirectory+"/tilt.dat")
+        if hasTiltPar and not hasTiltDat:
+            raise RuntimeError("ice model directory has tilt.par but tilt.dat is missing!")
+        elif hasTiltDat and not hasTiltPar:
+            raise RuntimeError("ice model directory has tilt.dat but tilt.par is missing!")
+        elif hasTiltDat and hasTiltPar:
+            useTilt=True
+
     icemodel_dat = numpy.loadtxt(iceDataDirectory+"/icemodel.dat", unpack=True)
     icemodel_par = numpy.loadtxt(iceDataDirectory+"/icemodel.par")
     icemodel_cfg = numpy.loadtxt(iceDataDirectory+"/cfg.txt")
@@ -186,6 +200,18 @@ def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m,
         m.SetPreScatterDirectionTransform(preScatterTransform)
         m.SetPostScatterDirectionTransform(postScatterTransform)
 
+    if useTilt:
+        print "Tilt! Wheee!"
+
+        m.SetIceTiltZShift(
+            util.GetIceTiltZShift(
+                tiltDirectory = iceDataDirectory,
+                detectorCenterDepth = detectorCenterDepth,
+                )
+            )
+    else:
+        # no ice tilt
+        m.SetIceTiltZShift(I3CLSimScalarFieldConstant(0.))
 
     phaseRefIndex = I3CLSimFunctionRefIndexIceCube(mode="phase")
     groupRefIndex = I3CLSimFunctionRefIndexIceCube(mode="group")

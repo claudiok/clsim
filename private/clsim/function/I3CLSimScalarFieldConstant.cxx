@@ -63,23 +63,19 @@ std::string I3CLSimScalarFieldConstant::GetOpenCLFunction(const std::string &fun
     // the OpenCL interface takes a float4, but ignores the fourth component
     // (well.. since this is just a constant, the input is ignored altogether..)
 
+    std::string funcHint =
+    std::string("#define ") + functionName + "_IS_CONSTANT " + ToFloatString(value_) + "\n";
+
     std::string funcDef = 
     std::string("inline float ") + functionName + std::string("(float4 vec)\n");
     
-    std::ostringstream output(std::ostringstream::out);
-    output.setf(std::ios::scientific,std::ios::floatfield);
-    output.precision(std::numeric_limits<float>::digits10+4); // maximum precision for a float
-    
-    output << value_ << "f";
-    std::string valueString = output.str();
-    
     std::string funcBody = std::string() + 
     "{\n"
-    "    return " + valueString + ";\n"
+    "    return " + ToFloatString(value_) + ";\n"
     "}\n"
     ;
     
-    return funcDef + ";\n\n" + funcDef + funcBody;
+    return funcDef + ";\n\n" + funcHint + funcDef + funcBody;
 }
 
 bool I3CLSimScalarFieldConstant::CompareTo(const I3CLSimScalarField &other) const

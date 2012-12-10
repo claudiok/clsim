@@ -159,7 +159,9 @@ if hasattr(icetray, "traysegment"):
         UseGPUs=False,
         UseCPUs=True,
         #IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos090.11jul2011.txt"))
-        IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"))
+        IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
+        #DisableTilt=True,
+        )
 else:
     # this is how you would add clsim to your script without
     # IceTray support for tray segments:

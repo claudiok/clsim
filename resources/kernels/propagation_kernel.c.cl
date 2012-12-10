@@ -401,7 +401,9 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
     floating4_t photonDirAndWlen;
     uint photonNumScatters=0;
     floating_t photonTotalPathLength=ZERO;
-    int currentPhotonLayer=0;
+#ifdef getTiltZShift_IS_CONSTANT
+    int currentPhotonLayer;
+#endif
 
 #ifndef FUNCTION_getGroupVelocity_DOES_NOT_DEPEND_ON_LAYER
 #error This kernel only works with a constant group velocity (constant w.r.t. layers)
@@ -435,12 +437,10 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
                 photonPosAndTime.w, photonDirAndWlen.w/1e-9f);
 #endif
             
+#ifdef getTiltZShift_IS_CONSTANT
             currentPhotonLayer = min(max(findLayerForGivenZPos(photonPosAndTime.z), 0), MEDIUM_LAYERS-1);
-            //currentPhotonLayer = findLayerForGivenZPos(photonPosAndTime.z);
-#ifdef PRINTF_ENABLED
-            dbg_printf("   in layer %i (valid between 0 and up to including %u)\n", currentPhotonLayer, MEDIUM_LAYERS-1);
 #endif
-            
+
             inv_groupvel = my_recip(getGroupVelocity(0, photonDirAndWlen.w));
             
             // the photon needs a lifetime. determine distance to next scatter and absorption
@@ -454,8 +454,6 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
 #endif
             abs_lens_left = abs_lens_initial;
             
-            //if ((currentPhotonLayer < 0) || (currentPhotonLayer >= MEDIUM_LAYERS)) abs_lens_left=0.f; // outside, do not track
-            
 #ifdef PRINTF_ENABLED
             dbg_printf("   - total track length will be %f absorption lengths\n", abs_lens_left);
 #endif
@@ -464,6 +462,14 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
         // this block is along the lines of the PPC kernel
         floating_t distancePropagated;
         {
+#ifdef getTiltZShift_IS_CONSTANT
+#define effective_z (photonPosAndTime.z-getTiltZShift_IS_CONSTANT)
+#else
+            // apply ice tilt
+            const floating_t effective_z = photonPosAndTime.z - getTiltZShift(photonPosAndTime);
+            int currentPhotonLayer = min(max(findLayerForGivenZPos(effective_z), 0), MEDIUM_LAYERS-1);
+#endif
+
             const floating_t photon_dz=photonDirAndWlen.z;
             
             // add a correction factor to the number of absorption lengths abs_lens_left
@@ -486,8 +492,8 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             floating_t currentScaLen = getScatteringLength(currentPhotonLayer, photonDirAndWlen.w);
             floating_t currentAbsLen = getAbsorptionLength(currentPhotonLayer, photonDirAndWlen.w);
             
-            floating_t ais=( photon_dz*sca_step_left - my_divide((mediumBoundary-photonPosAndTime.z),currentScaLen) )*(ONE/(floating_t)MEDIUM_LAYER_THICKNESS);
-            floating_t aia=( photon_dz*abs_lens_left - my_divide((mediumBoundary-photonPosAndTime.z),currentAbsLen) )*(ONE/(floating_t)MEDIUM_LAYER_THICKNESS);
+            floating_t ais=( photon_dz*sca_step_left - my_divide((mediumBoundary-effective_z),currentScaLen) )*(ONE/(floating_t)MEDIUM_LAYER_THICKNESS);
+            floating_t aia=( photon_dz*abs_lens_left - my_divide((mediumBoundary-effective_z),currentAbsLen) )*(ONE/(floating_t)MEDIUM_LAYER_THICKNESS);
 
 #ifdef PRINTF_ENABLED
             dbg_printf("   - ais=%f, aia=%f, j_initial=%i\n", ais, aia, currentPhotonLayer);
@@ -521,10 +527,12 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
                 distanceToAbsorption=abs_lens_left*currentAbsLen;
             } else {
                 const floating_t recip_photon_dz = my_recip(photon_dz);
-                distancePropagated=(ais*((floating_t)MEDIUM_LAYER_THICKNESS)*currentScaLen+mediumBoundary-photonPosAndTime.z)*recip_photon_dz;
-                distanceToAbsorption=(aia*((floating_t)MEDIUM_LAYER_THICKNESS)*currentAbsLen+mediumBoundary-photonPosAndTime.z)*recip_photon_dz;
+                distancePropagated=(ais*((floating_t)MEDIUM_LAYER_THICKNESS)*currentScaLen+mediumBoundary-effective_z)*recip_photon_dz;
+                distanceToAbsorption=(aia*((floating_t)MEDIUM_LAYER_THICKNESS)*currentAbsLen+mediumBoundary-effective_z)*recip_photon_dz;
             }
+#ifdef getTiltZShift_IS_CONSTANT
             currentPhotonLayer=j;
+#endif
             
 #ifdef PRINTF_ENABLED
             dbg_printf("   - distancePropagated=%f\n", distancePropagated);

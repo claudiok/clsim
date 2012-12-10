@@ -53,6 +53,7 @@ def I3CLSimMakePhotons(tray, name,
                        ParallelEvents=1000,
                        RandomService=None,
                        IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
+                       DisableTilt=False,
                        UnWeightedPhotons=False,
                        UseGeant4=False,
                        StopDetectedPhotons=True,
@@ -135,6 +136,10 @@ def I3CLSimMakePhotons(tray, name,
         less interpolation between table entries (the PPC ice-specification
         is parametric w.r.t. wavelength, whereas the photonics specification
         is not).
+    :param DisableTilt:
+        Do not simulate ice tilt, even if the ice model directory
+        provides tilt information. (Photonics-based models will never
+        have tilt.)
     :param UnWeightedPhotons:
         Enabling this setting will disable all optimizations. These
         are currently a DOM oversize factor of 5 (with the appropriate
@@ -274,7 +279,7 @@ def I3CLSimMakePhotons(tray, name,
             clSimMCTreeName = clSimMCTreeName
 
     # ice properties
-    mediumProperties = parseIceModel(IceModelLocation)
+    mediumProperties = parseIceModel(IceModelLocation, disableTilt=DisableTilt)
 
     # detector properties
     if UseHoleIceParameterization:

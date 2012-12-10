@@ -81,6 +81,7 @@ public:
     I3CLSimScalarFieldConstPtr GetDirectionalAbsorptionLengthCorrection() const;
     I3CLSimVectorTransformConstPtr GetPreScatterDirectionTransform() const;
     I3CLSimVectorTransformConstPtr GetPostScatterDirectionTransform() const;
+    I3CLSimScalarFieldConstPtr GetIceTiltZShift() const;
 
     void SetAbsorptionLength(uint32_t layer, I3CLSimFunctionConstPtr ptr);
     void SetScatteringLength(uint32_t layer, I3CLSimFunctionConstPtr ptr);
@@ -90,6 +91,7 @@ public:
     void SetDirectionalAbsorptionLengthCorrection(I3CLSimScalarFieldConstPtr ptr);
     void SetPreScatterDirectionTransform(I3CLSimVectorTransformConstPtr ptr);
     void SetPostScatterDirectionTransform(I3CLSimVectorTransformConstPtr ptr);
+    void SetIceTiltZShift(I3CLSimScalarFieldConstPtr ptr);
 
     double GetMinWavelength() const;
     double GetMaxWavelength() const;
@@ -131,6 +133,7 @@ private:
     I3CLSimScalarFieldConstPtr directionalAbsorptionLengthCorrection_;
     I3CLSimVectorTransformConstPtr preScatterDirectionTransform_;
     I3CLSimVectorTransformConstPtr postScatterDirectionTransform_;
+    I3CLSimScalarFieldConstPtr iceTiltZShift_;
 
 private:
     friend class boost::serialization::access;
