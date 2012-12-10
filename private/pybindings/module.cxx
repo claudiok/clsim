@@ -64,6 +64,10 @@ namespace bp = boost::python;
 void register_I3CLSimTabulator();
 #endif
 
+#ifdef USE_BACKPORTED_I3MATRIX
+void register_I3Matrix();
+#endif
+
 
 BOOST_PP_SEQ_FOR_EACH(I3_REGISTRATION_FN_DECL, ~, REGISTER_THESE_THINGS)
 #ifndef BUILD_CLSIM_DATACLASSES_ONLY
@@ -87,6 +91,10 @@ BOOST_PYTHON_MODULE(clsim)
     
 #ifdef USE_TABULATOR
     register_I3CLSimTabulator();
+#endif
+
+#ifdef USE_BACKPORTED_I3MATRIX
+    register_I3Matrix();
 #endif
 
 }

@@ -28,7 +28,13 @@ import numpy
 from icecube.clsim import I3CLSimScalarFieldAnisotropyAbsLenScaling
 from icecube.clsim import I3CLSimVectorTransformMatrix
 from icecube.icetray import I3Units
-from icecube.dataclasses import I3Matrix
+
+try:
+    from icecube.dataclasses import I3Matrix
+except ImportError:
+    # I3Matrix is in dataclasses trunk, but not in
+    # an offline-software release yet.. :-(
+    from icecube.clsim import I3Matrix
 
 def GetSpiceLeaAnisotropyTransforms(
     anisotropyDirAzimuth=216.*I3Units.deg, # direction of ice tilt (perp. to flow)

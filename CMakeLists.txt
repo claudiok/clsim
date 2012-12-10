@@ -198,6 +198,20 @@ if(NOT EXISTS ${CMAKE_SOURCE_DIR}/icetray/public/icetray/python/dataclass_suite.
 endif(NOT EXISTS ${CMAKE_SOURCE_DIR}/icetray/public/icetray/python/dataclass_suite.hpp)
 
 
+# Check for dataclasses/I3Matrix.h. Use backport if it doesn't exist.
+if(NOT EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/I3Matrix.h)
+  LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
+       private/clsim/backports/I3Matrix.cxx
+       )
+  
+  set (USE_BACKPORTED_I3MATRIX YES)
+  ADD_DEFINITIONS(-DUSE_BACKPORTED_I3MATRIX)
+  colormsg(YELLOW "+-- dataclasses does not have I3Matrix.h. Using local backported version.")
+else(NOT EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/I3Matrix.h)
+  set (USE_BACKPORTED_I3MATRIX NO)
+endif(NOT EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/I3Matrix.h)
+
+
 # check if multiPMT support is available and add multiPMT-only 
 # source files (this is still for the KM3NeT multiPMT version of IceTray)
 # support for 3-item OMKeys is coming soon!
@@ -209,6 +223,7 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3OMTypeIn
   ADD_DEFINITIONS(-DHAS_MULTIPMT_SUPPORT)
   colormsg(GREEN "+-- KM3NeT old-style multiPMT support")
 endif(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3OMTypeInfo.h)
+
 
 # check for glshovel support
 if(QT4_FOUND AND NOT QT_CONFIG_ERROR AND OPENGL_FOUND AND GLUT_FOUND)
