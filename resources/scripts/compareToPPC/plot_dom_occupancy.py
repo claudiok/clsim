@@ -32,10 +32,10 @@ params = {'backend': 'pdf',
         'legend.fontsize': 6,
         'xtick.labelsize': 8,
         'ytick.labelsize': 8,
-        'text.usetex': True,
+        'text.usetex': False,
         'figure.figsize': fig_size}
 matplotlib.rcParams.update(params)
-matplotlib.rc('font',**{'family':'serif','serif':['Computer Modern']})
+# matplotlib.rc('font',**{'family':'serif','serif':['Computer Modern']})
 
 def addAnnotationToPlot(plot, text, loc=1, size=8., rotation=0.):
     from mpl_toolkits.axes_grid. anchored_artists import AnchoredText
@@ -65,6 +65,10 @@ def calcTimeResiduals(hitSeriesMap,
                       hitSeriesIndex,
                       muons,
                       muonIndex):
+
+    if len(muonIndex) != len(hitSeriesIndex):
+        raise RuntimeError("muon and hit indices have different lengths")
+
     muon_x = muons.x[:]
     muon_y = muons.y[:]
     muon_z = muons.z[:]
@@ -96,25 +100,30 @@ def calcTimeResiduals(hitSeriesMap,
     hitsIndex_start = hitSeriesIndex.start[:]
     hitsIndex_stop = hitSeriesIndex.stop[:]
 
-    time_residuals = numpy.zeros(len(hitSeriesMap))
-    track_dca = numpy.zeros(len(hitSeriesMap))
+    muonIndex_start = muonIndex.start[:]
+    muonIndex_stop = muonIndex.stop[:]
+
+    time_residuals = numpy.zeros(len(hits_x))
+    track_dca = numpy.zeros(len(hits_x))
 
     print "calculcating time residuals.."
-    for i in range(len(muonIndex)):
-        #print "i=", i
+    for i in xrange(len(muonIndex_start)):
+        # print "i=", i
+        # print "hitsIndex_start[i]=", hitsIndex_start[i]
+        # print "hitsIndex_stop[i]=", hitsIndex_stop[i]
 
         x = hits_x[hitsIndex_start[i]:hitsIndex_stop[i]]
         y = hits_y[hitsIndex_start[i]:hitsIndex_stop[i]]
         z = hits_z[hitsIndex_start[i]:hitsIndex_stop[i]]
         t = hits_t[hitsIndex_start[i]:hitsIndex_stop[i]]
     
-        m_x = muon_x[muonIndex.start[i]]
-        m_y = muon_y[muonIndex.start[i]]
-        m_z = muon_z[muonIndex.start[i]]
-        m_dx = muon_dx[muonIndex.start[i]]
-        m_dy = muon_dy[muonIndex.start[i]]
-        m_dz = muon_dz[muonIndex.start[i]]
-        m_t = muon_t[muonIndex.start[i]]
+        m_x = muon_x[muonIndex_start[i]]
+        m_y = muon_y[muonIndex_start[i]]
+        m_z = muon_z[muonIndex_start[i]]
+        m_dx = muon_dx[muonIndex_start[i]]
+        m_dy = muon_dy[muonIndex_start[i]]
+        m_dz = muon_dz[muonIndex_start[i]]
+        m_t = muon_t[muonIndex_start[i]]
     
         v_x = x-m_x
         v_y = y-m_y
@@ -136,16 +145,20 @@ def calcTimeResiduals(hitSeriesMap,
 
     return (time_residuals, track_dca)
 
+print "ppc..."
 time_residuals_ppc, dca_ppc = calcTimeResiduals(h5file.root.MCHitSeriesMap.cols,
                                        h5file.root.__I3Index__.MCHitSeriesMap.cols,
                                        h5file.root.MCMostEnergeticMuon.cols,
                                        h5file.root.__I3Index__.MCMostEnergeticMuon.cols)
+
+print "clsim.."
 time_residuals_clsim, dca_clsim = calcTimeResiduals(h5file.root.MCHitSeriesMap_clsim.cols,
                                          h5file.root.__I3Index__.MCHitSeriesMap_clsim.cols,
                                          h5file.root.MCMostEnergeticMuon.cols,
                                          h5file.root.__I3Index__.MCMostEnergeticMuon.cols)
 
 
+print "some more work.."
 #
 hits_string_ppc = h5file.root.MCHitSeriesMap.cols.string[:]
 hits_string_clsim = h5file.root.MCHitSeriesMap_clsim.cols.string[:]
@@ -153,15 +166,19 @@ hits_string_clsim = h5file.root.MCHitSeriesMap_clsim.cols.string[:]
 hits_om_ppc = h5file.root.MCHitSeriesMap.cols.om[:]
 hits_om_clsim = h5file.root.MCHitSeriesMap_clsim.cols.om[:]
 
-#bincounts_ppc = numpy.bincount(hits_om_ppc[(hits_string_ppc>=60) & (hits_string_ppc<=63)])
-#bincounts_clsim = numpy.bincount(hits_om_clsim[(hits_string_clsim>=60) & (hits_string_clsim<=63)])
-bincounts_ppc = numpy.bincount(h5file.root.MCHitSeriesMap.cols.om[:][(dca_ppc>5.)])
-bincounts_clsim = numpy.bincount(h5file.root.MCHitSeriesMap_clsim.cols.om[:][(dca_clsim>5.)])
+
+bincounts_ppc = numpy.bincount(hits_om_ppc[:][(dca_ppc>20.) & (hits_string_ppc==21)])
+bincounts_clsim = numpy.bincount(hits_om_clsim[(dca_clsim>20.) & (hits_string_clsim==21)])
 dom_numbers = range(0,len(bincounts_ppc))
 
 
+bincounts_ppc_string = numpy.bincount(hits_string_ppc[:][(dca_ppc>20.)])
+bincounts_clsim_string = numpy.bincount(hits_string_clsim[(dca_clsim>20.)])
+string_numbers = range(0,len(bincounts_ppc_string))
+
 
 ####
+print "plotting.."
 
 
 fig = pylab.figure(3)
@@ -170,7 +187,8 @@ fig.subplots_adjust(left=0.09, bottom=0.05, top=0.95, right=0.98)
 ax = fig.add_subplot(2, 2, 1)
 bx = fig.add_subplot(2, 2, 2)
 cx = fig.add_subplot(2, 2, 3)
-dx = fig.add_subplot(2, 2, 4)
+dx = fig.add_subplot(4, 2, 6)
+ex = fig.add_subplot(4, 2, 8)
 
 ax.scatter(dom_numbers, bincounts_ppc, marker='x', color='r', label='ppc')
 ax.errorbar(dom_numbers, bincounts_ppc, yerr=numpy.sqrt(bincounts_ppc), xerr=0.5, fmt=None, ecolor='r')
@@ -179,6 +197,8 @@ ax.scatter(dom_numbers, bincounts_clsim, marker='x', color='b', label='clsim')
 ax.errorbar(dom_numbers, bincounts_clsim, yerr=numpy.sqrt(bincounts_clsim), xerr=0.5, fmt=None, ecolor='b')
 
 cx.scatter(numpy.array(dom_numbers, float), numpy.array(bincounts_clsim, float)/numpy.array(bincounts_ppc, float))
+
+
 
 
 ax.set_xlim(-0.5,60.5)
@@ -192,7 +212,27 @@ cx.grid(True)
 cx.set_xlabel("DOM number")
 
 
-the_range=(-20.,20.)
+
+dx.scatter(string_numbers, bincounts_ppc_string, marker='x', color='r', label='ppc')
+dx.errorbar(string_numbers, bincounts_ppc_string, yerr=numpy.sqrt(bincounts_ppc_string), xerr=0.5, fmt=None, ecolor='r')
+
+dx.scatter(string_numbers, bincounts_clsim_string, marker='x', color='b', label='clsim')
+dx.errorbar(string_numbers, bincounts_clsim_string, yerr=numpy.sqrt(bincounts_clsim_string), xerr=0.5, fmt=None, ecolor='b')
+
+dx.set_xlim(-0.5,86.5)
+dx.grid(True)
+dx.set_xlabel("string number")
+
+
+ex.scatter(numpy.array(string_numbers, float), numpy.array(bincounts_clsim_string, float)/numpy.array(bincounts_ppc_string, float))
+ex.set_xlim(-0.5,86.5)
+ex.grid(True)
+ex.set_xlabel("string number")
+
+
+
+#the_range=(-20.,20.)
+the_range=(-10.,50.)
 num_bins=200
 
 if True:
