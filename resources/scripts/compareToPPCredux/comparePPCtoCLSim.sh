@@ -2,12 +2,10 @@
 set -e
 
 echo "************** generating GCD.."
-./generateTestingGeometry.py --zpos=200
-# ./generateTestingGeometry.py --xpos=257 --ypos=212 --zpos=-399
+./generateTestingGeometry.py --xpos=257 --ypos=212 --zpos=-399
 
 echo "************** generating events.."
-./generateTestEvents.py --zpos=200
-# ./generateTestEvents.py --xpos=257 --ypos=212 --zpos=-399
+./generateTestEvents.py --numevents=1000 --xpos=257 --ypos=212 --zpos=-399
 
 echo "************** running CLSim.."
 time ./applyCLSim.py -p10 -i test_events.i3 --icemodel=test_ice_models/lea/                     -o test_events_clsim_lea.i3

@@ -127,15 +127,15 @@ labels = [
     'PPC no aniso.',
     'PPC no tilt/no aniso.',
 ]
-hide = [
-    False,     # clsim std
+show = [
+    True,     # clsim std
     True,     # clsim no tilt
-    False,     # clsim no aniso.
+    True,     # clsim no aniso.
     True,     # clsim no tilt/no aniso.
 
-    False,     # PPC std
+    True,     # PPC std
     True,     # PPC no tilt
-    False,     # PPC no aniso.
+    True,     # PPC no aniso.
     True,     # PPC no tilt/no aniso.
 ]
 
@@ -201,7 +201,7 @@ def plotHistogram(plot, times, color='k', linestyle='-', label=None):
     plot.semilogy( (bin_edges[1:]+bin_edges[:-1])/2., hist, color=color, linestyle=linestyle, label=label)
 
 for i in xrange(len(timesForFilename)):
-    if hide[i]: continue
+    if not show[i]: continue
 
     timesForDOM = timesForFilename[i]
     filename = filenames[i]
@@ -218,10 +218,10 @@ for i in xrange(len(timesForFilename)):
 for subplot in subplots:
     subplot.grid(True)
     subplot.set_xlim(500., 2500.)
-    subplot.set_ylim(1e1, 1e3)
+    subplot.set_ylim(3e1, 3e3)
     subplot.legend(loc='upper right')
 
-    subplot.set_xlabel(r"$t_\mathrm{hit'MC}$ [$\mathrm{ns}$]")
+    subplot.set_xlabel(r"$t_\mathrm{hit;MC}$ [$\mathrm{ns}$]")
     subplot.set_ylabel(r"$N_\mathrm{hit;MC}$")
 
 
@@ -250,7 +250,6 @@ c = matplotlib.patches.FancyArrowPatch(
     posB = ( tilt_dir_x*arrow_magnitude,  tilt_dir_y*arrow_magnitude),
     arrowstyle="simple",
     mutation_scale=100.,
-    # color='0.5',
     edgecolor='0.5',
     facecolor='0.5',
     alpha=0.5,
