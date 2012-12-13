@@ -7,6 +7,7 @@ parser = OptionParser(usage)
 parser.add_option("-o","--outfile",dest="OUTFILE",help="Write output to OUTFILE",default=None)
 parser.add_option("-f","--format",dest="format",help="format to output [hdf5, root, or csv]",default='hdf5')
 parser.add_option("-z","--compress",dest="compression",help="compression level",default=1,type=int)
+parser.add_option("-n","--nevents",dest="nevents",help="number of events to read",default=None,type=int)
 
 # parse cmd line args, bail out if anything is not understood
 (options,args) = parser.parse_args()
@@ -100,5 +101,8 @@ tray.AddModule(tableio.I3TableWriter,'writer',
 tray.AddModule(counter,'countvoncount')
 tray.AddModule('TrashCan','yeswecan')
 
-tray.Execute()
+if options.nevents is None:
+    tray.Execute()
+else:
+    tray.Execute(options.nevents+4)
 tray.Finish()

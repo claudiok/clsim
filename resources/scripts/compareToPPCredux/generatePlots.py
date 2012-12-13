@@ -16,7 +16,7 @@ if len(args) != 0:
     parser.error("wrong number of options")
 
 
-outfile = "generatePlots.pdf"
+outfile = "timing_distributions_SpiceLea_tiltOnOff_anisotropyOnOff.pdf"
 
 fig_size = [11.7,8.3] # din A4
 params = {'backend': 'pdf',
@@ -40,6 +40,15 @@ def addAnnotationToPlot(plot, text, loc=1, size=8., rotation=0.):
     at.patch.set_boxstyle("round,pad=0.,rounding_size=0.2")
     plot.add_artist(at)
 
+def addAnnotationToPlot(plot, text, loc=1, size=6.):
+    from mpl_toolkits.axes_grid. anchored_artists import AnchoredText
+    at = AnchoredText(text,
+                      prop=dict(size=size), frameon=True,
+                      loc=loc,
+                      )
+    at.patch.set_boxstyle("round,pad=0.,rounding_size=0.2")
+    plot.add_artist(at)
+
 import math
 import numpy
 import pylab
@@ -49,6 +58,9 @@ import scipy.integrate
 
 import tables
 import numpy
+
+from icecube import icetray, dataclasses, clsim
+from I3Tray import I3Units
 
 def getTimesAndPositions(filename, DOMs):
     xPosForDOM = []
@@ -79,9 +91,21 @@ def getTimesAndPositions(filename, DOMs):
         yPosForDOM.append(yPosForThisDOM[0])
         zPosForDOM.append(zPosForThisDOM[0])
 
+    numEvents = len(h5file.root.__I3Index__.MCHitSeriesMap.cols.exists[:])
+
+    emitterPosX = numpy.unique(h5file.root.MCMostEnergeticInIce.cols.x[:])
+    emitterPosY = numpy.unique(h5file.root.MCMostEnergeticInIce.cols.y[:])
+    emitterPosZ = numpy.unique(h5file.root.MCMostEnergeticInIce.cols.z[:])
+
+    if len(emitterPosX) != 1: raise RuntimeError("all emitters/particles need to be identical!")
+    if len(emitterPosY) != 1: raise RuntimeError("all emitters/particles need to be identical!")
+    if len(emitterPosZ) != 1: raise RuntimeError("all emitters/particles need to be identical!")
+
+    emitterPos = numpy.array([emitterPosX[0], emitterPosY[0], emitterPosZ[0]])
+
     h5file.close()
 
-    return (timesForDOM, xPosForDOM, yPosForDOM, zPosForDOM)
+    return (timesForDOM, xPosForDOM, yPosForDOM, zPosForDOM, numEvents, emitterPos)
 
 
 OMKeys = [(1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2), (7, 2), (8, 2)]
@@ -147,9 +171,23 @@ DOMpositionsY = numpy.ones(len(OMKeys)) * float('NaN')
 DOMpositionsZ = numpy.ones(len(OMKeys)) * float('NaN')
 
 timesForFilename = []
+numEventsForFilename = []
+
+emitterPos = None
+
 for filename in filenames:
-    times, xPos, yPos, zPos = getTimesAndPositions(filename, OMKeys)
+    print "reading", filename
+
+    times, xPos, yPos, zPos, numEvents, thisEmitterPos = getTimesAndPositions(filename, OMKeys)
+
+    if emitterPos is None:
+        emitterPos = thisEmitterPos
+    else:
+        if thisEmitterPos[0] != emitterPos[0] or thisEmitterPos[1] != emitterPos[1] or thisEmitterPos[2] != emitterPos[2]:
+            raise RuntimeError("input files cannot have emitting particles in different positions!")
+
     timesForFilename.append(times)
+    numEventsForFilename.append(numEvents)
 
     for i in xrange(len(OMKeys)):
         key = OMKeys[i]
@@ -157,21 +195,31 @@ for filename in filenames:
             DOMpositionsX[i] = xPos[i]
         else:
             if DOMpositionsX[i] != xPos[i]:
-                raise RuntimeError("files have inconsistent DOM positions")
+                print "got:", xPos
+                print "expected:", DOMpositionsX
+
+                raise RuntimeError("files have inconsistent DOM positions (x)")
         if (numpy.isnan(DOMpositionsY[i])):
             DOMpositionsY[i] = yPos[i]
         else:
             if DOMpositionsY[i] != yPos[i]:
-                raise RuntimeError("files have inconsistent DOM positions")
+                print "got:", xPos
+                print "expected:", DOMpositionsX
+
+                raise RuntimeError("files have inconsistent DOM positions (y)")
         if (numpy.isnan(DOMpositionsZ[i])):
             DOMpositionsZ[i] = zPos[i]
         else:
             if DOMpositionsZ[i] != zPos[i]:
-                raise RuntimeError("files have inconsistent DOM positions")
+                print "got:", xPos
+                print "expected:", DOMpositionsX
+
+                raise RuntimeError("files have inconsistent DOM positions (z)")
 
 
 
 print "done."
+
 
 
 ####
@@ -193,11 +241,11 @@ subplots = [
 ]
 
 
-def plotHistogram(plot, times, color='k', linestyle='-', label=None):
+def plotHistogram(plot, times, weights=None, color='k', linestyle='-', label=None):
     the_range=(500.,2500.)
     num_bins=200
 
-    hist, bin_edges = numpy.histogram(times, bins=num_bins, range=the_range)
+    hist, bin_edges = numpy.histogram(times, weights=weights, bins=num_bins, range=the_range)
     plot.semilogy( (bin_edges[1:]+bin_edges[:-1])/2., hist, color=color, linestyle=linestyle, label=label)
 
 for i in xrange(len(timesForFilename)):
@@ -208,21 +256,73 @@ for i in xrange(len(timesForFilename)):
     label = labels[i]
     linestyle = linestyles[i]
     color = colors[i]
+    numEventsInFile = numEventsForFilename[i]
 
     for j, times in enumerate(timesForDOM):
         subplot = subplots[j]
+        weights = numpy.ones(len(times)) / float(numEventsInFile)
 
-        plotHistogram(subplot, times, color=color, linestyle=linestyle, label=label)
+        plotHistogram(subplot, times, weights=weights, color=color, linestyle=linestyle, label=label)
 
 
 for subplot in subplots:
     subplot.grid(True)
     subplot.set_xlim(500., 2500.)
-    subplot.set_ylim(3e1, 3e3)
+    subplot.set_ylim(3e-1, 3e1)
     subplot.legend(loc='upper right')
 
     subplot.set_xlabel(r"$t_\mathrm{hit;MC}$ [$\mathrm{ns}$]")
     subplot.set_ylabel(r"$N_\mathrm{hit;MC}$")
+
+
+centerPlotRangeX = [-160.+emitterPos[0],160.+emitterPos[0]]
+centerPlotRangeY = [-160.+emitterPos[1],160.+emitterPos[1]]
+
+
+
+ax = fig.add_subplot(3, 3, 5)
+ax.set_aspect('equal')
+
+
+
+# plot a tilt map for reference
+detectorCenterDepth = 1948.07*I3Units.m
+
+iceTiltCLSim = clsim.util.GetIceTiltZShift()
+zshiftCLSim_vectorized = numpy.vectorize(lambda x,y,z: iceTiltCLSim.GetValue(x,y,z))
+
+scanZ = emitterPos[2]
+scanDepth = detectorCenterDepth-scanZ
+
+delta = 1.
+x = numpy.arange(centerPlotRangeX[0], centerPlotRangeX[1]+delta, delta)
+y = numpy.arange(centerPlotRangeY[0], centerPlotRangeY[1]+delta, delta)
+X, Y = numpy.meshgrid(x, y)
+Z = zshiftCLSim_vectorized(X, Y, scanZ)
+
+level_delta = 4.
+level_from = -30.
+level_to = 50.
+
+levels = numpy.arange(level_from,level_to+level_delta,level_delta)
+
+extent = [x[0], x[-1], y[0], y[-1]]
+im = ax.imshow(
+    Z.T,
+    extent=extent,
+    interpolation='nearest',
+    origin='lower',
+    cmap=matplotlib.pyplot.cm.gray,
+    norm=matplotlib.colors.Normalize(vmin=level_from, vmax=level_to))
+# cbar = fig.colorbar(im, ax=plot)
+
+CS = ax.contour(X, Y, Z, levels=levels, colors='k')
+ax.clabel(CS, inline=1, fontsize=8, fmt=r'$%+1.1f\,\mathrm{m}$')
+
+addAnnotationToPlot(ax, r"z=$%1.0f\,\mathrm{m}$ (depth=$%1.0f\,\mathrm{m}$)" % (scanZ, scanDepth), loc=2)
+
+
+
 
 
 
@@ -238,42 +338,39 @@ anis_dir_y = numpy.sin(anis_azimuth)
 
 arrow_magnitude=100.
 
-ax = fig.add_subplot(3, 3, 5)
-ax.set_aspect('equal')
-
-ax.scatter(DOMpositionsX, DOMpositionsY, s=20, c='k', marker='o')
-ax.scatter([0.], [0.], s=120, c='r', marker='o')
-ax.scatter([0.], [0.], s=120/numpy.sqrt(2.)*0.85, c='k', marker='x')
+ax.scatter(DOMpositionsX, DOMpositionsY, s=20, c='k', marker='o',zorder=2)
+ax.scatter([emitterPos[0]], [emitterPos[1]], s=120, c='r', marker='o',zorder=2)
+ax.scatter([emitterPos[0]], [emitterPos[1]], s=120/numpy.sqrt(2.)*0.85, c='k', marker='x', zorder=2)
 
 c = matplotlib.patches.FancyArrowPatch(
-    posA = (-tilt_dir_x*arrow_magnitude, -tilt_dir_y*arrow_magnitude),
-    posB = ( tilt_dir_x*arrow_magnitude,  tilt_dir_y*arrow_magnitude),
+    posA = (-tilt_dir_x*arrow_magnitude+emitterPos[0], -tilt_dir_y*arrow_magnitude+emitterPos[1]),
+    posB = ( tilt_dir_x*arrow_magnitude+emitterPos[0],  tilt_dir_y*arrow_magnitude+emitterPos[1]),
     arrowstyle="simple",
     mutation_scale=100.,
     edgecolor='0.5',
     facecolor='0.5',
     alpha=0.5,
-    zorder=0,
+    zorder=1,
     )
 ax.add_patch(c)
 
 
 d = matplotlib.patches.FancyArrowPatch(
-    posA = (-anis_dir_x*arrow_magnitude, -anis_dir_y*arrow_magnitude),
-    posB = ( anis_dir_x*arrow_magnitude,  anis_dir_y*arrow_magnitude),
+    posA = (-anis_dir_x*arrow_magnitude+emitterPos[0], -anis_dir_y*arrow_magnitude+emitterPos[1]),
+    posB = ( anis_dir_x*arrow_magnitude+emitterPos[0],  anis_dir_y*arrow_magnitude+emitterPos[1]),
     arrowstyle="simple",
     mutation_scale=100.,
     edgecolor='b',
     facecolor='b',
     alpha=0.5,
-    zorder=0,
+    zorder=1,
     )
 ax.add_patch(d)
 
 
 ax.grid(True)
-ax.set_xlim(-160.,160.)
-ax.set_ylim(-160.,160.)
+ax.set_xlim(centerPlotRangeX[0], centerPlotRangeX[1])
+ax.set_ylim(centerPlotRangeY[0], centerPlotRangeY[1])
 ax.set_xlabel(r"x [$\mathrm{m}$]")
 ax.set_ylabel(r"y [$\mathrm{m}$]")
 
