@@ -42,7 +42,7 @@
 // or on OpenCL 1.2. It is not available on OpenCL 1.0
 #if defined(cl_ext_device_fission) || (!defined(CL_VERSION_1_1) && !defined(CL_VERSION_1_0))
 #define HAS_CL_DEVICE_FISSION 1
-#if defined(CL_VERSION_1_1)
+#if defined(CL_VERSION_1_1) && (!defined(CL_VERSION_1_2))
 #define USE_CL_DEVICE_FISSION 1
 #endif
 #endif
