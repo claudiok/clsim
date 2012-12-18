@@ -29,7 +29,7 @@ from icecube.phys_services import I3Calculator, I3GSLRandomService
 from icecube.clsim import I3Photon, I3CLSimTabulator, GetIceCubeDOMAcceptance, GetIceCubeDOMAngularSensitivity
 import numpy, math
 from icecube.photospline import numpy_extensions # meshgrid_nd
-from icecube.photospline.pyphotonics.photonics_table import photonics_table, Efficiency, Geometry
+from icecube.photospline.photonics import Table, Efficiency, Geometry
 
 # A default header. This contains the same keys as the one created in photo2numpy from photospline.
 empty_header = {
@@ -47,7 +47,7 @@ empty_header = {
 	'n_phase':    I3Constants.n_ice_phase,
 }
 
-class PhotoTable(photonics_table, object):
+class PhotoTable(Table, object):
 	"""
 	A (mostly) drop-in replacement for the Photonics table wrapper from photospline.
 	"""
