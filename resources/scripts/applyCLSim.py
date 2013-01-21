@@ -21,8 +21,6 @@ parser.add_option("-r", "--runnumber", type="int", default=1,
                   dest="RUNNUMBER", help="The run number for this simulation")
 parser.add_option("-p", "--max-parallel-events", type="int", default=100,
                   dest="MAXPARALLELEVENTS", help="maximum number of events(==frames) that will be processed in parallel")
-parser.add_option("--apply-mmc", action="store_true", default=False,
-                  dest="APPLYMMC", help="apply MMC to the I3MCTree before passing it to CLSim")
 parser.add_option("--remove-photon-data", action="store_true", default=False,
                   dest="REMOVEPHOTONDATA", help="Remove I3Photons before writing the output file (only keep hits)")
 parser.add_option("--input-is-pre-sliced", action="store_true", default=False,
@@ -36,9 +34,6 @@ if len(args) != 0:
                 crap += a
                 crap += " "
         parser.error(crap)
-
-if options.APPLYMMC and options.INPUTISPRESLICED:
-    raise RuntimeError("you cannot use the --apply-mmc and --input-is-pre-sliced options together.")
 
 ########################
 if options.INFILE:
@@ -109,10 +104,6 @@ randomService = phys_services.I3SPRNGRandomService(
     nstreams = 10000,
     streamnum = options.RUNNUMBER)
 
-if options.APPLYMMC:
-    load("libc2j-icetray")
-    load("libmmc-icetray")
-    MMCseed=options.SEED
 
 tray = I3Tray()
 
@@ -122,16 +113,6 @@ tray.AddService("I3XMLSummaryServiceFactory","summary",
 
 tray.AddModule("I3Reader","reader",
                Filename=infile)
-
-if options.APPLYMMC:
-    mmcOpts = "-seed=%i -radius=900 -length=1600" % (MMCseed)
-    
-    tray.AddModule("I3PropagatorMMC","propagate",
-                   PrimaryTreeName = "I3MCTree",
-                   mode=-1,
-                   opts=mmcOpts,
-                   ShiftParticles = False,
-                   )
 
 
 
@@ -149,30 +130,19 @@ else:
     MMCTrackListName=None
 
 
-if hasattr(icetray, "traysegment"):
-    tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
-        PhotonSeriesName = photonSeriesName,
-        MCTreeName = MCTreeName,
-        MMCTrackListName = MMCTrackListName,
-        ParallelEvents = options.MAXPARALLELEVENTS,
-        RandomService = randomService,
-        UseGPUs=False,
-        UseCPUs=True,
-        #IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos090.11jul2011.txt"))
-        IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
-        #DisableTilt=True,
-        )
-else:
-    # this is how you would add clsim to your script without
-    # IceTray support for tray segments:
-    clsim.I3CLSimMakeHits(tray, "makeCLSimHits",
-        PhotonSeriesName = photonSeriesName,
-        MCTreeName = MCTreeName,
-        MMCTrackListName = MMCTrackListName,
-        ParallelEvents = options.MAXPARALLELEVENTS,
-        RandomService = randomService,
-        UseGPUs=False,
-        UseCPUs=True)
+tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
+    PhotonSeriesName = photonSeriesName,
+    MCTreeName = MCTreeName,
+    MMCTrackListName = MMCTrackListName,
+    ParallelEvents = options.MAXPARALLELEVENTS,
+    RandomService = randomService,
+    MCHitSeriesName = "I3MCHitSeriesMap_clsim",
+    UseGPUs=True,
+    UseCPUs=False,
+    #IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos090.11jul2011.txt"))
+    IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_lea"),
+    #DisableTilt=True,
+    )
     
 
 tray.AddModule("I3Writer","writer",

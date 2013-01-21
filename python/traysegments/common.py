@@ -3,7 +3,7 @@
 Convenience functions for configuring CLSim components.
 """
 
-def configureOpenCLDevices(UseGPUs=True, UseCPUs=False, OverrideApproximateNumberOfWorkItems=None, DoNotParallelize=True):
+def configureOpenCLDevices(UseGPUs=True, UseCPUs=False, OverrideApproximateNumberOfWorkItems=None, DoNotParallelize=True, UseOnlyDeviceNumber=None):
     # get OpenCL devices
     from icecube.clsim import I3CLSimOpenCLDevice
     import string
@@ -12,7 +12,11 @@ def configureOpenCLDevices(UseGPUs=True, UseCPUs=False, OverrideApproximateNumbe
     openCLDevices = []
     
     # (auto-)configure OpenCL devices
-    for device in openCLDevicesRaw:
+    for i, device in enumerate(openCLDevicesRaw):
+        if UseOnlyDeviceNumber is not None and i != UseOnlyDeviceNumber:
+            # skip all devices except for the selected one (if there is a selection)
+            continue
+
         if string.count(device.device, 'Tesla') > 0 or string.count(device.device, 'GTX') > 0:
             # assume these are "fast", all others are "slow"
             device.useNativeMath=True
@@ -21,6 +25,9 @@ def configureOpenCLDevices(UseGPUs=True, UseCPUs=False, OverrideApproximateNumbe
                 device.approximateNumberOfWorkItems=1024000
             else:
                 device.approximateNumberOfWorkItems=102400
+        elif string.count(device.device, 'Tahiti') > 0:
+            device.useNativeMath=True
+            device.approximateNumberOfWorkItems=102400*2
         else:
             device.useNativeMath=False
             device.approximateNumberOfWorkItems=10240

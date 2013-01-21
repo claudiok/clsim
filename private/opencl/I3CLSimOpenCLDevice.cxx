@@ -147,7 +147,7 @@ I3CLSimOpenCLDeviceSeriesPtr I3CLSimOpenCLDevice::SplitDevice() const
     if (!device_) throw std::runtime_error("no valid device");
 
 #ifdef HAS_CL_DEVICE_FISSION
-#if defined(CL_VERSION_1_0) || defined(CL_VERSION_1_1)
+#if (defined(CL_VERSION_1_0) || defined(CL_VERSION_1_1)) && (!defined(CL_VERSION_1_2))
     // On OpenCL < 1.2, we need an extension
     if (device_->getInfo<CL_DEVICE_EXTENSIONS>().find("cl_ext_device_fission") == std::string::npos) {
         throw std::runtime_error("device does not support fission (extension \"cl_ext_device_fission\" is not available)");

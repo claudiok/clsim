@@ -124,9 +124,9 @@ double I3CLSimScalarFieldIceTiltZShift::GetValue(double x, double y, double z) c
 
     const double nr = lnx*x+lny*y;
 
-    for(int j=1; j<distancesFromOriginAlongTilt_.size(); j++) 
+    for(int j=1; j<static_cast<int>(distancesFromOriginAlongTilt_.size()); j++) 
     {
-        if((nr<distancesFromOriginAlongTilt_[j]) || (j==distancesFromOriginAlongTilt_.size()-1))
+        if((nr<distancesFromOriginAlongTilt_[j]) || (j==static_cast<int>(distancesFromOriginAlongTilt_.size())-1))
         {
             const double thisDistanceBinWidth = (distancesFromOriginAlongTilt_[j] - distancesFromOriginAlongTilt_[j-1]);
 

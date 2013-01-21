@@ -44,6 +44,7 @@ my_traysegment = icetray.traysegment if hasattr(icetray, "traysegment") else unc
 def I3CLSimMakePhotons(tray, name,
                        UseCPUs=False,
                        UseGPUs=True,
+                       UseOnlyDeviceNumber=None,
                        MCTreeName="I3MCTree",
                        OutputMCTreeName=None,
                        FlasherInfoVectName=None,
@@ -95,6 +96,10 @@ def I3CLSimMakePhotons(tray, name,
         Turn this off to not use GPU-based devices.
         This may be useful if your GPU is used for display
         purposes and you don't want it to slow down.
+    :param UseOnlyDeviceNumber:
+        Use only a single device number, even if there is more than
+        one device found matching the required description. The numbering
+        starts at 0.
     :param MCTreeName:
         The name of the I3MCTree containing the particles to propagate.
     :param OutputMCTreeName:
@@ -318,7 +323,13 @@ def I3CLSimMakePhotons(tray, name,
         # no spectrum table is necessary when only using the Cherenkov spectrum
         spectrumTable = None
 
-    openCLDevices = configureOpenCLDevices(UseGPUs, UseCPUs, OverrideApproximateNumberOfWorkItems, DoNotParallelize)
+    openCLDevices = configureOpenCLDevices(
+        UseGPUs=UseGPUs,
+        UseCPUs=UseCPUs,
+        OverrideApproximateNumberOfWorkItems=OverrideApproximateNumberOfWorkItems,
+        DoNotParallelize=DoNotParallelize,
+        UseOnlyDeviceNumber=UseOnlyDeviceNumber
+	)
 
     tray.AddModule("I3CLSimModule", name + "_clsim",
                    MCTreeName=clSimMCTreeName,

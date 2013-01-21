@@ -44,6 +44,7 @@ my_traysegment = icetray.traysegment if hasattr(icetray, "traysegment") else unc
 def I3CLSimMakeHits(tray, name,
                     UseCPUs=False,
                     UseGPUs=True,
+                    UseOnlyDeviceNumber=None,
                     MCTreeName="I3MCTree",
                     FlasherInfoVectName=None,
                     FlasherPulseSeriesName=None,
@@ -93,6 +94,10 @@ def I3CLSimMakeHits(tray, name,
         Turn this off to not use GPU-based devices.
         This may be useful if your GPU is used for display
         purposes and you don't want it to slow down.
+    :param UseOnlyDeviceNumber:
+        Use only a single device number, even if there is more than
+        one device found matching the required description. The numbering
+        starts at 0.
     :param MCTreeName:
         The name of the I3MCTree containing the particles to propagate.
     :param FlasherInfoVectName:
@@ -220,6 +225,7 @@ def I3CLSimMakeHits(tray, name,
 
     I3CLSimMakePhotons_kwargs = dict(UseCPUs=UseCPUs,
                                      UseGPUs=UseGPUs,
+                                     UseOnlyDeviceNumber=UseOnlyDeviceNumber,
                                      MCTreeName=MCTreeName,
                                      OutputMCTreeName=clSimMCTreeName,
                                      FlasherInfoVectName=FlasherInfoVectName,

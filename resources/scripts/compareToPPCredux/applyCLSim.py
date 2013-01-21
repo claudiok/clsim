@@ -23,6 +23,8 @@ parser.add_option("-p", "--max-parallel-events", type="int", default=100,
                   dest="MAXPARALLELEVENTS", help="maximum number of events(==frames) that will be processed in parallel")
 parser.add_option("--no-remove-photon-data", action="store_false", default=True,
                   dest="REMOVEPHOTONDATA", help="Do not remove I3Photons before writing the output file")
+parser.add_option("-d", "--device", type="int", default=None,
+                  dest="DEVICE", help="device number")
 
 parser.add_option("--icemodel", default="test_ice_models/lea",
                   dest="ICEMODEL", help="A clsim ice model file/directory")
@@ -139,7 +141,9 @@ tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
     UnshadowedFraction = 0.9,
     UseGPUs=True,
     UseCPUs=False,
+    UseOnlyDeviceNumber=options.DEVICE,
     IceModelLocation=options.ICEMODEL,
+    ExtraArgumentsToI3CLSimModule={"EnableDoubleBuffering":True}
     )
     
 
