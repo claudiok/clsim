@@ -148,7 +148,7 @@ class PhotoTable(Table, object):
 			weights = None
 		
 		header = dict()
-		for k in data.header.keys():
+		for k in map(str.lower, data.header.keys()):
 			if k.startswith('_i3_'):
 				header[k[4:]] = data.header[k]
 			
