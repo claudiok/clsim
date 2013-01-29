@@ -29,6 +29,7 @@
 
 #include "icetray/serialization.h"
 #include "icetray/I3TrayHeaders.h"
+#include "icetray/I3FrameObject.h"
 
 #include <vector>
 
@@ -42,9 +43,9 @@
  * ice) with all its properties like refractive index,
  * absorption length, scattering length, ..
  */
-static const unsigned i3clsimmediumproperties_version_ = 1;
+static const unsigned i3clsimmediumproperties_version_ = 2;
 
-struct I3CLSimMediumProperties 
+struct I3CLSimMediumProperties : public I3FrameObject
 {
     
 public:

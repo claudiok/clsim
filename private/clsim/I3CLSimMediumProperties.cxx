@@ -342,6 +342,9 @@ void I3CLSimMediumProperties::load(Archive &ar, unsigned version)
     if (version>i3clsimmediumproperties_version_)
         log_fatal("Attempting to read version %u from file but running version %u of I3CLSimMediumProperties class.",version,i3clsimmediumproperties_version_);
     
+    if (version>=2)
+        ar >> make_nvp("I3FrameObject", base_object<I3FrameObject>(*this));
+
     ar >> make_nvp("mediumDensity", mediumDensity_);
     ar >> make_nvp("layersNum", layersNum_);
     ar >> make_nvp("layersZStart", layersZStart_);
@@ -372,6 +375,10 @@ void I3CLSimMediumProperties::load(Archive &ar, unsigned version)
 template <class Archive>
 void I3CLSimMediumProperties::save(Archive &ar, unsigned version) const
 {
+    // version 2:
+    ar << make_nvp("I3FrameObject", base_object<I3FrameObject>(*this));
+
+    // version 0:
     ar << make_nvp("mediumDensity", mediumDensity_);
     ar << make_nvp("layersNum", layersNum_);
     ar << make_nvp("layersZStart", layersZStart_);

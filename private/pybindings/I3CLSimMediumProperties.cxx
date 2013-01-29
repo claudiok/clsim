@@ -31,11 +31,9 @@
 #include <boost/preprocessor/seq.hpp>
 
 #ifdef NO_PYTHON_DATACLASS_SUITE
-#include "icetray_python_backports/list_indexing_suite.hpp"
-#include "icetray_python_backports/boost_serializable_pickle_suite.hpp"
+#include "icetray_python_backports/dataclass_suite.hpp"
 #else
-#include <icetray/python/list_indexing_suite.hpp>
-#include <icetray/python/boost_serializable_pickle_suite.hpp>
+#include <icetray/python/dataclass_suite.hpp>
 #endif
 
 using namespace boost::python;
@@ -115,11 +113,9 @@ void register_I3CLSimMediumProperties()
         .add_property("ForcedMinWlen", &I3CLSimMediumProperties::GetForcedMinWlen, &I3CLSimMediumProperties::SetForcedMinWlen)
         .add_property("ForcedMaxWlen", &I3CLSimMediumProperties::GetForcedMaxWlen, &I3CLSimMediumProperties::SetForcedMaxWlen)
 
-        .def_pickle(boost_serializable_pickle_suite<I3CLSimMediumProperties>())
+        .def(dataclass_suite<I3CLSimMediumProperties>())
         ;
     }
     
-    bp::implicitly_convertible<shared_ptr<I3CLSimMediumProperties>, shared_ptr<const I3CLSimMediumProperties> >();
-    
-    
+    register_pointer_conversions<I3CLSimMediumProperties>();
 }
