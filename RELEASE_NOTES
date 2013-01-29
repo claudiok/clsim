@@ -2,6 +2,13 @@
 # $Author$
 # $Date$
 
+January 29, 2013 Claudio Kopper  (ckopper@icecube.wisc.edu)
+--------------------------------------------------------------------
+Release V00-03-00
+
+* support for ice tilt and anisotropy
+* tuned when running on AMD cards (Radeon 7970 on cobaltamdgpu)
+
 June 14, 2012 Claudio Kopper  (ckopper@icecube.wisc.edu)
 --------------------------------------------------------------------
 Release V00-02-01
