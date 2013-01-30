@@ -358,6 +358,21 @@ void register_I3CLSimFunction()
             )
            )
          )
+        .def("GetKappa", &I3CLSimFunctionAbsLenIceCube::GetKappa)
+        .def("GetA", &I3CLSimFunctionAbsLenIceCube::GetA)
+        .def("GetB", &I3CLSimFunctionAbsLenIceCube::GetB)
+        .def("GetD", &I3CLSimFunctionAbsLenIceCube::GetD)
+        .def("GetE", &I3CLSimFunctionAbsLenIceCube::GetE)
+        .def("GetADust400", &I3CLSimFunctionAbsLenIceCube::GetADust400)
+        .def("GetDeltaTau", &I3CLSimFunctionAbsLenIceCube::GetDeltaTau)
+
+        .add_property("kappa", &I3CLSimFunctionAbsLenIceCube::GetKappa)
+        .add_property("A", &I3CLSimFunctionAbsLenIceCube::GetA)
+        .add_property("B", &I3CLSimFunctionAbsLenIceCube::GetB)
+        .add_property("D", &I3CLSimFunctionAbsLenIceCube::GetD)
+        .add_property("E", &I3CLSimFunctionAbsLenIceCube::GetE)
+        .add_property("aDust400", &I3CLSimFunctionAbsLenIceCube::GetADust400)
+        .add_property("deltaTau", &I3CLSimFunctionAbsLenIceCube::GetDeltaTau)
         ;
     }
     bp::implicitly_convertible<shared_ptr<I3CLSimFunctionAbsLenIceCube>, shared_ptr<const I3CLSimFunctionAbsLenIceCube> >();
@@ -386,6 +401,10 @@ void register_I3CLSimFunction()
             )
            )
          )
+        .def("GetAlpha", &I3CLSimFunctionScatLenIceCube::GetAlpha)
+        .def("GetB400", &I3CLSimFunctionScatLenIceCube::GetB400)
+        .add_property("alpha", &I3CLSimFunctionScatLenIceCube::GetAlpha)
+        .add_property("b400", &I3CLSimFunctionScatLenIceCube::GetB400)
         ;
     }
     bp::implicitly_convertible<shared_ptr<I3CLSimFunctionScatLenIceCube>, shared_ptr<const I3CLSimFunctionScatLenIceCube> >();
