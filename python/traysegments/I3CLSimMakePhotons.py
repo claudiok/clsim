@@ -284,7 +284,11 @@ def I3CLSimMakePhotons(tray, name,
             clSimMCTreeName = clSimMCTreeName
 
     # ice properties
-    mediumProperties = parseIceModel(IceModelLocation, disableTilt=DisableTilt)
+    if isinstance(IceModelLocation, str):
+        mediumProperties = parseIceModel(IceModelLocation, disableTilt=DisableTilt)
+    else:
+        # get ice model directly if not a string
+        mediumProperties = IceModelLocation
 
     # detector properties
     if UseHoleIceParameterization:
