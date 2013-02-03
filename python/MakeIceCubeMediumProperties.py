@@ -46,7 +46,8 @@ from os.path import expandvars
 
 def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m,
                                 iceDataDirectory=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
-                                useTiltIfAvailable=True):
+                                useTiltIfAvailable=True,
+                                returnParameters=False):
     ### read ice information from PPC-compatible tables
     
     # do we have tilt descripton files?
@@ -235,4 +236,16 @@ def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m,
                                                           b400=b_400[i])
         m.SetScatteringLength(i, scatLen)
 
-    return m
+    if not returnParameters:
+        return m
+    else:
+        parameters = dict()
+        if hasAnisotropy:
+            parameters["anisotropyDirAzimuth"]=anisotropyDirAzimuth
+            parameters["anisotropyMagnitudeAlongDir"]=magnitudeAlongDir
+            parameters["anisotropyMagnitudePerpToDir"]=magnitudePerpToDir
+        else:
+            parameters["anisotropyDirAzimuth"]=float('NaN')
+            parameters["anisotropyMagnitudeAlongDir"]=float('NaN')
+            parameters["anisotropyMagnitudePerpToDir"]=float('NaN')
+        return (m, parameters)
