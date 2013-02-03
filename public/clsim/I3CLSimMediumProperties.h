@@ -45,9 +45,8 @@
  */
 static const unsigned i3clsimmediumproperties_version_ = 2;
 
-struct I3CLSimMediumProperties : public I3FrameObject
+class I3CLSimMediumProperties : public I3FrameObject
 {
-    
 public:
     static const double default_mediumDensity;
     static const uint32_t default_layersNum;

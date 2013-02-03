@@ -149,7 +149,7 @@ private:
     I3CLSimFunctionConstPtr wavelengthGenerationBias_;
 
     /// Parameter: An instance of I3CLSimMediumProperties describing the ice/water properties.
-    I3CLSimMediumPropertiesPtr mediumProperties_;
+    I3CLSimMediumPropertiesConstPtr mediumProperties_;
 
     /// Parameter: All spectra that could be requested by an I3CLSimStep.
     /// If set to NULL/None, only spectrum #0 (Cherenkov photons) will be available.

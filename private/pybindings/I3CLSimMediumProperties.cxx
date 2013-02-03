@@ -43,7 +43,7 @@ void register_I3CLSimMediumProperties()
 {
     {
         bp::scope I3CLSimMediumProperties_scope = 
-        bp::class_<I3CLSimMediumProperties, boost::shared_ptr<I3CLSimMediumProperties>, boost::noncopyable>
+        bp::class_<I3CLSimMediumProperties, bases<I3FrameObject>, boost::shared_ptr<I3CLSimMediumProperties> >
         ("I3CLSimMediumProperties",
          bp::init<double, uint32_t, double, double, double, double>
          (
@@ -54,7 +54,6 @@ void register_I3CLSimMediumProperties()
            bp::arg("layersHeight")=I3CLSimMediumProperties::default_layersHeight,
            bp::arg("rockZCoordinate")=I3CLSimMediumProperties::default_rockZCoordinate,
            bp::arg("airZCoordinate")=I3CLSimMediumProperties::default_airZCoordinate
-           
           )
          )
         )

@@ -49,7 +49,7 @@
 namespace I3CLSimModuleHelper {
     
     namespace {
-        double CherenkovYieldDistribution(double wlen, I3CLSimMediumPropertiesPtr mediumProperties, double beta=1.)
+        double CherenkovYieldDistribution(double wlen, I3CLSimMediumPropertiesConstPtr mediumProperties, double beta=1.)
         {
             I3CLSimFunctionConstPtr nPhaseDist =
             mediumProperties->GetPhaseRefractiveIndex(0); // this assumes the refractive index does not change between layers
@@ -74,7 +74,7 @@ namespace I3CLSimModuleHelper {
     I3CLSimRandomValueConstPtr
     makeWavelengthGenerator(I3CLSimFunctionConstPtr unbiasedSpectrum,
                             I3CLSimFunctionConstPtr wavelengthGenerationBias,
-                            I3CLSimMediumPropertiesPtr mediumProperties)
+                            I3CLSimMediumPropertiesConstPtr mediumProperties)
     {
         {
             // special handling for delta peaks
@@ -175,7 +175,7 @@ namespace I3CLSimModuleHelper {
     I3CLSimRandomValueConstPtr
     makeCherenkovWavelengthGenerator(I3CLSimFunctionConstPtr wavelengthGenerationBias,
                                      bool generateCherenkovPhotonsWithoutDispersion,
-                                     I3CLSimMediumPropertiesPtr mediumProperties)
+                                     I3CLSimMediumPropertiesConstPtr mediumProperties)
     {
         const double minWlen = mediumProperties->GetMinWavelength();
         const double maxWlen = mediumProperties->GetMaxWavelength();
@@ -303,7 +303,7 @@ namespace I3CLSimModuleHelper {
     I3CLSimStepToPhotonConverterOpenCLPtr initializeOpenCL(const I3CLSimOpenCLDevice &device,
                                                            I3RandomServicePtr rng,
                                                            I3CLSimSimpleGeometryFromI3GeometryPtr geometry,
-                                                           I3CLSimMediumPropertiesPtr medium,
+                                                           I3CLSimMediumPropertiesConstPtr medium,
                                                            I3CLSimFunctionConstPtr wavelengthGenerationBias,
                                                            const std::vector<I3CLSimRandomValueConstPtr> &wavelengthGenerators,
                                                            bool enableDoubleBuffering,
@@ -368,7 +368,7 @@ namespace I3CLSimModuleHelper {
     }
 
     I3CLSimLightSourceToStepConverterGeant4Ptr initializeGeant4(I3RandomServicePtr rng,
-                                                             I3CLSimMediumPropertiesPtr medium,
+                                                             I3CLSimMediumPropertiesConstPtr medium,
                                                              I3CLSimFunctionConstPtr wavelengthGenerationBias,
                                                              uint64_t bunchSizeGranularity,
                                                              uint64_t maxBunchSize,
