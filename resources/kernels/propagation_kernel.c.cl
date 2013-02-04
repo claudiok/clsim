@@ -158,7 +158,7 @@ inline void createPhotonFromTrack(struct I3CLSimStep *step,
         // our photon still needs a wavelength. create one!
         const floating_t wavelength = generateWavelength_0(RNG_ARGS_TO_CALL);
 
-        const floating_t cosCherenkov = my_recip(step->dirAndLengthAndBeta.w*getPhaseRefIndex(layer, wavelength)); // cos theta = 1/(beta*n)
+        const floating_t cosCherenkov = min(ONE, my_recip(step->dirAndLengthAndBeta.w*getPhaseRefIndex(layer, wavelength))); // cos theta = 1/(beta*n)
         const floating_t sinCherenkov = my_sqrt(ONE-cosCherenkov*cosCherenkov);
         // determine the photon direction
 
