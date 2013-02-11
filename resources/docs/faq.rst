@@ -47,28 +47,28 @@ Is there anything I can do to install OpenCL myself?
         
     Download the AMD APP SDK from here:
     http://developer.amd.com/sdks/AMDAPPSDK/downloads/Pages/default.aspx
-    (You should download a file named similarly to ``AMD-APP-SDK-v2.7-lnx64.tgz``
-    or ``AMD-APP-SDK-v2.7-lnx32.tgz``, depending if you are on a 32bit or
+    (You should download a file named similarly to ``AMD-APP-SDK-v2.8-lnx64.tgz``
+    or ``AMD-APP-SDK-v2.8-lnx32.tgz``, depending if you are on a 32bit or
     64bit system. Depending on your release of the APP ADK, your file and
     directory names will be slightly different. Just use ``ls`` to see what you've
     got. This example is for 64bit systems.). At the moment of writing this,
     the current file can be downloaded like this::
     
-        $ wget 'http://developer.amd.com/Downloads/AMD-APP-SDK-v2.7-lnx64.tgz'
+        $ wget 'http://developer.amd.com/wordpress/media/2012/11/AMD-APP-SDK-v2.8-lnx64.tgz'
     
     Now unpack what you just downloaded::
     
-        $ tar xzf AMD-APP-SDK-v2.7-lnx64.tgz
+        $ tar xzf AMD-APP-SDK-v2.8-lnx64.tgz
         
     That should give you two new archive file. Unpack those, too::
     
         $ tar xzf icd-registration.tgz
-        $ tar xzf AMD-APP-SDK-v2.7-RC-lnx64.tgz
+        $ tar xzf AMD-APP-SDK-v2.8-RC-lnx64.tgz
     
     The last step is to tell IceTray where to look for OpenCL::
     
         $ export OPENCL_VENDOR_PATH=/home/username/OpenCL/etc/OpenCL/vendors
-        $ export LD_LIBRARY_PATH=/home/username/OpenCL/AMD-APP-SDK-v2.7-RC-lnx64/lib/x86_64:$LD_LIBRARY_PATH
+        $ export LD_LIBRARY_PATH=/home/username/OpenCL/AMD-APP-SDK-v2.8-RC-lnx64/lib/x86_64:$LD_LIBRARY_PATH
     
     (This step would not be necessary if your administrator would install these things into system
     paths. Specifically, ``$OPENCL_VENDOR_PATH`` has a default of ``/etc/OpenCL/vendors``.)
@@ -81,8 +81,8 @@ Is there anything I can do to install OpenCL myself?
     You should see it pick up OpenCL::
 
         -- opencl 
-        -- + CL/cl.h found at /scratch/ckopper/AMD-APP-SDK-v2.7-RC-lnx64/include
-        -- + /scratch/ckopper/AMD-APP-SDK-v2.7-RC-lnx64/lib/x86_64/libOpenCL.so
+        -- + CL/cl.h found at /scratch/ckopper/AMD-APP-SDK-v2.8-RC-lnx64/include
+        -- + /scratch/ckopper/AMD-APP-SDK-v2.8-RC-lnx64/lib/x86_64/libOpenCL.so
         
     If you don't see this, make sure ``libOpenCL.so`` can be found in the path you added to $LD_LIBARY_PATH.
     As always, you may have to delete ``$I3_BUILD/CMakeCache.txt`` to force cmake to look for new tool locations.
