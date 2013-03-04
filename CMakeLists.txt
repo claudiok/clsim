@@ -93,7 +93,7 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
 )
 
 SET(LIB_${PROJECT_NAME}_PROJECTS icetray dataio dataclasses phys-services tableio simclasses)
-SET(LIB_${PROJECT_NAME}_TOOLS python boost log4cplus gsl)
+SET(LIB_${PROJECT_NAME}_TOOLS python boost gsl)
 
 
 # check for Geant4

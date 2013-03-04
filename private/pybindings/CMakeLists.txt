@@ -77,7 +77,7 @@ if(BUILD_PYBINDINGS)
 
   i3_add_pybindings(clsim
     ${LIB_${PROJECT_NAME}_PYBINDINGS_SOURCEFILES}
-    USE_TOOLS boost python log4cplus
+    USE_TOOLS boost python
     USE_PROJECTS icetray dataclasses clsim
     )
 endif(BUILD_PYBINDINGS)
