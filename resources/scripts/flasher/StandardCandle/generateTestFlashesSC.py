@@ -54,14 +54,6 @@ tray.AddModule("I3MCEventHeaderGenerator","gen_header",
                EventID=1,
                IncrementEventID=True)
 
-# I3GlobalTriggerSim needs a DrivingTime, so just copy it
-# from the I3EventHeader
-def makeDrivingTime(frame):
-    if "DrivingTime" in frame: return
-    header = frame["I3EventHeader"]
-    frame["DrivingTime"] = header.start_time
-tray.AddModule(makeDrivingTime, "makeDrivingTime", Streams=[icetray.I3Frame.DAQ])
-
 tray.AddModule(clsim.StandardCandleFlasherPulseSeriesGenerator, "StandardCandleFlasherPulseSeriesGenerator",
                FlasherPulseSeriesName = "SCFlashes",
                PhotonsPerPulse = 1.7e10,    # @  0.5% nominal output (SC2) [see http://wiki.icecube.wisc.edu/index.php/Standard_Candle#Data_runs]

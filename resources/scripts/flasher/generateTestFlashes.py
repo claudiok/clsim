@@ -54,14 +54,6 @@ tray.AddModule("I3MCEventHeaderGenerator","gen_header",
                EventID=1,
                IncrementEventID=True)
 
-# I3GlobalTriggerSim needs a DrivingTime, so just copy it
-# from the I3EventHeader
-def makeDrivingTime(frame):
-    if "DrivingTime" in frame: return
-    header = frame["I3EventHeader"]
-    frame["DrivingTime"] = header.start_time
-tray.AddModule(makeDrivingTime, "makeDrivingTime", Streams=[icetray.I3Frame.DAQ])
-
 tray.AddModule(clsim.FakeFlasherInfoGenerator, "FakeFlasherInfoGenerator",
                FlashingDOM = icetray.OMKey(57,30),
                #FlashingDOM = icetray.OMKey(36,22), # a cDOM

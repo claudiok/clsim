@@ -110,18 +110,10 @@ tray.AddService("I3SPRNGRandomServiceFactory","random",
 tray.AddModule("I3Reader","reader",
                Filename=infile)
 
-# copy DrivingTime from I3EventHeader (I3GlobalTriggerSim needs it)
-def makeDrivingTime(frame):
-    if "DrivingTime" in frame: return
-    header = frame["I3EventHeader"]
-    frame["DrivingTime"] = header.start_time
-tray.AddModule(makeDrivingTime, "makeDrivingTime", Streams=[icetray.I3Frame.DAQ])
-
 # stolen from http://x2100.icecube.wisc.edu/svn/projects/simprod-scripts/trunk/python/simulation/detector.py [ IC86() ],
 # bad DOM list changed to IC86, parameters inlined (ScaleFactor=1.0, FilterMode=True)
 #
 # don't trust this blindly for IC86 detector simulation, always compare to simprod scripts!
-#
 
 tray.AddModule("I3NoiseGeneratorModule","noiseic",
     ScaleFactor = 1.0,

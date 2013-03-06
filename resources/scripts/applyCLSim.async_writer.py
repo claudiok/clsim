@@ -162,7 +162,7 @@ if options.CLEANINPUT:
             if key not in Keys:
                 del frame[key]
     tray.AddModule(PythonKeep, "keeper", 
-                   Keys=["DrivingTime", "I3EventHeader", "I3MCWeightDict", "I3MCTree", "MMCTrackList"],
+                   Keys=["I3EventHeader", "I3MCWeightDict", "I3MCTree", "MMCTrackList"],
                    Streams=[icetray.I3Frame.DAQ])
 
 if options.APPLYMMC:

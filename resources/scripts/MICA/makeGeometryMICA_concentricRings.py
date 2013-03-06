@@ -311,7 +311,7 @@ tray.AddModule("Dump", "dump")
 
 tray.AddModule("FrameCheck", "check",
     ensure_physics_has = ["I3Calibration", "I3Geometry", 
-                          "I3DetectorStatus", "DrivingTime"])
+                          "I3DetectorStatus"])
 
 tray.AddModule("TrashCan","trash")
 
