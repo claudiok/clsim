@@ -522,8 +522,13 @@ void I3MuonSlicer::Physics(I3FramePtr frame)
     }
 
     I3MMCTrackListConstPtr MMCTrackList = frame->Get<I3MMCTrackListConstPtr>(MMCTrackListName_);
-    if (!MMCTrackList) log_fatal("Frame does not contain an I3MMCTrackList named \"%s\".",
+    if (!MMCTrackList) {
+        log_debug("Frame does not contain an I3MMCTrackList named \"%s\". Using an empty list for this frame.",
                                  MMCTrackListName_.c_str());
+
+        // make our own empty MMCTrackList
+        MMCTrackList = I3MMCTrackListConstPtr(new I3MMCTrackList);
+    }
 
     // build an index into the MMCTrackList (by particle ID)
     std::map<std::pair<uint64_t, int>, const I3MMCTrack *> MMCTrackListIndex;
