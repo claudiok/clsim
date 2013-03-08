@@ -38,7 +38,6 @@ def I3CLSimMakeHitsFromPhotons(tray, name,
                                MCTreeName="I3MCTree_sliced",
                                PhotonSeriesName="PhotonSeriesMap",
                                MCHitSeriesName="MCHitSeriesMap",
-                               SimulateAfterPulses=False,
                                RandomService=None,
                                DOMOversizeFactor=5.,
                                UnshadowedFraction=0.9,
@@ -58,11 +57,6 @@ def I3CLSimMakeHitsFromPhotons(tray, name,
         Name of the output I3MCHitSeriesMap written by the module.
         Set this to None to prevent generating MCHits from
         Photons.
-    :param SimulateAfterPulses:
-        Use an algorithm from hit-maker to simulate after-pulses.
-        Turn this on to be compatble to hit-maker with afer-pulse
-        simulation. This also includes PMT jitter simulation (2ns).
-        Do not use this when using external after-pulse simulation modules.
     :param RandomService:
         Set this to an instance of a I3RandomService. Alternatively,
         you can specify the name of a configured I3RandomServiceFactory
@@ -88,21 +82,6 @@ def I3CLSimMakeHitsFromPhotons(tray, name,
     domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius = DOMRadius*DOMOversizeFactor, efficiency=UnshadowedFraction)
     domAngularSensitivity = clsim.GetIceCubeDOMAngularSensitivity(holeIce=UseHoleIceParameterization)
 
-    # after-pulse simulation
-    has_I3CLSimPMTPhotonSimulatorIceCube = "I3CLSimPMTPhotonSimulatorIceCube" in clsim.__dict__
-    if SimulateAfterPulses:
-        if not has_I3CLSimPMTPhotonSimulatorIceCube:
-            raise RuntimeError("cannot simulate jitter/after-pulses because hit-maker is not installed")
-        pmtPhotonSimulator = clsim.I3CLSimPMTPhotonSimulatorIceCube(jitter=Jitter)
-    else:
-        if has_I3CLSimPMTPhotonSimulatorIceCube:
-            pmtPhotonSimulator = clsim.I3CLSimPMTPhotonSimulatorIceCube(jitter=0.,
-                                                                        pre_pulse_probability=0.,
-                                                                        late_pulse_probability=0.,
-                                                                        after_pulse_probability=0.)
-        else:
-            pmtPhotonSimulator = None
-
     tray.AddModule("I3PhotonToMCHitConverter", name + "_clsim_make_hits",
                    RandomService = RandomService,
                    MCTreeName = MCTreeName,
@@ -113,7 +92,6 @@ def I3CLSimMakeHitsFromPhotons(tray, name,
                    DOMPancakeFactor = DOMOversizeFactor,
                    WavelengthAcceptance = domAcceptance,
                    AngularAcceptance = domAngularSensitivity,
-                   PMTPhotonSimulator = pmtPhotonSimulator,
                    IgnoreDOMsWithoutDetectorStatusEntry = True,
                    If=If)
 

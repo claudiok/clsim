@@ -29,7 +29,6 @@ if(BUILD_PYBINDINGS)
   SET(LIB_${PROJECT_NAME}_PYBINDINGS_SOURCEFILES
     I3Photon.cxx
     I3CLSimEventStatistics.cxx
-    I3CLSimPMTPhotonSimulator.cxx
     I3CLSimFlasherPulse.cxx
     I3Converters.cxx
     I3ShadowedPhotonRemover.cxx

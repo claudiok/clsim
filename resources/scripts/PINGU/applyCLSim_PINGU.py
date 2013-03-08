@@ -179,14 +179,12 @@ def clsimMakePhotonsAndWrite(tray, name,
                              RandomService,
                              PhotonSeriesName,
                              DOMOversizeFactor=5.,
-                             SimulateAfterPulses=False,
                              RemovePhotonData=False
                              ):
     tray.AddSegment(clsim.I3CLSimMakeHitsFromPhotons, name+"_MakeHitsFromPhotons",
                     MCTreeName="I3MCTree_sliced",
                     PhotonSeriesName=PhotonSeriesName,
                     RandomService=RandomService,
-                    SimulateAfterPulses=SimulateAfterPulses,
                     DOMOversizeFactor=DOMOversizeFactor
                     )
     if RemovePhotonData:
@@ -205,7 +203,6 @@ tray.AddModule(clsim.AsyncTap, "clsimMakePhotonsAndWrite_Async",
                            PhotonSeriesName=photonSeriesName,
                            RemovePhotonData=options.REMOVEPHOTONDATA,
                            DOMOversizeFactor=1.,       # PINGU needs this (no oversizing, DOMs on strings are too dense)
-                           SimulateAfterPulses=True    # PINGU needs this (current simulations are still based on older PMT simulation)
                            )
                )
 
@@ -215,7 +212,6 @@ tray.AddModule(clsim.AsyncTap, "clsimMakePhotonsAndWrite_Async",
 #                PhotonSeriesName=photonSeriesName,
 #                RemovePhotonData=options.REMOVEPHOTONDATA,
 #                DOMOversizeFactor=1.,       # PINGU needs this (no oversizing, DOMs on strings are too dense)
-#                SimulateAfterPulses=True    # PINGU needs this (current simulations are still based on older PMT simulation)
 #                )
 
 tray.AddModule("TrashCan", "the can")

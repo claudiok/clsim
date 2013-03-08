@@ -51,7 +51,6 @@ def I3CLSimMakeHits(tray, name,
                     MMCTrackListName="MMCTrackList",
                     MCHitSeriesName="MCHitSeriesMap",
                     PhotonSeriesName=None,
-                    SimulateAfterPulses=False,
                     ParallelEvents=1000,
                     RandomService=None,
                     IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
@@ -122,11 +121,6 @@ def I3CLSimMakeHits(tray, name,
     :param PhotonSeriesName:
         Configure this to enable writing an I3PhotonSeriesMap containing
         all photons that reached the DOM surface.
-    :param SimulateAfterPulses:
-        Use an algorithm from hit-maker to simulate after-pulses.
-        Turn this on to be compatble to hit-maker with afer-pulse
-        simulation. This also includes PMT jitter simulation (2ns).
-        Do not use this when using external after-pulse simulation modules.
     :param ParallelEvents:
         clsim will work on a couple of events in parallel in order
         not to starve the GPU. Setting this too high will result
@@ -259,7 +253,6 @@ def I3CLSimMakeHits(tray, name,
         I3CLSimMakeHitsFromPhotons_kwargs = dict(MCTreeName=clSimMCTreeName,
                                                  PhotonSeriesName=photonsName,
                                                  MCHitSeriesName=MCHitSeriesName,
-                                                 SimulateAfterPulses=SimulateAfterPulses,
                                                  RandomService=RandomService,
                                                  DOMOversizeFactor=DOMOversizeFactor,
                                                  UnshadowedFraction=UnshadowedFraction,

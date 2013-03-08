@@ -34,7 +34,7 @@ namespace bp = boost::python;
 
 #define REGISTER_THESE_THINGS                       \
     (I3Photon)(I3CLSimEventStatistics)              \
-    (I3CLSimPMTPhotonSimulator)(I3Converters)       \
+    (I3Converters)                                  \
     (I3CLSimFlasherPulse)(I3ShadowedPhotonRemover)  \
     (I3ExtraGeometryItem)
 

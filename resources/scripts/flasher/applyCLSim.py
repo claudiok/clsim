@@ -113,7 +113,6 @@ tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
     PhotonSeriesName = photonSeriesName,
     ParallelEvents = options.MAXPARALLELEVENTS,
     RandomService = randomService,
-    SimulateAfterPulses=True, # remove this when using DOMLauncher!
     UseGPUs=False,
     UseCPUs=True,
     IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),

@@ -208,14 +208,12 @@ def clsimMakePhotonsAndWrite(tray, name,
                              RandomService,
                              PhotonSeriesName,
                              DOMOversizeFactor=5.,
-                             SimulateAfterPulses=False,
                              RemovePhotonData=False
                              ):
     tray.AddSegment(clsim.I3CLSimMakeHitsFromPhotons, name+"_MakeHitsFromPhotons",
                     MCTreeName="I3MCTree_sliced",
                     PhotonSeriesName=PhotonSeriesName,
                     RandomService=RandomService,
-                    SimulateAfterPulses=SimulateAfterPulses,
                     DOMOversizeFactor=DOMOversizeFactor
                     )
     if RemovePhotonData:

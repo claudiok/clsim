@@ -75,10 +75,8 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
   private/clsim/I3CLSimEventStatistics.cxx
   private/clsim/I3Photon.cxx
   private/clsim/I3CLSimFlasherPulse.cxx
-  private/clsim/I3CLSimPMTPhotonSimulator.cxx
   private/clsim/util/I3MuonSlicer.cxx
   private/clsim/util/I3TauSanitizer.cxx
-  private/clsim/util/I3ApplyCLSimPMTPhotonSimulator.cxx
   private/clsim/dom/I3PhotonToMCHitConverter.cxx
   private/clsim/shadow/I3ShadowedPhotonRemover.cxx
   private/clsim/shadow/I3ShadowedPhotonRemoverModule.cxx
@@ -172,19 +170,6 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/icetray/public/icetray/portable_binary_archive.hpp
 else(EXISTS ${CMAKE_SOURCE_DIR}/icetray/public/icetray/portable_binary_archive.hpp)
   colormsg(YELLOW "+-- portable_binary_archive is *not* in the icetray project")
 endif(EXISTS ${CMAKE_SOURCE_DIR}/icetray/public/icetray/portable_binary_archive.hpp)
-
-
-# add some things if hit-maker is available (IceCube-specific)
-if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/hit-maker)
-  LIST(APPEND LIB_${PROJECT_NAME}_PROJECTS hit-maker)
-  #LIST(APPEND LIB_${PROJECT_NAME}_TOOLS nothing) # no extra tools
-  LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
-       private/clsim/I3CLSimPMTPhotonSimulatorIceCube.cxx
-       )
-
-  ADD_DEFINITIONS(-DUSE_HIT_MAKER)
-  colormsg(GREEN "+-- hit-maker support (for pre-Rosencrantz simulations)")
-endif(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/hit-maker)
 
 
 # Check for the existence of icetray/python/dataclass_suite.hpp

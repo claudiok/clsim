@@ -37,7 +37,6 @@
 #include "phys-services/I3RandomService.h"
 
 #include "clsim/function/I3CLSimFunction.h"
-#include "clsim/I3CLSimPMTPhotonSimulator.h"
 
 #include <string>
 
@@ -46,9 +45,6 @@
  * @brief This module reads I3PhotonSeriesMaps generated
  * by CLSim, applies (D)OM acceptances (wavelength&angular)
  * to the photons and stores the results in an I3MCHitSeriesMap.
- * After-pulsing is not taken into account, please
- * use the I3AfterPulseSimulatorIceCube on the resulting
- * I3MCHitSeriesMap if you want to have it simulated.
  *
  */
 class I3PhotonToMCHitConverter : public I3ConditionalModule
@@ -124,9 +120,6 @@ private:
 
     /// Parameter: Specifiy the DOM radius. Do not include oversize factors here.
     double DOMRadiusWithoutOversize_;
-
-    /// Parameter: Optional after-pulse, late-pulse and jitter simulator object, an instance of I3CLSimPMTPhotonSimulator
-    I3CLSimPMTPhotonSimulatorPtr pmtPhotonSimulator_;
 
     /// Parameter: Default relative efficiency. This value is used if no entry is available from I3Calibration.
     double defaultRelativeDOMEfficiency_;

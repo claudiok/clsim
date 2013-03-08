@@ -104,12 +104,6 @@ I3PhotonToMCHitConverter::I3PhotonToMCHitConverter(const I3Context& context)
                  "Specifiy the DOM radius. Do not include oversize factors here.",
                  DOMRadiusWithoutOversize_);
 
-    AddParameter("PMTPhotonSimulator",
-                 "Optional after-pulse, late-pulse and jitter simulator object,\n"
-                 "an instance of I3CLSimPMTPhotonSimulator",
-                 pmtPhotonSimulator_);
-
-    
     defaultRelativeDOMEfficiency_=1.;
     AddParameter("DefaultRelativeDOMEfficiency",
                  "Default relative efficiency. This value is used if no entry is available from I3Calibration.",
@@ -161,7 +155,6 @@ void I3PhotonToMCHitConverter::Configure()
     GetParameter("DOMPancakeFactor", DOMPancakeFactor_);
     GetParameter("DOMRadiusWithoutOversize", DOMRadiusWithoutOversize_);
 
-    GetParameter("PMTPhotonSimulator", pmtPhotonSimulator_);
     GetParameter("DefaultRelativeDOMEfficiency", defaultRelativeDOMEfficiency_);
     GetParameter("ReplaceRelativeDOMEfficiencyWithDefault", replaceRelativeDOMEfficiencyWithDefault_);
     GetParameter("IgnoreDOMsWithoutDetectorStatusEntry", ignoreDOMsWithoutDetectorStatusEntry_);
@@ -199,9 +192,6 @@ void I3PhotonToMCHitConverter::Configure()
     if (!randomService_)
         log_fatal("No random service provided using the \"RandomService\" parameter (and there is none installed on the context).");
     
-    if (pmtPhotonSimulator_)
-        pmtPhotonSimulator_->SetRandomService(randomService_);
-
 }
 
 void I3PhotonToMCHitConverter::DetectorStatus(I3FramePtr frame)
@@ -212,9 +202,6 @@ void I3PhotonToMCHitConverter::DetectorStatus(I3FramePtr frame)
     if (!detectorStatus)
         log_fatal("detector status frame does not have an I3DetectorStatus entry");
     
-    if (pmtPhotonSimulator_)
-        pmtPhotonSimulator_->SetDetectorStatus(detectorStatus);
-
     // store it for later
     status_ = detectorStatus;
 
@@ -229,9 +216,6 @@ void I3PhotonToMCHitConverter::Calibration(I3FramePtr frame)
     if (!calibration)
         log_fatal("calibration frame does not have an I3Calibration entry");
     
-    if (pmtPhotonSimulator_)
-        pmtPhotonSimulator_->SetCalibration(calibration);
-
     // store it for later
     calibration_ = calibration;
     
@@ -605,46 +589,21 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
                 correctedTime += bringForward/photon.GetGroupVelocity();
             }
             
-            if (!pmtPhotonSimulator_)
-            {
-                // add a new hit
-                hits->push_back(I3MCHit());
-                I3MCHit &hit = hits->back();
-                
-                // fill in all information
-                hit.SetTime(correctedTime);
-                hit.SetHitID(photon.GetID());
+            // add a new hit
+            hits->push_back(I3MCHit());
+            I3MCHit &hit = hits->back();
+            
+            // fill in all information
+            hit.SetTime(correctedTime);
+            hit.SetHitID(photon.GetID());
 #ifdef I3MCHIT_WEIGHT_IS_DEPRECATED
-                hit.SetNPE(1);
+            hit.SetNPE(1);
 #else
-                hit.SetWeight(1.0);
+            hit.SetWeight(1.0);
 #endif
-                if (particle) hit.SetParticleID(*particle);
-                hit.SetCherenkovDistance(NAN);
-                hit.SetHitSource(I3MCHit::SPE); // SPE for now, may be changed by afterpulse simulation
-            }
-            else
-            {
-                // make a new hit
-                
-                // let pmtPhotonSimulator add the hit and all afterpulses
-                I3MCHit hit;
-
-                // fill in all information
-                hit.SetTime(correctedTime);
-                hit.SetHitID(photon.GetID());
-#ifdef I3MCHIT_WEIGHT_IS_DEPRECATED
-                hit.SetNPE(1);
-#else
-                hit.SetWeight(1.0);
-#endif
-                if (particle) hit.SetParticleID(*particle);
-                hit.SetCherenkovDistance(NAN);
-                hit.SetHitSource(I3MCHit::SPE); // SPE for now, may be changed by afterpulse simulation
-
-                pmtPhotonSimulator_->ApplyAfterPulseLatePulseAndJitterSim
-                (key, hit, *hits);
-            }
+            if (particle) hit.SetParticleID(*particle);
+            hit.SetCherenkovDistance(NAN);
+            hit.SetHitSource(I3MCHit::SPE); // SPE for now, may be changed by afterpulse simulation
         }
         
         if (hits) {
