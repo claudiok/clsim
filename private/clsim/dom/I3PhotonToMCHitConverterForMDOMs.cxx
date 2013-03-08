@@ -33,7 +33,7 @@
 #include "clsim/dom/I3PhotonToMCHitConverterForMDOMs.h"
 
 #include "clsim/I3Photon.h"
-#include "dataclasses/physics/I3MCHit.h"
+#include "simclasses/I3MCPE.h"
 #include "dataclasses/physics/I3MCTree.h"
 
 // IceTray things:
@@ -353,9 +353,9 @@ namespace {
 
 namespace {
     // Return whether first element is greater than the second
-    bool MCHitTimeLess(const I3MCHit &elem1, const I3MCHit &elem2)
+    bool MCHitTimeLess(const I3MCPE &elem1, const I3MCPE &elem2)
     {
-        return elem1.GetTime() < elem2.GetTime();
+        return elem1.time < elem2.time;
     }
     
 }
@@ -441,7 +441,7 @@ void I3PhotonToMCHitConverterForMDOMs::DAQ(I3FramePtr frame)
     if (!input_hitmap) log_fatal("I3PhotonSeriesMap object with name \"%s\" not found in the frame!", inputPhotonSeriesMapName_.c_str());
     
     // create a new output hit map
-    I3MCHitSeriesMapPtr output_hitmap = I3MCHitSeriesMapPtr(new I3MCHitSeriesMap);
+    I3MCPESeriesMapPtr output_hitmap = I3MCPESeriesMapPtr(new I3MCPESeriesMap);
     
     // currently, the only reason we need the MCTree is that I3MCHit does
     // only allow setting the major/minor particle IDs using an existing
@@ -564,32 +564,24 @@ void I3PhotonToMCHitConverterForMDOMs::DAQ(I3FramePtr frame)
             
             
             // get the hit series into which we are going to insert the hit
-            I3MCHitSeries &hitSeries = output_hitmap->insert(std::make_pair(pmtKey, I3MCHitSeries())).first->second;
+            I3MCPESeries &hitSeries = output_hitmap->insert(std::make_pair(pmtKey, I3MCPESeries())).first->second;
             
             // add a new hit
-            hitSeries.push_back(I3MCHit());
-            I3MCHit &hit = hitSeries.back();
+            hitSeries.push_back(I3MCPE(particle));
+            I3MCPE &hit = hitSeries.back();
             
             // fill in all information
-            hit.SetTime(photon.GetTime());
-            hit.SetHitID(photon.GetID());
-#ifdef I3MCHIT_WEIGHT_IS_DEPRECATED
-            hit.SetNPE(1);
-#else
-            hit.SetWeight(1.0);
-#endif
-            hit.SetParticleID(particle);
-            hit.SetCherenkovDistance(NAN);
-            hit.SetHitSource(I3MCHit::SPE); // SPE for now, no afterpulses at this point
+            hit.time=photon.GetTime();
+            hit.npe=1;
         }
         
     }
 
     // sort the hit vectors for each PMT
-    for (I3MCHitSeriesMap::iterator pmtIt = output_hitmap->begin();
+    for (I3MCPESeriesMap::iterator pmtIt = output_hitmap->begin();
          pmtIt != output_hitmap->end(); ++pmtIt)
     {
-        I3MCHitSeries &hitSeries = pmtIt->second;
+        I3MCPESeries &hitSeries = pmtIt->second;
         
         // now sort by time, regardless of particle ID
         std::sort(hitSeries.begin(), hitSeries.end(), MCHitTimeLess);

@@ -46,7 +46,7 @@
 #include "dataclasses/geometry/I3Geometry.h"
 #endif
 
-#include "dataclasses/physics/I3MCHit.h"
+#include "simclasses/I3MCPE.h"
 #include "dataclasses/physics/I3MCTree.h"
 
 #include "dataclasses/I3Constants.h"
@@ -224,9 +224,9 @@ void I3PhotonToMCHitConverter::Calibration(I3FramePtr frame)
 
 namespace {
     // Return whether first element is greater than the second
-    bool MCHitTimeLess(const I3MCHit &elem1, const I3MCHit &elem2)
+    bool MCHitTimeLess(const I3MCPE &elem1, const I3MCPE &elem2)
     {
-        return elem1.GetTime() < elem2.GetTime();
+        return elem1.time < elem2.time;
     }
 }
 
@@ -278,7 +278,7 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
     I3MCTreeConstPtr MCTree = frame->Get<I3MCTreeConstPtr>(MCTreeName_);
 
     // allocate the output hitSeriesMap
-    I3MCHitSeriesMapPtr outputMCHitSeriesMap(new I3MCHitSeriesMap());
+    I3MCPESeriesMapPtr outputMCHitSeriesMap(new I3MCPESeriesMap());
     
     std::map<std::pair<uint64_t, int>, const I3Particle *> mcTreeIndex;
     if (MCTree) {
@@ -429,7 +429,7 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
         // a pointer to the output vector. The vector will be allocated 
         // by the map, this is merely a pointer to it in case we have multiple
         // hits per OM.
-        I3MCHitSeries *hits = NULL;
+        I3MCPESeries *hits = NULL;
 
         BOOST_FOREACH(const I3Photon &photon, photons)
         {
@@ -579,7 +579,7 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
             }
         
             // allocate the output vector if not already done
-            if (!hits) hits = &(outputMCHitSeriesMap->insert(std::make_pair(key, I3MCHitSeries())).first->second);
+            if (!hits) hits = &(outputMCHitSeriesMap->insert(std::make_pair(key, I3MCPESeries())).first->second);
 
             // correct timing for oversized DOMs
             double correctedTime = photon.GetTime();
@@ -590,20 +590,15 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
             }
             
             // add a new hit
-            hits->push_back(I3MCHit());
-            I3MCHit &hit = hits->back();
+			if(particle)
+				hits->push_back(I3MCPE(*particle));
+			else
+				hits->push_back(I3MCPE());
+            I3MCPE &hit = hits->back();
             
             // fill in all information
-            hit.SetTime(correctedTime);
-            hit.SetHitID(photon.GetID());
-#ifdef I3MCHIT_WEIGHT_IS_DEPRECATED
-            hit.SetNPE(1);
-#else
-            hit.SetWeight(1.0);
-#endif
-            if (particle) hit.SetParticleID(*particle);
-            hit.SetCherenkovDistance(NAN);
-            hit.SetHitSource(I3MCHit::SPE); // SPE for now, may be changed by afterpulse simulation
+            hit.time=correctedTime;
+            hit.npe=1;
         }
         
         if (hits) {
