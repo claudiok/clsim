@@ -2556,23 +2556,23 @@ public:
     }
 
 
-#if defined(CL_VERSION_1_2)
-    cl_int setPrintfCallback(
-        void (CL_CALLBACK * pfn_notify)(
-            cl_context /* program */, 
-            cl_uint /*printf_data_len */, 
-            char * /* printf_data_ptr */, 
-            void * /* user_data */),
-        void * user_data )
-    {
-        return detail::errHandler(
-            ::clSetPrintfCallback(
-                object_,
-                pfn_notify,
-                user_data), 
-            __SET_PRINTF_CALLBACK_ERR);
-    }
-#endif // #if defined(CL_VERSION_1_2)
+// #if defined(CL_VERSION_1_2)
+//     cl_int setPrintfCallback(
+//         void (CL_CALLBACK * pfn_notify)(
+//             cl_context /* program */, 
+//             cl_uint /*printf_data_len */, 
+//             char * /* printf_data_ptr */, 
+//             void * /* user_data */),
+//         void * user_data )
+//     {
+//         return detail::errHandler(
+//             ::clSetPrintfCallback(
+//                 object_,
+//                 pfn_notify,
+//                 user_data), 
+//             __SET_PRINTF_CALLBACK_ERR);
+//     }
+// #endif // #if defined(CL_VERSION_1_2)
 };
 
 inline Device Device::getDefault(cl_int * err)
