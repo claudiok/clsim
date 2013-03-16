@@ -49,7 +49,7 @@ def I3CLSimMakeHits(tray, name,
                     FlasherInfoVectName=None,
                     FlasherPulseSeriesName=None,
                     MMCTrackListName="MMCTrackList",
-                    MCHitSeriesName="MCHitSeriesMap",
+                    MCPESeriesName="MCPESeriesMap",
                     PhotonSeriesName=None,
                     ParallelEvents=1000,
                     RandomService=None,
@@ -67,7 +67,7 @@ def I3CLSimMakeHits(tray, name,
                     If=lambda f: True
                     ):
     """Do standard clsim processing, compatible to hit-maker/PPC.
-    Reads its particles from an I3MCTree and writes an I3MCHitSeriesMap.
+    Reads its particles from an I3MCTree and writes an I3MCPESeriesMap.
 
     All available OpenCL GPUs (and optionally CPUs) will
     be used. This will take over your entire machine,
@@ -114,9 +114,9 @@ def I3CLSimMakeHits(tray, name,
         Only used if *ChopMuons* is active. Set it to the name
         of the I3MMCTrackList object that contains additional
         muon energy loss information.
-    :param MCHitSeriesName:
-        Name of the output I3MCHitSeriesMap written by the module.
-        Set this to None to prevent generating MCHits from
+    :param MCPESeriesName:
+        Name of the output I3MCPESeriesMap written by the module.
+        Set this to None to prevent generating MCPEs from
         Photons.
     :param PhotonSeriesName:
         Configure this to enable writing an I3PhotonSeriesMap containing
@@ -185,8 +185,8 @@ def I3CLSimMakeHits(tray, name,
     from icecube import icetray, dataclasses, clsim
 
     # simple sanity check
-    if (PhotonSeriesName is None) and (MCHitSeriesName is None):
-        raise RuntimeError("You need to set at least one of the \"PhotonSeriesName\" or \"MCHitSeriesName\" arguments to something other than None!")
+    if (PhotonSeriesName is None) and (MCPESeriesName is None):
+        raise RuntimeError("You need to set at least one of the \"PhotonSeriesName\" or \"MCPESeriesName\" arguments to something other than None!")
 
     # warn the user in case they might have done something they probably don't want
     if UnWeightedPhotons and (DOMOversizeFactor != 1.):
@@ -249,10 +249,10 @@ def I3CLSimMakeHits(tray, name,
         I3CLSimMakePhotons(tray, name + "_makePhotons",
                            **I3CLSimMakePhotons_kwargs)
 
-    if MCHitSeriesName is not None:
+    if MCPESeriesName is not None:
         I3CLSimMakeHitsFromPhotons_kwargs = dict(MCTreeName=clSimMCTreeName,
                                                  PhotonSeriesName=photonsName,
-                                                 MCHitSeriesName=MCHitSeriesName,
+                                                 MCPESeriesName=MCPESeriesName,
                                                  RandomService=RandomService,
                                                  DOMOversizeFactor=DOMOversizeFactor,
                                                  UnshadowedFraction=UnshadowedFraction,

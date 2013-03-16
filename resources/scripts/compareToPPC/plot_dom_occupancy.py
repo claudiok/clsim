@@ -152,8 +152,8 @@ time_residuals_ppc, dca_ppc = calcTimeResiduals(h5file.root.MCHitSeriesMap.cols,
                                        h5file.root.__I3Index__.MCMostEnergeticMuon.cols)
 
 print "clsim.."
-time_residuals_clsim, dca_clsim = calcTimeResiduals(h5file.root.MCHitSeriesMap_clsim.cols,
-                                         h5file.root.__I3Index__.MCHitSeriesMap_clsim.cols,
+time_residuals_clsim, dca_clsim = calcTimeResiduals(h5file.root.MCPESeriesMap_clsim.cols,
+                                         h5file.root.__I3Index__.MCPESeriesMap_clsim.cols,
                                          h5file.root.MCMostEnergeticMuon.cols,
                                          h5file.root.__I3Index__.MCMostEnergeticMuon.cols)
 
@@ -161,10 +161,10 @@ time_residuals_clsim, dca_clsim = calcTimeResiduals(h5file.root.MCHitSeriesMap_c
 print "some more work.."
 #
 hits_string_ppc = h5file.root.MCHitSeriesMap.cols.string[:]
-hits_string_clsim = h5file.root.MCHitSeriesMap_clsim.cols.string[:]
+hits_string_clsim = h5file.root.MCPESeriesMap_clsim.cols.string[:]
 
 hits_om_ppc = h5file.root.MCHitSeriesMap.cols.om[:]
-hits_om_clsim = h5file.root.MCHitSeriesMap_clsim.cols.om[:]
+hits_om_clsim = h5file.root.MCPESeriesMap_clsim.cols.om[:]
 
 
 bincounts_ppc = numpy.bincount(hits_om_ppc[:][(dca_ppc>20.) & (hits_string_ppc==21)])

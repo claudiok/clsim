@@ -68,7 +68,7 @@ def I3CLSimMakePhotons(tray, name,
                        If=lambda f: True
                        ):
     """Do standard clsim processing up to the I3Photon level.
-    These photons still need to be converted to I3MCHits to be usable
+    These photons still need to be converted to I3MCPEs to be usable
     for further steps in the standard IceCube MC processing chain.
     Reads its particles from an I3MCTree and writes an I3PhotonSeriesMap.
 

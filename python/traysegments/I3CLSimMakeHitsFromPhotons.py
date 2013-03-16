@@ -37,7 +37,7 @@ my_traysegment = icetray.traysegment if hasattr(icetray, "traysegment") else unc
 def I3CLSimMakeHitsFromPhotons(tray, name,
                                MCTreeName="I3MCTree_sliced",
                                PhotonSeriesName="PhotonSeriesMap",
-                               MCHitSeriesName="MCHitSeriesMap",
+                               MCPESeriesName="MCPESeriesMap",
                                RandomService=None,
                                DOMOversizeFactor=5.,
                                UnshadowedFraction=0.9,
@@ -45,7 +45,7 @@ def I3CLSimMakeHitsFromPhotons(tray, name,
                                If=lambda f: True
                                ):
     """
-    Convert I3Photons into I3MCHits. This applies the DOM
+    Convert I3Photons into I3MCPEs. This applies the DOM
     angular acceptance (and wavenelgth acceptance in case
     you are using the unbiased photon propagation mode.)
 
@@ -53,9 +53,9 @@ def I3CLSimMakeHitsFromPhotons(tray, name,
         The name of the I3MCTree containing the particles to propagate.
     :param PhotonSeriesName:
         Name of the input I3PhotonSeriesMap to be converted.
-    :param MCHitSeriesName:
-        Name of the output I3MCHitSeriesMap written by the module.
-        Set this to None to prevent generating MCHits from
+    :param MCPESeriesName:
+        Name of the output I3MCPESeriesMap written by the module.
+        Set this to None to prevent generating MCPEs from
         Photons.
     :param RandomService:
         Set this to an instance of a I3RandomService. Alternatively,
@@ -82,11 +82,11 @@ def I3CLSimMakeHitsFromPhotons(tray, name,
     domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius = DOMRadius*DOMOversizeFactor, efficiency=UnshadowedFraction)
     domAngularSensitivity = clsim.GetIceCubeDOMAngularSensitivity(holeIce=UseHoleIceParameterization)
 
-    tray.AddModule("I3PhotonToMCHitConverter", name + "_clsim_make_hits",
+    tray.AddModule("I3PhotonToMCPEConverter", name + "_clsim_make_hits",
                    RandomService = RandomService,
                    MCTreeName = MCTreeName,
                    InputPhotonSeriesMapName = PhotonSeriesName,
-                   OutputMCHitSeriesMapName = MCHitSeriesName,
+                   OutputMCPESeriesMapName = MCPESeriesName,
                    DOMRadiusWithoutOversize=DOMRadius,
                    DOMOversizeFactor = DOMOversizeFactor,
                    DOMPancakeFactor = DOMOversizeFactor,

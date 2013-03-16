@@ -91,9 +91,7 @@ tray.AddModule(tableio.I3TableWriter,'writer',
     keys=[
           dict(key="MCMostEnergeticInIce", name="MCMostEnergeticInIce"),
           dict(key="MCMostEnergeticPrimary", name="MCMostEnergeticPrimary"),
-          dict(key="MCHitSeriesMap", converter=clsim.converters.I3MCHitSeriesMapConverterWithIDs(True), name="MCHitSeriesMap"),
-          # dict(key="MCHitSeriesMap_clsim", converter=clsim.converters.I3MCHitSeriesMapConverterWithIDs(True), name="MCHitSeriesMap_clsim"),
-          # dict(key="PropagatedPhotons", name="PropagatedPhotons"),
+          dict(key="MCPESeriesMap", converter=clsim.converters.I3MCPESeriesMapConverterWithIDs(True), name="MCPESeriesMap"),
          ],
     SubEventStreams=['nullsplit',])
 

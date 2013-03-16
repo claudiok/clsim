@@ -18,14 +18,14 @@
  *
  * $Id$
  *
- * @file I3PhotonToMCHitConverter.h
+ * @file I3PhotonToMCPEConverter.h
  * @version $Revision$
  * @date $Date$
  * @author Claudio Kopper
  */
 
-#ifndef I3PHOTONTOMCHITCONVERTER_H_INCLUDED
-#define I3PHOTONTOMCHITCONVERTER_H_INCLUDED
+#ifndef I3PHOTONTOMCPECONVERTER_H_INCLUDED
+#define I3PHOTONTOMCPECONVERTER_H_INCLUDED
 
 #include "icetray/I3Module.h"
 #include "icetray/I3ConditionalModule.h"
@@ -44,21 +44,21 @@
 /**
  * @brief This module reads I3PhotonSeriesMaps generated
  * by CLSim, applies (D)OM acceptances (wavelength&angular)
- * to the photons and stores the results in an I3MCHitSeriesMap.
+ * to the photons and stores the results in an I3MCPESeriesMap.
  *
  */
-class I3PhotonToMCHitConverter : public I3ConditionalModule
+class I3PhotonToMCPEConverter : public I3ConditionalModule
 {
 public:
     /**
      * Builds an instance of this class
      */
-    I3PhotonToMCHitConverter(const I3Context& ctx);
+    I3PhotonToMCPEConverter(const I3Context& ctx);
     
     /**
      * Destroys an instance of this class
      */
-    virtual ~I3PhotonToMCHitConverter();
+    virtual ~I3PhotonToMCPEConverter();
     
     /**
      * This module takes a configuration parameter and so it must be configured.
@@ -96,8 +96,8 @@ private:
     /// Parameter: Name of the input I3PhotonSeriesMap frame object. 
     std::string inputPhotonSeriesMapName_;
 
-    /// Parameter: Name of the output I3MCHitSeries frame object. 
-    std::string outputMCHitSeriesMapName_;
+    /// Parameter: Name of the output I3MCPESeries frame object. 
+    std::string outputMCPESeriesMapName_;
 
     /// Parameter: Name of the I3MCTree frame object. All photon particle IDs are checked against this tree.
     std::string MCTreeName_;
@@ -136,9 +136,9 @@ private:
     
 private:
     // default, assignment, and copy constructor declared private
-    I3PhotonToMCHitConverter();
-    I3PhotonToMCHitConverter(const I3PhotonToMCHitConverter&);
-    I3PhotonToMCHitConverter& operator=(const I3PhotonToMCHitConverter&);
+    I3PhotonToMCPEConverter();
+    I3PhotonToMCPEConverter(const I3PhotonToMCPEConverter&);
+    I3PhotonToMCPEConverter& operator=(const I3PhotonToMCPEConverter&);
 
     I3CalibrationConstPtr calibration_;
     I3DetectorStatusConstPtr status_;
@@ -146,7 +146,7 @@ private:
     // record some statistics
     uint64_t numGeneratedHits_;
     
-    SET_LOGGER("I3PhotonToMCHitConverter");
+    SET_LOGGER("I3PhotonToMCPEConverter");
 };
 
-#endif //I3PHOTONTOMCHITCONVERTER_H_INCLUDED
+#endif //I3PHOTONTOMCPECONVERTER_H_INCLUDED

@@ -17,7 +17,7 @@ parser.add_option("-r", "--runnumber", type="int", default=1,
 parser.add_option("-p", "--max-parallel-events", type="int", default=10,
                   dest="MAXPARALLELEVENTS", help="maximum number of events(==frames) that will be processed in parallel")
 parser.add_option("--keep-photon-data", action="store_false", default=True,
-                  dest="REMOVEPHOTONDATA", help="Keep I3Photons before writing the output file (in addition to I3MCHits")
+                  dest="REMOVEPHOTONDATA", help="Keep I3Photons before writing the output file (in addition to I3MCPEs")
 
 # parse cmd line args, bail out if anything is not understood
 (options,args) = parser.parse_args()

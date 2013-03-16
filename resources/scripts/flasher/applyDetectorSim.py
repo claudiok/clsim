@@ -22,8 +22,8 @@ parser.add_option("-r", "--runnumber", type="int", default=1,
                   dest="RUNNUMBER", help="The run number for this simulation")
 parser.add_option("-s", "--seed",type="int",default=12345,
                   dest="SEED", help="Initial seed for the random number generator")
-parser.add_option("--keep-mchits", action="store_true", default=False,
-                  dest="KEEPMCHITS", help="Keep I3MCHits before writing the output file")
+parser.add_option("--keep-mcpes", action="store_true", default=False,
+                  dest="KEEPMCPES", help="Keep I3MCPEs before writing the output file")
 parser.add_option("--use-domlauncher", action="store_true", default=False,
                   dest="USEDOMLAUNCHER", help="Use DOMLauncher instead of PMTsimulator/DOMsimulator")
 
@@ -122,12 +122,11 @@ tray.AddModule("I3NoiseGeneratorModule","noiseic",
     EndWindow = 10.*I3Units.microsecond,
     StartWindow = 10.*I3Units.microsecond,
     IndividualRates = True, 
-    InputHitSeriesMapName = "MCHitSeriesMap",
-    DOMstoExclude = bad_dom_list_static.IC86_static_bad_dom_list())
+    InputHitSeriesMapName = "MCPESeriesMap")
 
 if options.USEDOMLAUNCHER:
     tray.AddModule("PMTResponseSimulator","rosencrantz",
-        Input="MCHitSeriesMap",
+        Input="MCPESeriesMap",
         Output="weightedMCHitSeriesMap")
     tray.AddModule("DOMLauncher", "guildenstern",
         Input="weightedMCHitSeriesMap",
@@ -159,7 +158,7 @@ tray.AddModule("I3Pruner","pruner",
 
 if options.USEDOMLAUNCHER:
     MCPMTResponseMapNames = []
-    MCHitSeriesMapNames = ["MCHitSeriesMap", "weightedMCHitSeriesMap"]
+    MCHitSeriesMapNames = ["MCPESeriesMap", "weightedMCHitSeriesMap"]
 else:
     MCPMTResponseMapNames = ["MCPMTResponseMap"]
     MCHitSeriesMapNames = ["MCHitSeriesMap"]
@@ -179,9 +178,9 @@ tray.AddModule("Delete", "cleanup",
             "MCPMTResponseMap",
             "weightedMCHitSeriesMap"])
 
-if not options.KEEPMCHITS:
+if not options.KEEPMCPES:
     tray.AddModule("Delete", "cleanup_I3MCHits",
-        Keys = ["MCHitSeriesMap"])
+        Keys = ["MCPESeriesMap"])
 
 
 tray.AddModule("I3Writer","writer",

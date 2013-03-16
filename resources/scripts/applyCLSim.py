@@ -136,7 +136,7 @@ tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
     MMCTrackListName = MMCTrackListName,
     ParallelEvents = options.MAXPARALLELEVENTS,
     RandomService = randomService,
-    MCHitSeriesName = "I3MCHitSeriesMap_clsim",
+    MCPESeriesName = "I3MCPESeriesMap_clsim",
     UseGPUs=True,
     UseCPUs=False,
     #IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos090.11jul2011.txt"))

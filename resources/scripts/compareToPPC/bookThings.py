@@ -84,7 +84,7 @@ tray.AddModule(tableio.I3TableWriter,'writer1',
           dict(key="MCMostEnergeticMuon", name="MCMostEnergeticMuon"),
           dict(key="MCMostEnergeticPrimary", name="MCMostEnergeticPrimary"),
           dict(key="MCHitSeriesMap", converter=clsim.converters.I3MCHitSeriesMapConverterWithIDs(True), name="MCHitSeriesMap"),
-          dict(key="MCHitSeriesMap_clsim", converter=clsim.converters.I3MCHitSeriesMapConverterWithIDs(True), name="MCHitSeriesMap_clsim"),
+          dict(key="MCPESeriesMap_clsim", converter=clsim.converters.I3MCPESeriesMapConverterWithIDs(True), name="MCPESeriesMap_clsim"),
           dict(key="PropagatedPhotons", name="PropagatedPhotons"),
          ],
     SubEventStreams=['nullsplit',])

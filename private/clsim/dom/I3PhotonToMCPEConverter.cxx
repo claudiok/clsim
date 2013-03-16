@@ -18,7 +18,7 @@
  *
  * $Id$
  *
- * @file I3PhotonToMCHitConverter.cxx
+ * @file I3PhotonToMCPEConverter.cxx
  * @version $Revision$
  * @date $Date$
  * @author Claudio Kopper
@@ -31,7 +31,7 @@
 
 #include <algorithm>
 
-#include "clsim/dom/I3PhotonToMCHitConverter.h"
+#include "clsim/dom/I3PhotonToMCPEConverter.h"
 
 #include <boost/foreach.hpp>
 
@@ -52,9 +52,9 @@
 #include "dataclasses/I3Constants.h"
 
 // The module
-I3_MODULE(I3PhotonToMCHitConverter);
+I3_MODULE(I3PhotonToMCPEConverter);
 
-I3PhotonToMCHitConverter::I3PhotonToMCHitConverter(const I3Context& context) 
+I3PhotonToMCPEConverter::I3PhotonToMCPEConverter(const I3Context& context) 
 : I3ConditionalModule(context)
 {
     AddParameter("RandomService",
@@ -66,10 +66,10 @@ I3PhotonToMCHitConverter::I3PhotonToMCHitConverter(const I3Context& context)
                  "Name of the input I3PhotonSeriesMap frame object.",
                  inputPhotonSeriesMapName_);
 
-    outputMCHitSeriesMapName_="MCHitSeriesMap";
-    AddParameter("OutputMCHitSeriesMapName",
-                 "Name of the output I3MCHitSeries frame object.",
-                 outputMCHitSeriesMapName_);
+    outputMCPESeriesMapName_="MCPESeriesMap";
+    AddParameter("OutputMCPESeriesMapName",
+                 "Name of the output I3MCPESeries frame object.",
+                 outputMCPESeriesMapName_);
 
     MCTreeName_="I3MCTree";
     AddParameter("MCTreeName",
@@ -131,20 +131,20 @@ I3PhotonToMCHitConverter::I3PhotonToMCHitConverter(const I3Context& context)
 
 }
 
-I3PhotonToMCHitConverter::~I3PhotonToMCHitConverter()
+I3PhotonToMCPEConverter::~I3PhotonToMCPEConverter()
 {
     log_trace("%s", __PRETTY_FUNCTION__);
 }
 
 
-void I3PhotonToMCHitConverter::Configure()
+void I3PhotonToMCPEConverter::Configure()
 {
     log_trace("%s", __PRETTY_FUNCTION__);
 
     GetParameter("RandomService", randomService_);
 
     GetParameter("InputPhotonSeriesMapName", inputPhotonSeriesMapName_);
-    GetParameter("OutputMCHitSeriesMapName", outputMCHitSeriesMapName_);
+    GetParameter("OutputMCPESeriesMapName", outputMCPESeriesMapName_);
 
     GetParameter("MCTreeName", MCTreeName_);
 
@@ -194,7 +194,7 @@ void I3PhotonToMCHitConverter::Configure()
     
 }
 
-void I3PhotonToMCHitConverter::DetectorStatus(I3FramePtr frame)
+void I3PhotonToMCPEConverter::DetectorStatus(I3FramePtr frame)
 {
     log_trace("%s", __PRETTY_FUNCTION__);
         
@@ -208,7 +208,7 @@ void I3PhotonToMCHitConverter::DetectorStatus(I3FramePtr frame)
     PushFrame(frame);
 }
 
-void I3PhotonToMCHitConverter::Calibration(I3FramePtr frame)
+void I3PhotonToMCPEConverter::Calibration(I3FramePtr frame)
 {
     log_trace("%s", __PRETTY_FUNCTION__);
     
@@ -224,16 +224,16 @@ void I3PhotonToMCHitConverter::Calibration(I3FramePtr frame)
 
 namespace {
     // Return whether first element is greater than the second
-    bool MCHitTimeLess(const I3MCPE &elem1, const I3MCPE &elem2)
+    bool MCPETimeLess(const I3MCPE &elem1, const I3MCPE &elem2)
     {
         return elem1.time < elem2.time;
     }
 }
 
 #ifdef IS_Q_FRAME_ENABLED
-void I3PhotonToMCHitConverter::DAQ(I3FramePtr frame)
+void I3PhotonToMCPEConverter::DAQ(I3FramePtr frame)
 #else
-void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
+void I3PhotonToMCPEConverter::Physics(I3FramePtr frame)
 #endif
 {
     log_trace("%s", __PRETTY_FUNCTION__);
@@ -272,13 +272,13 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
         return;
     }
     
-    // currently, the only reason we need the MCTree is that I3MCHit does
+    // currently, the only reason we need the MCTree is that I3MCPE does
     // only allow setting the major/minor particle IDs using an existing
     // I3Particle instance with that ID combination.
     I3MCTreeConstPtr MCTree = frame->Get<I3MCTreeConstPtr>(MCTreeName_);
 
     // allocate the output hitSeriesMap
-    I3MCPESeriesMapPtr outputMCHitSeriesMap(new I3MCPESeriesMap());
+    I3MCPESeriesMapPtr outputMCPESeriesMap(new I3MCPESeriesMap());
     
     std::map<std::pair<uint64_t, int>, const I3Particle *> mcTreeIndex;
     if (MCTree) {
@@ -579,7 +579,7 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
             }
         
             // allocate the output vector if not already done
-            if (!hits) hits = &(outputMCHitSeriesMap->insert(std::make_pair(key, I3MCPESeries())).first->second);
+            if (!hits) hits = &(outputMCPESeriesMap->insert(std::make_pair(key, I3MCPESeries())).first->second);
 
             // correct timing for oversized DOMs
             double correctedTime = photon.GetTime();
@@ -603,26 +603,26 @@ void I3PhotonToMCHitConverter::Physics(I3FramePtr frame)
         
         if (hits) {
             // sort the photons in each hit series by time
-            std::sort(hits->begin(), hits->end(), MCHitTimeLess);
+            std::sort(hits->begin(), hits->end(), MCPETimeLess);
             
             // keep track of the number of hits generated
             numGeneratedHits_ += static_cast<uint64_t>(hits->size());
         }
     }
     
-    // store the output I3MCHitSeriesMap
-    frame->Put(outputMCHitSeriesMapName_, outputMCHitSeriesMap);
+    // store the output I3MCPESeriesMap
+    frame->Put(outputMCPESeriesMapName_, outputMCPESeriesMap);
     
     // that's it!
     PushFrame(frame);
 }
 
-void I3PhotonToMCHitConverter::Finish()
+void I3PhotonToMCPEConverter::Finish()
 {
     // add some summary information to a potential I3SummaryService
     I3SummaryServicePtr summary = context_.Get<I3SummaryServicePtr>();
     if (summary) {
-        const std::string prefix = "I3PhotonToMCHitConverter_" + GetName() + "_";
+        const std::string prefix = "I3PhotonToMCPEConverter_" + GetName() + "_";
         
         (*summary)[prefix+"NumGeneratedHits"] = numGeneratedHits_;
     }

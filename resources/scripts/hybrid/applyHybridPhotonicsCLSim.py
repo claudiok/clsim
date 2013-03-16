@@ -88,7 +88,7 @@ import sys
 
 # pull in all modules
 from icecube import icetray, dataclasses, dataio
-from icecube import phys_services, sim_services, DomTools
+from icecube import phys_services, sim_services
 from icecube import photonics_service
 from icecube import clsim
 
@@ -148,8 +148,8 @@ tray.AddModule("I3MCTreeHybridSimulationSplitter", "splitMCTree",
 
 # simulate cascades (with photonics-hit-maker)
 cascade_service = photonics_service.I3PhotoSplineService(
-    amplitudetable='/Users/claudio/Documents/Work/IceTray/PhotonTables/spice1_splines/ems_spice1_z20_a10.abs.fits',
-    timingtable='/Users/claudio/Documents/Work/IceTray/PhotonTables/spice1_splines/ems_spice1_z20_a10.prob.fits',
+    amplitudetable='/Users/claudio/Documents/Work/IceTray/PhotonTables/spline-tables/ems_spice1_z20_a10.abs.fits',
+    timingtable='/Users/claudio/Documents/Work/IceTray/PhotonTables/spline-tables/ems_spice1_z20_a10.prob.fits',
     timingSigma=0.)
 
 tray.AddModule("I3PhotonicsHitMaker", "hitsFromTheTable",
@@ -157,7 +157,7 @@ tray.AddModule("I3PhotonicsHitMaker", "hitsFromTheTable",
     TrackService = None, # tracks are handled by clsim
     UnshadowedFraction = 0.9,
     Input = "I3MCTreeCascades",
-    Output = "I3MCHitSeriesMapCascades",
+    Output = "I3MCPESeriesMapCascades",
     RandomService = randomService
     )
 
@@ -167,7 +167,7 @@ tray.AddModule("I3PhotonicsHitMaker", "hitsFromTheTable",
 tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
     PhotonSeriesName = None,
     MCTreeName = "I3MCTreeTracks",
-    MCHitSeriesName = "I3MCHitSeriesMapTracks",
+    MCPESeriesName = "I3MCPESeriesMapTracks",
     MMCTrackListName = "MMCTrackList",
     ParallelEvents = options.MAXPARALLELEVENTS,
     RandomService = randomService,
@@ -183,17 +183,16 @@ tray.AddModule("Delete", "cleanup_clsim_sliced_MCTree",
     Keys = ["I3MCTreeTracks_sliced"])
 
 
-# combine the resulting I3MCHitSeriesMaps
-tray.AddModule("I3CombineResponses<I3MCHit>", "combine_hits",
-    InputResponses = ["I3MCHitSeriesMapTracks", "I3MCHitSeriesMapCascades"],
-    OutputResponse = "I3MCHitSeriesMap",
-    Stream = icetray.I3Frame.DAQ) # This runs on Physics by default
+# combine the resulting I3MCPESeriesMaps
+tray.AddModule("I3CombineMCPE", "combine_hits",
+    InputResponses = ["I3MCPESeriesMapTracks", "I3MCPESeriesMapCascades"],
+    OutputResponse = "I3MCPESeriesMap")
 
 
 
 # delete the original maps and the split I3MCTrees
 tray.AddModule("Delete", "cleanup_hitseriesmaps",
-    Keys = ["I3MCHitSeriesMapTracks", "I3MCHitSeriesMapCascades"])
+    Keys = ["I3MCPESeriesMapTracks", "I3MCPESeriesMapCascades"])
 
 tray.AddModule("Delete", "cleanup_MCTree",
     Keys=["I3MCTreeTracks", "I3MCTreeCascades"])

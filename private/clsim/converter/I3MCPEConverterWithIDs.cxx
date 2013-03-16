@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2011, 2012
+ * Copyright (c) 2013
  * Claudio Kopper <claudio.kopper@icecube.wisc.edu>
  * and the IceCube Collaboration <http://www.icecube.wisc.edu>
  *
@@ -18,29 +18,36 @@
  *
  * $Id$
  *
- * @file I3Converters.cxx
+ * @file I3MCPEConverterWithIDs.cxx
  * @version $Revision$
  * @date $Date$
  * @author Claudio Kopper
  */
 
-#include <sstream>
+#include "I3MCPEConverterWithIDs.h"
 
-#include "clsim/converter/I3PhotonConverter.h"
-#include "clsim/converter/I3MCHitConverterWithIDs.h"
-#include "clsim/converter/I3MCPEConverterWithIDs.h"
-#include "tableio/converter/pybindings.h"
-
-void register_I3Converters()
+void
+I3MCPEConverterWithIDs::AddFields
+(I3TableRowDescriptionPtr desc, const booked_type &)
 {
-    I3CONVERTER_NAMESPACE(clsim);
-
-    I3CONVERTER_EXPORT_DEFAULT(I3PhotonConverter, "Dumps a single I3Photon to a table column");
-    I3_MAP_CONVERTER_EXPORT_DEFAULT(I3PhotonSeriesMapConverter,"Dumps all I3Photons in a I3PhotonSeriesMap");
-
-    // this is not the default converter, the default one is in dataclasses
-    I3_MAP_CONVERTER_EXPORT(I3MCHitSeriesMapConverterWithIDs, "Dumps all I3MCHits from a I3MCHitSeriesMap");
-
-    I3_MAP_CONVERTER_EXPORT(I3MCPESeriesMapConverterWithIDs, "Dumps all I3MCPEs from a I3MCPESeriesMap");
-
+    desc->AddField<double>  ("time", "ns", "time");
+    desc->AddField<double>  ("npe", "PE", "The number of photoelectrons the hit represents.");
+    desc->AddField<uint64_t>("partmajorid", "", "the particle major ID");
+    desc->AddField<int>     ("partminorid", "", "the particle minor ID");
 }
+
+void
+I3MCPEConverterWithIDs::FillSingleRow
+(const I3MCPEConverterWithIDs::booked_type &hit, I3TableRowPtr row)
+{
+    row->Set<double>  ("time", hit.time);
+    row->Set<double>  ("npe", hit.npe);
+    row->Set<uint64_t>("partmajorid", hit.major_ID);
+    row->Set<int>     ("partminorid", hit.minor_ID);
+}
+
+//I3_CONVERTER(I3MCPESeriesMapConverterWithIDs, I3MCPESeriesMapWithIDs); 
+
+
+
+

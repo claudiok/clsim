@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2011, 2012
+ * Copyright (c) 2013
  * Claudio Kopper <claudio.kopper@icecube.wisc.edu>
  * and the IceCube Collaboration <http://www.icecube.wisc.edu>
  *
@@ -18,29 +18,24 @@
  *
  * $Id$
  *
- * @file I3Converters.cxx
+ * @file I3MCPEConverterWithIDs.h
  * @version $Revision$
  * @date $Date$
  * @author Claudio Kopper
  */
 
-#include <sstream>
+#include "tableio/I3Converter.h"
+#include "tableio/converter/I3MapConverter.h"
 
-#include "clsim/converter/I3PhotonConverter.h"
-#include "clsim/converter/I3MCHitConverterWithIDs.h"
-#include "clsim/converter/I3MCPEConverterWithIDs.h"
-#include "tableio/converter/pybindings.h"
+#include "simclasses/I3MCPE.h"
 
-void register_I3Converters()
+struct I3MCPEConverterWithIDs 
 {
-    I3CONVERTER_NAMESPACE(clsim);
+    typedef I3MCPE booked_type;
+    typedef booked_type value_type;
 
-    I3CONVERTER_EXPORT_DEFAULT(I3PhotonConverter, "Dumps a single I3Photon to a table column");
-    I3_MAP_CONVERTER_EXPORT_DEFAULT(I3PhotonSeriesMapConverter,"Dumps all I3Photons in a I3PhotonSeriesMap");
+    void AddFields(I3TableRowDescriptionPtr desc, const booked_type& = booked_type());
+    void FillSingleRow(const booked_type& dl, I3TableRowPtr row);
+};
 
-    // this is not the default converter, the default one is in dataclasses
-    I3_MAP_CONVERTER_EXPORT(I3MCHitSeriesMapConverterWithIDs, "Dumps all I3MCHits from a I3MCHitSeriesMap");
-
-    I3_MAP_CONVERTER_EXPORT(I3MCPESeriesMapConverterWithIDs, "Dumps all I3MCPEs from a I3MCPESeriesMap");
-
-}
+typedef I3MapOMKeyVectorConverter<I3MCPEConverterWithIDs> I3MCPESeriesMapConverterWithIDs;

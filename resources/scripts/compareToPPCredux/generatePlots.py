@@ -70,12 +70,12 @@ def getTimesAndPositions(filename, DOMs):
     timesForDOM = []
 
     h5file = tables.openFile(filename=filename, mode='r')
-    allTimes = h5file.root.MCHitSeriesMap.cols.time[:]
-    allOMs = h5file.root.MCHitSeriesMap.cols.om[:]
-    allStrings = h5file.root.MCHitSeriesMap.cols.string[:]
-    allX = h5file.root.MCHitSeriesMap.cols.x[:]
-    allY = h5file.root.MCHitSeriesMap.cols.y[:]
-    allZ = h5file.root.MCHitSeriesMap.cols.z[:]
+    allTimes = h5file.root.MCPESeriesMap.cols.time[:]
+    allOMs = h5file.root.MCPESeriesMap.cols.om[:]
+    allStrings = h5file.root.MCPESeriesMap.cols.string[:]
+    allX = h5file.root.MCPESeriesMap.cols.x[:]
+    allY = h5file.root.MCPESeriesMap.cols.y[:]
+    allZ = h5file.root.MCPESeriesMap.cols.z[:]
 
     for string, dom in DOMs:
         timesForDOM.append(allTimes[(allOMs==dom) & (allStrings==string)])
@@ -91,7 +91,7 @@ def getTimesAndPositions(filename, DOMs):
         yPosForDOM.append(yPosForThisDOM[0])
         zPosForDOM.append(zPosForThisDOM[0])
 
-    numEvents = len(h5file.root.__I3Index__.MCHitSeriesMap.cols.exists[:])
+    numEvents = len(h5file.root.__I3Index__.MCPESeriesMap.cols.exists[:])
 
     emitterPosX = numpy.unique(h5file.root.MCMostEnergeticInIce.cols.x[:])
     emitterPosY = numpy.unique(h5file.root.MCMostEnergeticInIce.cols.y[:])

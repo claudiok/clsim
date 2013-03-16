@@ -77,7 +77,7 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
   private/clsim/I3CLSimFlasherPulse.cxx
   private/clsim/util/I3MuonSlicer.cxx
   private/clsim/util/I3TauSanitizer.cxx
-  private/clsim/dom/I3PhotonToMCHitConverter.cxx
+  private/clsim/dom/I3PhotonToMCPEConverter.cxx
   private/clsim/shadow/I3ShadowedPhotonRemover.cxx
   private/clsim/shadow/I3ShadowedPhotonRemoverModule.cxx
   private/clsim/shadow/I3ExtraGeometryItem.cxx
@@ -88,6 +88,7 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
   # tableio converters
   private/clsim/converter/I3PhotonConverter.cxx
   private/clsim/converter/I3MCHitConverterWithIDs.cxx
+  private/clsim/converter/I3MCPEConverterWithIDs.cxx
 )
 
 SET(LIB_${PROJECT_NAME}_PROJECTS icetray dataio dataclasses phys-services tableio simclasses)
