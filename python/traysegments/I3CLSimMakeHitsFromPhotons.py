@@ -92,6 +92,6 @@ def I3CLSimMakeHitsFromPhotons(tray, name,
                    DOMPancakeFactor = DOMOversizeFactor,
                    WavelengthAcceptance = domAcceptance,
                    AngularAcceptance = domAngularSensitivity,
-                   IgnoreDOMsWithoutDetectorStatusEntry = True,
+                   IgnoreDOMsWithoutDetectorStatusEntry = False, # in icesim4 it is the job of the DOM simulation tools to cut out these DOMs
                    If=If)
 
