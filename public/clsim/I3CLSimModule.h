@@ -298,8 +298,6 @@ private:
     
     // helper functions
     std::size_t FlushFrameCache();
-    void AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
-                            I3CLSimPhotonHistorySeriesConstPtr photonHistories);
     void ConvertMCTreeToLightSources(const I3MCTree &mcTree,
                                      std::deque<I3CLSimLightSource> &lightSources,
                                      std::deque<double> &timeOffsets);
@@ -312,8 +310,6 @@ private:
     std::map<uint32_t, uint64_t> photonNumGeneratedPerParticle_;
     std::map<uint32_t, double> photonWeightSumGeneratedPerParticle_;
 
-    std::map<uint32_t, uint64_t> photonNumAtOMPerParticle_;
-    std::map<uint32_t, double> photonWeightSumAtOMPerParticle_;
 
 
     
@@ -355,6 +351,22 @@ private:
     // currently being simulated
     std::map<uint32_t, particleCacheEntry> particleCache_;
     
+    static void AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
+                                   I3CLSimPhotonHistorySeriesConstPtr photonHistories,
+                                   const std::vector<I3PhotonSeriesMapPtr> &photonsForFrameList_,
+                                   std::vector<int32_t> &currentPhotonIdForFrame_,
+                                   const std::vector<I3FramePtr> &frameList_,
+                                   const std::map<uint32_t, particleCacheEntry> &particleCache_,
+#ifdef GRANULAR_GEOMETRY_SUPPORT
+                                   const std::vector<std::set<ModuleKey> > &maskedOMKeys_,
+#else
+                                   const std::vector<std::set<OMKey> > &maskedOMKeys_,
+#endif
+                                   bool collectStatistics_,
+                                   std::map<uint32_t, uint64_t> &photonNumAtOMPerParticle,
+                                   std::map<uint32_t, double> &photonWeightSumAtOMPerParticle
+                                   );
+
     SET_LOGGER("I3CLSimModule");
 };
 

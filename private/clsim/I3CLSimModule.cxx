@@ -820,7 +820,20 @@ namespace {
 }
 
 void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
-                                       I3CLSimPhotonHistorySeriesConstPtr photonHistories)
+                                       I3CLSimPhotonHistorySeriesConstPtr photonHistories,
+                                       const std::vector<I3PhotonSeriesMapPtr> &photonsForFrameList_,
+                                       std::vector<int32_t> &currentPhotonIdForFrame_,
+                                       const std::vector<I3FramePtr> &frameList_,
+                                       const std::map<uint32_t, particleCacheEntry> &particleCache_,
+#ifdef GRANULAR_GEOMETRY_SUPPORT
+                                       const std::vector<std::set<ModuleKey> > &maskedOMKeys_,
+#else
+                                       const std::vector<std::set<OMKey> > &maskedOMKeys_,
+#endif
+                                       bool collectStatistics_,
+                                       std::map<uint32_t, uint64_t> &photonNumAtOMPerParticle,
+                                       std::map<uint32_t, double> &photonWeightSumAtOMPerParticle
+                                       )
 {
     if (photonsForFrameList_.size() != frameList_.size())
         log_fatal("Internal error: cache sizes differ. (1)");
@@ -841,7 +854,7 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
         const I3CLSimPhoton &photon = photons[i];
         
         // find identifier in particle cache
-        std::map<uint32_t, particleCacheEntry>::iterator it = particleCache_.find(photon.identifier);
+        std::map<uint32_t, particleCacheEntry>::const_iterator it = particleCache_.find(photon.identifier);
         if (it == particleCache_.end())
             log_fatal("Internal error: unknown particle id from OpenCL: %" PRIu32,
                       photon.identifier);
@@ -927,8 +940,8 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
         if (collectStatistics_)
         {
             // collect statistics
-            (photonNumAtOMPerParticle_.insert(std::make_pair(photon.identifier, 0)).first->second)++;
-            (photonWeightSumAtOMPerParticle_.insert(std::make_pair(photon.identifier, 0.)).first->second)+=photon.GetWeight();
+            (photonNumAtOMPerParticle.insert(std::make_pair(photon.identifier, 0)).first->second)++;
+            (photonWeightSumAtOMPerParticle.insert(std::make_pair(photon.identifier, 0.)).first->second)+=photon.GetWeight();
         }
         
         currentPhotonId++;
@@ -968,12 +981,38 @@ std::size_t I3CLSimModule::FlushFrameCache()
         log_debug("thread finished.");
     }
 
+    // swap all frame cache objects with local versions
+
+    std::map<uint32_t, uint64_t> photonNumGeneratedPerParticle_old;
+    std::map<uint32_t, double> photonWeightSumGeneratedPerParticle_old;
+    photonNumGeneratedPerParticle_old.swap(photonNumGeneratedPerParticle_);
+    photonWeightSumGeneratedPerParticle_old.swap(photonWeightSumGeneratedPerParticle_);
+
+    std::vector<I3PhotonSeriesMapPtr> photonsForFrameList_old;
+    std::vector<int32_t> currentPhotonIdForFrame_old;
+    std::vector<I3FramePtr> frameList_old;
+    std::map<uint32_t, particleCacheEntry> particleCache_old;
+#ifdef GRANULAR_GEOMETRY_SUPPORT
+    std::vector<std::set<ModuleKey> > maskedOMKeys_old;
+#else
+    std::vector<std::set<OMKey> > maskedOMKeys_old;
+#endif
+    std::vector<bool> frameIsBeingWorkedOn_old;
+
+    photonsForFrameList_old.swap(photonsForFrameList_);
+    currentPhotonIdForFrame_old.swap(currentPhotonIdForFrame_);
+    frameList_old.swap(frameList_);
+    particleCache_old.swap(particleCache_);
+    maskedOMKeys_old.swap(maskedOMKeys_);
+    frameIsBeingWorkedOn_old.swap(frameIsBeingWorkedOn_);
+
+
     // at this point, if we have frames in the secondary cache, 
     // immediately push them to Geant4 so it can start working on them
     for (;;)
     {
         if (frameList2_.empty()) break;
-        if (frameListPhysicsFrameCounter_ >= maxNumParallelEvents_) break;
+        if (frameList_.size() >= maxNumParallelEvents_) break;
 
         DigestOtherFrame(frameList2_.front());
         frameList2_.pop_front();
@@ -982,8 +1021,8 @@ std::size_t I3CLSimModule::FlushFrameCache()
     // now wait for OpenCL to finish    
     std::size_t totalNumOutPhotons=0;
     
-    photonNumAtOMPerParticle_.clear();
-    photonWeightSumAtOMPerParticle_.clear();
+    std::map<uint32_t, uint64_t> photonNumAtOMPerParticle;
+    std::map<uint32_t, double> photonWeightSumAtOMPerParticle;
     
     for (std::size_t deviceIndex=0;deviceIndex<numBunchesSentToOpenCL_.size();++deviceIndex)
     {
@@ -996,7 +1035,16 @@ std::size_t I3CLSimModule::FlushFrameCache()
             if (!res.photons) log_fatal("Internal error: received NULL photon series from OpenCL.");
 
             // convert to I3Photons and add to their respective frames
-            AddPhotonsToFrames(*(res.photons), res.photonHistories);
+            AddPhotonsToFrames(*(res.photons), res.photonHistories,
+                               photonsForFrameList_old,
+                               currentPhotonIdForFrame_old,
+                               frameList_old,
+                               particleCache_old,
+                               maskedOMKeys_old,
+                               collectStatistics_,
+                               photonNumAtOMPerParticle,
+                               photonWeightSumAtOMPerParticle
+                               );
             
             totalNumOutPhotons += res.photons->size();
         }
@@ -1009,8 +1057,8 @@ std::size_t I3CLSimModule::FlushFrameCache()
     if (collectStatistics_)
     {
         std::vector<I3CLSimEventStatisticsPtr> eventStatisticsForFrame;
-        for (std::size_t i=0;i<frameList_.size();++i) {
-            if (frameIsBeingWorkedOn_[i]) {
+        for (std::size_t i=0;i<frameList_old.size();++i) {
+            if (frameIsBeingWorkedOn_old[i]) {
                 eventStatisticsForFrame.push_back(I3CLSimEventStatisticsPtr(new I3CLSimEventStatistics()));
             } else {
                 eventStatisticsForFrame.push_back(I3CLSimEventStatisticsPtr()); // NULL pointer for non-physics(/DAQ)-frames
@@ -1019,12 +1067,12 @@ std::size_t I3CLSimModule::FlushFrameCache()
 
         
         // generated photons (count)
-        for(std::map<uint32_t, uint64_t>::const_iterator it=photonNumGeneratedPerParticle_.begin();
-            it!=photonNumGeneratedPerParticle_.end();++it)
+        for(std::map<uint32_t, uint64_t>::const_iterator it=photonNumGeneratedPerParticle_old.begin();
+            it!=photonNumGeneratedPerParticle_old.end();++it)
         {
             // find identifier in particle cache
-            std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_.find(it->first);
-            if (it_cache == particleCache_.end())
+            std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_old.find(it->first);
+            if (it_cache == particleCache_old.end())
                 log_error("Internal error: unknown particle id from Geant4: %" PRIu32,
                           it->first);
             const particleCacheEntry &cacheEntry = it_cache->second;
@@ -1038,12 +1086,12 @@ std::size_t I3CLSimModule::FlushFrameCache()
         }
 
         // generated photons (weight sum)
-        for(std::map<uint32_t, double>::const_iterator it=photonWeightSumGeneratedPerParticle_.begin();
-            it!=photonWeightSumGeneratedPerParticle_.end();++it)
+        for(std::map<uint32_t, double>::const_iterator it=photonWeightSumGeneratedPerParticle_old.begin();
+            it!=photonWeightSumGeneratedPerParticle_old.end();++it)
         {
             // find identifier in particle cache
-            std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_.find(it->first);
-            if (it_cache == particleCache_.end())
+            std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_old.find(it->first);
+            if (it_cache == particleCache_old.end())
                 log_fatal("Internal error: unknown particle id from Geant4: %" PRIu32,
                           it->first);
             const particleCacheEntry &cacheEntry = it_cache->second;
@@ -1058,12 +1106,12 @@ std::size_t I3CLSimModule::FlushFrameCache()
 
         
         // photons @ DOMs(count)
-        for(std::map<uint32_t, uint64_t>::const_iterator it=photonNumAtOMPerParticle_.begin();
-            it!=photonNumAtOMPerParticle_.end();++it)
+        for(std::map<uint32_t, uint64_t>::const_iterator it=photonNumAtOMPerParticle.begin();
+            it!=photonNumAtOMPerParticle.end();++it)
         {
             // find identifier in particle cache
-            std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_.find(it->first);
-            if (it_cache == particleCache_.end())
+            std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_old.find(it->first);
+            if (it_cache == particleCache_old.end())
                 log_fatal("Internal error: unknown particle id from Geant4: %" PRIu32,
                           it->first);
             const particleCacheEntry &cacheEntry = it_cache->second;
@@ -1077,12 +1125,12 @@ std::size_t I3CLSimModule::FlushFrameCache()
         }
         
         // photons @ DOMs (weight sum)
-        for(std::map<uint32_t, double>::const_iterator it=photonWeightSumAtOMPerParticle_.begin();
-            it!=photonWeightSumAtOMPerParticle_.end();++it)
+        for(std::map<uint32_t, double>::const_iterator it=photonWeightSumAtOMPerParticle.begin();
+            it!=photonWeightSumAtOMPerParticle.end();++it)
         {
             // find identifier in particle cache
-            std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_.find(it->first);
-            if (it_cache == particleCache_.end())
+            std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_old.find(it->first);
+            if (it_cache == particleCache_old.end())
                 log_fatal("Internal error: unknown particle id from Geant4: %" PRIu32,
                           it->first);
             const particleCacheEntry &cacheEntry = it_cache->second;
@@ -1097,44 +1145,30 @@ std::size_t I3CLSimModule::FlushFrameCache()
 
         
         // store statistics to frame
-        for (std::size_t i=0;i<frameList_.size();++i)
+        for (std::size_t i=0;i<frameList_old.size();++i)
         {
-            if (frameIsBeingWorkedOn_[i]) {
-                frameList_[i]->Put(statisticsName_, eventStatisticsForFrame[i]);
+            if (frameIsBeingWorkedOn_old[i]) {
+                frameList_old[i]->Put(statisticsName_, eventStatisticsForFrame[i]);
             }
         }
     }    
     
-    // not needed anymore
-    photonWeightSumGeneratedPerParticle_.clear();
-    photonNumGeneratedPerParticle_.clear();
-    photonNumAtOMPerParticle_.clear();
-    photonWeightSumAtOMPerParticle_.clear();
-
     
     log_debug("finished.");
     
     std::size_t framesPushed=0;
-    for (std::size_t identifier=0;identifier<frameList_.size();++identifier)
+    for (std::size_t identifier=0;identifier<frameList_old.size();++identifier)
     {
-        if (frameIsBeingWorkedOn_[identifier]) {
+        if (frameIsBeingWorkedOn_old[identifier]) {
             log_debug("putting photons into frame %zu...", identifier);
-            frameList_[identifier]->Put(photonSeriesMapName_, photonsForFrameList_[identifier]);
+            frameList_old[identifier]->Put(photonSeriesMapName_, photonsForFrameList_old[identifier]);
         }
         
         log_debug("pushing frame number %zu...", identifier);
-        PushFrame(frameList_[identifier]);
+        PushFrame(frameList_old[identifier]);
         ++framesPushed;
     }
     
-    // empty the frame cache
-    particleCache_.clear();
-    frameList_.clear();
-    photonsForFrameList_.clear();
-    currentPhotonIdForFrame_.clear();
-    frameIsBeingWorkedOn_.clear();
-    maskedOMKeys_.clear();
-
     return framesPushed;
 }
 
