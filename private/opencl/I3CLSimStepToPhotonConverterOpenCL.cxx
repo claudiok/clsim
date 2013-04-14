@@ -672,9 +672,8 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
         log_warn("OpenCL context created successfully!");
     
     {
-        log_info("Running on: ");
         std::string deviceName = device.getInfo<CL_DEVICE_NAME>();
-        log_info("  * \"%s\"", deviceName.c_str());
+        log_info("Running on \"%s\"", deviceName.c_str());
         log_debug("      ->                      CL_DEVICE_TYPE: %s", boost::lexical_cast<std::string>(device.getInfo<CL_DEVICE_TYPE>()).c_str());
         log_debug("      ->         CL_DEVICE_MAX_COMPUTE_UNITS: %s", boost::lexical_cast<std::string>(device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>()).c_str());
         log_debug("      ->    CL_DEVICE_MAX_WORK_ITEM_SIZES[0]: %s", boost::lexical_cast<std::string>(device.getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[0]).c_str());
