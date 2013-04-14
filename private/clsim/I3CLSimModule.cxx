@@ -931,7 +931,7 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
     
 }
 
-void I3CLSimModule::FlushFrameCache()
+std::size_t I3CLSimModule::FlushFrameCache()
 {
     log_debug("Flushing frame cache..");
     
@@ -1097,6 +1097,7 @@ void I3CLSimModule::FlushFrameCache()
     
     log_debug("finished.");
     
+    std::size_t framesPushed=0;
     for (std::size_t identifier=0;identifier<frameList_.size();++identifier)
     {
         if (frameIsBeingWorkedOn_[identifier]) {
@@ -1106,6 +1107,7 @@ void I3CLSimModule::FlushFrameCache()
         
         log_debug("pushing frame number %zu...", identifier);
         PushFrame(frameList_[identifier]);
+        ++framesPushed;
     }
     
     // empty the frame cache
@@ -1115,8 +1117,8 @@ void I3CLSimModule::FlushFrameCache()
     currentPhotonIdForFrame_.clear();
     frameIsBeingWorkedOn_.clear();
     maskedOMKeys_.clear();
-    
-    frameListPhysicsFrameCounter_=0;
+
+    return framesPushed;
 }
 
 namespace {
@@ -1245,11 +1247,47 @@ void I3CLSimModule::Process()
     }
 
     // it's either Physics or something else..
-    DigestOtherFrame(frame);
+    if (frameListPhysicsFrameCounter_ < maxNumParallelEvents_)
+    {
+        // we currently treat physics and other frames/empty Physics
+        // frames the same
+        //const bool isPhysicsFrame =
+        DigestOtherFrame(frame);
+        frameListPhysicsFrameCounter_++;
+    }
+    else if (frameListPhysicsFrameCounter_ < maxNumParallelEvents_*2) 
+    {
+        // keep a second buffer so we have it available once 
+        // the first buffer has finished processing
+        frameList2_.push_back(frame);
+        frameListPhysicsFrameCounter_++;
+    }
+    else // frameListPhysicsFrameCounter_ >= maxNumParallelEvents_*2
+    {
+        log_debug("Flushing results for a total energy of %fGeV for %" PRIu64 " particles",
+                 totalSimulatedEnergyForFlush_/I3Units::GeV, totalNumParticlesForFlush_);
+                 
+        totalSimulatedEnergyForFlush_=0.;
+        totalNumParticlesForFlush_=0;
+        
+        // this will finish processing the first buffer and
+        // push all its frames
+        const std::size_t framesPushed =
+            FlushFrameCache();
+        frameListPhysicsFrameCounter_ -= framesPushed;
+
+        // now immediately start processing frames from the second buffer
+        for (std::size_t i=0;i<frameList2_.size();++i) {
+            DigestOtherFrame(frameList2_[i]);
+        }
+        frameList2_.clear();
+        
+        log_debug("============== CACHE FLUSHED ================");
+    }
 }
 
 
-void I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
+bool I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
 {
     log_trace("%s", __PRETTY_FUNCTION__);
     
@@ -1280,7 +1318,7 @@ void I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
     if (workOnTheseStops_set_.count(frame->GetStop()) == 0) {
         // nothing to do for this frame, it is chached, however
         frameIsBeingWorkedOn_.push_back(false); // do not touch this frame, just push it later on
-        return;
+        return false;
     }
     
     // should we process it? (conditional module)
@@ -1289,7 +1327,7 @@ void I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
     
     if (!shouldDoProcess_fromConditionalModule) {
         frameIsBeingWorkedOn_.push_back(false); // do not touch this frame, just push it later on
-        return;
+        return false;
     }
     
     // does it include some work?
@@ -1304,7 +1342,7 @@ void I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
     if ((!MCTree) && (!flasherPulses)) {
         // ignore frames without any MCTree and/or Flashers
         frameIsBeingWorkedOn_.push_back(false); // do not touch this frame, just push it later on
-        return;
+        return false;
     }
 
     I3VectorOMKeyConstPtr omKeyMask;
@@ -1324,8 +1362,6 @@ void I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
     
     // work with this frame!
     frameIsBeingWorkedOn_.push_back(true); // this frame will receive results (->Put() will be called later)
-    
-    frameListPhysicsFrameCounter_++;
     
     std::deque<I3CLSimLightSource> lightSources;
     std::deque<double> timeOffsets;
@@ -1396,19 +1432,8 @@ void I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
     }
     
     lightSources.clear();
-    
-    if (frameListPhysicsFrameCounter_ >= maxNumParallelEvents_)
-    {
-        log_debug("Flushing results for a total energy of %fGeV for %" PRIu64 " particles",
-                 totalSimulatedEnergyForFlush_/I3Units::GeV, totalNumParticlesForFlush_);
-                 
-        totalSimulatedEnergyForFlush_=0.;
-        totalNumParticlesForFlush_=0;
-        
-        FlushFrameCache();
-        
-        log_debug("============== CACHE FLUSHED ================");
-    }
+
+    return true;
 }
 
 void I3CLSimModule::Finish()

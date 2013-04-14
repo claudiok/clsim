@@ -120,7 +120,7 @@ private:
     /**
      * The module needs to process Physics frames
      */
-    void DigestOtherFrame(I3FramePtr frame);
+    bool DigestOtherFrame(I3FramePtr frame);
     
     /**
      * The module needs to process Geometry frames
@@ -297,7 +297,7 @@ private:
 
     
     // helper functions
-    void FlushFrameCache();
+    std::size_t FlushFrameCache();
     void AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
                             I3CLSimPhotonHistorySeriesConstPtr photonHistories);
     void ConvertMCTreeToLightSources(const I3MCTree &mcTree,
@@ -331,8 +331,9 @@ private:
     I3CLSimLightSourceToStepConverterGeant4Ptr geant4ParticleToStepsConverter_;
     
     // list of all currently held frames, in order
-    unsigned int frameListPhysicsFrameCounter_;
+    std::size_t frameListPhysicsFrameCounter_;
     std::vector<I3FramePtr> frameList_;
+    std::vector<I3FramePtr> frameList2_;
     std::vector<I3PhotonSeriesMapPtr> photonsForFrameList_;
     std::vector<int32_t> currentPhotonIdForFrame_;
     std::vector<bool> frameIsBeingWorkedOn_;
