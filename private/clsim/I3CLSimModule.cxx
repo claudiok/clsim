@@ -1020,12 +1020,11 @@ std::size_t I3CLSimModule::FlushFrameCache()
         frameList2_.pop_front();
     }
 
-    // now wait for OpenCL to finish    
-    std::size_t totalNumOutPhotons=0;
-    
+    // now wait for OpenCL to finish; retrieve results
     std::map<uint32_t, uint64_t> photonNumAtOMPerParticle;
     std::map<uint32_t, double> photonWeightSumAtOMPerParticle;
-    
+
+    std::deque<I3CLSimStepToPhotonConverter::ConversionResult_t> res_list;
     for (std::size_t deviceIndex=0;deviceIndex<numBunchesSentToOpenCL_.size();++deviceIndex)
     {
         log_debug("Geant4 finished, retrieving results from GPU %zu..", deviceIndex);
@@ -1036,24 +1035,48 @@ std::size_t I3CLSimModule::FlushFrameCache()
             openCLStepsToPhotonsConverters_[deviceIndex]->GetConversionResult();
             if (!res.photons) log_fatal("Internal error: received NULL photon series from OpenCL.");
 
-            // convert to I3Photons and add to their respective frames
-            AddPhotonsToFrames(*(res.photons), res.photonHistories,
-                               photonsForFrameList_old,
-                               currentPhotonIdForFrame_old,
-                               frameList_old,
-                               particleCache_old,
-                               maskedOMKeys_old,
-                               collectStatistics_,
-                               photonNumAtOMPerParticle,
-                               photonWeightSumAtOMPerParticle
-                               );
-            
-            totalNumOutPhotons += res.photons->size();
+            res_list.push_back(res);
         }
     }
     
     log_debug("results fetched from OpenCL.");
-    
+
+    // new frames were already sent to Geant4, we can re-start the thread right now
+    // since we are done with fetching results from OpenCL    
+    if (startThreadLater) {
+        // start the connector thread if necessary
+        if (!threadObj_) {
+            log_debug("Delayed start of Thread().");
+            StartThread();
+        }
+    }
+
+    log_debug("Adding photons to frame.");
+    std::size_t totalNumOutPhotons=0;
+
+    while (!res_list.empty()) 
+    {
+        const I3CLSimStepToPhotonConverter::ConversionResult_t &res =
+            res_list.front();
+
+        // convert to I3Photons and add to their respective frames
+        AddPhotonsToFrames(*(res.photons), res.photonHistories,
+                           photonsForFrameList_old,
+                           currentPhotonIdForFrame_old,
+                           frameList_old,
+                           particleCache_old,
+                           maskedOMKeys_old,
+                           collectStatistics_,
+                           photonNumAtOMPerParticle,
+                           photonWeightSumAtOMPerParticle
+                           );
+        
+        totalNumOutPhotons += res.photons->size();
+
+        res_list.pop_front();
+    }
+
+
     log_debug("Got %zu photons in total during flush.", totalNumOutPhotons);
 
     if (collectStatistics_)
@@ -1171,14 +1194,6 @@ std::size_t I3CLSimModule::FlushFrameCache()
         ++framesPushed;
     }
     
-    if (startThreadLater) {
-        // start the connector thread if necessary
-        if (!threadObj_) {
-            log_debug("Delayed start of Thread().");
-            StartThread();
-        }
-    }
-
     return framesPushed;
 }
 
