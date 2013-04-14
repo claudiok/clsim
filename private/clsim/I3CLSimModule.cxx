@@ -1262,7 +1262,8 @@ void I3CLSimModule::Process()
         frameList2_.push_back(frame);
         frameListPhysicsFrameCounter_++;
     }
-    else // frameListPhysicsFrameCounter_ >= maxNumParallelEvents_*2
+
+    if (frameListPhysicsFrameCounter_ >= maxNumParallelEvents_*2) 
     {
         log_debug("Flushing results for a total energy of %fGeV for %" PRIu64 " particles",
                  totalSimulatedEnergyForFlush_/I3Units::GeV, totalNumParticlesForFlush_);
@@ -1449,6 +1450,9 @@ void I3CLSimModule::Finish()
     std::size_t framesPushed = FlushFrameCache();
     frameListPhysicsFrameCounter_ -= framesPushed;
 
+    log_info("Flushing I3Tray..");
+    Flush();
+
     // finish frames in 2nd buffer if there are any
     if (frameList2_.size()>0) {
         for (std::size_t i=0;i<frameList2_.size();++i) {
@@ -1458,11 +1462,11 @@ void I3CLSimModule::Finish()
 
         std::size_t framesPushed = FlushFrameCache();
         frameListPhysicsFrameCounter_ -= framesPushed;
+
+        log_info("Flushing I3Tray (again)..");
+        Flush();
     }
 
-    log_info("Flushing I3Tray..");
-    Flush();
-    
     log_info("I3CLSimModule is done.");
 
     // add some summary information to a potential I3SummaryService
