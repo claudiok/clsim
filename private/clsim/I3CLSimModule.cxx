@@ -967,7 +967,19 @@ std::size_t I3CLSimModule::FlushFrameCache()
         if (!threadFinishedOK_) log_fatal("Thread was aborted or failed.");
         log_debug("thread finished.");
     }
-    
+
+    // at this point, if we have frames in the secondary cache, 
+    // immediately push them to Geant4 so it can start working on them
+    for (;;)
+    {
+        if (frameList2_.empty()) break;
+        if (frameListPhysicsFrameCounter_ >= maxNumParallelEvents_) break;
+
+        DigestOtherFrame(frameList2_.front());
+        frameList2_.pop_front();
+    }
+
+    // now wait for OpenCL to finish    
     std::size_t totalNumOutPhotons=0;
     
     photonNumAtOMPerParticle_.clear();

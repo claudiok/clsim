@@ -333,7 +333,7 @@ private:
     // list of all currently held frames, in order
     std::size_t frameListPhysicsFrameCounter_;
     std::vector<I3FramePtr> frameList_;
-    std::vector<I3FramePtr> frameList2_;
+    std::deque<I3FramePtr> frameList2_;
     std::vector<I3PhotonSeriesMapPtr> photonsForFrameList_;
     std::vector<int32_t> currentPhotonIdForFrame_;
     std::vector<bool> frameIsBeingWorkedOn_;
