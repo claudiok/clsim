@@ -1006,6 +1006,7 @@ std::size_t I3CLSimModule::FlushFrameCache()
     maskedOMKeys_old.swap(maskedOMKeys_);
     frameIsBeingWorkedOn_old.swap(frameIsBeingWorkedOn_);
 
+    bool startThreadLater = false;
 
     // at this point, if we have frames in the secondary cache, 
     // immediately push them to Geant4 so it can start working on them
@@ -1014,7 +1015,8 @@ std::size_t I3CLSimModule::FlushFrameCache()
         if (frameList2_.empty()) break;
         if (frameList_.size() >= maxNumParallelEvents_) break;
 
-        DigestOtherFrame(frameList2_.front());
+        DigestOtherFrame(frameList2_.front(), false); // do not start the connector thread right now
+        startThreadLater=true;
         frameList2_.pop_front();
     }
 
@@ -1169,6 +1171,14 @@ std::size_t I3CLSimModule::FlushFrameCache()
         ++framesPushed;
     }
     
+    if (startThreadLater) {
+        // start the connector thread if necessary
+        if (!threadObj_) {
+            log_debug("Delayed start of Thread().");
+            StartThread();
+        }
+    }
+
     return framesPushed;
 }
 
@@ -1339,7 +1349,7 @@ void I3CLSimModule::Process()
 }
 
 
-bool I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
+bool I3CLSimModule::DigestOtherFrame(I3FramePtr frame, bool startThread)
 {
     log_trace("%s", __PRETTY_FUNCTION__);
     
@@ -1357,12 +1367,14 @@ bool I3CLSimModule::DigestOtherFrame(I3FramePtr frame)
     if (!geometryIsConfigured_)
         log_fatal("Received Physics frame before Geometry frame");
     
-    // start the connector thread if necessary
-    if (!threadObj_) {
-        log_debug("No thread found running during Physics(), starting one.");
-        StartThread();
+    if (startThread)
+    {
+        // start the connector thread if necessary
+        if (!threadObj_) {
+            log_debug("No thread found running during Physics(), starting one.");
+            StartThread();
+        }
     }
-
     
     // a few cases where we don't work with the frame:
     

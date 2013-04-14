@@ -120,7 +120,7 @@ private:
     /**
      * The module needs to process Physics frames
      */
-    bool DigestOtherFrame(I3FramePtr frame);
+    bool DigestOtherFrame(I3FramePtr frame, bool startThread=true);
     
     /**
      * The module needs to process Geometry frames
