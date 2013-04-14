@@ -442,7 +442,12 @@ void I3CLSimModule::Configure()
     }
 
     if (!mediumProperties_) log_fatal("You have to specify the \"MediumProperties\" parameter!");
+
     if (maxNumParallelEvents_ <= 0) log_fatal("Values <= 0 are invalid for the \"MaxNumParallelEvents\" parameter!");
+    // maxNumParallelEvents_ is the number of frames buffered by this module.
+    // Since we use double-buffering, divide the number by 2.
+    maxNumParallelEvents_ /= 2;
+    if (maxNumParallelEvents_==0) maxNumParallelEvents_=1;
 
     if (openCLDeviceList_.empty()) log_fatal("You have to provide at least one OpenCL device using the \"OpenCLDeviceList\" parameter.");
     
