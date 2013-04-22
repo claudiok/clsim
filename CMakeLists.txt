@@ -210,24 +210,6 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3OMTypeIn
   colormsg(GREEN "+-- KM3NeT old-style multiPMT support")
 endif(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3OMTypeInfo.h)
 
-
-# check for glshovel support
-if(QT4_FOUND AND NOT QT_CONFIG_ERROR AND OPENGL_FOUND AND GLUT_FOUND)
-  if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/glshovel)
-    # We seem to have glshovel and its requirements available.
-    # Build the I3Photon renderer!
-    LIST(APPEND LIB_${PROJECT_NAME}_PROJECTS glshovel)
-    LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
-         private/glshovel/render/PhotonPaths.cxx
-     )
-    include(${QT_USE_FILE})
-
-    colormsg(GREEN "+-- glshovel I3Photon renderers")
-  endif(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/glshovel)
-endif(QT4_FOUND AND NOT QT_CONFIG_ERROR AND OPENGL_FOUND AND GLUT_FOUND)
-
-
-
 # This is the core clsim stuff (everything using OpenCL and/or Geant4)
 if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
 
