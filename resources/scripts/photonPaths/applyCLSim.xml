@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<!DOCTYPE boost_serialization>
+<boost_serialization signature="serialization::archive" version="5">
+<I3XMLSummaryService class_id="0" tracking_level="1" version="0" object_id="_0">
+	<I3FrameObject class_id="1" tracking_level="1" version="0" object_id="_1"></I3FrameObject>
+	<map class_id="2" tracking_level="0" version="0">
+		<count>15</count>
+		<item class_id="3" tracking_level="0" version="0">
+			<first>I3CLSimModule_makeCLSimPhotons_clsim_AverageDeviceTimePerPhoton</first>
+			<second>1847.8088272907701</second>
+		</item>
+		<item>
+			<first>I3CLSimModule_makeCLSimPhotons_clsim_AverageHostTimePerPhoton</first>
+			<second>2010.2688498995747</second>
+		</item>
+		<item>
+			<first>I3CLSimModule_makeCLSimPhotons_clsim_DeviceUtilization</first>
+			<second>0.91918492761954684</second>
+		</item>
+		<item>
+			<first>I3CLSimModule_makeCLSimPhotons_clsim_NumKernelCalls</first>
+			<second>1</second>
+		</item>
+		<item>
+			<first>I3CLSimModule_makeCLSimPhotons_clsim_TotalDeviceTime</first>
+			<second>6523657652</second>
+		</item>
+		<item>
+			<first>I3CLSimModule_makeCLSimPhotons_clsim_TotalHostTime</first>
+			<second>7097220000</second>
+		</item>
+		<item>
+			<first>I3CLSimModule_makeCLSimPhotons_clsim_TotalNumPhotonsAtDOMs</first>
+			<second>35251</second>
+		</item>
+		<item>
+			<first>I3CLSimModule_makeCLSimPhotons_clsim_TotalNumPhotonsGenerated</first>
+			<second>3530483</second>
+		</item>
+		<item>
+			<first>context switches</first>
+			<second>20149</second>
+		</item>
+		<item>
+			<first>memory swaps</first>
+			<second>0</second>
+		</item>
+		<item>
+			<first>real_time</first>
+			<second>9</second>
+		</item>
+		<item>
+			<first>shared memory</first>
+			<second>0</second>
+		</item>
+		<item>
+			<first>sys_time</first>
+			<second>1.0183816000000001</second>
+		</item>
+		<item>
+			<first>unshared memory</first>
+			<second>0</second>
+		</item>
+		<item>
+			<first>user_time</first>
+			<second>50.996964400000003</second>
+		</item>
+	</map>
+</I3XMLSummaryService>
+</boost_serialization>
+
