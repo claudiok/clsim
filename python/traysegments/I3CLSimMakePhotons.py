@@ -299,14 +299,14 @@ def I3CLSimMakePhotons(tray, name,
     domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius = DOMRadius*DOMOversizeFactor, efficiency=domEfficiencyCorrection)
 
     # photon generation wavelength bias
-    if isinstance(UnWeightedPhotons, float) or isinstance(UnWeightedPhotons, int):
-        print "***** running unweighted simulation with a photon pre-scaling of", UnWeightedPhotons
-        wavelengthGenerationBias = clsim.I3CLSimFunctionConstant(UnWeightedPhotons)
+    #if isinstance(UnWeightedPhotons, float) or isinstance(UnWeightedPhotons, int):
+    #    print "***** running unweighted simulation with a photon pre-scaling of", UnWeightedPhotons
+    #    wavelengthGenerationBias = clsim.I3CLSimFunctionConstant(UnWeightedPhotons)
+    #else:
+    if not UnWeightedPhotons:
+        wavelengthGenerationBias = domAcceptance
     else:
-        if not UnWeightedPhotons:
-            wavelengthGenerationBias = domAcceptance
-        else:
-            wavelengthGenerationBias = None
+        wavelengthGenerationBias = None
 
     # muon&cascade parameterizations
     ppcConverter = clsim.I3CLSimLightSourceToStepConverterPPC(photonsPerStep=200)
