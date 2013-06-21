@@ -179,18 +179,20 @@ class FlasherInfoVectToFlasherPulseSeriesConverter(icetray.I3ConditionalModule):
 
                     flasherDir = dataclasses.I3Direction()
                     flasherDir.set_theta_phi(90.*I3Units.deg + flasherUpwardsTiltAngle, flasherAziRotation)
-
+                    # now apply the DOM orientation (this will flip over the DOM)
+                    flasherDir = omGeo.orientation.rotate(flasherDir)
+                    # for standard DOMs (i.e. pointing down), flashers are now 
+                    # ordered clockwise when viewed from above
+                    
                     flasherPos = dataclasses.I3Direction()
                     # flasher position on flasher board
                     flasherPos.set_theta_phi(90.*I3Units.deg, flasherAziRotation) # no upwards tilt for position
-                    # flasher position in global coordinates
-                    flasherPos = dataclasses.I3Position(domPos.x + flasherPos.x*flasherRadiusInDOM, domPos.y + flasherPos.y*flasherRadiusInDOM, domPos.z + flasherZPosInDOM)
-
-                    # now apply the DOM orientation (this will flip over the DOM)
-                    flasherDir = omGeo.orientation.rotate(flasherDir)
+                    # flasher position in DOM coordinates
+                    flasherPos = dataclasses.I3Position(flasherPos.x*flasherRadiusInDOM, flasherPos.y*flasherRadiusInDOM, flasherZPosInDOM)
+                    # apply the DOM orientation (this will flip over the DOM)
                     flasherPos = omGeo.orientation.rotate(flasherPos)
-                    # for standard DOMs (i.e. pointing down), flashers are now 
-                    # ordered clockwise when viewed from above
+                    # shift to the actual position in global coordinates
+                    flasherPos = dataclasses.I3Position(domPos.x + flasherPos.x, domPos.y + flasherPos.y, domPos.z - flasherPos.z)
                 else:
                     # old-style I3OMGeo (only up/down enum and aziangle for DOM orientation):
                     # do calculations in global coordinate system (DOM axis towards -z)
@@ -210,14 +212,6 @@ class FlasherInfoVectToFlasherPulseSeriesConverter(icetray.I3ConditionalModule):
                     flasherPos.set_theta_phi(90.*I3Units.deg, flasherAziRotation - omGeo.aziangle) # no upwards tilt for position
                     # flasher position in global coordinates
                     flasherPos = dataclasses.I3Position(domPos.x + flasherPos.x*flasherRadiusInDOM, domPos.y + flasherPos.y*flasherRadiusInDOM, domPos.z + flasherZPosInDOM)
-
-
-
-                flasherPos = dataclasses.I3Direction()
-                # flasher position on flasher board
-                flasherPos.set_theta_phi(90.*I3Units.deg, flasherAziRotation) # no upwards tilt for position
-                # flasher position in global coordinates
-                flasherPos = dataclasses.I3Position(domPos.x + flasherPos.x*flasherRadiusInDOM, domPos.y + flasherPos.y*flasherRadiusInDOM, domPos.z + flasherZPosInDOM)
 
                 newPulse = I3CLSimFlasherPulse()
 
