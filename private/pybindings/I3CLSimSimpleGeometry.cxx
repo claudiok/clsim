@@ -60,6 +60,36 @@ struct I3CLSimSimpleGeometryWrapper : I3CLSimSimpleGeometry, bp::wrapper<I3CLSim
 
 };
 
+static boost::shared_ptr<I3CLSimSimpleGeometryFromI3Geometry>
+MakeSimpleGeometrySimply(double OMRadius, double oversizeFactor,
+                         const I3FramePtr &frame,
+                         const std::vector<int> &ignoreStrings,
+                         const std::vector<unsigned int> &ignoreDomIDs,
+                         const std::vector<std::string> &ignoreSubdetectors,
+                         int32_t ignoreStringIDsSmallerThan,
+                         int32_t ignoreStringIDsLargerThan,
+                         uint32_t ignoreDomIDsSmallerThan,
+                         uint32_t ignoreDomIDsLargerThan,
+                         bool splitIntoPartsAccordingToPosition,
+                         bool useHardcodedDeepCoreSubdetector)
+{
+	std::set<int> ignoreStringss(ignoreStrings.begin(), ignoreStrings.end());
+	std::set<unsigned int> ignoreDomIDss(ignoreDomIDs.begin(), ignoreDomIDs.end());
+	std::set<std::string> ignoreSubdetectorss(ignoreSubdetectors.begin(), ignoreSubdetectors.end());
+	return I3CLSimSimpleGeometryFromI3GeometryPtr(new I3CLSimSimpleGeometryFromI3Geometry(
+		OMRadius, oversizeFactor,
+		frame,
+		ignoreStringss,
+		ignoreDomIDss,
+		ignoreSubdetectorss,
+		ignoreStringIDsSmallerThan,
+		ignoreStringIDsLargerThan,
+		ignoreDomIDsSmallerThan,
+		ignoreDomIDsLargerThan,
+		splitIntoPartsAccordingToPosition,
+		useHardcodedDeepCoreSubdetector));
+}
+
 void register_I3CLSimSimpleGeometry()
 {
     {
@@ -170,24 +200,17 @@ void register_I3CLSimSimpleGeometry()
         boost::noncopyable
         >
         (
-         "I3CLSimSimpleGeometryFromI3Geometry",
-         bp::init<
-         double, double,
-         const I3FramePtr &,
-         const std::set<int> &,
-         const std::set<unsigned int> &,
-         const std::set<std::string> &,
-         int32_t, int32_t,
-         uint32_t, uint32_t,
-         bool, bool
-         >(
+         "I3CLSimSimpleGeometryFromI3Geometry", bp::no_init)
+        .def("__init__", bp::make_constructor(MakeSimpleGeometrySimply, bp::default_call_policies(),
            (
             bp::arg("OMRadius"),
             bp::arg("oversizeFactor"),
             bp::arg("frame"),
-            bp::arg("ignoreStrings"), //=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreStrings,
-            bp::arg("ignoreDomIDs"), //=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreDomIDs,
-            bp::arg("ignoreSubdetectors"), //=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreSubdetectors,
+#define default(name, type) std::vector<type>(I3CLSimSimpleGeometryFromI3Geometry::default_##name.begin(), I3CLSimSimpleGeometryFromI3Geometry::default_##name.end()) 
+            bp::arg("ignoreStrings")=default(ignoreStrings, int),
+            bp::arg("ignoreDomIDs")=default(ignoreDomIDs, unsigned),
+            bp::arg("ignoreSubdetectors")=default(ignoreSubdetectors, std::string),
+#undef default
             bp::arg("ignoreStringIDsSmallerThan")=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreStringIDsSmallerThan,
             bp::arg("ignoreStringIDsLargerThan")=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreStringIDsLargerThan,
             bp::arg("ignoreDomIDsSmallerThan")=I3CLSimSimpleGeometryFromI3Geometry::default_ignoreDomIDsSmallerThan,

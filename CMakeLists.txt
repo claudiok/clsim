@@ -94,6 +94,7 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
 SET(LIB_${PROJECT_NAME}_PROJECTS icetray dataio dataclasses phys-services tableio simclasses)
 SET(LIB_${PROJECT_NAME}_TOOLS python boost gsl)
 
+LIST(APPEND LIB_${PROJECT_NAME}_PROJECTS photonics-service)
 
 # check for Geant4
 if (GEANT4_FOUND AND OPENCL_FOUND)
@@ -215,6 +216,8 @@ if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
 
   LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
     # private/clsim
+    private/clsim/I3CLShim.cxx
+    # private/clsim/I3CLSimBase.cxx
     private/clsim/I3CLSimMediumProperties.cxx
     private/clsim/I3CLSimModule.cxx
     private/clsim/I3CLSimModuleHelper.cxx

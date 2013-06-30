@@ -42,7 +42,7 @@ namespace bp = boost::python;
 // all these do depend on either OpenCL and/or Geant4
 // so they may not be compiled if these tools are missing:
 #define REGISTER_THESE_THINGS_TOO                   \
-    (I3CLSimStep)(I3CLSimPhoton)                    \
+    (I3CLShim)(I3CLSimStep)(I3CLSimPhoton)          \
     (I3CLSimPhotonHistory)                          \
     (I3CLSimFunction)                               \
     (I3CLSimMediumProperties)(I3CLSimRandomValue)   \

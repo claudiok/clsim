@@ -123,23 +123,10 @@ make_vector(const I3Direction &dir)
 	return make_vector(dir.GetX(), dir.GetY(), dir.GetZ());
 }
 
-inline ublas::vector<double>
-operator+(const I3Position &p1, const I3Position &p2)
+ublas::vector<double>
+make_vector(const I3Position &dir)
 {
-	return make_vector(p1.GetX()+p2.GetX(), p1.GetY()+p2.GetY(), p1.GetZ()+p2.GetZ());
-}
-
-inline I3Position
-operator+(const I3Position &p1, const ublas::vector<double> p2)
-{
-	assert(p2.size() == 3);
-	return I3Position(p1.GetX()+p2[0], p1.GetY()+p2[1], p1.GetZ()+p2[2]);
-}
-
-inline ublas::vector<double>
-operator-(const I3Position &p1, const I3Position &p2)
-{
-	return make_vector(p1.GetX()-p2.GetX(), p1.GetY()-p2.GetY(), p1.GetZ()-p2.GetZ());
+	return make_vector(dir.GetX(), dir.GetY(), dir.GetZ());
 }
 
 void
@@ -192,7 +179,7 @@ I3CLSimTabulator::GetBinIndex(const I3Particle &source, const I3Position &pos, d
 	    make_vector(-sourceDir[0]*sourceDir[2]/perpz, -sourceDir[1]*sourceDir[2]/perpz, perpz)
 	    : make_vector(1., 0., 0.);
 	
-	const vector displacement = pos-source.GetPos();
+	const vector displacement = make_vector(pos-source.GetPos());
 	double l = ublas::inner_prod(sourceDir, displacement);
 	const vector rho = displacement - l*sourceDir;
 	double n_rho = ublas::norm_2(rho);
@@ -252,8 +239,8 @@ I3CLSimTabulator::RecordPhoton(const I3Particle &source, const I3Photon &photon)
 			photon.GetDistanceInAbsorptionLengthsAtPositionListEntry(i+1)};
 		
 		// A vector connecting the two recording points.
-		vector pdir = (*p1)-(*p0);
-		double distance = ublas::norm_2(pdir);
+		I3Position pdir = (*p1)-(*p0);
+		double distance = pdir.Magnitude();
 		pdir /= distance;
 		
 		// XXX HACK: the cosine of the impact angle with the
@@ -261,13 +248,13 @@ I3CLSimTabulator::RecordPhoton(const I3Particle &source, const I3Photon &photon)
 		// direction if the DOM is pointed straight down.
 		// This can be modified for detectors with other values
 		// of pi.
-		double impactWeight = wlenWeight*angularAcceptance_->GetValue(pdir[2]);
+		double impactWeight = wlenWeight*angularAcceptance_->GetValue(pdir.GetZ());
 		
 		int nsamples = floorf(distance/stepLength_);
 		nsamples += (rng_->Uniform() < distance/stepLength_ - nsamples);
 		for (int i = 0; i < nsamples; i++) {
 			double d = distance*rng_->Uniform();
-			off_t idx = GetBinIndex(source, (*p0) + d*pdir, t + d/photon.GetGroupVelocity());
+			off_t idx = GetBinIndex(source, *p0 + d*pdir, t + d/photon.GetGroupVelocity());
 			// Once the photon has accumulated enough delay time
 			// to run off the end of the table, there's no going back. Bail.
 			if (idx < 0) {

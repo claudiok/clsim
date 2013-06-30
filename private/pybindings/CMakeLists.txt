@@ -41,6 +41,7 @@ if(BUILD_PYBINDINGS)
   else(BUILD_CLSIM_DATACLASSES_ONLY)
     # add all extra source files that do depend on OpenCL and/or Geant4
     LIST(APPEND LIB_${PROJECT_NAME}_PYBINDINGS_SOURCEFILES
+      I3CLShim.cxx
       I3CLSimStep.cxx
       I3CLSimPhoton.cxx
       I3CLSimPhotonHistory.cxx
