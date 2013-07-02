@@ -137,7 +137,7 @@ operator+(const I3Position &p1, const ublas::vector<double> p2)
 }
 
 inline ublas::vector<double>
-operator-(const I3Position &p1, const I3Position &p2)
+subtract(const I3Position &p1, const I3Position &p2)
 {
 	return make_vector(p1.GetX()-p2.GetX(), p1.GetY()-p2.GetY(), p1.GetZ()-p2.GetZ());
 }
@@ -192,7 +192,7 @@ I3CLSimTabulator::GetBinIndex(const I3Particle &source, const I3Position &pos, d
 	    make_vector(-sourceDir[0]*sourceDir[2]/perpz, -sourceDir[1]*sourceDir[2]/perpz, perpz)
 	    : make_vector(1., 0., 0.);
 	
-	const vector displacement = pos-source.GetPos();
+	const vector displacement = subtract(pos,source.GetPos());
 	double l = ublas::inner_prod(sourceDir, displacement);
 	const vector rho = displacement - l*sourceDir;
 	double n_rho = ublas::norm_2(rho);
@@ -252,7 +252,7 @@ I3CLSimTabulator::RecordPhoton(const I3Particle &source, const I3Photon &photon)
 			photon.GetDistanceInAbsorptionLengthsAtPositionListEntry(i+1)};
 		
 		// A vector connecting the two recording points.
-		vector pdir = (*p1)-(*p0);
+		vector pdir = subtract(*p1,*p0);
 		double distance = ublas::norm_2(pdir);
 		pdir /= distance;
 		
