@@ -292,11 +292,19 @@ I3CLSimTabulator::RecordPhoton(const I3Particle &source, const I3Photon &photon)
 
 namespace bp = boost::python;
 
+#ifdef USE_NUMPY
+#if PY_MAJOR_VERSION >= 3
+static PyObject *hack_import_array() {import_array(); return NULL;}
+#else
+static void hack_import_array() {import_array();}
+#endif
+#endif
+
 void
 register_I3CLSimTabulator()
 {
 #ifdef USE_NUMPY
-	import_array();
+	hack_import_array();
 #endif
 	bp::class_<I3CLSimTabulator, boost::shared_ptr<I3CLSimTabulator> >("I3CLSimTabulator")
 	    .def("SetBins", &I3CLSimTabulator::SetBins)
