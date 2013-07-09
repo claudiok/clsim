@@ -208,6 +208,14 @@ I3CLSimTabulator::GetBinIndex(const I3Particle &source, const I3Position &pos, d
 	// Bail if the photon is too delayed at this point to be recorded
 	if (coords[3] > binEdges_[3].back())
 		return -1;
+
+        // Bail if any of the dimensions is nan
+        for (int i=0; i < 4; i++) {
+		if (!std::isfinite(coords[i])) {
+			log_error("Coordinate %d is %f!", i, coords[i]);
+			return -1;
+		}
+	}
 	
 	// Find the index of the appropriate bin for each dimension,
 	// and compute an index into the flattened table array.
