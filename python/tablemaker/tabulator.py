@@ -19,8 +19,8 @@
 # $Id$
 #
 # @file tabulator.py
-# @version $Revision: 88539 $
-# @date $Date: 2012-05-21 20:18:46 -0500 (Mon, 21 May 2012) $
+# @version $Revision$
+# @date $Date$
 # @author Jakob van Santen
 
 from __future__ import print_function

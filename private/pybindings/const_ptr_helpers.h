@@ -6,8 +6,8 @@
  *
  * $Id$
  *
- * @version $Revision: 63715 $
- * @date $LastChangedDate: 2010-04-28 06:29:44 +0200 (Wed, 28 Apr 2010) $
+ * @version $Revision$
+ * @date $LastChangedDate$
  * @author Jakob van Santen <vansanten@wisc.edu> Last changed by: $LastChangedBy$
  */
 
