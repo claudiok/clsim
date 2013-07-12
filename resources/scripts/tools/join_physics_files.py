@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #
 #
+from __future__ import print_function
 from I3Tray import *
 
 from os.path import expandvars
@@ -10,7 +11,7 @@ import os
 
 argc = len(sys.argv)
 if argc < 3:
-    print 'usage:', sys.argv[0], 'physics_file_base output_file'
+    print('usage:', sys.argv[0], 'physics_file_base output_file')
     sys.exit(1);
 
 physics_file_base = sys.argv[1];
@@ -24,8 +25,8 @@ file_list.sort()
 
 non_zero_file_list = [x for x in file_list if os.path.getsize(x)!=0]
 
-print "working with" 
-print non_zero_file_list
+print("working with") 
+print(non_zero_file_list)
 
 import os
 import sys

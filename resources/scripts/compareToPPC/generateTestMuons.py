@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 from optparse import OptionParser
 from os.path import expandvars
 
@@ -30,7 +31,7 @@ if len(args) != 0:
         parser.error(crap)
 
 if options.MMCWITHRECC and (not options.APPLYMMC):
-    print "using the --mmc-with-recc without --apply-mmc will have no effect"
+    print("using the --mmc-with-recc without --apply-mmc will have no effect")
 
 from I3Tray import *
 import os
@@ -48,9 +49,9 @@ except AttributeError:
     isQified = False
 
 if isQified:
-    print "using fully Qified modules"
+    print("using fully Qified modules")
 else:
-    print "using old-school non-Q-frame enabled modules/services"
+    print("using old-school non-Q-frame enabled modules/services")
 
 if options.APPLYMMC:
     load("libc2j-icetray")

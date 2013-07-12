@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import math
 import numpy
 
@@ -44,10 +46,10 @@ openCLDevice = openCLDevices[0]
 openCLDevice.useNativeMath=False
 workgroupSize = 1
 workItemsPerIteration = 10240
-print "           using platform:", openCLDevice.platform
-print "             using device:", openCLDevice.device
-print "            workgroupSize:", workgroupSize
-print "    workItemsPerIteration:", workItemsPerIteration
+print("           using platform:", openCLDevice.platform)
+print("             using device:", openCLDevice.device)
+print("            workgroupSize:", workgroupSize)
+print("    workItemsPerIteration:", workItemsPerIteration)
 
 
 
@@ -103,9 +105,9 @@ def applyOpenCLMediumPropertyFunction(xValues, layer, mediumProps, mode):
 
 
 mediumProps = clsim.MakeAntaresMediumProperties()
-print "numer of layers =", mediumProps.LayersNum
+print("numer of layers =", mediumProps.LayersNum)
 currentLayer = mediumProps.LayersNum/2
-print "  current layer =", currentLayer
+print("  current layer =", currentLayer)
 phaseRefIndex = mediumProps.GetPhaseRefractiveIndex(currentLayer)
 
 ####

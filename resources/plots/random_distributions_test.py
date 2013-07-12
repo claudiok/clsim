@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import math
 import numpy
 
@@ -45,10 +47,10 @@ openCLDevice = openCLDevices[0]
 openCLDevice.useNativeMath=False
 workgroupSize = 1
 workItemsPerIteration = 10240
-print "           using platform:", openCLDevice.platform
-print "             using device:", openCLDevice.device
-print "            workgroupSize:", workgroupSize
-print "    workItemsPerIteration:", workItemsPerIteration
+print("           using platform:", openCLDevice.platform)
+print("             using device:", openCLDevice.device)
+print("            workgroupSize:", workgroupSize)
+print("    workItemsPerIteration:", workItemsPerIteration)
 
 
 
@@ -64,15 +66,15 @@ def genMCHistogramsOpenCL(distribution, hist_range, distribution_params=[], iter
     
     values = tester.GenerateRandomNumbers(iterations)
     samples = len(values)
-    print "generated"
+    print("generated")
     
     range_width=hist_range[1]-hist_range[0]
     
     num_orig, bins = scipy.histogram(values, range=hist_range, bins=numBins)
-    print "hist1 complete"
+    print("hist1 complete")
     
     del values # not needed anymore
-    print "deleted"
+    print("deleted")
     
     num=[]
     for number in num_orig:
@@ -85,21 +87,21 @@ def genMCHistogramsOpenCL(distribution, hist_range, distribution_params=[], iter
 
 
 def genMCHistogramsHost(distribution, hist_range, distribution_params=[], iterations=100000, numBins=1000):
-    print "generating (host)"
+    print("generating (host)")
 
     values = []
     for i in range(iterations):
         values.append(distribution.SampleFromDistribution(rng, distribution_params))
     samples = len(values)
-    print "generated (host)"
+    print("generated (host)")
     
     range_width=hist_range[1]-hist_range[0]
     
     num_orig, bins = scipy.histogram(values, range=hist_range, bins=numBins)
-    print "hist1 complete (host)"
+    print("hist1 complete (host)")
     
     del values # not needed anymore
-    print "deleted (host)"
+    print("deleted (host)")
     
     num=[]
     for number in num_orig:

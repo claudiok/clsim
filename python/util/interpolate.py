@@ -138,7 +138,7 @@ class interp1d(object):
 
         # Make a "view" of the y array that is rotated to the interpolation
         # axis.
-        axes = range(y.ndim)
+        axes = list(range(y.ndim))
         del axes[self.axis]
         axes.append(self.axis)
         oriented_y = y.transpose(axes)
@@ -251,8 +251,8 @@ class interp1d(object):
             return asarray(y_new)
         else: #elif self._kind in ('linear', 'nearest'):
             y_new[..., out_of_bounds] = self.fill_value
-            axes = range(ny - nx)
-            axes[self.axis:self.axis] = range(ny - nx, ny)
+            axes = list(range(ny - nx))
+            axes[self.axis:self.axis] = list(range(ny - nx, ny))
             return y_new.transpose(axes)
 
     def _check_bounds(self, x_new):

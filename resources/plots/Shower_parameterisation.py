@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import math
 
 import matplotlib
@@ -388,13 +390,13 @@ def DirectionProfileFromPhotonProfile(cosDirection):
         
         discr = cosCherenkov**2. + 4.*(sinCherenkov**2.)*(sin2pix**2.) - 4.*sinCherenkov*sin2pix*cosDirection
         if discr < 0.: 
-            print "discr=", discr
+            print("discr=", discr)
             return
         
         ret1 = (cosCherenkov + math.sqrt(discr))/(2.*sinCherenkov*sin2pix)
         ret2 = (cosCherenkov - math.sqrt(discr))/(2.*sinCherenkov*sin2pix)
         
-        print "x=%f: ret1=%f, ret2=%f" % (x, ret1, ret2)
+        print("x=%f: ret1=%f, ret2=%f" % (x, ret1, ret2))
         
     for x in numpy.linspace(0.,1.,100):
         DirectionProfileFromPhotonProfileForX(cosDirection, x)
@@ -436,7 +438,7 @@ except IOError:
         angularParticleDirectionsWithNumPhotonsWeight_hist_previous = angularParticleDirectionsWithNumPhotonsWeight_hist
         angularParticleDirectionsWithNumPhotonsWeight_hist = None
 
-        print "Loading", histFileName
+        print("Loading", histFileName)
         angularParticleDirectionsWithNumPhotonsWeight = numpy.loadtxt(histFileName, unpack=True)
         angularParticleDirectionsWithNumPhotonsWeight_hist = makeHist(angularParticleDirectionsWithNumPhotonsWeight)
         del angularParticleDirectionsWithNumPhotonsWeight
@@ -455,8 +457,8 @@ p0 = [0.39, 2.61] # initial guess
 
 p1, success = scipy.optimize.leastsq(errfunc, p0[:], args=(angularParticleDirectionsWithNumPhotonsWeight_hist[0], angularParticleDirectionsWithNumPhotonsWeight_hist[1]))
 
-print "p1=", p1
-print "success=", success
+print("p1=", p1)
+print("success=", success)
 
 showerDist_a = p1[0]
 showerDist_b = p1[1]
@@ -465,11 +467,11 @@ showerDist_b = p1[1]
 
 ### do some simple MC simulation to show that throwing dice works correctly..
 
-print "starting MC... (part 1)"
+print("starting MC... (part 1)")
 hist_showerProfileNew = genMCHistograms(lambda: makeShowerPhotonDirection([0.,0.,1.], a=showerDist_a, b=showerDist_b), samples=10000000, numBins=2000)
-print "starting MC... (part 2)"
+print("starting MC... (part 2)")
 hist_showerProfileParticleNew = genMCHistograms(lambda: makeShoweParticleAngle([0.,0.,1.], a=showerDist_a, b=showerDist_b), samples=10000000, numBins=2000)
-print "...MC finished"
+print("...MC finished")
 
 
 

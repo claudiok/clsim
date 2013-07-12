@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 from optparse import OptionParser
 import os
 
@@ -43,9 +45,9 @@ if options.INFILE:
         if os.access(filename,os.R_OK) == False:
                 raise "cannot find input file!"
         infile = filename
-        print 'using input file %s' % infile
+        print('using input file %s' % infile)
 else:
-        print "No input file!"
+        print("No input file!")
         parser.print_help()
         exit(-1)
 
@@ -57,7 +59,7 @@ if infileExt == ".gz":
         infileExt = ".i3.gz"
 
 if infileExt != ".i3" and infileExt != ".i3.gz":
-        raise Exception, "you have to specify either a .i3 or an .i3.gz file!"
+        raise Exception("you have to specify either a .i3 or an .i3.gz file!")
 
 ########################
 outdir=""
@@ -81,49 +83,49 @@ if not outfile:
         infileRootDir, infileRootFile = os.path.split(infileRoot)
         outfile = infileRootFile + "_clsim"
         outfile = outfile + infileExt
-print "output dir is %s" % outdir
-print "output file is %s" % outdir + outfile
+print("output dir is %s" % outdir)
+print("output file is %s" % outdir + outfile)
 
 ########################
 
 
 
 if options.MMCWITHRECC and (not options.APPLYMMC):
-    print "using the --mmc-with-recc without --apply-mmc will have no effect"
+    print("using the --mmc-with-recc without --apply-mmc will have no effect")
 
 if options.CHOPMUONS==-1:
     if options.MMCWITHRECC and options.APPLYMMC:
         options.CHOPMUONS=False
-        print "auto-configured --chop-muons=False"
+        print("auto-configured --chop-muons=False")
     else:
         options.CHOPMUONS=True
-        print "auto-configured --chop-muons=True"
+        print("auto-configured --chop-muons=True")
 else:
     options.CHOPMUONS = (options.CHOPMUONS==1)
     
     if options.APPLYMMC:
         if options.CHOPMUONS and options.MMCWITHRECC:
-            print "you cannot use the --chop-muons and the --mmc-with-recc option together"
+            print("you cannot use the --chop-muons and the --mmc-with-recc option together")
             exit(-1)
         elif (not options.CHOPMUONS) and (not options.MMCWITHRECC):
-            print "you should consider using either the --chop-muons or --mmc-with-recc options"
+            print("you should consider using either the --chop-muons or --mmc-with-recc options")
 
 
 if options.APPLYMMC:
     if  options.MMCWITHRECC:
-        print "applying MMC (with -recc -cont)"
+        print("applying MMC (with -recc -cont)")
     else:
-        print "applying MMC (without -recc -cont)"
+        print("applying MMC (without -recc -cont)")
 if options.CHOPMUONS:
-    print "chopping muons"
+    print("chopping muons")
 else:
-    print "not chopping muons"
+    print("not chopping muons")
 
 
 if options.REMOVEPHOTONDATA:
-    print "not storing I3Photons"
+    print("not storing I3Photons")
 else:
-    print "storing I3Photons"
+    print("storing I3Photons")
 
 
 if options.SEED is None:
@@ -131,7 +133,7 @@ if options.SEED is None:
     theSeed = hash(options.INFILE)
     if theSeed < 0: theSeed = -theSeed
     theSeed = theSeed % 100000
-    print "using auto-seed generated from input filename:", theSeed
+    print("using auto-seed generated from input filename:", theSeed)
 else:
     theSeed = options.SEED
     
@@ -152,7 +154,7 @@ if options.APPLYMMC:
 radiusOverSizeFactor=options.OVERSIZEFACTOR
 
 if radiusOverSizeFactor != 1.:
-    print "using a OM radius oversize factor of {0}".format(radiusOverSizeFactor)
+    print("using a OM radius oversize factor of {0}".format(radiusOverSizeFactor))
 
 tray = I3Tray()
 

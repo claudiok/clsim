@@ -24,6 +24,8 @@
 # @author Claudio Kopper
 #
 
+from __future__ import print_function
+
 from icecube import icetray, dataclasses
 from icecube.clsim import I3CLSimLightSourceParameterization
 from icecube.clsim import I3CLSimFlasherPulse, I3CLSimLightSourceToStepConverterFlasher
@@ -33,7 +35,7 @@ from icecube.clsim import I3CLSimRandomValueFixParameter
 from icecube.clsim import I3CLSimRandomValueConstant
 from icecube.clsim import I3CLSimRandomValueUniform
 
-import I3CLSimRandomValueIceCubeFlasherTimeProfile
+from . import I3CLSimRandomValueIceCubeFlasherTimeProfile
 
 from I3Tray import I3Units
 

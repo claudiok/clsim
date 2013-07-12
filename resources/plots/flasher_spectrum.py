@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import math
 import numpy
 
@@ -99,10 +101,10 @@ openCLDevice = openCLDevices[0]
 openCLDevice.useNativeMath=False
 workgroupSize = 1
 workItemsPerIteration = 10240
-print "           using platform:", openCLDevice.platform
-print "             using device:", openCLDevice.device
-print "            workgroupSize:", workgroupSize
-print "    workItemsPerIteration:", workItemsPerIteration
+print("           using platform:", openCLDevice.platform)
+print("             using device:", openCLDevice.device)
+print("            workgroupSize:", workgroupSize)
+print("    workItemsPerIteration:", workItemsPerIteration)
 
 
 
@@ -141,18 +143,18 @@ def genMCHistogramsOpenCL(distribution, range, iterations=1000, numBins=1000):
     
     values = tester.GenerateRandomNumbers(iterations)
     samples = len(values)
-    print "generated"
+    print("generated")
     
     values = numpy.array(values)/I3Units.nanometer # convert to numpy array and convert units
-    print "converted"
+    print("converted")
     
     range_width=range[1]-range[0]
     
     num_orig, bins = scipy.histogram(values, range=range, bins=numBins)
-    print "hist1 complete"
+    print("hist1 complete")
     
     del values # not needed anymore
-    print "deleted"
+    print("deleted")
     
     num=[]
     for number in num_orig:
@@ -200,14 +202,14 @@ for i in range(len(flasherName)):
     vectorizedSpectrumWithBias = numpy.vectorize(lambda x: spectrum[i].GetValue(x)*domAcceptance.GetValue(x))
     
     integral_spectrum = scipy.integrate.quad(vectorizedSpectrum, spectrum[i].GetMinWlen(), spectrum[i].GetMaxWlen())[0]/I3Units.nanometer
-    print "spectrum integral (w/o bias) [", spectrum[i].GetMinWlen()/I3Units.nanometer, "nm,", spectrum[i].GetMaxWlen()/I3Units.nanometer, "nm] =", integral_spectrum
+    print("spectrum integral (w/o bias) [", spectrum[i].GetMinWlen()/I3Units.nanometer, "nm,", spectrum[i].GetMaxWlen()/I3Units.nanometer, "nm] =", integral_spectrum)
     
     bins = numpy.linspace(wlen_range[0]*I3Units.nanometer, wlen_range[1]*I3Units.nanometer, 1000)
     vals = vectorizedSpectrum(bins) / integral_spectrum
     valsWithBias = vectorizedSpectrumWithBias(bins) / integral_spectrum
 
     correctionFactor = clsim.PhotonNumberCorrectionFactorAfterBias(spectrum[i], domAcceptance, spectrum[i].GetMinWlen(), spectrum[i].GetMaxWlen())
-    print "bias photon number correction factor", correctionFactor
+    print("bias photon number correction factor", correctionFactor)
 
     spectrumData.append([bins, vals])
     spectrumDataWithBias.append([bins, valsWithBias])
@@ -220,12 +222,12 @@ biasDataVals = vectorizedDomAcceptance(biasDataBins)
 
 flasherSpectrumGenNoBias = []
 for i in range(len(spectrumGeneratorNoBias)):
-    print "preparing spectrum", i, "(no bias)"
+    print("preparing spectrum", i, "(no bias)")
     flasherSpectrumGenNoBias.append(genMCHistogramsOpenCL(spectrumGeneratorNoBias[i], range=wlen_range))
 
 flasherSpectrumGenWithBias = []
 for i in range(len(spectrumGeneratorWithBias)):
-    print "preparing spectrum", i, "(with bias)"
+    print("preparing spectrum", i, "(with bias)")
     flasherSpectrumGenWithBias.append(genMCHistogramsOpenCL(spectrumGeneratorWithBias[i], range=wlen_range))
 
 
@@ -243,7 +245,7 @@ cx = fig.add_subplot(3, 1, 3)
 wlens=numpy.linspace(wlen_range[0],wlen_range[1],num=10000)
 #energies=numpy.linspace(h_times_c/680.,h_times_c/260.,num=10000)
 
-print "plotting..."
+print("plotting...")
 legendLabels = []
 legendHandles = []
 
@@ -321,9 +323,9 @@ bx.set_xlabel("wavelength $\\lambda [\\mathrm{nm}]$")
 bx.set_ylabel("intensity [a.u.]")
 
 
-print "saving.."
+print("saving..")
 pylab.savefig("flasher_spectrum.pdf", transparent=True)
 
-print "done."
+print("done.")
 
 

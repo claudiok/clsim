@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import math
 import numpy
 
@@ -54,7 +56,7 @@ tilt_zcoord_diffs = tilt_zcoords[1:]-tilt_zcoords[:-1]
 z_offset = numpy.mean(tilt_zcoord_diffs)
 
 tilt_shift = []
-for i in xrange(len(tilt_distance_from_origin_in_tilt_dir)):
+for i in range(len(tilt_distance_from_origin_in_tilt_dir)):
     tilt_shift.append(tilt_dat[i+1][::-1])
 tilt_shift = numpy.array(tilt_shift)
 
@@ -164,5 +166,5 @@ plotAtDepth(fx, 2400.*I3Units.m)
 
 outfileName = "tilt_map.pdf"
 pylab.savefig(outfileName, transparent=False)
-print "wrote", outfileName
+print("wrote", outfileName)
 

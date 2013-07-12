@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import numpy
 import math
 
@@ -20,10 +21,10 @@ openCLDevice = openCLDevices[0]
 openCLDevice.useNativeMath=False
 workgroupSize = 1
 workItemsPerIteration = 10240
-print "           using platform:", openCLDevice.platform
-print "             using device:", openCLDevice.device
-print "            workgroupSize:", workgroupSize
-print "    workItemsPerIteration:", workItemsPerIteration
+print("           using platform:", openCLDevice.platform)
+print("             using device:", openCLDevice.device)
+print("            workgroupSize:", workgroupSize)
+print("    workItemsPerIteration:", workItemsPerIteration)
 
 
 def evaluateScalarFieldOpenCL(xValues, yValues, zValues, scalarField, useReferenceFunction=False):
@@ -60,11 +61,11 @@ deviation_OclFromRef = results_OpenCL-results_Ref
 maxIndexInOcl = numpy.argmax(numpy.abs(deviation_OclFromRef))
 maxDeviationInOcl = deviation_OclFromRef[maxIndexInOcl]
 
-print "maximum deviation in OpenCL implementation:   ", maxDeviationInOcl, "@", maxIndexInOcl, "xyz:", xVals[maxIndexInOcl], yVals[maxIndexInOcl], zVals[maxIndexInOcl], "ref:", results_Ref[maxIndexInOcl], "ocl:", results_OpenCL[maxIndexInOcl]
+print("maximum deviation in OpenCL implementation:   ", maxDeviationInOcl, "@", maxIndexInOcl, "xyz:", xVals[maxIndexInOcl], yVals[maxIndexInOcl], zVals[maxIndexInOcl], "ref:", results_Ref[maxIndexInOcl], "ocl:", results_OpenCL[maxIndexInOcl])
 
 if numpy.abs(maxDeviationInOcl) > maximumDeviation:
     raise RuntimeError("reference implementation results differ from OpenCL implementation results!")
 
-print "test successful!"
+print("test successful!")
 
 

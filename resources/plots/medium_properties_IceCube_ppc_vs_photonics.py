@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import math
 import numpy
 
@@ -44,22 +46,22 @@ openCLDevice = openCLDevices[0]
 openCLDevice.useNativeMath=False
 workgroupSize = 1
 workItemsPerIteration = 10240
-print "           using platform:", openCLDevice.platform
-print "             using device:", openCLDevice.device
-print "            workgroupSize:", workgroupSize
-print "    workItemsPerIteration:", workItemsPerIteration
+print("           using platform:", openCLDevice.platform)
+print("             using device:", openCLDevice.device)
+print("            workgroupSize:", workgroupSize)
+print("    workItemsPerIteration:", workItemsPerIteration)
 
 
 
 def applyOpenCLWlenDependentFunction(xValues, functionOpenCL, getDerivative=False, useReferenceFunction=False):
-    print "         number of values:", len(xValues)
+    print("         number of values:", len(xValues))
     
     tester = clsim.I3CLSimFunctionTester(device=openCLDevice,
                                                    workgroupSize=workgroupSize,
                                                    workItemsPerIteration=workItemsPerIteration,
                                                    wlenDependentValue=functionOpenCL)
     
-    print "maxWorkgroupSizeForKernel:", tester.maxWorkgroupSize
+    print("maxWorkgroupSizeForKernel:", tester.maxWorkgroupSize)
     
     # the function currently only accepts I3VectorFloat as its input type
     vector = dataclasses.I3VectorFloat(numpy.array(xValues)*I3Units.nanometer)
@@ -136,15 +138,15 @@ elif modelName=="SPICE-Mie":
 else:
     raise RuntimeError("unknown model:", modelName)
 
-print "numer of layers (PPC      ) is {}, starting at z={}m, height={}m".format(mediumPropsPPC.LayersNum, mediumPropsPPC.LayersZStart/I3Units.m, mediumPropsPPC.LayersHeight/I3Units.m)
-print "numer of layers (photonics) is {}, starting at z={}m, height={}m".format(mediumPropsPhotonics.LayersNum, mediumPropsPhotonics.LayersZStart/I3Units.m, mediumPropsPhotonics.LayersHeight/I3Units.m)
+print("numer of layers (PPC      ) is {}, starting at z={}m, height={}m".format(mediumPropsPPC.LayersNum, mediumPropsPPC.LayersZStart/I3Units.m, mediumPropsPPC.LayersHeight/I3Units.m))
+print("numer of layers (photonics) is {}, starting at z={}m, height={}m".format(mediumPropsPhotonics.LayersNum, mediumPropsPhotonics.LayersZStart/I3Units.m, mediumPropsPhotonics.LayersHeight/I3Units.m))
 
 currentLayer = 0
 
 
 ####
 
-print "a"
+print("a")
 
 fig = pylab.figure(3)
 fig.subplots_adjust(left=0.05, bottom=0.05, top=0.95, right=0.98)
@@ -175,7 +177,7 @@ else:
     ngroup_reference_photonics = applyOpenCLWlenDependentFunction(wlens, mediumPropsPhotonics.GetGroupRefractiveIndexOverride(0), useReferenceFunction=True)
 
 
-print "c"
+print("c")
 
 ax.plot(wlens, nphase_reference_PPC,       linewidth=3., color='k',   linestyle='solid', label=r"$n_\mathrm{p}$ (PPC)")
 ax.plot(wlens, nphase_reference_photonics, linewidth=3., color='0.5', linestyle='solid', label=r"$n_\mathrm{p}$ (photonics)")
@@ -215,7 +217,7 @@ for layerNum in range(1, mediumPropsPhotonics.GetLayersNum()): # skip bottom lay
     zStart_PPC = mediumPropsPPC.GetLayersZStart() + float(layerNum) * mediumPropsPPC.GetLayersHeight()
     zStart_photonics = mediumPropsPhotonics.GetLayersZStart() + float(layerNum) * mediumPropsPhotonics.GetLayersHeight()
     
-    print "layer {} starts at z={}m (PPC) / z={}m (photonics)".format(layerNum, zStart_PPC/I3Units.m, zStart_photonics/I3Units.m)
+    print("layer {} starts at z={}m (PPC) / z={}m (photonics)".format(layerNum, zStart_PPC/I3Units.m, zStart_photonics/I3Units.m))
     
     absCoeff_PPC = 1./applyOpenCLMediumPropertyFunction(wlens, layerNum, mediumPropsPPC, mode="absorptionLength")
     bx.plot(wlens, absCoeff_PPC, linewidth=1., linestyle='-', color='b', alpha=0.1, label=r"(PPC) layer %u" % (layerNum))
@@ -258,7 +260,7 @@ for layerNum in range(1, mediumPropsPhotonics.GetLayersNum()): # skip bottom lay
     zStart_PPC = mediumPropsPPC.GetLayersZStart() + float(layerNum) * mediumPropsPPC.GetLayersHeight()
     zStart_photonics = mediumPropsPhotonics.GetLayersZStart() + float(layerNum) * mediumPropsPhotonics.GetLayersHeight()
     
-    print "layer {} starts at z={}m (PPC) / z={}m (photonics)".format(layerNum, zStart_PPC/I3Units.m, zStart_photonics/I3Units.m)
+    print("layer {} starts at z={}m (PPC) / z={}m (photonics)".format(layerNum, zStart_PPC/I3Units.m, zStart_photonics/I3Units.m))
     
     scatCoeff_PPC = 1./applyOpenCLMediumPropertyFunction(wlens, layerNum, mediumPropsPPC, mode="scatteringLength")
     cx.plot(wlens, scatCoeff_PPC, linewidth=1., linestyle='-', color='b', alpha=0.1, label=r"(PPC) layer %u" % (layerNum))

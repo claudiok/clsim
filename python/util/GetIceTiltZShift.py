@@ -49,7 +49,7 @@ def GetIceTiltZShift(
     zcoords = (detectorCenterDepth-tilt_dat[0])[::-1]
 
     zshift = []
-    for i in xrange(len(distance_from_origin_in_tilt_dir)):
+    for i in range(len(distance_from_origin_in_tilt_dir)):
         zshift.append(tilt_dat[i+1][::-1])
     zshift = numpy.array(zshift)
 

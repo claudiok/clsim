@@ -24,6 +24,8 @@
 # @author Claudio Kopper
 #
 
+from __future__ import print_function
+
 from icecube import icetray, dataclasses
 from icecube.clsim import I3CLSimMediumProperties
 from icecube.clsim import I3CLSimRandomValueMixed
@@ -35,7 +37,7 @@ from icecube.clsim import I3CLSimFunctionScatLenIceCube
 from icecube.clsim import I3CLSimScalarFieldConstant
 from icecube.clsim import I3CLSimVectorTransformConstant
 
-import util
+from . import util
 
 from I3Tray import I3Units
 
@@ -129,7 +131,7 @@ def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m,
         relativeError = abs(thisDeltaTau-deltaTau(thisDepth))/thisDeltaTau
         if relativeError > maxRelativeError: maxRelativeError=relativeError
     if maxRelativeError > 0.01:
-        print "The ice table's delta_tau values do not seem to correpsond to the equation. Loading table anyway."
+        print("The ice table's delta_tau values do not seem to correpsond to the equation. Loading table anyway.")
     
     
     # some sanity checks on the layer files
@@ -188,7 +190,7 @@ def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m,
         m.SetPreScatterDirectionTransform(I3CLSimVectorTransformConstant())
         m.SetPostScatterDirectionTransform(I3CLSimVectorTransformConstant())
     else:
-        print "Anisotropy! Whooo!", anisotropyDirAzimuth/I3Units.deg, magnitudeAlongDir, magnitudePerpToDir
+        print("Anisotropy! Whooo!", anisotropyDirAzimuth/I3Units.deg, magnitudeAlongDir, magnitudePerpToDir)
 
         absLenScaling, preScatterTransform, postScatterTransform = \
             util.GetSpiceLeaAnisotropyTransforms(
@@ -202,7 +204,7 @@ def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m,
         m.SetPostScatterDirectionTransform(postScatterTransform)
 
     if useTilt:
-        print "Tilt! Wheee!"
+        print("Tilt! Wheee!")
 
         m.SetIceTiltZShift(
             util.GetIceTiltZShift(

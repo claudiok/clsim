@@ -24,6 +24,7 @@
 # @author Claudio Kopper
 #
 
+from __future__ import print_function
 
 import numpy, math, sys
 from os.path import expandvars
@@ -41,7 +42,7 @@ def GetAntaresOMAngularSensitivity(name='NotSet'):
     """
     
     if name == 'NotSet':
-        print "GetAntaresOMAngularSensitivity ERROR: Please specify an angulare sensitivity type! Possible are 'Spring09', 'Genova', 'NIM' and 'old'."
+        print("GetAntaresOMAngularSensitivity ERROR: Please specify an angulare sensitivity type! Possible are 'Spring09', 'Genova', 'NIM' and 'old'.")
         sys.exit()
         
     elif name == 'Spring09':
@@ -149,7 +150,7 @@ def GetAntaresOMAngularSensitivity(name='NotSet'):
         return I3CLSimFunctionPolynomial(coefficients, -0.36, 1., 0., 1.)
     
     else:
-        print "GetAntaresOMAngularSensitivity ERROR: '"+name+"' does not name an angulare sensitivity type! Possible are 'Spring09', 'Genova', 'NIM' and 'old'."
+        print("GetAntaresOMAngularSensitivity ERROR: '"+name+"' does not name an angulare sensitivity type! Possible are 'Spring09', 'Genova', 'NIM' and 'old'.")
         sys.exit()
 
 

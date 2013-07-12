@@ -23,6 +23,8 @@
 # @date $Date: 2012-05-21 20:18:46 -0500 (Mon, 21 May 2012) $
 # @author Jakob van Santen
 
+from __future__ import print_function
+
 from icecube.icetray import I3Units, I3Module, traysegment
 from icecube.dataclasses import I3Position, I3Particle, I3MCTree, I3Direction, I3Constants
 from icecube.phys_services import I3Calculator, I3GSLRandomService
@@ -82,20 +84,20 @@ class PhotoTable(Table, object):
 		Check for generalized brokenness.
 		"""
 		if not isinstance(other, self.__class__):
-			raise TypeError, "Can't combine a %s with this %s" % (other.__class__.__name__, self.__class__.__name__)
+			raise TypeError("Can't combine a %s with this %s" % (other.__class__.__name__, self.__class__.__name__))
 		if self.values.shape != other.values.shape:
-			raise ValueError, "Shape mismatch in data arrays!"
+			raise ValueError("Shape mismatch in data arrays!")
 		nans = self.values.size - numpy.isfinite(self.values).sum()
 		if nans != 0:
-			raise ValueError, "This table has %d NaN values. You might want to see to that."
+			raise ValueError("This table has %d NaN values. You might want to see to that.")
 		nans = other.values.size - numpy.isfinite(other.values).sum()
 		if nans != 0:
-			raise ValueError, "Other table has %d NaN values. You might want to see to that."
-		for k, v in self.header.iteritems():
+			raise ValueError("Other table has %d NaN values. You might want to see to that.")
+		for k, v in self.header.items():
 			if k == 'n_photons':
 				continue
 			if other.header[k] != v:
-				raise ValueError, "Can't combine tables with %s=%s and %s" % (k, v, other.header[k])
+				raise ValueError("Can't combine tables with %s=%s and %s" % (k, v, other.header[k]))
 		
 	def normalize(self):
 		if not self.header['efficiency'] & Efficiency.N_PHOTON:
@@ -109,12 +111,12 @@ class PhotoTable(Table, object):
 			if overwrite:
 				os.unlink(fname)
 			else:
-				raise IOError, "File '%s' exists!" % fname
+				raise IOError("File '%s' exists!" % fname)
 		
 		data = pyfits.PrimaryHDU(self.values)
 		data.header.update('TYPE', 'Photon detection probability table')
 		
-		for k, v in self.header.iteritems():
+		for k, v in self.header.items():
 			# work around 8-char limit in FITS keywords
 			tag = 'hierarch _i3_' + k
 			data.header.update(tag, v)
@@ -125,7 +127,7 @@ class PhotoTable(Table, object):
 			errors = pyfits.ImageHDU(self.weights, name='ERRORS')
 			hdulist.append(errors)
 		
-		for i in xrange(self.values.ndim):
+		for i in range(self.values.ndim):
 			edgehdu = pyfits.ImageHDU(self.bin_edges[i],name='EDGES%d' % i)
 			hdulist.append(edgehdu)
 			
@@ -139,7 +141,7 @@ class PhotoTable(Table, object):
 		data = hdulist[0]
 		values = data.data
 		binedges = []
-		for i in xrange(values.ndim):
+		for i in range(values.ndim):
 			binedges.append(hdulist['EDGES%d' % i].data)
 		
 		try:
@@ -179,7 +181,7 @@ class Tabulator(object):
 	def save(self, fname):
 		# normalize to a photon flux, but not the number of photons (for later stacking)
 		area = self._getBinAreas()
-		print "Total weights:", self.n_photons
+		print("Total weights:", self.n_photons)
 		PhotoTable(self.binedges, self.values/area, self.weights/(area*area), self.n_photons).save(fname)
 	
 	def _getBinAreas(self):
@@ -191,7 +193,7 @@ class Tabulator(object):
 		# the sampling frequency. 
 		# NB: since we're condensing onto a half-sphere, the azimuthal extent of each bin is doubled.
 		area = ((far[0]**3-near[0]**3)/3.)*(2*(far[1]-near[1])*I3Units.degree)*(far[2]-near[2])
-		print 'Total volume:', area.sum()
+		print('Total volume:', area.sum())
 		area = area.reshape(area.shape + (1,))/self._dtype(self._step_length)
 		return area
 		
@@ -272,7 +274,7 @@ class Tabulator(object):
 		# position of photon at each scatter
 		positions = photon.positionList
 		# path length in units of absorption length at each scatter
-		abs_lengths = [photon.GetDistanceInAbsorptionLengthsAtPositionListEntry(i) for i in xrange(len(positions))]
+		abs_lengths = [photon.GetDistanceInAbsorptionLengthsAtPositionListEntry(i) for i in range(len(positions))]
 		
 		# The various weights are constant for different bits of the photon track.
 		# Constant for a given photon:
@@ -306,7 +308,7 @@ class Tabulator(object):
 			# FIXME: this samples at fixed distances. Randomize instead?
 			nsamples = int(numpy.floor(distance/self._step_length))
 			nsamples += int(self.rng.uniform(0,1) < (distance/self._step_length - nsamples))
-			for i in xrange(nsamples):
+			for i in range(nsamples):
 				d = distance*self.rng.uniform(0,1)
 			# for d in numpy.arange(0, distance, self._step_length):
 				# Which bin did we land in?
@@ -376,7 +378,7 @@ class I3TabulatorModule(I3Module, tabulator):
 		source = frame[self.source]
 		photonmap = frame[self.photons]
 		
-		for photons in photonmap.itervalues():
+		for photons in photonmap.values():
 			for photon in photons:
 				self.RecordPhoton(source, photon)
 		
@@ -385,9 +387,9 @@ class I3TabulatorModule(I3Module, tabulator):
 		# photon. Since the generation spectrum is biased, we want to
 		# normalize to the sum of weights, not the number of photons.
 		stats = frame[self.stats]
-		print '%f photons at DOMs (total weight %f), %f generated (total weight %f)' % (
+		print('%f photons at DOMs (total weight %f), %f generated (total weight %f)' % (
 		    stats.GetTotalNumberOfPhotonsAtDOMs(), stats.GetTotalSumOfWeightsPhotonsAtDOMs(),
-		    stats.GetTotalNumberOfPhotonsGenerated(), stats.GetTotalSumOfWeightsPhotonsGenerated())
+		    stats.GetTotalNumberOfPhotonsGenerated(), stats.GetTotalSumOfWeightsPhotonsGenerated()))
 		self.n_photons += stats.GetTotalSumOfWeightsPhotonsAtDOMs()
 		
 		self.PushFrame(frame)
@@ -459,7 +461,7 @@ class MakeParticle(I3Module):
         
         self.PushFrame(frame)
         
-        print self.emittedEvents
+        print(self.emittedEvents)
         if self.emittedEvents >= self.nEvents:
             self.RequestSuspension()
 

@@ -24,6 +24,8 @@
 # @author Claudio Kopper
 #
 
+from __future__ import print_function
+
 import os
 import subprocess
 import pickle
@@ -45,7 +47,7 @@ def AutoSetGeant4Environment(force=True):
     if not hasOldGeant4:
         if not os.path.isfile(os.path.expandvars("$I3_PORTS/bin/geant4.sh")):
             if force:
-                print "cannot forcibly overwrite the Geant4 environment variables because $I3_PORTS/bin/geant4.sh is not available. Using what's available."
+                print("cannot forcibly overwrite the Geant4 environment variables because $I3_PORTS/bin/geant4.sh is not available. Using what's available.")
                 force = False
     
     Geant4Variables = set(["G4ABLADATA", "G4LEDATA", "G4LEVELGAMMADATA", "G4NEUTRONHPDATA", "G4NEUTRONXSDATA", "G4PIIDATA", "G4RADIOACTIVEDATA", "G4REALSURFACEDATA"])
@@ -65,21 +67,21 @@ def AutoSetGeant4Environment(force=True):
     
     if len(Geant4Variables_unset)>0:
         if not hasOldGeant4:
-            print "Not all Geant4 environment variables are set. Trying to get some of them from $I3_PORTS/bin/geant4.sh.."
+            print("Not all Geant4 environment variables are set. Trying to get some of them from $I3_PORTS/bin/geant4.sh..")
         else:
-            print "Not all Geant4 environment variables are set. Trying to use defaults for geant4.9.3/4.9.4.."
+            print("Not all Geant4 environment variables are set. Trying to use defaults for geant4.9.3/4.9.4..")
             
         if force:
-            print "already set: (will be overwritten)"
+            print("already set: (will be overwritten)")
         else:
-            print "already set:"
+            print("already set:")
         for var in Geant4Variables_set:
-            print "  *", var, "->", os.environ[var]
+            print("  *", var, "->", os.environ[var])
 
         if not force:
-            print "missing:"
+            print("missing:")
             for var in Geant4Variables_unset:
-                print "  *", var
+                print("  *", var)
                 
         if hasOldGeant4:
             geant4env = hardCodedForGeant4_9_3and4
@@ -98,11 +100,11 @@ def AutoSetGeant4Environment(force=True):
             #penv = os.popen('%s && %s' %(source,dump))
             #geant4env = pickle.loads(penv.read())
 
-        print "setting from geant4.sh:"
+        print("setting from geant4.sh:")
         for var in Geant4Variables_setnew:
             if var not in geant4env:
                 raise RuntimeError("Cannot find the %s environment variable in the geant4.sh script." % var)
             os.environ[var] = geant4env[var]
-            print "  *", var, "->", os.environ[var]
+            print("  *", var, "->", os.environ[var])
 
     

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 from icecube import icetray, dataclasses, phys_services, clsim
 from I3Tray import I3Units
 
@@ -98,7 +100,7 @@ def generate_stuff_at_energy(energy, iterations=100, copies=10):
     gran=iterations/10
     if gran <= 0: gran=1
     for it in range(iterations):
-        if it%gran==0: print it
+        if it%gran==0: print(it)
     
         # generate steps
         steps = gen_steps(p, ppcConverter, copies=copies)
@@ -119,8 +121,8 @@ def generate_stuff_at_energy(energy, iterations=100, copies=10):
     weights = numpy.array(weights)/float(iterations*copies)/(energy/I3Units.GeV)
 
     # some output
-    print "generated", len(steps), "steps"
-    print "with a total of", float(totalNumPhotons)/float(copies*iterations), " photons per cascade"
+    print("generated", len(steps), "steps")
+    print("with a total of", float(totalNumPhotons)/float(copies*iterations), " photons per cascade")
 
 
     x_pos_hist_data, x_pos_hist_edges = numpy.histogram(xPos, weights=weights, range=(-1.,8.), bins=500)
@@ -159,7 +161,7 @@ copies =     [500,             50,             50,              5,              
 
 results = dict()
 for i, energy in enumerate(energies):
-    print "current energy: %fGeV" % (energy/I3Units.GeV)
+    print("current energy: %fGeV" % (energy/I3Units.GeV))
     results[energy] = generate_stuff_at_energy(energy, iterations=iterations[i], copies=copies[i])
 
 ###############################
@@ -201,15 +203,15 @@ ax = fig.add_subplot(3, 1, 1)
 bx = fig.add_subplot(3, 1, 2)
 cx = fig.add_subplot(3, 1, 3)
 
-for energy, result in sorted(results.iteritems()):
+for energy, result in sorted(results.items()):
     ax.plot(result["x_pos_hist_centers"], result["x_pos_hist_data"], label=r"E=%fGeV" % (energy/I3Units.GeV))
 
-for energy, result in sorted(results.iteritems()):
+for energy, result in sorted(results.items()):
     bx.semilogy(result["dir_ang_hist_centers"], result["dir_ang_hist_data"], label=r"E=%fGeV" % (energy/I3Units.GeV))
 
 energies=[]
 num_photons=[]
-for energy, result in sorted(results.iteritems()):
+for energy, result in sorted(results.items()):
     energies.append(energy)
     num_photons.append(float(result["total_num_photons"]))
 energies=numpy.array(energies)

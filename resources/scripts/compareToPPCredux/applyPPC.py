@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 from optparse import OptionParser
 
 usage = "usage: %prog [options] inputfile"
@@ -26,12 +27,12 @@ if len(args) != 0:
         parser.error(crap)
 #
 if not options.OUTFILE:
-    print "No OUTFILE specified!"
+    print("No OUTFILE specified!")
     parser.print_help()
     exit(-1)
 
 if not options.INFILE:
-    print "No INFILE specified!"
+    print("No INFILE specified!")
     parser.print_help()
     exit(-1)
 

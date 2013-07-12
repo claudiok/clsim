@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import numpy
 import math
 
@@ -23,10 +24,10 @@ openCLDevice = openCLDevices[0]
 openCLDevice.useNativeMath=False
 workgroupSize = 1
 workItemsPerIteration = 10240
-print "           using platform:", openCLDevice.platform
-print "             using device:", openCLDevice.device
-print "            workgroupSize:", workgroupSize
-print "    workItemsPerIteration:", workItemsPerIteration
+print("           using platform:", openCLDevice.platform)
+print("             using device:", openCLDevice.device)
+print("            workgroupSize:", workgroupSize)
+print("    workItemsPerIteration:", workItemsPerIteration)
 
 
 def evaluateScalarFieldOpenCL(xValues, yValues, zValues, scalarField, useReferenceFunction=False):
@@ -85,7 +86,7 @@ def DimasAbsLenScalingFactor(x,y,z, thx,logk1,logk2):
         return 1./nr
     
     res = numpy.zeros(len(x))
-    for i in xrange(len(x)):
+    for i in range(len(x)):
         res[i] = _DimasAbsLenScalingFactor(x[i], y[i], z[i], thx,logk1,logk2)
     return res
 
@@ -113,8 +114,8 @@ maxDeviationInOcl = deviation_OclFromPython[maxIndexInOcl]
 
 #print deviation_OclFromPython[10230:10300]
 
-print "maximum relative deviation in reference implementation:", maxDeviationInRef, "@", maxIndexInRef, "xyz:", xVals[maxIndexInRef], yVals[maxIndexInRef], zVals[maxIndexInRef], "python:", results_Python[maxIndexInRef], "ref:", results_Ref[maxIndexInRef], "ocl:", results_OpenCL[maxIndexInRef]
-print "maximum relative deviation in OpenCL implementation:   ", maxDeviationInOcl, "@", maxIndexInOcl, "xyz:", xVals[maxIndexInOcl], yVals[maxIndexInOcl], zVals[maxIndexInOcl], "python:", results_Python[maxIndexInOcl], "ref:", results_Ref[maxIndexInOcl], "ocl:", results_OpenCL[maxIndexInOcl]
+print("maximum relative deviation in reference implementation:", maxDeviationInRef, "@", maxIndexInRef, "xyz:", xVals[maxIndexInRef], yVals[maxIndexInRef], zVals[maxIndexInRef], "python:", results_Python[maxIndexInRef], "ref:", results_Ref[maxIndexInRef], "ocl:", results_OpenCL[maxIndexInRef])
+print("maximum relative deviation in OpenCL implementation:   ", maxDeviationInOcl, "@", maxIndexInOcl, "xyz:", xVals[maxIndexInOcl], yVals[maxIndexInOcl], zVals[maxIndexInOcl], "python:", results_Python[maxIndexInOcl], "ref:", results_Ref[maxIndexInOcl], "ocl:", results_OpenCL[maxIndexInOcl])
 
 #print "minimum relative deviation in reference implementation:", minDeviationInRef
 #print "minimum relative deviation in OpenCL implementation:   ", minDeviationInOcl
@@ -125,6 +126,6 @@ if numpy.abs(maxDeviationInRef) > maximumRelativeDeviation:
 if numpy.abs(maxDeviationInOcl) > maximumRelativeDeviation:
     raise RuntimeError("python implementation results differ from OpenCL implementation results!")
 
-print "test successful!"
+print("test successful!")
 
 

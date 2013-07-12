@@ -3,6 +3,7 @@
 
 """
 
+from __future__ import print_function
 from optparse import OptionParser
 import os
 import string
@@ -37,9 +38,9 @@ if options.INFILE:
         if os.access(filename,os.R_OK) == False:
                 raise RuntimeError("cannot find input file!")
         infile = filename
-        print 'using input file %s' % infile
+        print('using input file %s' % infile)
 else:
-        print "No input file!"
+        print("No input file!")
         parser.print_help()
         exit(-1)
 
@@ -75,8 +76,8 @@ if not outfile:
         infileRootDir, infileRootFile = os.path.split(infileRoot)
         outfile = infileRootFile + "_clsim"
         outfile = outfile + infileExt
-print "output dir is %s" % outdir
-print "output file is %s" % outdir + outfile
+print("output dir is %s" % outdir)
+print("output file is %s" % outdir + outfile)
 
 ########################
 

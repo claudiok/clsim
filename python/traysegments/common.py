@@ -1,3 +1,4 @@
+from __future__ import print_function
 
 """
 Convenience functions for configuring CLSim components.
@@ -52,11 +53,11 @@ def configureOpenCLDevices(UseGPUs=True, UseCPUs=False, OverrideApproximateNumbe
                         subDevices[0].approximateNumberOfWorkItems=10240
                     openCLDevices.append(subDevices[0])
                 else:
-                    print "failed to split CPU device into individual cores", device.platform, device.device, "[using full device with minimal number of work-items to (hopefully) disable parallelization]"
+                    print("failed to split CPU device into individual cores", device.platform, device.device, "[using full device with minimal number of work-items to (hopefully) disable parallelization]")
                     device.approximateNumberOfWorkItems=1
                     openCLDevices.append(device)
             except:
-                print "failed to split CPU device into individual cores", device.platform, device.device, "(exception) [using full device with minimal number of work-items to (hopefully) disable parallelization]"
+                print("failed to split CPU device into individual cores", device.platform, device.device, "(exception) [using full device with minimal number of work-items to (hopefully) disable parallelization]")
                 device.approximateNumberOfWorkItems=1
                 openCLDevices.append(device)
             

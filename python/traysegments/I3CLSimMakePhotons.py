@@ -24,6 +24,8 @@
 # @author Claudio Kopper
 #
 
+from __future__ import print_function
+
 import string
 from os.path import expandvars, exists, isdir, isfile
 
@@ -205,11 +207,11 @@ def I3CLSimMakePhotons(tray, name,
 
     # warn the user in case they might have done something they probably don't want
     if UnWeightedPhotons and (DOMOversizeFactor != 1.):
-        print "********************"
-        print "Enabling the clsim.I3CLSimMakeHits() \"UnWeightedPhotons=True\" option without setting"
-        print "\"DOMOversizeFactor=1.\" will still apply a constant weighting factor of DOMOversizeFactor**2."
-        print "If this is what you want, you can safely ignore this warning."
-        print "********************"
+        print("********************")
+        print("Enabling the clsim.I3CLSimMakeHits() \"UnWeightedPhotons=True\" option without setting")
+        print("\"DOMOversizeFactor=1.\" will still apply a constant weighting factor of DOMOversizeFactor**2.")
+        print("If this is what you want, you can safely ignore this warning.")
+        print("********************")
 
     # some constants
     DOMRadius = 0.16510*icetray.I3Units.m # 13" diameter
@@ -326,7 +328,7 @@ def I3CLSimMakePhotons(tray, name,
         spectrumTable = clsim.I3CLSimSpectrumTable()
         particleParameterizations += GetFlasherParameterizationList(spectrumTable)
         
-        print "number of spectra (1x Cherenkov + Nx flasher):", len(spectrumTable)
+        print("number of spectra (1x Cherenkov + Nx flasher):", len(spectrumTable))
     else:
         # no spectrum table is necessary when only using the Cherenkov spectrum
         spectrumTable = None

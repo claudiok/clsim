@@ -24,6 +24,8 @@
 # @author Claudio Kopper
 #
 
+from __future__ import print_function
+
 import string
 from os.path import expandvars, exists, isdir, isfile
 
@@ -32,8 +34,8 @@ from icecube import icetray, dataclasses
 from icecube.clsim import GetDefaultParameterizationList
 from icecube.clsim import GetFlasherParameterizationList
 
-from I3CLSimMakePhotons import I3CLSimMakePhotons
-from I3CLSimMakeHitsFromPhotons import I3CLSimMakeHitsFromPhotons
+from .I3CLSimMakePhotons import I3CLSimMakePhotons
+from .I3CLSimMakeHitsFromPhotons import I3CLSimMakeHitsFromPhotons
 
 
 # use this instead of a simple "@icetray.traysegment" to support
@@ -190,11 +192,11 @@ def I3CLSimMakeHits(tray, name,
 
     # warn the user in case they might have done something they probably don't want
     if UnWeightedPhotons and (DOMOversizeFactor != 1.):
-        print "********************"
-        print "Enabling the clsim.I3CLSimMakeHits() \"UnWeightedPhotons=True\" option without setting"
-        print "\"DOMOversizeFactor=1.\" will still apply a constant weighting factor of DOMOversizeFactor**2."
-        print "If this is what you want, you can safely ignore this warning."
-        print "********************"
+        print("********************")
+        print("Enabling the clsim.I3CLSimMakeHits() \"UnWeightedPhotons=True\" option without setting")
+        print("\"DOMOversizeFactor=1.\" will still apply a constant weighting factor of DOMOversizeFactor**2.")
+        print("If this is what you want, you can safely ignore this warning.")
+        print("********************")
 
     if PhotonSeriesName is not None:
         photonsName=PhotonSeriesName

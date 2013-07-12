@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import matplotlib
 matplotlib.use("PDF")
 
@@ -106,8 +107,8 @@ def calcTimeResiduals(hitSeriesMap,
     time_residuals = numpy.zeros(len(hits_x))
     track_dca = numpy.zeros(len(hits_x))
 
-    print "calculcating time residuals.."
-    for i in xrange(len(muonIndex_start)):
+    print("calculcating time residuals..")
+    for i in range(len(muonIndex_start)):
         # print "i=", i
         # print "hitsIndex_start[i]=", hitsIndex_start[i]
         # print "hitsIndex_stop[i]=", hitsIndex_stop[i]
@@ -145,20 +146,20 @@ def calcTimeResiduals(hitSeriesMap,
 
     return (time_residuals, track_dca)
 
-print "ppc..."
+print("ppc...")
 time_residuals_ppc, dca_ppc = calcTimeResiduals(h5file.root.MCHitSeriesMap.cols,
                                        h5file.root.__I3Index__.MCHitSeriesMap.cols,
                                        h5file.root.MCMostEnergeticMuon.cols,
                                        h5file.root.__I3Index__.MCMostEnergeticMuon.cols)
 
-print "clsim.."
+print("clsim..")
 time_residuals_clsim, dca_clsim = calcTimeResiduals(h5file.root.MCPESeriesMap_clsim.cols,
                                          h5file.root.__I3Index__.MCPESeriesMap_clsim.cols,
                                          h5file.root.MCMostEnergeticMuon.cols,
                                          h5file.root.__I3Index__.MCMostEnergeticMuon.cols)
 
 
-print "some more work.."
+print("some more work..")
 #
 hits_string_ppc = h5file.root.MCHitSeriesMap.cols.string[:]
 hits_string_clsim = h5file.root.MCPESeriesMap_clsim.cols.string[:]
@@ -169,16 +170,16 @@ hits_om_clsim = h5file.root.MCPESeriesMap_clsim.cols.om[:]
 
 bincounts_ppc = numpy.bincount(hits_om_ppc[:][(dca_ppc>20.) & (hits_string_ppc==21)])
 bincounts_clsim = numpy.bincount(hits_om_clsim[(dca_clsim>20.) & (hits_string_clsim==21)])
-dom_numbers = range(0,len(bincounts_ppc))
+dom_numbers = list(range(0,len(bincounts_ppc)))
 
 
 bincounts_ppc_string = numpy.bincount(hits_string_ppc[:][(dca_ppc>20.)])
 bincounts_clsim_string = numpy.bincount(hits_string_clsim[(dca_clsim>20.)])
-string_numbers = range(0,len(bincounts_ppc_string))
+string_numbers = list(range(0,len(bincounts_ppc_string)))
 
 
 ####
-print "plotting.."
+print("plotting..")
 
 
 fig = pylab.figure(3)
@@ -273,7 +274,7 @@ bx.set_xlim(the_range[0],the_range[1])
 
 
 
-print "saving as {0}".format(outfile)
+print("saving as {0}".format(outfile))
 pylab.savefig(outfile, transparent=False)
 
 

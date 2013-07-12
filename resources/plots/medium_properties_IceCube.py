@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import os
 
 import math
@@ -82,7 +84,7 @@ numberOfPhotonsPerNanometer, err = scipy.integrate.quadrature(Cherenkov_dN_dXdwl
 #print err
 numberOfPhotonsPerMeter = numberOfPhotonsPerNanometer*1e9
 
-print "photons per meter between [290..610]nm =", numberOfPhotonsPerMeter
+print("photons per meter between [290..610]nm =", numberOfPhotonsPerMeter)
 
 
 
@@ -104,22 +106,22 @@ openCLDevice = openCLDevices[0]
 openCLDevice.useNativeMath=False
 workgroupSize = 1
 workItemsPerIteration = 10240
-print "           using platform:", openCLDevice.platform
-print "             using device:", openCLDevice.device
-print "            workgroupSize:", workgroupSize
-print "    workItemsPerIteration:", workItemsPerIteration
+print("           using platform:", openCLDevice.platform)
+print("             using device:", openCLDevice.device)
+print("            workgroupSize:", workgroupSize)
+print("    workItemsPerIteration:", workItemsPerIteration)
 
 
 
 def applyOpenCLWlenDependentFunction(xValues, functionOpenCL, getDerivative=False, useReferenceFunction=False):
-    print "         number of values:", len(xValues)
+    print("         number of values:", len(xValues))
     
     tester = clsim.I3CLSimFunctionTester(device=openCLDevice,
                                                    workgroupSize=workgroupSize,
                                                    workItemsPerIteration=workItemsPerIteration,
                                                    wlenDependentValue=functionOpenCL)
     
-    print "maxWorkgroupSizeForKernel:", tester.maxWorkgroupSize
+    print("maxWorkgroupSizeForKernel:", tester.maxWorkgroupSize)
     
     # the function currently only accepts I3VectorFloat as its input type
     vector = dataclasses.I3VectorFloat(numpy.array(xValues)*I3Units.nanometer)
@@ -164,14 +166,14 @@ def applyOpenCLMediumPropertyFunction(xValues, layer, mediumProps, mode):
 
 #mediumProps = clsim.MakeIceCubeMediumPropertiesPhotonics(tableFile=os.path.expandvars("$I3_SRC/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos090.11jul2011.txt"))
 mediumProps = clsim.MakeIceCubeMediumProperties()
-print "numer of layers =", mediumProps.LayersNum
+print("numer of layers =", mediumProps.LayersNum)
 currentLayer = mediumProps.LayersNum/2
-print "  current layer =", currentLayer
+print("  current layer =", currentLayer)
 phaseRefIndex = mediumProps.GetPhaseRefractiveIndex(currentLayer)
 
 ####
 
-print "a"
+print("a")
 
 fig = pylab.figure(3)
 fig.subplots_adjust(left=0.09, bottom=0.05, top=0.95, right=0.98)
@@ -189,7 +191,7 @@ l.set_dashes([5,5])
 l, = ax.plot(wlens, getGroupRefIndex_derivative(wlens), linewidth=3., color='0.5', label=r"$n_\mathrm{g}$ (calculated from $n_\mathrm{p}$)")
 l.set_dashes([10,10])
 
-print "b"
+print("b")
 
 
 nphase_reference = applyOpenCLWlenDependentFunction(wlens, mediumProps.GetPhaseRefractiveIndex(currentLayer), useReferenceFunction=True)
@@ -198,7 +200,7 @@ if mediumProps.GetGroupRefractiveIndexOverride(currentLayer) is None:
 else:
     ngroup_reference = applyOpenCLWlenDependentFunction(wlens, mediumProps.GetGroupRefractiveIndexOverride(currentLayer), useReferenceFunction=True)
 
-print "c"
+print("c")
 
 ax.plot(wlens, nphase_reference, linewidth=3., color='k', linestyle='solid', label=r"$n_\mathrm{p}$ (C++)")
 if ngroup_reference is not None:
@@ -206,7 +208,7 @@ if ngroup_reference is not None:
     l.set_dashes([5,5])
 
 
-print "d"
+print("d")
 
 
 nphase = applyOpenCLMediumPropertyFunction(wlens, currentLayer, mediumProps, mode="phaseRefIndex")
