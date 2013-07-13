@@ -43,7 +43,7 @@ if len(args) != 0:
 if options.INFILE:
         filename = options.INFILE
         if os.access(filename,os.R_OK) == False:
-                raise "cannot find input file!"
+                raise IOError("cannot find input file!")
         infile = filename
         print('using input file %s' % infile)
 else:
