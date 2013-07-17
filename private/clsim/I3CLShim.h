@@ -32,6 +32,8 @@ public:
 	    double t_0, double values[], double gradients[][6],
 	    double hessians[][6][6], size_t n_bins) { log_fatal("Unimplemented!"); return false; };
 	
+	virtual const double* const GetTimeRange() const { log_fatal("Unimplemented!"); return NULL; };
+	
 	// I3ServiceBase should have exposed things like this in the first place
 	void SetParameter(const std::string &key, const boost::python::object &value)
 	{
