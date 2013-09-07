@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "gmp/gmp.h"
+#include "gmp.h"
 
 int isprime(mpz_t n)
 {
