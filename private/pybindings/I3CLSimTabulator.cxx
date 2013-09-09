@@ -224,13 +224,14 @@ I3CLSimTabulator::GetBinIndex(const I3Particle &source, const I3Position &pos, d
 		const std::vector<double> &edges = binEdges_[i];
 		
 		off_t dimidx;
-		if (coords[i] < edges.front())
+		if (coords[i] <= edges.front())
 			dimidx = 0;
 		else if (coords[i] >= edges.back())
 			dimidx = edges.size()-2;
 		else
 			dimidx = std::distance(edges.begin(),
 			    std::lower_bound(edges.begin(), edges.end(), coords[i]))-1;
+		
 		assert(dimidx >= 0);
 		assert(dimidx < PyArray_DIM(values_, i));
 		
