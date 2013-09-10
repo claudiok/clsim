@@ -302,7 +302,7 @@ def I3CLSimMakePhotons(tray, name,
 
     # photon generation wavelength bias
     #if isinstance(UnWeightedPhotons, float) or isinstance(UnWeightedPhotons, int):
-    #    print "***** running unweighted simulation with a photon pre-scaling of", UnWeightedPhotons
+    #    print("***** running unweighted simulation with a photon pre-scaling of", UnWeightedPhotons)
     #    wavelengthGenerationBias = clsim.I3CLSimFunctionConstant(UnWeightedPhotons)
     #else:
     if not UnWeightedPhotons:

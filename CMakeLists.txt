@@ -76,6 +76,7 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
   private/clsim/I3Photon.cxx
   private/clsim/I3CLSimFlasherPulse.cxx
   private/clsim/util/I3MuonSlicer.cxx
+  private/clsim/util/I3MuonSliceRemoverAndPulseRelabeler.cxx
   private/clsim/util/I3TauSanitizer.cxx
   private/clsim/dom/I3PhotonToMCPEConverter.cxx
   private/clsim/shadow/I3ShadowedPhotonRemover.cxx

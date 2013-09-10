@@ -48,6 +48,7 @@ def I3CLSimMakeHits(tray, name,
                     UseGPUs=True,
                     UseOnlyDeviceNumber=None,
                     MCTreeName="I3MCTree",
+                    OutputMCTreeName=None,
                     FlasherInfoVectName=None,
                     FlasherPulseSeriesName=None,
                     MMCTrackListName="MMCTrackList",
@@ -210,14 +211,20 @@ def I3CLSimMakeHits(tray, name,
         ChopMuons = True
 
     if MCTreeName is None or MCTreeName=="":
+        if OutputMCTreeName is not None:
+            raise RuntimeError("cannot have an output MCTree without an input MCTree")
+
         clSimMCTreeName=""
         if ChopMuons:
             raise RuntimeError("You cannot have \"MMCTrackListName\" enabled with no MCTree!")
     else:
-        if ChopMuons:
-            clSimMCTreeName=MCTreeName+"_sliced"
+        if OutputMCTreeName is None or OutputMCTreeName=="":
+            if ChopMuons:
+                clSimMCTreeName=MCTreeName+"_sliced"
+            else:
+                clSimMCTreeName=MCTreeName+"_clsim"
         else:
-            clSimMCTreeName=MCTreeName+"_clsim"
+            clSimMCTreeName = OutputMCTreeName
 
     I3CLSimMakePhotons_kwargs = dict(UseCPUs=UseCPUs,
                                      UseGPUs=UseGPUs,
