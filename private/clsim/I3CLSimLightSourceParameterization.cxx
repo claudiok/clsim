@@ -62,7 +62,7 @@ I3CLSimLightSourceParameterization::I3CLSimLightSourceParameterization
 :
 converter(converter_),
 #ifdef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
-forPdgEncoding(I3Particle::ConvertToPdgEncoding(forParticleType_)),
+forPdgEncoding(I3Particle(I3Particle::Null,forParticleType_).GetPdgEncoding()),
 #else
 forParticleType(forParticleType_),
 #endif
@@ -162,7 +162,7 @@ bool I3CLSimLightSourceParameterization::IsValid(I3Particle::ParticleType type, 
     if (isnan(energy)) return false;
     if (!catchAll) {
 #ifdef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
-        const int32_t encoding = I3Particle::ConvertToPdgEncoding(type);
+        const int32_t encoding = I3Particle(I3Particle::Null,type).GetPdgEncoding();
         if (encoding==0) return false;
         if (encoding != forPdgEncoding) return false;
 #else

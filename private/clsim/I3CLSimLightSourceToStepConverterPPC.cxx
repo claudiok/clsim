@@ -217,12 +217,7 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLight
     (particle.GetType()==I3Particle::PairProd) ||
     (particle.GetType()==I3Particle::Gamma);
 
-    const bool isHadron =
-#ifdef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
-    // if we don't know it but it has a pdg code,
-    // it is probably a hadron..
-    (particle.GetType()==I3Particle::UnknownWithPdgEncoding) ||
-#endif
+    bool isHadron =
     (particle.GetType()==I3Particle::Hadrons) ||
     (particle.GetType()==I3Particle::Neutron) ||
     (particle.GetType()==I3Particle::Pi0) ||
@@ -271,6 +266,15 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLight
     const bool isTau =
     (particle.GetType()==I3Particle::TauMinus) ||
     (particle.GetType()==I3Particle::TauPlus);
+
+#ifdef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
+    if ((!isHadron) && (!isElectron) && (!isMuon) && (!isTau))
+    {
+        // if we don't know it but it has a pdg code,
+        // it is probably a hadron..
+        isHadron = true;
+    }
+#endif
 
     const double E = particle.GetEnergy()/I3Units::GeV;
     const double logE = std::max(0., std::log(E)); // protect against extremely low energies
