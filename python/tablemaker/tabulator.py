@@ -31,13 +31,14 @@ from icecube.phys_services import I3Calculator, I3GSLRandomService
 from icecube.clsim import I3Photon, I3CLSimTabulator, GetIceCubeDOMAcceptance, GetIceCubeDOMAngularSensitivity
 import numpy, math
 from icecube.photospline import numpy_extensions # meshgrid_nd
-from icecube.photospline.photonics import Table, Efficiency, Geometry
+from icecube.photospline.photonics import Table, Efficiency, Geometry, Parity
 
 # A default header. This contains the same keys as the one created in photo2numpy from photospline.
 empty_header = {
 	'n_photon':   0,
 	'efficiency': Efficiency.NONE,
 	'geometry':   Geometry.SPHERICAL,
+	'parity':     Parity.EVEN,
 	'zenith':     0.,
 	'z':          0.,
 	'energy':     0.,
