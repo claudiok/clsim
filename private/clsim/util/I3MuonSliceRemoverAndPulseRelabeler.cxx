@@ -44,6 +44,7 @@
 #include "dataclasses/I3Constants.h"
 
 #include "simclasses/I3MCPE.h"
+#include "clsim/I3Photon.h"
 
 /**
  * @brief Removes muon slices in I3MCTree objects
@@ -100,6 +101,12 @@ private:
 
     /// Parameter: Name of the output I3MCPESeriesMap frame object (can be identical to the input).
     std::string outputMCPESeriesMapName_;
+
+    /// Parameter: Name of the input I3PhotonSeriesMap frame object.
+    std::string inputPhotonSeriesMapName_;
+
+    /// Parameter: Name of the output I3PhotonSeriesMap frame object (can be identical to the input).
+    std::string outputPhotonSeriesMapName_;
     
 private:
     // default, assignment, and copy constructor declared private
@@ -138,6 +145,16 @@ I3MuonSliceRemoverAndPulseRelabeler::I3MuonSliceRemoverAndPulseRelabeler(const I
                  "Name of the output I3MCPESeriesMap frame object.",
                  outputMCPESeriesMapName_);
 
+    inputPhotonSeriesMapName_="";
+    AddParameter("InputPhotonSeriesMapName",
+                 "Name of the input I3PhotonSeriesMap frame object.",
+                 inputPhotonSeriesMapName_);
+
+    outputPhotonSeriesMapName_="";
+    AddParameter("OutputPhotonSeriesMapName",
+                 "Name of the output I3PhotonSeriesMap frame object.",
+                 outputPhotonSeriesMapName_);
+
 
     // add an outbox
     AddOutBox("OutBox");
@@ -158,12 +175,12 @@ void I3MuonSliceRemoverAndPulseRelabeler::Configure()
     GetParameter("OldMCTreeName", oldMCTreeName_);
     GetParameter("InputMCPESeriesMapName", inputMCPESeriesMapName_);
     GetParameter("OutputMCPESeriesMapName", outputMCPESeriesMapName_);
+    GetParameter("InputPhotonSeriesMapName", inputPhotonSeriesMapName_);
+    GetParameter("OutputPhotonSeriesMapName", outputPhotonSeriesMapName_);
 
     if (inputMCTreeName_=="")
         log_fatal("The \"InputMCTreeName\" parameter must not be empty.");
 
-    if (inputMCPESeriesMapName_=="")
-        log_fatal("The \"InputMCPESeriesMapName\" parameter must not be empty.");
 }
 
 namespace {
@@ -211,8 +228,19 @@ namespace {
                 if (mcTree.number_of_children(daughter_it) > 0)
                     log_fatal("Non-dark daughter muon of dark muon has children of its own. Your MCTree is messed up.");
 
+                // this needs to work on older versions of dataclasses without
+                // "I3ParticleID I3Particle::operator()" - just make IDs and set
+                // their properties by hand for now.
+                I3ParticleID daughter_id;
+                daughter_id.majorID = daughter.GetMajorID();
+                daughter_id.minorID = daughter.GetMinorID();
+
+                I3ParticleID particle_id;
+                particle_id.majorID = particle.GetMajorID();
+                particle_id.minorID = particle.GetMinorID();
+
                 // insert into map so we know how to re-label hits later on
-                re_label_map.insert( std::pair<I3ParticleID, I3ParticleID>( daughter, particle ) );
+                re_label_map.insert( std::pair<I3ParticleID, I3ParticleID>( daughter_id, particle_id ) );
             }
 
         }
@@ -273,6 +301,23 @@ void I3MuonSliceRemoverAndPulseRelabeler::DAQ(I3FramePtr frame)
         outputMCPESeriesMap = I3MCPESeriesMapPtr(new I3MCPESeriesMap(*inputMCPESeriesMap));
     }
 
+    I3PhotonSeriesMapConstPtr inputPhotonSeriesMap;
+    I3PhotonSeriesMapPtr outputPhotonSeriesMap;
+
+    if (inputPhotonSeriesMapName_ != "")
+    {
+        inputPhotonSeriesMap = frame->Get<I3PhotonSeriesMapConstPtr>(inputPhotonSeriesMapName_);
+        if (!inputPhotonSeriesMap) {
+            log_fatal("Frame does not contain an I3PhotonSeriesMap named \"%s\".",
+                      inputPhotonSeriesMapName_.c_str());
+            PushFrame(frame);
+            return;
+        }
+
+        // allocate the output map (start with copies of the input objects)
+        outputPhotonSeriesMap = I3PhotonSeriesMapPtr(new I3PhotonSeriesMap(*inputPhotonSeriesMap));
+    }
+
     // now just work on the output objects
 
     // oldID->newID
@@ -303,11 +348,6 @@ void I3MuonSliceRemoverAndPulseRelabeler::DAQ(I3FramePtr frame)
             log_fatal("Muon slice ID *is* in \"old\" tree.");
         }
     }
-
-
-
-    // TODO: This should als re-label I3Photons!
-
 
     // re-label hits if requested
     if (inputMCPESeriesMapName_ != "")
@@ -341,6 +381,37 @@ void I3MuonSliceRemoverAndPulseRelabeler::DAQ(I3FramePtr frame)
         frame->Put(outputMCPESeriesMapName_, outputMCPESeriesMap);
     }
     
+    // re-label photons if requested
+    if (inputPhotonSeriesMapName_ != "")
+    {
+        for (I3PhotonSeriesMap::iterator it = outputPhotonSeriesMap->begin();
+             it != outputPhotonSeriesMap->end(); ++it)
+        {
+            I3PhotonSeries &photonSeries = it->second;
+
+            BOOST_FOREACH(I3Photon &photon, photonSeries)
+            {
+                I3ParticleID oldID;
+                oldID.majorID = photon.GetParticleMajorID();
+                oldID.minorID = photon.GetParticleMinorID();
+
+                std::map<I3ParticleID, I3ParticleID>::const_iterator re_label_it = re_label_map.find(oldID);
+                if (re_label_it==re_label_map.end())
+                    // no need to re-label
+                    continue;
+
+                const I3ParticleID newID = re_label_it->second;
+                photon.SetParticleMajorID(newID.majorID);
+                photon.SetParticleMinorID(newID.minorID);
+            }
+        }
+
+        // store the output I3MCPhotonSeriesMap
+        if (inputPhotonSeriesMapName_==outputPhotonSeriesMapName_) {
+            frame->Delete(inputPhotonSeriesMapName_);
+        }
+        frame->Put(outputPhotonSeriesMapName_, outputPhotonSeriesMap);
+    }
     
     // that's it!
     PushFrame(frame);
