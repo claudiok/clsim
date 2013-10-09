@@ -28,6 +28,7 @@ if(BUILD_PYBINDINGS)
   # these files will be compiled in any case (with or without OpenCL/Geant4)
   SET(LIB_${PROJECT_NAME}_PYBINDINGS_SOURCEFILES
     I3Photon.cxx
+    I3CompressedPhoton.cxx
     I3CLSimEventStatistics.cxx
     I3CLSimFlasherPulse.cxx
     I3Converters.cxx

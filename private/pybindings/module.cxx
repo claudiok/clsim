@@ -33,8 +33,8 @@ namespace bp = boost::python;
 #include <boost/preprocessor.hpp>
 
 #define REGISTER_THESE_THINGS                       \
-    (I3Photon)(I3CLSimEventStatistics)              \
-    (I3Converters)                                  \
+    (I3Photon)(I3CompressedPhoton)                  \
+    (I3CLSimEventStatistics)(I3Converters)          \
     (I3CLSimFlasherPulse)(I3ShadowedPhotonRemover)  \
     (I3ExtraGeometryItem)
 
