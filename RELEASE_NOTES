@@ -2,6 +2,16 @@
 # $Author$
 # $Date$
 
+October 23, 2013 Claudio Kopper  (ckopper@icecube.wisc.edu / dschultz@icecube.wisc.edu)
+--------------------------------------------------------------------
+Release V00-02-01b
+
+* identical to V00-02-01 except for:
+* updated cl.hpp to a more recent version from Khronos to allow
+  building on more recent OpenCL herader versions.
+* updated the safeprimes URL from http://www.icecube.wisc.edu/...
+  to http://icecube.wisc.edu/...
+
 June 14, 2012 Claudio Kopper  (ckopper@icecube.wisc.edu)
 --------------------------------------------------------------------
 Release V00-02-01
