@@ -1,27 +1,10 @@
-// This code is part of IceTray. It has been taken from
-// GPUMCML. Here is its original copyright notice:
-
-/*	 
- *   This file is part of GPUMCML.
- * 
- *   GPUMCML is free software: you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation, either version 3 of the License, or
- *   (at your option) any later version.
- *
- *   GPUMCML is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with GPUMCML.  If not, see <http://www.gnu.org/licenses/>.
- */
-
+// This code is based on the CUDA code described in
+// the documentation of the "CUDAMCML" package which can be found here:
+// http://www.atomic.physics.lu.se/fileadmin/atomfysik/Biophotonics/Software/CUDAMCML.pdf
 
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
-#endif 
+#endif
 #include <inttypes.h>
 
 #include <stdlib.h>
@@ -50,20 +33,19 @@ int main()
     mpz_init(n1);
     mpz_init(n2);
     mpz_init(a);
-    
+
     mpz_set_str(a,"4294967118",0);
-    
+
     file = fopen("safeprimes_base32.txt","w");
-    
-    //while(i<150000)
+
     while(i<15000000)
     {
         mpz_mul_2exp(n2,a,32);
         mpz_sub_ui(n2,n2,1lu);
         if(isprime(n2))
-            
+
         {
-            
+
             mpz_sub_ui(n1,n2,1lu);
             mpz_fdiv_q_2exp(n1,n1,1lu);
             if(isprime(n1))
@@ -76,14 +58,10 @@ int main()
                 mpz_out_str (file, 10, n1);
                 fprintf(file,"\n");
                 printf("%llu\n",i++);
-                
             }
         }
         mpz_sub_ui(a,a,1lu);
     }
     fclose(file);
     exit (0);
-    
 }
-
-
