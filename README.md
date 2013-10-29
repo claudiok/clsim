@@ -148,6 +148,6 @@ Another example (using a *photonics* file) would be:
 
 License
 -------
-Code is under the [BSD 2 Clause (NetBSD) license][license].
+The code is under the [BSD 2 Clause (NetBSD) license][license].
 
-[icecube]:http://icecube.wisc.edu
+[icecube]: http://icecube.wisc.edu
