@@ -64,12 +64,6 @@ surface. These photons still need to be converted into hits, which is done
 using a dedicated module. This module finally writes a I3MCHitSeriesMap,
 compatible to all existing photon simulation output.
 
-Usage
------
-
-This section currently only covers the standard usage of the module/service
-chain for IceCube, using a fully parameterized model (i.e. without *Geant4*).
-
 Basic usage
 -----------
 
@@ -148,6 +142,13 @@ Another example (using a *photonics* file) would be:
 
 License
 -------
-The code is under the [BSD 2 Clause (NetBSD) license][license].
+Except the files listed below, all of the code is under the [ISC (OpenBSD/BSD 2 Clause equivalent) license][license].
+
+The files `clsim/private/geant4/TrkCerenkov.cxx` and `clsim/private/geant4/TrkCerenkov.hh` are based on code from the Geant4 package released under the [Geant4 license][geant4license] ( http://cern.ch/geant4/license ).
+
+This product includes software developed by Members of the [Geant4 Collaboration][geant4coll] ( http://cern.ch/geant4 ).
 
 [icecube]: http://icecube.wisc.edu
+[license]: https://github.com/claudiok/clsim/master/resources/docs/LICENSE
+[geant4license]: http://cern.ch/geant4/license
+[geant4coll]: http://cern.ch/geant4
