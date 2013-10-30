@@ -29,6 +29,7 @@
 
 #include "globals.hh"
 #include "G4UIsession.hh"
+#include "G4Version.hh"
 
 #include <boost/shared_ptr.hpp>
 #include "clsim/I3CLSimQueue.h"
@@ -41,8 +42,14 @@ public:
     virtual ~TrkUISessionToQueue();
 
     // These two methods will be invoked by G4strstreambuf.
+#if G4VERSION_NUMBER >= 960
+    // yay! Geant4 changed the interface in version 4.9.6
+    virtual G4int ReceiveG4cout(const G4String& coutString);
+    virtual G4int ReceiveG4cerr(const G4String& cerrString);
+#else
     virtual G4int ReceiveG4cout(G4String coutString);
     virtual G4int ReceiveG4cerr(G4String cerrString);
+#endif
 
 private:
     boost::shared_ptr<I3CLSimQueue<boost::shared_ptr<std::pair<const std::string, bool> > > > queueFromGeant4Messages_;
