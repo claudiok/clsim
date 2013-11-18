@@ -95,8 +95,7 @@ void I3CLSimMediumPropertiesTester::InitBuffers(I3RandomServicePtr randomService
         MWC_RNG_x.resize(workItemsPerIteration);
         MWC_RNG_a.resize(workItemsPerIteration);
     
-        const std::string I3_SRC(getenv("I3_SRC"));
-        if (init_MWC_RNG(&(MWC_RNG_x[0]), &(MWC_RNG_a[0]), workItemsPerIteration, (I3_SRC+"/clsim/resources/safeprimes_base32.txt").c_str(), randomService)!=0) 
+        if (init_MWC_RNG(&(MWC_RNG_x[0]), &(MWC_RNG_a[0]), workItemsPerIteration, randomService)!=0) 
             throw std::runtime_error("I3CLSimStepToPhotonConverterOpenCL already initialized!");
         log_debug("RNG is set up..");
 
