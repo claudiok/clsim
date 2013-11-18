@@ -252,8 +252,7 @@ void I3CLSimStepToPhotonConverterOpenCL::Initialize()
     MWC_RNG_x.resize(maxNumWorkitems_);
     MWC_RNG_a.resize(maxNumWorkitems_);
     
-    const std::string I3_SRC(getenv("I3_SRC"));
-    if (init_MWC_RNG(&(MWC_RNG_x[0]), &(MWC_RNG_a[0]), maxNumWorkitems_, (I3_SRC+"/clsim/resources/safeprimes_base32.txt").c_str(), randomService_)!=0) 
+    if (init_MWC_RNG(&(MWC_RNG_x[0]), &(MWC_RNG_a[0]), maxNumWorkitems_, randomService_)!=0) 
         throw I3CLSimStepToPhotonConverter_exception("I3CLSimStepToPhotonConverterOpenCL already initialized!");
     
     log_debug("RNG is set up..");

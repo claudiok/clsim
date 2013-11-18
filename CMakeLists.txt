@@ -286,14 +286,16 @@ if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
   #LIST(APPEND LIB_${PROJECT_NAME}_PROJECTS )
   LIST(APPEND LIB_${PROJECT_NAME}_TOOLS opencl)
 
-  if(NOT EXISTS ${CMAKE_SOURCE_DIR}/clsim/resources/safeprimes_base32.txt)
+  if(EXISTS $ENV{I3_DATA}/safeprimes_base32.txt)
+    colormsg(CYAN   "+-- $ENV{I3_DATA}/safeprimes_base32.txt data file exists, skipping download")
+  elseif(NOT EXISTS ${CMAKE_SOURCE_DIR}/clsim/resources/safeprimes_base32.txt)
     colormsg(RED   "+-- Downloading and unpacking the safeprimes_base32.txt data file...")
     colormsg(RED   "    (this file will only be downloaded once)")
     EXECUTE_PROCESS(COMMAND ${CMAKE_SOURCE_DIR}/clsim/resources/download_safeprimes.sh ${CMAKE_SOURCE_DIR}/clsim/resources)
     colormsg(GREEN "+-- ...download complete.")
   else(NOT EXISTS ${CMAKE_SOURCE_DIR}/clsim/resources/safeprimes_base32.txt)
     colormsg(CYAN  "+-- safeprimes_base32.txt already downloaded")
-  endif(NOT EXISTS ${CMAKE_SOURCE_DIR}/clsim/resources/safeprimes_base32.txt)
+  endif(EXISTS $ENV{I3_DATA}/safeprimes_base32.txt)
 endif(NOT BUILD_CLSIM_DATACLASSES_ONLY)
 
 # the clsim library definition
@@ -308,6 +310,11 @@ if(GMP_FOUND)
   i3_executable(make_safeprimes
     private/make_safeprimes/main.c
     USE_TOOLS python boost gmp
+    )
+  i3_executable(convert_safeprimes
+    private/make_safeprimes/convert.cxx
+    USE_PROJECTS icetray
+    USE_TOOLS python boost
     )
   colormsg(GREEN "+-- gmp support (make_safeprimes utility)")
 else(GMP_FOUND)
