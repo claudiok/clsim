@@ -1,5 +1,5 @@
-// This code is based on the CUDA code described in
-// the documentation of the "CUDAMCML" package which can be found here:
+// Multiply-with-carry random number generator for OpenCL using an
+// implementation along the lines of the CUDAMCML code described here:
 // http://www.atomic.physics.lu.se/fileadmin/atomfysik/Biophotonics/Software/CUDAMCML.pdf
 
 // prototypes to make some compilers happy

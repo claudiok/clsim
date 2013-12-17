@@ -1,6 +1,9 @@
-// This code is based on the CUDA code described in
-// the documentation of the "CUDAMCML" package which can be found here:
+// Initialization of the multiply-with-carry random number generator for OpenCL using an
+// implementation along the lines of the CUDAMCML code described here:
 // http://www.atomic.physics.lu.se/fileadmin/atomfysik/Biophotonics/Software/CUDAMCML.pdf
+//
+// This code can generate a "safeprimes_base32.txt" file compatible with their implementation,
+// but a binary file format with much smaller file sizes is also supported.
 
 #ifndef MWCRNG_INIT_H
 #define MWCRNG_INIT_H
@@ -25,8 +28,6 @@ inline int init_MWC_RNG(uint64_t *x, uint32_t *a,
                  I3RandomServicePtr randomService,
                  std::string safeprimes_file="")
 {
-    // uint32_t fora,tmp1,tmp2;
-    // int64_t forab;
     int64_t multiplier;
 
     if (safeprimes_file == "")
@@ -62,11 +63,6 @@ inline int init_MWC_RNG(uint64_t *x, uint32_t *a,
         }
     }
 
-    // Here we set up a loop, using the first multiplier in the file to generate x's and c's
-    // There are some restictions to these two numbers:
-    // 0<=c<a and 0<=x<b, where a is the multiplier and b is the base (2^32)
-    // also [x,c]=[0,0] and [b-1,a-1] are not allowed.
-    
     for (uint32_t i=0;i < n_rng;i++) {
         if (ifs.eof())
             log_error("File ended before %u primes could be read!", i+1);
@@ -87,8 +83,8 @@ inline int init_MWC_RNG(uint64_t *x, uint32_t *a,
             }
         }
         
-        if (multiplier < std::numeric_limits<uint32_t>::min() || multiplier > std::numeric_limits<uint32_t>::max()) {
-            log_error("Prime #%u (%ld) is out of range!", i+1, multiplier);
+        if ((multiplier < std::numeric_limits<uint32_t>::min()) || (multiplier > std::numeric_limits<uint32_t>::max())) {
+            log_error("Prime #%u (%" PRIi64 ") is out of range!", i+1, multiplier);
             return 1;
         }
         
@@ -98,7 +94,6 @@ inline int init_MWC_RNG(uint64_t *x, uint32_t *a,
         x[i]=0;
         while( (x[i]==0) | (((uint32_t)(x[i]>>32))>=(a[i]-1)) | (((uint32_t)x[i])>=0xfffffffful))
         {
-            // generate a random numbers for x and x (both are stored in the "x" array
             x[i] = static_cast<uint32_t>(randomService->Integer(0xffffffff));
             x[i]=x[i]<<32;
             x[i] += static_cast<uint32_t>(randomService->Integer(0xffffffff));
