@@ -307,10 +307,6 @@ i3_add_library(${PROJECT_NAME}
 
 # the make-safeprimes tool needs gmp, so only compile it if that tool is available
 if(GMP_FOUND)
-  i3_executable(make_safeprimes
-    private/make_safeprimes/main.c
-    USE_TOOLS python boost gmp
-    )
   i3_executable(convert_safeprimes
     private/make_safeprimes/convert.cxx
     USE_PROJECTS icetray
