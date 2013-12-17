@@ -7,7 +7,9 @@ or Mediterranean sea water.
 Disclaimer
 ----------
 This project is specific to the [IceCube neutrino telescope][icecube] (and Antares/KM3NeT)
-simulation and the following description contains lots of internal jargon.
+simulation and the following description contains lots of internal jargon. It requires
+the [IceTray framework][icetray]. It still has some IceCube-internal dependencies, but those
+might be removed in the future.
 
 Rationale
 ---------
@@ -149,6 +151,7 @@ The files `clsim/private/geant4/TrkCerenkov.cxx` and `clsim/private/geant4/TrkCe
 This product includes software developed by Members of the [Geant4 Collaboration][geant4coll] ( http://cern.ch/geant4 ).
 
 [icecube]: http://icecube.wisc.edu
+[icetray]: http://code.icecube.wisc.edu/projects/icetray
 [license]: https://github.com/claudiok/clsim/master/resources/docs/LICENSE
 [geant4license]: http://cern.ch/geant4/license
 [geant4coll]: http://cern.ch/geant4
