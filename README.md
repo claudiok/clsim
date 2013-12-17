@@ -1,6 +1,6 @@
 clsim
 =====
-An OpenCL-based photon-tracking simulation using a (backward) ray tracing algorithm
+An OpenCL-based photon-tracking simulation using a (source-based) ray tracing algorithm
 modeling scattering and absorption of light in the deep glacial ice at the South Pole
 or Mediterranean sea water.
 
