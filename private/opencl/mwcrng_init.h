@@ -32,16 +32,21 @@ inline int init_MWC_RNG(uint64_t *x, uint32_t *a,
 
     if (safeprimes_file == "")
     {
+        bool success = 0;
         namespace fs = boost::filesystem;
-        const fs::path I3_SRC(getenv("I3_SRC"));
-        const fs::path I3_DATA(getenv("I3_DATA"));
-        if (fs::exists(I3_SRC/"clsim/resources/safeprimes_base32.txt"))
-            safeprimes_file = (I3_SRC/"/clsim/resources/safeprimes_base32.txt").string();
-        else if (fs::exists(I3_DATA/"safeprimes_base32.txt"))
-            safeprimes_file = (I3_DATA/"safeprimes_base32.txt").string();
-        else
-            // Try to find it in the local directory
-            safeprimes_file = "safeprimes_base32.txt";
+        safeprimes_file = "safeprimes_base32.txt"; 
+        if (getenv("I3_SRC")) {
+            const fs::path I3_SRC(getenv("I3_SRC"));
+            if (fs::exists(I3_SRC/"clsim/resources/safeprimes_base32.txt")) {
+                safeprimes_file = (I3_SRC/"/clsim/resources/safeprimes_base32.txt").string();
+                success = 1;
+            }
+        }
+        if (!success && getenv("I3_DATA")) {
+            const fs::path I3_DATA(getenv("I3_DATA"));
+            if (fs::exists(I3_DATA/"safeprimes_base32.txt"))
+                safeprimes_file = (I3_DATA/"safeprimes_base32.txt").string();
+        }
     }
     
     boost::iostreams::filtering_istream ifs;
