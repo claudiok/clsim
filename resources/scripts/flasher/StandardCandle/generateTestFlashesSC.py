@@ -29,7 +29,7 @@ from I3Tray import *
 import os
 import sys
 
-from icecube import icetray, dataclasses, dataio, phys_services, clsim
+from icecube import icetray, dataclasses, dataio, phys_services, clsim, sim_services
 
 import math
 import numpy
