@@ -18,7 +18,9 @@ theMatrix = numpy.random.uniform(-10.,10.,(3,3))
 
 
 # get OpenCL CPU devices
-openCLDevices = [device for device in clsim.I3CLSimOpenCLDevice.GetAllDevices() if device.cpu]
+#openCLDevices = [device for device in clsim.I3CLSimOpenCLDevice.GetAllDevices() if device.cpu]
+#EDIT Sam : if device.cpu fail check even openCL device available
+openCLDevices = [device for device in clsim.I3CLSimOpenCLDevice.GetAllDevices()]
 if len(openCLDevices)==0:
     raise RuntimeError("No CPU OpenCL devices available!")
 openCLDevice = openCLDevices[0]
