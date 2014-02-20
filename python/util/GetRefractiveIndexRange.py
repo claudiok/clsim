@@ -18,7 +18,7 @@
 # 
 # $Id$
 # 
-# @file GetMaximumGroupRefractiveIndex.py
+# @file GetRefractiveIndexRange.py
 # @version $Revision$
 # @date $Date$
 # @author Claudio Kopper
@@ -37,12 +37,13 @@ def __MakeGroupRefIndexFunctionFromPhaseRefIndex(phaseRefIndex):
 
     return numpy.vectorize(lambda wlen: phaseRefIndex.GetValue(wlen)/(1. + phaseRefIndex.GetDerivative(wlen)*wlen/phaseRefIndex.GetValue(wlen)))
 
-def GetMaximumGroupRefractiveIndex(mediumProperties):
+def GetGroupRefractiveIndexRange(mediumProperties):
     """
-    Returns the maximum group refractive index over all
-    ice layers for a given mediumProperties object.
+    Returns the minimum and maximum group refractive indices as tuple
+    over all ice layers for a given mediumProperties object.
     """
     
+    minIndex = None
     maxIndex = None
     #atWlen = None
     
@@ -67,15 +68,55 @@ def GetMaximumGroupRefractiveIndex(mediumProperties):
         
         testWlens = numpy.linspace(minWlen, maxWlen, 10000, endpoint=True)
         evaluatedFunc = groupRefIndexFunc(testWlens)
-        
+
+        thisLayerMinIndex_arg = numpy.argmin(evaluatedFunc)
+        thisLayerMinIndex = evaluatedFunc[thisLayerMinIndex_arg]
         thisLayerMaxIndex_arg = numpy.argmax(evaluatedFunc)
         thisLayerMaxIndex = evaluatedFunc[thisLayerMaxIndex_arg]
         #thisLayerAtWlen = testWlens[thisLayerMaxIndex_arg]
-        
+
+        if (minIndex is None) or (thisLayerMinIndex < minIndex):
+            minIndex = thisLayerMinIndex
         if (maxIndex is None) or (thisLayerMaxIndex > maxIndex):
             maxIndex = thisLayerMaxIndex
             #atWlen = thisLayerAtWlen
     
     #return (maxIndex, atWlen, overallMinWlen, overallMaxWlen)
-    return maxIndex
+    return (minIndex, maxIndex)
+
+def GetPhaseRefractiveIndexRange(mediumProperties):
+    """
+    Returns the minimum and maximum phase refractive indices as tuple
+    over all ice layers for a given mediumProperties object.
+    """
     
+    minIndex = None
+    maxIndex = None
+    
+    overallMinWlen = mediumProperties.GetMinWavelength()
+    overallMaxWlen = mediumProperties.GetMaxWavelength()
+    
+    for layer in range(mediumProperties.LayersNum):
+        minWlen = overallMinWlen
+        maxWlen = overallMaxWlen
+        
+        phaseRefIndex = mediumProperties.GetPhaseRefractiveIndex(layer)
+        minWlen = max(minWlen, phaseRefIndex.GetMinWlen())
+        maxWlen = min(maxWlen, phaseRefIndex.GetMaxWlen())
+        phaseRefIndexFunc = numpy.vectorize(lambda wlen: phaseRefIndex.GetValue(wlen))
+        
+        testWlens = numpy.linspace(minWlen, maxWlen, 10000, endpoint=True)
+        evaluatedFunc = phaseRefIndexFunc(testWlens)
+        
+        thisLayerMinIndex_arg = numpy.argmin(evaluatedFunc)
+        thisLayerMinIndex = evaluatedFunc[thisLayerMinIndex_arg]
+        thisLayerMaxIndex_arg = numpy.argmax(evaluatedFunc)
+        thisLayerMaxIndex = evaluatedFunc[thisLayerMaxIndex_arg]
+
+        if (minIndex is None) or (thisLayerMinIndex < minIndex):
+            minIndex = thisLayerMinIndex
+        if (maxIndex is None) or (thisLayerMaxIndex > maxIndex):
+            maxIndex = thisLayerMaxIndex
+
+    return (minIndex, maxIndex)
+

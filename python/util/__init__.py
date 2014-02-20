@@ -25,7 +25,8 @@
 #
 
 from .interpolate import *
-from .GetMaximumGroupRefractiveIndex import GetMaximumGroupRefractiveIndex
+from .GetRefractiveIndexRange import GetGroupRefractiveIndexRange
+from .GetRefractiveIndexRange import GetPhaseRefractiveIndexRange
 from .GetSpiceLeaAnisotropyTransforms import GetSpiceLeaAnisotropyTransforms
 from .GetIceTiltZShift import GetIceTiltZShift
 
