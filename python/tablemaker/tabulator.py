@@ -30,6 +30,8 @@ from icecube.dataclasses import I3Position, I3Particle, I3MCTree, I3Direction, I
 from icecube.phys_services import I3Calculator, I3GSLRandomService
 from icecube.clsim import I3Photon, I3CLSimTabulator, GetIceCubeDOMAcceptance, GetIceCubeDOMAngularSensitivity
 from icecube.clsim import FlasherInfoVectToFlasherPulseSeriesConverter, I3CLSimFlasherPulse, I3CLSimFlasherPulseSeries
+from icecube.clsim.traysegments.common import parseIceModel
+from icecube.clsim.util import GetRefractiveIndexRange
 import numpy, math
 from icecube.photospline import numpy_extensions # meshgrid_nd
 from icecube.photospline.photonics import Table, Efficiency, Geometry, Parity
@@ -45,8 +47,6 @@ empty_header = {
     'energy':            0.,
     'type':              int(I3Particle.ParticleType.unknown),
     'level':             1,
-    # FIXME: this is almost always incorrect. Be sure to set these to the minimum
-    # values found in the ice properties!
     'n_group':           I3Constants.n_ice_group,
     'n_phase':           I3Constants.n_ice_phase,
 }
@@ -71,7 +71,7 @@ class PhotoTable(Table, object):
         self.header['n_photons'] += other.header['n_photons']
         
         return self
-    
+
     def __idiv__(self, num):
         return self.__imul__(1./num)
         
@@ -507,9 +507,11 @@ class MakeParticle(I3Module):
 
         return pulse
 
-def get_minimum_refractive_index(IceModelLocation):
-    # FIXME: make this actual find the minima
-    return (I3Constants.n_ice_group, I3Constants.n_ice_phase)
+def get_minimum_refractive_index(IceModelLocation, DisableTilt):
+    mediumProperties = parseIceModel(IceModelLocation, DisableTilt)
+    n_group_min, n_group_max = GetRefractiveIndexRange.GetGroupRefractiveIndexRange(mediumProperties)
+    n_phase_min, n_phase_max = GetRefractiveIndexRange.GetPhaseRefractiveIndexRange(mediumProperties)
+    return (n_group_min, n_phase_min)
 
 @traysegment
 def PhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Units.degree, ZCoordinate=0.*I3Units.m,
@@ -604,7 +606,7 @@ def PhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Units.degre
         DisableTilt=DisableTilt,
     )
     
-    n_group, n_phase = get_minimum_refractive_index(expandvars("$I3_SRC/clsim/resources/ice/" + IceModel))
+    n_group, n_phase = get_minimum_refractive_index(expandvars("$I3_SRC/clsim/resources/ice/" + IceModel), DisableTilt)
     
     header = dict(empty_header)
     header['zenith'] = Zenith/I3Units.degree
