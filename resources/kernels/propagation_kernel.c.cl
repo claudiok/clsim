@@ -239,9 +239,9 @@ inline void saveHit(
     unsigned short hitOnDom,
     __global uint* hitIndex,
     uint maxHitIndex,
-    __write_only __global struct I3CLSimPhoton *outputPhotons
+    __global struct I3CLSimPhoton *outputPhotons
 #ifdef SAVE_PHOTON_HISTORY
-  , __write_only __global float4 *photonHistory,
+  , __global float4 *photonHistory,
     float4 *currentPhotonHistory
 #endif
     )
@@ -306,14 +306,14 @@ inline void saveHit(
 __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOutputPhotons
     const uint maxHitIndex,    // maxNumOutputPhotons_
 #ifndef SAVE_ALL_PHOTONS
-    __read_only __global unsigned short *geoLayerToOMNumIndexPerStringSet,
+    __global unsigned short *geoLayerToOMNumIndexPerStringSet,
 #endif
 
-    __read_only __global struct I3CLSimStep *inputSteps, // deviceBuffer_InputSteps
-    __write_only __global struct I3CLSimPhoton *outputPhotons, // deviceBuffer_OutputPhotons
+    __global struct I3CLSimStep *inputSteps, // deviceBuffer_InputSteps
+    __global struct I3CLSimPhoton *outputPhotons, // deviceBuffer_OutputPhotons
 
 #ifdef SAVE_PHOTON_HISTORY
-    __write_only __global float4 *photonHistory,
+    __global float4 *photonHistory,
 #endif
 
     __global ulong* MWC_RNG_x,
