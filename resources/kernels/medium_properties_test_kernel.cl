@@ -39,8 +39,8 @@
 
 __kernel void testKernel(__global ulong* MWC_RNG_x,
                          __global uint* MWC_RNG_a,
-                         __read_only __global float* xValues,
-                         __write_only __global float* yValues,
+                         __global float* xValues,
+                         __global float* yValues,
                          uint layer,
                          uint mode)
 {

@@ -33,7 +33,7 @@ inline void checkForCollision_inCell(
     const struct I3CLSimStep *step,
     __global uint* hitIndex,
     uint maxHitIndex,
-    __write_only __global struct I3CLSimPhoton *outputPhotons
+    __global struct I3CLSimPhoton *outputPhotons
 #endif
     )
 {
@@ -92,7 +92,7 @@ inline bool checkForCollision(const floating4_t photonPosAndTime,
 #endif
     __global uint* hitIndex,
     uint maxHitIndex,
-    __write_only __global struct I3CLSimPhoton *outputPhotons,
+    __global struct I3CLSimPhoton *outputPhotons,
     __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal
     )
 {

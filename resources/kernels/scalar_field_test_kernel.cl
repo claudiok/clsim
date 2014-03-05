@@ -37,10 +37,10 @@
 //#define dbg_printf(format, ...) printf(format, ##__VA_ARGS__)
 
 __kernel void testKernel(
-    __read_only __global float* inputValuesX,
-    __read_only __global float* inputValuesY,
-    __read_only __global float* inputValuesZ,
-    __write_only __global float* outputValues)
+    __global float* inputValuesX,
+    __global float* inputValuesY,
+    __global float* inputValuesZ,
+    __global float* outputValues)
 {
     dbg_printf("Start kernel... (work item %u of %u)\n", get_global_id(0), get_global_size(0));
 

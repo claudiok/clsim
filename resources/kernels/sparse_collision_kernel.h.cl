@@ -45,9 +45,9 @@ inline void checkForCollision_OnString(
     const struct I3CLSimStep *step,
     __global uint* hitIndex,
     uint maxHitIndex,
-    __write_only __global struct I3CLSimPhoton *outputPhotons,
+    __global struct I3CLSimPhoton *outputPhotons,
 #ifdef SAVE_PHOTON_HISTORY
-    __write_only __global float4 *photonHistory,
+    __global float4 *photonHistory,
     float4 *currentPhotonHistory,
 #endif
 #endif
@@ -74,9 +74,9 @@ inline void checkForCollision_InCell(
     const struct I3CLSimStep *step,
     __global uint* hitIndex,
     uint maxHitIndex,
-    __write_only __global struct I3CLSimPhoton *outputPhotons,
+    __global struct I3CLSimPhoton *outputPhotons,
 #ifdef SAVE_PHOTON_HISTORY
-    __write_only __global float4 *photonHistory,
+    __global float4 *photonHistory,
     float4 *currentPhotonHistory,
 #endif
 #endif
@@ -111,9 +111,9 @@ inline void checkForCollision_InCells(
     const struct I3CLSimStep *step,
     __global uint* hitIndex,
     uint maxHitIndex,
-    __write_only __global struct I3CLSimPhoton *outputPhotons,
+    __global struct I3CLSimPhoton *outputPhotons,
 #ifdef SAVE_PHOTON_HISTORY
-    __write_only __global float4 *photonHistory,
+    __global float4 *photonHistory,
     float4 *currentPhotonHistory,
 #endif
 #endif
@@ -136,9 +136,9 @@ inline bool checkForCollision(const floating4_t photonPosAndTime,
 #endif
     __global uint* hitIndex,
     uint maxHitIndex,
-    __write_only __global struct I3CLSimPhoton *outputPhotons,
+    __global struct I3CLSimPhoton *outputPhotons,
 #ifdef SAVE_PHOTON_HISTORY
-    __write_only __global float4 *photonHistory,
+    __global float4 *photonHistory,
     float4 *currentPhotonHistory,
 #endif
     __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal

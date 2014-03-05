@@ -69,7 +69,7 @@ inline float my_exp(float a) {return exp(a);}
 inline float sqr(float a) {return a*a;}
 
 
-__kernel void testKernel(__write_only __global float* randomNumbers,
+__kernel void testKernel(__global float* randomNumbers,
                          __global ulong* MWC_RNG_x,
                          __global uint* MWC_RNG_a)
 {

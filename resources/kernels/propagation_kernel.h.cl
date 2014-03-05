@@ -116,9 +116,9 @@ inline void saveHit(
     unsigned short hitOnDom,
     __global uint* hitIndex,
     uint maxHitIndex,
-    __write_only __global struct I3CLSimPhoton *outputPhotons
+    __global struct I3CLSimPhoton *outputPhotons
 #ifdef SAVE_PHOTON_HISTORY
-  , __write_only __global float4 *photonHistory,
+  , __global float4 *photonHistory,
     float4 *currentPhotonHistory
 #endif
     );
