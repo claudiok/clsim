@@ -272,15 +272,15 @@ def I3CLSimMakePhotons(tray, name,
     else:
         if (OutputMCTreeName is not None) and (OutputMCTreeName != ""):
             # copy the MCTree to the requested output name
-            def copyMCTree(frame, inputName, outputName, If=None):
-                if If is not None:
-                    if not If(frame): return
+            def copyMCTree(frame, inputName, outputName, If_=None):
+                if If_ is not None:
+                    if not If_(frame): return
                 frame[outputName] = frame[inputName]
             tray.AddModule(copyMCTree, name + "_copyMCTree",
                            inputName=clSimMCTreeName,
                            outputName=OutputMCTreeName,
                            Streams=[icetray.I3Frame.DAQ],
-                           If=If)
+                           If_=If)
             clSimMCTreeName = OutputMCTreeName
         else:
             clSimMCTreeName = clSimMCTreeName
