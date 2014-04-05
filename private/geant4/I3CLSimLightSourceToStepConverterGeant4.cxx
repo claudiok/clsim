@@ -128,7 +128,7 @@ maxBunchSize_(512000)
         (!getenv("G4NEUTRONHPDATA")) ||
         (!getenv("G4ABLADATA")))
     {
-        log_warn("Geant4 requires the following environment variables to be set: \"G4LEVELGAMMADATA\", \"G4RADIOACTIVEDATA\", \"G4LEDATA\", \"G4NEUTRONHPDATA\" and \"G4ABLADATA\"");
+        log_info("Geant4 requires the following environment variables to be set: \"G4LEVELGAMMADATA\", \"G4RADIOACTIVEDATA\", \"G4LEDATA\", \"G4NEUTRONHPDATA\" and \"G4ABLADATA\"");
     }
 
     // geant 4.9.5 needs some more
@@ -137,7 +137,7 @@ maxBunchSize_(512000)
         (!getenv("G4PIIDATA")) ||
         (!getenv("G4REALSURFACEDATA")))
     {
-        log_warn("Geant4.9.5 requires the following environment variables to be set: \"G4NEUTRONXSDATA\", \"G4PIIDATA\", \"G4REALSURFACEDATA\"");
+        log_info("Geant4.9.5 requires the following environment variables to be set: \"G4NEUTRONXSDATA\", \"G4PIIDATA\", \"G4REALSURFACEDATA\"");
     }
 #endif
     

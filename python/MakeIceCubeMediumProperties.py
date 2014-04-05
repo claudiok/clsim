@@ -190,7 +190,7 @@ def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m,
         m.SetPreScatterDirectionTransform(I3CLSimVectorTransformConstant())
         m.SetPostScatterDirectionTransform(I3CLSimVectorTransformConstant())
     else:
-        print("Anisotropy! Whooo!", anisotropyDirAzimuth/I3Units.deg, magnitudeAlongDir, magnitudePerpToDir)
+        # print("Anisotropy! Whooo!", anisotropyDirAzimuth/I3Units.deg, magnitudeAlongDir, magnitudePerpToDir)
 
         absLenScaling, preScatterTransform, postScatterTransform = \
             util.GetSpiceLeaAnisotropyTransforms(
@@ -204,7 +204,7 @@ def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m,
         m.SetPostScatterDirectionTransform(postScatterTransform)
 
     if useTilt:
-        print("Tilt! Wheee!")
+        # print("Tilt! Wheee!")
 
         m.SetIceTiltZShift(
             util.GetIceTiltZShift(
