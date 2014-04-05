@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 from optparse import OptionParser
 from os.path import expandvars
 
@@ -20,6 +22,9 @@ parser.add_option("--icemodel", default=expandvars("$I3_SRC/clsim/resources/ice/
 parser.add_option("--use-cpu",  action="store_true", default=False,
                   dest="USECPU", help="simulate using CPU instead of GPU")
 
+parser.add_option("--minimal-gcd",  action="store_true", default=False,
+                  dest="MINIMALGCD", help="generate a trivial GCD from scratch with only 24 DOMs. There are fewer collision checks, so usually things are faster, but unrealistic.")
+
 parser.add_option("-d", "--device", type="int", default=None,
                   dest="DEVICE", help="device number")
 
@@ -33,8 +38,16 @@ if len(args) != 0:
         parser.error(crap)
 
 if options.DEVICE is not None:
-    print " ** DEVICE selected using the \"--device\" command line option. Only do this if you know what you are doing!"
-    print " ** You should be using the CUDA_VISIBLE_DEVICES and/or GPU_DEVICE_ORDINAL environment variables instead."
+    print(" ")
+    print(" ** DEVICE selected using the \"-d/--device\" command line option. Only do this if you know what you are doing!")
+    print(" ** You should be using the CUDA_VISIBLE_DEVICES and/or GPU_DEVICE_ORDINAL environment variables instead.")
+
+if options.MINIMALGCD:
+    print(" ")
+    print(" ** You chose to not use a standard IceCube GCD file but instead to create a trivial geometry from scratch.")
+    print(" ** This geometry only has 24 DOMs, so there are fewer collision checks.")
+    print(" ** This usually means propagation is faster, but unrealistic. Might differ from GPU type to GPU type.")
+
 
 from I3Tray import *
 import os
@@ -245,19 +258,22 @@ randomService = phys_services.I3SPRNGRandomService(
     nstreams = 10000,
     streamnum = options.RUNNUMBER)
 
-# use a real GCD file for a real-world test
-tray.AddModule("I3InfiniteSource","streams",
-    Prefix = expandvars("$I3_PORTS/test-data/sim/GeoCalibDetectorStatus_IC86.55697_corrected_V2.i3.gz"),
-    Stream=icetray.I3Frame.DAQ)
+if options.MINIMALGCD:
+    tray.AddModule("I3InfiniteSource","streams",
+        Stream=icetray.I3Frame.DAQ)
 
-## this would be an alternative to a real GCD file. comment out "Prefix" above and uncomment this
-# tray.AddModule(injectFakeGCD,"gcd",
-#     OMKeys = omKeys,
-#     OMPositions = omPositions,
-#     # XCoord = xCoord,
-#     # YCoord = yCoord,
-#     # ZCoord = zCoord,
-#     )
+    tray.AddModule(injectFakeGCD,"gcd",
+        OMKeys = omKeys,
+        OMPositions = omPositions,
+        # XCoord = xCoord,
+        # YCoord = yCoord,
+        # ZCoord = zCoord,
+        )
+else:
+    # use a real GCD file for a real-world test
+    tray.AddModule("I3InfiniteSource","streams",
+        Prefix = expandvars("$I3_PORTS/test-data/sim/GeoCalibDetectorStatus_IC86.55697_corrected_V2.i3.gz"),
+        Stream=icetray.I3Frame.DAQ)
 
 tray.AddModule("I3MCEventHeaderGenerator","gen_header",
     Year=2009,
@@ -313,15 +329,15 @@ ns_per_photon = [float(item.find('second').text) for item in root.find('I3XMLSum
 ns_per_photon_with_util = [float(item.find('second').text) for item in root.find('I3XMLSummaryService').find('map').findall('item') if item.find('first').text=="I3CLSimModule_makeCLSimHits_makePhotons_clsim_AverageHostTimePerPhoton"][0]
 device_util = [float(item.find('second').text) for item in root.find('I3XMLSummaryService').find('map').findall('item') if item.find('first').text=="I3CLSimModule_makeCLSimHits_makePhotons_clsim_DeviceUtilization"][0]
 
-print " "
-print "# these numbers are performance figures for the GPU:"
-print "time per photon (GPU):", ns_per_photon, "ns"
-print "photons per second (GPU):", 1e9/ns_per_photon, "photons per second"
+print(" ")
+print("# these numbers are performance figures for the GPU:")
+print("time per photon (GPU):", ns_per_photon, "ns")
+print("photons per second (GPU):", 1e9/ns_per_photon, "photons per second")
 
-print " "
-print "# these numbers include the host utilization and are probably not meaningful for --numevents=1 (the default). You need more events to even out the startup/setup time."
-print "time per photon (actual, including under-utilization):", ns_per_photon_with_util, "ns"
-print "photons per second (actual, including under-utilization):", 1e9/ns_per_photon_with_util, "photons per second"
+print(" ")
+print("# these numbers include the host utilization and are probably not meaningful for --numevents=1 (the default). You need more events to even out the startup/setup time.")
+print("time per photon (actual, including under-utilization):", ns_per_photon_with_util, "ns")
+print("photons per second (actual, including under-utilization):", 1e9/ns_per_photon_with_util, "photons per second")
 
-print "device utilization:", device_util*100., "%"
+print("device utilization:", device_util*100., "%")
 
