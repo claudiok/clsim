@@ -156,7 +156,7 @@ public:
      * position is relative to the global coordinate system, where the
      * z-axis is facing upwards. It is NOT relative to the OM axis!!
      */
-    void SetPos(const I3Position& p) { position_.SetPosition(p); }
+    void SetPos(const I3Position& p) { position_=p; }
     
     /**
      * @return The direction vector of the photon on the OM. 
@@ -170,7 +170,7 @@ public:
      * This direction is relative to the global coordinate system, where the
      * z-axis is facing upwards. It is NOT relative to the OM axis!!
      */
-    void SetDir(const I3Direction& d) { direction_.SetDirection(d); }
+    void SetDir(const I3Direction& d) { direction_=d; }
 
     
     /**
@@ -191,7 +191,7 @@ public:
     /**
      * @param p The position of emission of this photon.
      */
-    void SetStartPos(const I3Position& p) { startPosition_.SetPosition(p); }
+    void SetStartPos(const I3Position& p) { startPosition_=p; }
     
     /**
      * @return The direction of emission of this photon.
@@ -201,7 +201,7 @@ public:
     /**
      * @param d The direction of emission of this photon.
      */
-    void SetStartDir(const I3Direction& d) { startDirection_.SetDirection(d); }
+    void SetStartDir(const I3Direction& d) { startDirection_=d; }
 
     
     /** 

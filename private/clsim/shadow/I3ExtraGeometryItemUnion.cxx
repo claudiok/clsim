@@ -80,8 +80,8 @@ void I3ExtraGeometryItemUnion::CalculateBoundingBox() const
         if (box.second.GetZ() > highZ) highZ = box.second.GetZ();
     }
     
-    boundingBoxLower_.SetPos(lowX, lowY, lowZ);
-    boundingBoxUpper_.SetPos(highX, highY, highZ);
+    boundingBoxLower_=I3Position(lowX, lowY, lowZ);
+    boundingBoxUpper_=I3Position(highX, highY, highZ);
     
     boundingBoxCalculated_=true;
 }

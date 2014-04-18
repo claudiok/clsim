@@ -53,8 +53,8 @@ void I3ExtraGeometryItemMove::CalculateBoundingBox() const
     if (boundingBoxCalculated_) return;
     
     if (!element_) {
-        boundingBoxLower_.SetPos(NAN, NAN, NAN);
-        boundingBoxUpper_.SetPos(NAN, NAN, NAN);
+        boundingBoxLower_=I3Position();
+        boundingBoxUpper_=I3Position();
         
         boundingBoxCalculated_=true;
         return;
@@ -63,8 +63,8 @@ void I3ExtraGeometryItemMove::CalculateBoundingBox() const
     const std::pair<I3Position, I3Position> box =
     element_->GetBoundingBox();
     
-    boundingBoxLower_.SetPos(box.first.GetX() +offset_.GetX(), box.first.GetY() +offset_.GetY(), box.first.GetZ() +offset_.GetZ());
-    boundingBoxUpper_.SetPos(box.second.GetX()+offset_.GetX(), box.second.GetY()+offset_.GetY(), box.second.GetZ()+offset_.GetZ());
+    boundingBoxLower_=box.first+offset_;
+    boundingBoxUpper_=box.second+offset_;
     
     boundingBoxCalculated_=true;
 }
@@ -77,12 +77,8 @@ I3ExtraGeometryItemMove::DoesLineIntersect
 {
     if (!element_) return false;
 
-    return element_->DoesLineIntersect(I3Position(lineStart.GetX()-offset_.GetX(),
-                                                  lineStart.GetY()-offset_.GetY(),
-                                                  lineStart.GetZ()-offset_.GetZ()),
-                                       I3Position(lineEnd.GetX()  -offset_.GetX(),
-                                                  lineEnd.GetY()  -offset_.GetY(),
-                                                  lineEnd.GetZ()  -offset_.GetZ()));
+    return element_->DoesLineIntersect(lineStart-offset_,
+                                       lineEnd-offset_);
 }
 
 std::pair<I3Position, I3Position>

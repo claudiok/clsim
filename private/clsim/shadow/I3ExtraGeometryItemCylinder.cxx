@@ -55,8 +55,8 @@ void I3ExtraGeometryItemCylinder::CalculateBoundingBox() const
     if (boundingBoxCalculated_) return;
     
     
-    boundingBoxLower_.SetPos(NAN,NAN,NAN);
-    boundingBoxUpper_.SetPos(NAN,NAN,NAN);
+    boundingBoxLower_=I3Position();
+    boundingBoxUpper_=I3Position();
     
     boundingBoxCalculated_=true;
 }

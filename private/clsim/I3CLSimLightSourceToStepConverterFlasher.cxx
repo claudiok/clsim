@@ -518,7 +518,7 @@ void I3CLSimLightSourceToStepConverterFlasher::FillStep(I3CLSimStep &step,
             dirz *= recip_length;
         }
 
-        smearedDirection.SetDir(dirx, diry, dirz);
+        smearedDirection=I3Direction(dirx, diry, dirz);
     }
         
     //////// bunch time delay
