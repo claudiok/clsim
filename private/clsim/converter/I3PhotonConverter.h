@@ -42,8 +42,4 @@ private:
     std::size_t FillRows(const I3Photon &photon, I3TableRowPtr rows);
 };
 
-#ifdef GRANULAR_GEOMETRY_SUPPORT
 typedef I3MapModuleKeyVectorConverter<I3PhotonConverter, I3PhotonSeriesMap> I3PhotonSeriesMapConverter;
-#else
-typedef I3MapOMKeyVectorConverter<I3PhotonConverter, I3PhotonSeriesMap> I3PhotonSeriesMapConverter;
-#endif

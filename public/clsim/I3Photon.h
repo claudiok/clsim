@@ -33,11 +33,7 @@
 
 #include "dataclasses/I3Vector.h"
 #include "dataclasses/I3Map.h"
-#ifdef GRANULAR_GEOMETRY_SUPPORT
 #include "dataclasses/ModuleKey.h"
-#else
-#include "icetray/OMKey.h"
-#endif
 #include "dataclasses/I3Direction.h"
 #include "dataclasses/I3Position.h"
 #include "dataclasses/physics/I3Particle.h"
@@ -388,11 +384,7 @@ BOOST_CLASS_VERSION(I3Photon, i3photon_version_);
 
 typedef I3Vector<I3Photon> I3PhotonSeries;
 
-#ifdef GRANULAR_GEOMETRY_SUPPORT
 typedef I3Map<ModuleKey, I3PhotonSeries> I3PhotonSeriesMap; 
-#else
-typedef I3Map<OMKey, I3PhotonSeries> I3PhotonSeriesMap; 
-#endif
 
 I3_POINTER_TYPEDEFS(I3Photon);
 I3_POINTER_TYPEDEFS(I3PhotonSeries);

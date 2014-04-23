@@ -806,12 +806,10 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
 }
 
 namespace {
-#ifdef GRANULAR_GEOMETRY_SUPPORT
     static inline ModuleKey ModuleKeyFromOpenCLSimIDs(int16_t stringID, uint16_t domID)
     {
         return ModuleKey(stringID, domID);
     }
-#endif
 
     static inline OMKey OMKeyFromOpenCLSimIDs(int16_t stringID, uint16_t domID)
     {
@@ -825,11 +823,7 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
                                        std::vector<int32_t> &currentPhotonIdForFrame_,
                                        const std::vector<I3FramePtr> &frameList_,
                                        const std::map<uint32_t, particleCacheEntry> &particleCache_,
-#ifdef GRANULAR_GEOMETRY_SUPPORT
                                        const std::vector<std::set<ModuleKey> > &maskedOMKeys_,
-#else
-                                       const std::vector<std::set<OMKey> > &maskedOMKeys_,
-#endif
                                        bool collectStatistics_,
                                        std::map<uint32_t, uint64_t> &photonNumAtOMPerParticle,
                                        std::map<uint32_t, double> &photonWeightSumAtOMPerParticle
@@ -869,19 +863,12 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
         // get the current photon id
         int32_t &currentPhotonId = currentPhotonIdForFrame_[cacheEntry.frameListEntry];
         
-#ifdef GRANULAR_GEOMETRY_SUPPORT
         // generate the OMKey
         const ModuleKey key = ModuleKeyFromOpenCLSimIDs(photon.stringID, photon.omID);
-#else
-        const OMKey key = OMKeyFromOpenCLSimIDs(photon.stringID, photon.omID);
-#endif
         
         // get the OMKey mask
-#ifdef GRANULAR_GEOMETRY_SUPPORT
         const std::set<ModuleKey> &keyMask = maskedOMKeys_[cacheEntry.frameListEntry];
-#else
-        const std::set<OMKey> &keyMask = maskedOMKeys_[cacheEntry.frameListEntry];
-#endif
+
         if (keyMask.count(key) > 0) continue; // ignore masked DOMs
         
         // this either inserts a new vector or retrieves an existing one
@@ -992,11 +979,7 @@ std::size_t I3CLSimModule::FlushFrameCache()
     std::vector<int32_t> currentPhotonIdForFrame_old;
     std::vector<I3FramePtr> frameList_old;
     std::map<uint32_t, particleCacheEntry> particleCache_old;
-#ifdef GRANULAR_GEOMETRY_SUPPORT
     std::vector<std::set<ModuleKey> > maskedOMKeys_old;
-#else
-    std::vector<std::set<OMKey> > maskedOMKeys_old;
-#endif
     std::vector<bool> frameIsBeingWorkedOn_old;
 
     photonsForFrameList_old.swap(photonsForFrameList_);
@@ -1372,11 +1355,7 @@ bool I3CLSimModule::DigestOtherFrame(I3FramePtr frame, bool startThread)
     photonsForFrameList_.push_back(I3PhotonSeriesMapPtr(new I3PhotonSeriesMap()));
     currentPhotonIdForFrame_.push_back(0);
     std::size_t currentFrameListIndex = frameList_.size()-1;
-#ifdef GRANULAR_GEOMETRY_SUPPORT
     maskedOMKeys_.push_back(std::set<ModuleKey>()); // insert an empty ModuleKey mask
-#else
-    maskedOMKeys_.push_back(std::set<OMKey>()); // insert an empty OMKey mask
-#endif
     
     // check if we got a geometry before starting to work
     if (!geometryIsConfigured_)
@@ -1425,17 +1404,13 @@ bool I3CLSimModule::DigestOtherFrame(I3FramePtr frame, bool startThread)
     }
 
     I3VectorOMKeyConstPtr omKeyMask;
-#ifdef GRANULAR_GEOMETRY_SUPPORT
     I3VectorModuleKeyConstPtr moduleKeyMask;
-#endif
     if (omKeyMaskName_ != "") {
         omKeyMask = frame->Get<I3VectorOMKeyConstPtr>(omKeyMaskName_);
         
-#ifdef GRANULAR_GEOMETRY_SUPPORT
         if (!omKeyMask) {
             moduleKeyMask = frame->Get<I3VectorModuleKeyConstPtr>(omKeyMaskName_);
         }
-#endif
     }
 
     
@@ -1447,7 +1422,6 @@ bool I3CLSimModule::DigestOtherFrame(I3FramePtr frame, bool startThread)
     if (MCTree) ConvertMCTreeToLightSources(*MCTree, lightSources, timeOffsets);
     if (flasherPulses) ConvertFlasherPulsesToLightSources(*flasherPulses, lightSources, timeOffsets);
     
-#ifdef GRANULAR_GEOMETRY_SUPPORT
     // support both vectors of OMKeys and vectors of ModuleKeys
     
     if (omKeyMask) {
@@ -1464,15 +1438,6 @@ bool I3CLSimModule::DigestOtherFrame(I3FramePtr frame, bool startThread)
         }
     }
    
-#else
-    if (omKeyMask) {
-        // assign the current OMKey mask if there is one
-        BOOST_FOREACH(const OMKey &key, *omKeyMask) {
-            maskedOMKeys_.back().insert(key);
-        }
-    }
-#endif
-    
     for (std::size_t i=0;i<lightSources.size();++i)
     {
         const I3CLSimLightSource &lightSource = lightSources[i];

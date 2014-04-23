@@ -35,9 +35,7 @@
 #include "dataclasses/geometry/I3Geometry.h"
 #include "dataclasses/geometry/I3OMGeo.h"
 
-#ifdef GRANULAR_GEOMETRY_SUPPORT
 #include "dataclasses/geometry/I3ModuleGeo.h"
-#endif
 
 #include <stdexcept>
 #include <limits>
@@ -172,7 +170,6 @@ useHardcodedDeepCoreSubdetector_(useHardcodedDeepCoreSubdetector)
     
     numOMs_=0;
     
-#ifdef GRANULAR_GEOMETRY_SUPPORT
     I3ModuleGeoMapConstPtr moduleGeoMap = frame->Get<I3ModuleGeoMapConstPtr>("I3ModuleGeoMap");
     
     if (!moduleGeoMap) {
@@ -202,31 +199,6 @@ useHardcodedDeepCoreSubdetector_(useHardcodedDeepCoreSubdetector)
             subdetectorName = subdetector_it->second;
         }
         
-#else
-    I3GeometryConstPtr geometry = frame->Get<I3GeometryConstPtr>();
-    if (!geometry) log_fatal("No I3Geometry object in frame");
-
-    BOOST_FOREACH(const I3OMGeoMap::value_type &i, geometry->omgeo)
-    {
-        const OMKey &key = i.first;
-        const I3OMGeo &geo = i.second;
-        
-#ifdef HAS_MULTIPMT_SUPPORT
-        std::string subdetectorName = geo.subdetector;
-#else
-        std::string subdetectorName;
-        switch (geo.omtype)
-        {
-            case I3OMGeo::UnknownType: subdetectorName = "UnknownType"; break;
-            case I3OMGeo::AMANDA: subdetectorName = "AMANDA"; break;
-            case I3OMGeo::IceCube: subdetectorName = "IceCube"; break;
-            case I3OMGeo::IceTop: subdetectorName = "IceTop"; break;
-            default: subdetectorName = "(unknown)"; break;
-        }
-#endif
-
-#endif
-      
         int32_t string=key.GetString();
         uint32_t dom=key.GetOM();
 
@@ -236,11 +208,7 @@ useHardcodedDeepCoreSubdetector_(useHardcodedDeepCoreSubdetector)
             {
                 if ((string>=79) && (string<=86)) // these are the DeepCore strings
                 {
-#ifdef GRANULAR_GEOMETRY_SUPPORT
                     if (geo.GetPos().GetZ()>-30.*I3Units::m) // z=30m is about halfway between the upper and lower parts of DeepCore
-#else
-                    if (geo.position.GetZ()>-30.*I3Units::m) // z=30m is about halfway between the upper and lower parts of DeepCore
-#endif
                         subdetectorName="DeepCoreUpper";
                     else
                         subdetectorName="DeepCoreLower";
@@ -273,24 +241,16 @@ useHardcodedDeepCoreSubdetector_(useHardcodedDeepCoreSubdetector)
         subdetectorName = subdetectorName + "_" + boost::lexical_cast<std::string>(it->second);
 #endif
         
-#ifdef GRANULAR_GEOMETRY_SUPPORT
         // sanity check
         if (std::abs(geo.GetRadius()-OMRadius_) > 0.001*I3Units::mm)
             log_fatal("This version of clsim does only support DOMs with one single size. Configured size=%fmm, size in geometry=%fmm",
                       OMRadius_/I3Units::mm, geo.GetRadius()/I3Units::mm);
-#endif
         
         stringIDs_.push_back(string);
         domIDs_.push_back(dom);
-#ifdef GRANULAR_GEOMETRY_SUPPORT
         posX_.push_back(geo.GetPos().GetX());
         posY_.push_back(geo.GetPos().GetY());
         posZ_.push_back(geo.GetPos().GetZ());
-#else
-        posX_.push_back(geo.position.GetX());
-        posY_.push_back(geo.position.GetY());
-        posZ_.push_back(geo.position.GetZ());
-#endif
         subdetectors_.push_back(subdetectorName);
 
         ++numOMs_;
