@@ -172,20 +172,6 @@ if(NOT EXISTS ${CMAKE_SOURCE_DIR}/icetray/public/icetray/python/dataclass_suite.
 endif(NOT EXISTS ${CMAKE_SOURCE_DIR}/icetray/public/icetray/python/dataclass_suite.hpp)
 
 
-# Check for dataclasses/I3Matrix.h. Use backport if it doesn't exist.
-if(NOT EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/I3Matrix.h)
-  LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
-       private/clsim/backports/I3Matrix.cxx
-       )
-  
-  set (USE_BACKPORTED_I3MATRIX YES)
-  ADD_DEFINITIONS(-DUSE_BACKPORTED_I3MATRIX)
-  colormsg(YELLOW "+-- dataclasses does not have I3Matrix.h. Using local backported version.")
-else(NOT EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/I3Matrix.h)
-  set (USE_BACKPORTED_I3MATRIX NO)
-endif(NOT EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/I3Matrix.h)
-
-
 # This is the core clsim stuff (everything using OpenCL and/or Geant4)
 if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
 
