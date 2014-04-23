@@ -1,5 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 set -e
+
+## DO NOT COPY THIS SCRIPT INTO YOUR PROJECT
+## Ask on the dataclass e-mail list how to do this
 
 # helper script to automatically download and extract safeprimes_base32.txt
 # (it takes a long time to build this file..)
@@ -20,9 +23,14 @@ if [ -f $RESOURCES_DIR/safeprimes_base32.txt ]; then
     # (if not, just assume it is ok and exit)
     
     FOUND_MD5=0
-    command -v md5 >/dev/null && FOUND_MD5=1 || FOUND_MD5=0
+    UNAME=`uname`
+    md5=md5
+    if [ x"$UNAME" = "xDarwin" ]; then
+	md5=/sbin/md5
+    fi
+    command -v $md5 >/dev/null && FOUND_MD5=1 || FOUND_MD5=0
     if [ $FOUND_MD5 -eq 1 ]; then
-        MD5_SUM_FILE=`md5 -q $RESOURCES_DIR/safeprimes_base32.txt`
+        MD5_SUM_FILE=`$md5 -q $RESOURCES_DIR/safeprimes_base32.txt`
     else
         # exit if there is no md5 or md5sum tool available
         command -v md5sum >/dev/null || { exit 0; }
