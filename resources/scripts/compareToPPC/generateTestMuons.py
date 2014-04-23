@@ -41,17 +41,6 @@ from icecube import icetray, dataclasses, dataio, phys_services
 
 load("libsim-services")
 
-# simple (maybe too simple?) runtime check to see
-# if we should support Q-frames
-try:
-    isQified = "QConverter" in icetray.modules("dataio")
-except AttributeError:
-    isQified = False
-
-if isQified:
-    print("using fully Qified modules")
-else:
-    print("using old-school non-Q-frame enabled modules/services")
 
 if options.APPLYMMC:
     load("libc2j-icetray")
@@ -92,94 +81,48 @@ class mySimpleMuon(icetray.I3Module):
         self.sphereRadius = self.GetParameter("SphereRadius")
         self.nEvents = self.GetParameter("NEvents")
 
-    if isQified:
-        def DAQ(self, frame):
+    def DAQ(self, frame):
 
-            azi = self.rs.uniform(self.azimuthMin,self.azimuthMax)
+        azi = self.rs.uniform(self.azimuthMin,self.azimuthMax)
 
-            cos_zen_low = math.cos(self.zenithMin / I3Units.radian)
-            cos_zen_high = math.cos(self.zenithMax / I3Units.radian )
-            zen = math.acos(self.rs.uniform(cos_zen_low,cos_zen_high))
+        cos_zen_low = math.cos(self.zenithMin / I3Units.radian)
+        cos_zen_high = math.cos(self.zenithMax / I3Units.radian )
+        zen = math.acos(self.rs.uniform(cos_zen_low,cos_zen_high))
 
-            r = self.ConstructPerpVector(zen,azi) * math.sqrt(self.rs.uniform(0,self.diskRadius**2))
+        r = self.ConstructPerpVector(zen,azi) * math.sqrt(self.rs.uniform(0,self.diskRadius**2))
 
-            diskCenter = self.sphereRadius * numpy.array([math.sin(zen) * math.cos(azi),\
-                                                          math.sin(zen) * math.sin(azi),
-                                                          math.cos(zen)])
+        diskCenter = self.sphereRadius * numpy.array([math.sin(zen) * math.cos(azi),\
+                                                      math.sin(zen) * math.sin(azi),
+                                                      math.cos(zen)])
 
-            pos = diskCenter + r
-        
-            # set the particle's energy
-            energy = self.rs.uniform(self.energyMin,self.energyMax) * I3Units.GeV        
-
-            daughter = dataclasses.I3Particle()
-            daughter.type = self.particleType
-            daughter.energy = energy
-            daughter.pos = dataclasses.I3Position(pos[0], pos[1], pos[2])
-            daughter.dir = dataclasses.I3Direction(zen,azi)
-            daughter.time = 0.
-            daughter.location_type = dataclasses.I3Particle.LocationType.InIce
-
-            primary = dataclasses.I3Particle()
-            primary.type = dataclasses.I3Particle.ParticleType.NuMu
-            primary.energy = energy
-            primary.pos = dataclasses.I3Position(pos[0], pos[1], pos[2])
-            primary.dir = dataclasses.I3Direction(zen,azi)
-            primary.time = 0.
-            primary.location_type = dataclasses.I3Particle.LocationType.Anywhere
-
-            mctree = dataclasses.I3MCTree()
-            mctree.add_primary(primary)
-            mctree.append_child(primary,daughter)
+        pos = diskCenter + r
     
-            frame["I3MCTree"] = mctree
+        # set the particle's energy
+        energy = self.rs.uniform(self.energyMin,self.energyMax) * I3Units.GeV        
 
-            self.PushFrame(frame)
-    else:
-        # this is an ancient version of icetray that does not have Q-frames.
-        # compensate. This is a total re-implementation because the python bindings
-        # changed, too.
-        def Physics(self, frame):
-            azi = self.rs.Uniform(self.azimuthMin,self.azimuthMax)
+        daughter = dataclasses.I3Particle()
+        daughter.type = self.particleType
+        daughter.energy = energy
+        daughter.pos = dataclasses.I3Position(pos[0], pos[1], pos[2])
+        daughter.dir = dataclasses.I3Direction(zen,azi)
+        daughter.time = 0.
+        daughter.location_type = dataclasses.I3Particle.LocationType.InIce
 
-            cos_zen_low = math.cos(self.zenithMin / I3Units.radian)
-            cos_zen_high = math.cos(self.zenithMax / I3Units.radian )
-            zen = math.acos(self.rs.Uniform(cos_zen_low,cos_zen_high))
+        primary = dataclasses.I3Particle()
+        primary.type = dataclasses.I3Particle.ParticleType.NuMu
+        primary.energy = energy
+        primary.pos = dataclasses.I3Position(pos[0], pos[1], pos[2])
+        primary.dir = dataclasses.I3Direction(zen,azi)
+        primary.time = 0.
+        primary.location_type = dataclasses.I3Particle.LocationType.Anywhere
 
-            r = self.ConstructPerpVector(zen,azi) * math.sqrt(self.rs.Uniform(0,self.diskRadius**2))
+        mctree = dataclasses.I3MCTree()
+        mctree.add_primary(primary)
+        mctree.append_child(primary,daughter)
 
-            diskCenter = self.sphereRadius * numpy.array([math.sin(zen) * math.cos(azi),\
-                                                          math.sin(zen) * math.sin(azi),
-                                                          math.cos(zen)])
+        frame["I3MCTree"] = mctree
 
-            pos = diskCenter + r
-        
-            # set the particle's energy
-            energy = self.rs.Uniform(self.energyMin,self.energyMax) * I3Units.GeV        
-
-            daughter = dataclasses.I3Particle()
-            daughter.SetType(self.particleType)
-            daughter.SetEnergy(energy)
-            daughter.SetPos(pos[0], pos[1], pos[2])
-            daughter.SetDir(zen,azi)
-            daughter.SetTime(0.)
-            daughter.SetLocationType(dataclasses.I3Particle.LocationType.InIce)
-
-            primary = dataclasses.I3Particle()
-            primary.SetType(dataclasses.I3Particle.ParticleType.NuMu)
-            primary.SetEnergy(energy)
-            primary.SetPos(pos[0], pos[1], pos[2])
-            primary.SetDir(zen,azi)
-            primary.SetTime(0.)
-            primary.SetLocationType(dataclasses.I3Particle.LocationType.Anywhere)
-
-            mctree = dataclasses.I3MCTree()
-            mctree.AddPrimary(primary)
-            mctree.AppendChild(primary,daughter)
-    
-            frame["I3MCTree"] = mctree
-
-            self.PushFrame(frame)
+        self.PushFrame(frame)
 
     def ConstructPerpVector(self, zenith,azimuth):
         x = math.sin(zenith) * math.cos(azimuth)
@@ -189,12 +132,8 @@ class mySimpleMuon(icetray.I3Module):
         v = numpy.array([x,y,z])
         
         # construct another vector in a random direction
-        if isQified:
-            ru_azimuth = self.rs.uniform(0,2.* math.pi)
-            ru_zenith = math.acos(self.rs.uniform(-1.0,1.0))
-        else:
-            ru_azimuth = self.rs.Uniform(0,2.* math.pi)
-            ru_zenith = math.acos(self.rs.Uniform(-1.0,1.0))
+        ru_azimuth = self.rs.uniform(0,2.* math.pi)
+        ru_zenith = math.acos(self.rs.uniform(-1.0,1.0))
         
         xi = math.sin(ru_zenith) * math.cos(ru_azimuth)
         yi = math.sin(ru_zenith) * math.sin(ru_azimuth)
@@ -225,34 +164,16 @@ randomService = phys_services.I3SPRNGRandomService(
     nstreams = 10000,
     streamnum = options.RUNNUMBER)
 
-if isQified:
-    tray.AddModule("I3InfiniteSource","streams",
-                   Prefix=options.GCDFILE,
-                   Stream=icetray.I3Frame.DAQ)
+tray.AddModule("I3InfiniteSource","streams",
+               Prefix=options.GCDFILE,
+               Stream=icetray.I3Frame.DAQ)
 
-    tray.AddModule("I3MCEventHeaderGenerator","gen_header",
-                   Year=2009,
-                   DAQTime=158100000000000000,
-                   RunNumber=1,
-                   EventID=1,
-                   IncrementEventID=True)
-
-else:
-    tray.AddService("I3ReaderServiceFactory", "gcd_reader",
-        Filename = options.GCDFILE,
-        OmitGeometry=False,
-        OmitCalibration=False,
-        OmitStatus=False,
-        OmitEvent=True)
-
-    tray.AddService("I3MCTimeGeneratorServiceFactory", "gen_header",
-        Year=2010,
-        DAQTime=158100000000000000,
-        RunNumber=1,
-        EventID=1,
-        IncrementEventID=True)
-
-    tray.AddModule("I3Muxer", "muxme")
+tray.AddModule("I3MCEventHeaderGenerator","gen_header",
+               Year=2009,
+               DAQTime=158100000000000000,
+               RunNumber=1,
+               EventID=1,
+               IncrementEventID=True)
 
 tray.AddModule(mySimpleMuon, "injectMuon",
                I3RandomService = randomService,

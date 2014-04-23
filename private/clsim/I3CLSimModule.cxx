@@ -82,11 +82,7 @@ geometryIsConfigured_(false)
 {
     // define parameters
     workOnTheseStops_.clear();
-#ifdef IS_Q_FRAME_ENABLED
     workOnTheseStops_.push_back(I3Frame::DAQ);
-#else
-    workOnTheseStops_.push_back(I3Frame::Physics);
-#endif
     AddParameter("WorkOnTheseStops",
                  "Work on MCTrees found in the stream types (\"stops\") specified in this list",
                  workOnTheseStops_);

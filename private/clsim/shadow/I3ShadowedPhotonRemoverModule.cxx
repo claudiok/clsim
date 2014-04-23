@@ -82,11 +82,7 @@ void I3ShadowedPhotonRemoverModule::Configure()
 }
 
 
-#ifdef IS_Q_FRAME_ENABLED
 void I3ShadowedPhotonRemoverModule::DAQ(I3FramePtr frame)
-#else
-void I3ShadowedPhotonRemoverModule::Physics(I3FramePtr frame)
-#endif
 {
     log_trace("%s", __PRETTY_FUNCTION__);
     

@@ -141,17 +141,6 @@ endif(NUMPY_FOUND)
 ADD_DEFINITIONS(-D__STDC_FORMAT_MACROS)
 
 
-# check for Q-Frame support
-if(EXISTS ${CMAKE_SOURCE_DIR}/dataio/private/dataio/QConverter.cxx)
-  # we assume that the existence of this module means that we have
-  # to deal with a Q-frame-enabled meta-project
-  ADD_DEFINITIONS(-DIS_Q_FRAME_ENABLED)
-  colormsg(GREEN "+-- Q-frame-enabled")
-else(EXISTS ${CMAKE_SOURCE_DIR}/dataio/private/dataio/QConverter.cxx)
-  colormsg(YELLOW "+-- old-style, non-Q-frame module")
-endif(EXISTS ${CMAKE_SOURCE_DIR}/dataio/private/dataio/QConverter.cxx)
-
-
 # This is the core clsim stuff (everything using OpenCL and/or Geant4)
 if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
 

@@ -517,11 +517,7 @@ namespace {
     
 }
 
-#ifdef IS_Q_FRAME_ENABLED
 void I3MuonSlicer::DAQ(I3FramePtr frame)
-#else
-void I3MuonSlicer::Physics(I3FramePtr frame)
-#endif
 {
     log_trace("%s", __PRETTY_FUNCTION__);
     

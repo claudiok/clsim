@@ -68,11 +68,7 @@ public:
     /**
      * The module needs to process Physics frames
      */
-#ifdef IS_Q_FRAME_ENABLED
     virtual void DAQ(I3FramePtr frame);
-#else
-    virtual void Physics(I3FramePtr frame);
-#endif
     
 private:
     // parameters
@@ -147,11 +143,7 @@ void I3TauSanitizer::Configure()
 }
 
 
-#ifdef IS_Q_FRAME_ENABLED
 void I3TauSanitizer::DAQ(I3FramePtr frame)
-#else
-void I3TauSanitizer::Physics(I3FramePtr frame)
-#endif
 {
     log_trace("%s", __PRETTY_FUNCTION__);
     
