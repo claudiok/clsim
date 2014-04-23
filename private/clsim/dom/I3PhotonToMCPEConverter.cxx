@@ -282,13 +282,6 @@ void I3PhotonToMCPEConverter::Physics(I3FramePtr frame)
         }
     }    
     
-#if !defined(HAS_MULTIPMT_SUPPORT)
-    // DOM is looking downwards
-    const double DOMDir_x = 0.;
-    const double DOMDir_y = 0.;
-    const double DOMDir_z = -1.;
-#endif
-    
     BOOST_FOREACH(const I3PhotonSeriesMap::value_type &it, *inputPhotonSeriesMap)
     {
         const ModuleKey &module_key = it.first;

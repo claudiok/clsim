@@ -186,18 +186,6 @@ else(NOT EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/I3Matrix.h)
 endif(NOT EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/I3Matrix.h)
 
 
-# check if multiPMT support is available and add multiPMT-only 
-# source files (this is still for the KM3NeT multiPMT version of IceTray)
-# support for 3-item OMKeys is coming soon!
-if(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3OMTypeInfo.h)
-  LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
-       private/clsim/dom/I3PhotonToMCHitConverterForMultiPMT.cxx
-       )
-
-  ADD_DEFINITIONS(-DHAS_MULTIPMT_SUPPORT)
-  colormsg(GREEN "+-- KM3NeT old-style multiPMT support")
-endif(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3OMTypeInfo.h)
-
 # This is the core clsim stuff (everything using OpenCL and/or Geant4)
 if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
 
