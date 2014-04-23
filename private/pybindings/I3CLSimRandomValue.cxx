@@ -41,11 +41,7 @@
 #include <clsim/random_value/I3CLSimRandomValueConstant.h>
 #include <clsim/random_value/I3CLSimRandomValueUniform.h>
 
-#ifdef NO_PYTHON_DATACLASS_SUITE
-#include "icetray_python_backports/list_indexing_suite.hpp"
-#else
 #include <icetray/python/list_indexing_suite.hpp>
-#endif
 
 #include <boost/preprocessor/seq.hpp>
 #include "const_ptr_helpers.h"

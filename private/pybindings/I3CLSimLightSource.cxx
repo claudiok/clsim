@@ -31,14 +31,9 @@
 #include <clsim/I3CLSimLightSource.h>
 #include <boost/preprocessor/seq.hpp>
      
-#ifdef NO_PYTHON_DATACLASS_SUITE
-#include "icetray_python_backports/list_indexing_suite.hpp"
-#include "icetray_python_backports/std_map_indexing_suite.hpp"
-#else
 #include <icetray/python/list_indexing_suite.hpp>
 #include <icetray/python/std_map_indexing_suite.hpp>
-#endif
-     
+
 namespace bp = boost::python;
 
 #define ENUM_DEF(r,data,T) .value(BOOST_PP_STRINGIZE(T), data::T)

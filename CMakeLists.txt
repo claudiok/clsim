@@ -161,17 +161,6 @@ else(EXISTS ${CMAKE_SOURCE_DIR}/icetray/public/icetray/portable_binary_archive.h
 endif(EXISTS ${CMAKE_SOURCE_DIR}/icetray/public/icetray/portable_binary_archive.hpp)
 
 
-# Check for the existence of icetray/python/dataclass_suite.hpp
-# If this file does not exist, a local copy of the python
-# binding helper headers is used. TODO: This needs to go away
-# as soon as an offline-software release contains these headers.
-# (They already are in icetray/trunk.)
-if(NOT EXISTS ${CMAKE_SOURCE_DIR}/icetray/public/icetray/python/dataclass_suite.hpp)
-  ADD_DEFINITIONS(-DNO_PYTHON_DATACLASS_SUITE)
-  colormsg(YELLOW "+-- icetray does not have dataclass_suite.hpp. Using local version.")
-endif(NOT EXISTS ${CMAKE_SOURCE_DIR}/icetray/public/icetray/python/dataclass_suite.hpp)
-
-
 # This is the core clsim stuff (everything using OpenCL and/or Geant4)
 if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
 

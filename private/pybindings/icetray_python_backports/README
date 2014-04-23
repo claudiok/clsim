@@ -1,3 +1,0 @@
-These files are copies from icetray/trunk. As soon as the all standard meta-projects have
-updated copies of icetray (with dataclass_suite.hpp), this can and should go away!
-(grep for NO_PYTHON_DATACLASS_SUITE)
