@@ -24,18 +24,6 @@
  * @author Claudio Kopper
  */
 
-#pragma OPENCL EXTENSION cl_khr_global_int32_base_atomics : enable
-#pragma OPENCL EXTENSION cl_khr_local_int32_base_atomics : enable
-#pragma OPENCL EXTENSION cl_khr_byte_addressable_store : enable
-//#pragma OPENCL EXTENSION cl_khr_fp16 : enable
-
-// disable dbg_printf for GPU
-#define dbg_printf(format, ...)
-
-// enable printf for CPU
-//#pragma OPENCL EXTENSION cl_amd_printf : enable
-//#define dbg_printf(format, ...) printf(format, ##__VA_ARGS__)
-
 __kernel void testKernel(
     __global float* inputValuesX,
     __global float* inputValuesY,

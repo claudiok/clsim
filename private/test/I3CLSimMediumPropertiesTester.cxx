@@ -75,9 +75,11 @@ void I3CLSimMediumPropertiesTester::FillSource(std::vector<std::string> &source,
 
     std::string mediumPropertiesSource = I3CLSimHelper::GenerateMediumPropertiesSource(*mediumProperties);
 
-    std::string testKernelSource = I3CLSimHelper::LoadProgramSource(kernelBaseDir+"/medium_properties_test_kernel.cl");
+    std::string testKernelHeader = I3CLSimHelper::LoadProgramSource(kernelBaseDir+"/medium_properties_test_kernel.h.cl");
+    std::string testKernelSource = I3CLSimHelper::LoadProgramSource(kernelBaseDir+"/medium_properties_test_kernel.c.cl");
     
     // collect the program sources
+    source.push_back(testKernelHeader);
     source.push_back(mwcrngSource);
     source.push_back(mediumPropertiesSource);
     source.push_back(testKernelSource);

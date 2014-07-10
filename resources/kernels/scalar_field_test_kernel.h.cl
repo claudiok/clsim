@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2011, 2012
+ * Copyright (c) 2014
  * Claudio Kopper <claudio.kopper@icecube.wisc.edu>
  * and the IceCube Collaboration <http://www.icecube.wisc.edu>
  *
@@ -16,11 +16,11 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *
- * $Id$
+ * $Id
  *
- * @file vector_transform_test_kernel.cl
- * @version $Revision$
- * @date $Date$
+ * @file scalar_field_test_kernel.h.cl
+ * @version $Revision
+ * @date $Date
  * @author Claudio Kopper
  */
 
@@ -29,41 +29,16 @@
 #pragma OPENCL EXTENSION cl_khr_byte_addressable_store : enable
 //#pragma OPENCL EXTENSION cl_khr_fp16 : enable
 
+__kernel void testKernel(
+    __global float* inputValuesX,
+    __global float* inputValuesY,
+    __global float* inputValuesZ,
+    __global float* outputValues);
+
+
 // disable dbg_printf for GPU
 #define dbg_printf(format, ...)
 
 // enable printf for CPU
 //#pragma OPENCL EXTENSION cl_amd_printf : enable
 //#define dbg_printf(format, ...) printf(format, ##__VA_ARGS__)
-
-__kernel void testKernel(
-    __global float* inputValuesX,
-    __global float* inputValuesY,
-    __global float* inputValuesZ,
-    __global float* outputValuesX,
-    __global float* outputValuesY,
-    __global float* outputValuesZ)
-{
-    dbg_printf("Start kernel... (work item %u of %u)\n", get_global_id(0), get_global_size(0));
-
-    unsigned int i = get_global_id(0);
-    //unsigned int global_size = get_global_size(0);
-
-    // evaluate the function
-    float4 theVector = (float4)(inputValuesX[i], inputValuesY[i], inputValuesZ[i], -1.2345f);
-
-    evaluateVectorTransform(&theVector);
-
-    if (theVector.w != -1.2345f) {
-        outputValuesX[i] = 8888888.f;
-        outputValuesY[i] = 8888888.f;
-        outputValuesZ[i] = 8888888.f;
-    } else {
-        outputValuesX[i] = theVector.x;
-        outputValuesY[i] = theVector.y;
-        outputValuesZ[i] = theVector.z;
-    }
-
-    dbg_printf("Stop kernel... (work item %u of %u)\n", i, global_size);
-    dbg_printf("Kernel finished.\n");
-}

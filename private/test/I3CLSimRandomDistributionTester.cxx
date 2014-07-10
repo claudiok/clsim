@@ -99,9 +99,11 @@ void I3CLSimRandomDistributionTester::FillSource(std::vector<std::string> &sourc
      "RNG_CALL_UNIFORM_CO",    // the call to the rng for creating a uniform number [0;1[
      "RNG_CALL_UNIFORM_OC"     // the call to the rng for creating a uniform number ]0;1]
     );
-    std::string rngDistTestKernelSource = I3CLSimHelper::LoadProgramSource(kernelBaseDir+"/rng_dist_test_kernel.cl");
+    std::string rngDistTestKernelHeader = I3CLSimHelper::LoadProgramSource(kernelBaseDir+"/rng_dist_test_kernel.h.cl");
+    std::string rngDistTestKernelSource = I3CLSimHelper::LoadProgramSource(kernelBaseDir+"/rng_dist_test_kernel.c.cl");
     
     // collect the program sources
+    source.push_back(rngDistTestKernelHeader);
     source.push_back(mwcrngSource);
     source.push_back(randomDistSource);
     source.push_back(rngDistTestKernelSource);

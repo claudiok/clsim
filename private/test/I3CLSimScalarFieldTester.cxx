@@ -66,9 +66,11 @@ void I3CLSimScalarFieldTester::FillSource(
     
     std::string functionSource = theField->GetOpenCLFunction("evaluateScalarField");
     
-    std::string testKernelSource = I3CLSimHelper::LoadProgramSource(kernelBaseDir+"/scalar_field_test_kernel.cl");
+    std::string testKernelHeader = I3CLSimHelper::LoadProgramSource(kernelBaseDir+"/scalar_field_test_kernel.h.cl");
+    std::string testKernelSource = I3CLSimHelper::LoadProgramSource(kernelBaseDir+"/scalar_field_test_kernel.c.cl");
     
     // collect the program sources
+    source.push_back(testKernelHeader);
     source.push_back(functionSource);
     source.push_back(testKernelSource);
 }
