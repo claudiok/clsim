@@ -2,6 +2,21 @@
 # $Author$
 # $Date$
 
+July 11, 2014 Claudio Kopper  (ckopper@icecube.wisc.edu)
+--------------------------------------------------------------------
+trunk (some of these happened in earlier releases but this file has not been updated)
+
+* some code cleanup: removed the dataclasses header backports
+  -> this version will not work with outdated dataclasses
+* minor OpenCL cleanups to make some implementations happy
+* safeprimes file will now be taken from I3_DATA if it exists
+* added a benchmark script which can be used to check the GPU/CPU
+  performance by propagating a couple of photons
+* more cleanups to move from I3MCPulse to I3MCPE
+* fixed a bug where the MCTree chopping would ignore secondary losses
+  leading to light from muon stochastic losses to be ignored
+  when looking at data pre-processed with CMC
+
 January 29, 2013 Claudio Kopper  (ckopper@icecube.wisc.edu)
 --------------------------------------------------------------------
 Release V00-03-00
