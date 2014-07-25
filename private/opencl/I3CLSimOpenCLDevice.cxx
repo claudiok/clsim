@@ -287,7 +287,7 @@ void I3CLSimOpenCLDevice::InitializeStaticStuff()
         std::vector<cl::Device> devices;
         
         try {
-            platform.getDevices(CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_CPU, &devices);
+            platform.getDevices(CL_DEVICE_TYPE_ALL, &devices);
         } catch (cl::Error &err) {
             log_fatal("OpenCL ERROR: %s (%i)", err.what(), err.err());
         }
