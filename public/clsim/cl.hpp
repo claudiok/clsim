@@ -151,6 +151,8 @@
 #include <iterator>
 #include <intrin.h>
 
+#define USE_GL_INTEROP 0
+
 #if defined(__CL_ENABLE_EXCEPTIONS)
 #include <exception>
 #endif // #if defined(__CL_ENABLE_EXCEPTIONS)
@@ -173,7 +175,9 @@
 #include <OpenCL/opencl.h>
 #include <libkern/OSAtomic.h>
 #else
+#if USE_GL_INTEROP
 #include <GL/gl.h>
+#endif
 #include <CL/opencl.h>
 #endif // !__APPLE__
 
@@ -3258,6 +3262,7 @@ public:
  * 
  *  \see Memory
  */
+#if USE_GL_INTEROP
 class BufferGL : public Buffer
 {
 public:
@@ -3332,6 +3337,7 @@ public:
             __GET_GL_OBJECT_INFO_ERR);
     }
 };
+#endif
 
 /*! \brief Class interface for GL Render Buffer Memory Objects.
  *
@@ -3341,6 +3347,7 @@ public:
  * 
  *  \see Memory
  */
+#if USE_GL_INTEROP
 class BufferRenderGL : public Buffer
 {
 public:
@@ -3415,6 +3422,7 @@ public:
             __GET_GL_OBJECT_INFO_ERR);
     }
 };
+#endif
 
 /*! \brief C++ base class for Image Memory objects.
  *
@@ -4157,6 +4165,7 @@ public:
  * that wraps all GL sourced images on the grounds that setup information
  * was performed by OpenCL anyway.
  */
+#if USE_GL_INTEROP
 class ImageGL : public Image
 {
 public:
@@ -4203,6 +4212,7 @@ public:
         return *this;
     }
 };
+#endif
 #endif // #if defined(CL_VERSION_1_2)
 
 /*! \brief Class interface for cl_sampler.
