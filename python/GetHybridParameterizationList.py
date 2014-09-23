@@ -17,11 +17,11 @@
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 # 
 # 
-# $Id: GetDefaultParameterizationList.py 108199 2013-07-12 21:33:08Z nwhitehorn $
+# $Id$
 # 
-# @file GetDefaultParameterizationList.py
-# @version $Revision: 108199 $
-# @date $Date: 2013-07-12 23:33:08 +0200 (Fri, 12 Jul 2013) $
+# @file GetHybridParameterizationList.py
+# @version $Revision$
+# @date $Date$
 # @author Claudio Kopper
 #
 
