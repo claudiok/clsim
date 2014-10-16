@@ -241,7 +241,6 @@ def I3CLSimMakePhotons(tray, name,
     # some constants
     DOMRadius = 0.16510*icetray.I3Units.m # 13" diameter
     Jitter = 2.*icetray.I3Units.ns
-    numFlasherPhotonsAtFullBrightness = 8.0e9
 
     if MMCTrackListName is None or MMCTrackListName=="":
         # the input does not seem to have been processed by MMC
@@ -278,7 +277,6 @@ def I3CLSimMakePhotons(tray, name,
                        FlasherInfoVectName = FlasherInfoVectName,
                        FlasherPulseSeriesName = clSimFlasherPulseSeriesName,
                        FlasherOMKeyVectName = clSimOMKeyMaskName,
-                       NumberOfPhotonsAtMaxBrightness = numFlasherPhotonsAtFullBrightness,
                        If=If)
 
     # (optional) pre-processing
