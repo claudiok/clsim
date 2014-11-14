@@ -3830,6 +3830,7 @@ public:
      *
      *  Wraps clCreateFromGLTexture2D().
      */
+#if USE_GL_INTEROP
     Image2DGL(
         const Context& context,
         cl_mem_flags flags,
@@ -3853,7 +3854,7 @@ public:
         }
 
     }
-    
+#endif    
     //! \brief Default constructor - initializes to NULL.
     Image2DGL() : Image2D() { }
 
@@ -4096,6 +4097,7 @@ public:
      *
      *  Wraps clCreateFromGLTexture3D().
      */
+#if USE_GL_INTEROP
     Image3DGL(
         const Context& context,
         cl_mem_flags flags,
@@ -4118,6 +4120,7 @@ public:
             *err = error;
         }
     }
+  #endif
 
     //! \brief Default constructor - initializes to NULL.
     Image3DGL() : Image3D() { }
