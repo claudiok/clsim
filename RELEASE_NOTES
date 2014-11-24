@@ -2,6 +2,16 @@
 # $Author$
 # $Date$
 
+November 24, 2014 Alex Olivas  (olivas@icecube.umd.edu)
+--------------------------------------------------------------------
+Release V04-00-04
+
+* Builds without OpenGL and with Intel i7.
+* Newer, tighter safeprimes.
+* Switch to default value of numberOfPhotonsAtMaxBrightness.
+* Incorporate hybrid mode between GEANT4 and parametrization.
+* Get all devices, even those that are neither CPUs nor GPUs, like the Xeon Phi.
+
 July 11, 2014 Claudio Kopper  (ckopper@icecube.wisc.edu)
 --------------------------------------------------------------------
 trunk (some of these happened in earlier releases but this file has not been updated)
