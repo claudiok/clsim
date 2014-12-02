@@ -1177,9 +1177,9 @@ std::size_t I3CLSimModule::FlushFrameCache()
 }
 
 namespace {
-    bool ParticleHasMuonDaughter(const I3MCTree::iterator &particle_it, const I3MCTree &mcTree)
+    bool ParticleHasMuonDaughter(const I3MCTree::const_iterator &particle_it, const I3MCTree &mcTree)
     {
-        I3MCTree::sibling_iterator j(particle_it);
+        I3MCTree::sibling_const_iterator j(particle_it);
         for (j=mcTree.begin(particle_it); j!=mcTree.end(particle_it); ++j)
         {
             const I3Particle &daughter = *j;
@@ -1545,7 +1545,7 @@ void I3CLSimModule::ConvertMCTreeToLightSources(const I3MCTree &mcTree,
                                                 std::deque<I3CLSimLightSource> &lightSources,
                                                 std::deque<double> &timeOffsets)
 {
-    for (I3MCTree::iterator particle_it = mcTree.begin();
+    for (I3MCTree::const_iterator particle_it = mcTree.begin();
          particle_it != mcTree.end(); ++particle_it)
     {
         const I3Particle &particle_ref = *particle_it;

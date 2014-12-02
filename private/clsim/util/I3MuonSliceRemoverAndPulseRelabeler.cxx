@@ -180,19 +180,8 @@ void I3MuonSliceRemoverAndPulseRelabeler::Configure()
 }
 
 namespace {
-    inline
-    I3MCTree::iterator
-    GetMCTreeIterator(const I3MCTree &t, const I3Particle& p){
-        I3MCTree::iterator i;
-        for(i=t.begin() ; i!= t.end(); i++)
-            if((i->GetMinorID() == p.GetMinorID()) &&
-               (i->GetMajorID() == p.GetMajorID()))
-                return i;
-        return t.end();
-    }
-
     void RemoveMuonSlicesIfDarkMuon(const I3MCTree &mcTree,
-                                    I3MCTree::iterator particle_it,
+                                    I3MCTree::const_iterator particle_it,
                                     std::map<I3ParticleID, I3ParticleID> &re_label_map
                                     )
     {
@@ -205,12 +194,12 @@ namespace {
         {
             // yes, it's a dark muon.
 
-            std::vector<I3MCTree::iterator> daughterList;
-            I3MCTree::sibling_iterator j(particle_it);
+            std::vector<I3MCTree::const_iterator> daughterList;
+            I3MCTree::sibling_const_iterator j(particle_it);
             for (j=mcTree.begin(particle_it); j!=mcTree.end(particle_it); ++j)
                 daughterList.push_back(j);
 
-            BOOST_FOREACH(I3MCTree::iterator &daughter_it, daughterList)
+            BOOST_FOREACH(I3MCTree::const_iterator &daughter_it, daughterList)
             {
                 const I3Particle &daughter = *daughter_it;
 
@@ -224,16 +213,8 @@ namespace {
                 if (mcTree.number_of_children(daughter_it) > 0)
                     log_fatal("Non-dark daughter muon of dark muon has children of its own. Your MCTree is messed up.");
 
-                // this needs to work on older versions of dataclasses without
-                // "I3ParticleID I3Particle::operator()" - just make IDs and set
-                // their properties by hand for now.
-                I3ParticleID daughter_id;
-                daughter_id.majorID = daughter.GetMajorID();
-                daughter_id.minorID = daughter.GetMinorID();
-
-                I3ParticleID particle_id;
-                particle_id.majorID = particle.GetMajorID();
-                particle_id.minorID = particle.GetMinorID();
+                I3ParticleID daughter_id = daughter;
+                I3ParticleID particle_id = particle;
 
                 // insert into map so we know how to re-label hits later on
                 re_label_map.insert( std::pair<I3ParticleID, I3ParticleID>( daughter_id, particle_id ) );
@@ -242,12 +223,12 @@ namespace {
         }
 
         // now decend the tree and recursively call this function again
-        std::vector<I3MCTree::iterator> daughterList;
-        I3MCTree::sibling_iterator j(particle_it);
+        std::vector<I3MCTree::const_iterator> daughterList;
+        I3MCTree::sibling_const_iterator j(particle_it);
         for (j=mcTree.begin(particle_it); j!=mcTree.end(particle_it); ++j)
             daughterList.push_back(j);
 
-        BOOST_FOREACH(I3MCTree::iterator &daughter_it, daughterList)
+        BOOST_FOREACH(I3MCTree::const_iterator &daughter_it, daughterList)
         {
             RemoveMuonSlicesIfDarkMuon(mcTree, daughter_it, re_label_map);
         }
@@ -277,7 +258,7 @@ void I3MuonSliceRemoverAndPulseRelabeler::DAQ(I3FramePtr frame)
         return;
     }
     std::set<I3ParticleID> oldTree_IDs;
-    for (I3MCTree::iterator j=oldMCTree->begin(); j!=oldMCTree->end(); ++j)
+    for (I3MCTree::const_iterator j=oldMCTree->begin(); j!=oldMCTree->end(); ++j)
         oldTree_IDs.insert(*j);
 
     I3MCPESeriesMapConstPtr inputMCPESeriesMap;
@@ -320,12 +301,12 @@ void I3MuonSliceRemoverAndPulseRelabeler::DAQ(I3FramePtr frame)
     std::map<I3ParticleID, I3ParticleID> re_label_map;
 
     // get a list of primaries
-    const std::vector<I3Particle> primaries = I3MCTreeUtils::GetPrimaries(inputMCTree);
+    const std::vector<const I3Particle*> primaries = I3MCTreeUtils::GetPrimariesPtr(inputMCTree);
     
     // add each one to the output tree and check their children
-    BOOST_FOREACH(const I3Particle &primary, primaries)
+    BOOST_FOREACH(const I3Particle* primary, primaries)
     {
-        I3MCTree::iterator primary_in_output_tree = GetMCTreeIterator(*inputMCTree, primary);
+        I3MCTree::const_iterator primary_in_output_tree(*inputMCTree, *primary);
 
         RemoveMuonSlicesIfDarkMuon(*inputMCTree, primary_in_output_tree, re_label_map);
     }
@@ -355,9 +336,7 @@ void I3MuonSliceRemoverAndPulseRelabeler::DAQ(I3FramePtr frame)
 
             BOOST_FOREACH(I3MCPE &pe, peSeries)
             {
-                I3ParticleID oldID;
-                oldID.majorID = pe.major_ID;
-                oldID.minorID = pe.minor_ID;
+                I3ParticleID oldID = pe.ID;
 
                 std::map<I3ParticleID, I3ParticleID>::const_iterator re_label_it = re_label_map.find(oldID);
                 if (re_label_it==re_label_map.end())
@@ -365,8 +344,7 @@ void I3MuonSliceRemoverAndPulseRelabeler::DAQ(I3FramePtr frame)
                     continue;
 
                 const I3ParticleID newID = re_label_it->second;
-                pe.major_ID = newID.majorID;
-                pe.minor_ID = newID.minorID;
+                pe.ID = newID;
             }
         }
 

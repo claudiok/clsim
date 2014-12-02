@@ -270,7 +270,7 @@ void I3PhotonToMCPEConverter::DAQ(I3FramePtr frame)
     std::map<std::pair<uint64_t, int>, const I3Particle *> mcTreeIndex;
     if (MCTree) {
         // build an index into the I3MCTree
-        for (I3MCTree::iterator it = MCTree->begin();
+        for (I3MCTree::const_iterator it = MCTree->begin();
              it != MCTree->end(); ++it)
         {
             const I3Particle &particle = *it;
