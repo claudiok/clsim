@@ -104,9 +104,7 @@ namespace {
     
     inline bool DoesItHaveChildren(const I3MCTree &mcTree, const I3Particle &particle)
     {
-        const std::vector<I3Particle> daughters =
-        I3MCTreeUtils::GetDaughters(mcTree, particle);
-        return (daughters.size() > 0);
+        return (bool) mcTree.first_child(particle);
     }
     
     inline bool AreParticlesSortedInTime(const std::vector<I3MCTree::const_iterator> &particles)
@@ -180,7 +178,7 @@ namespace {
         GetDaughterIteratorsFromParentIterator(const I3MCTree& t, I3MCTree::const_iterator parent_it)
         {
             std::vector<I3MCTree::const_iterator> daughterList;
-            for (I3MCTree::sibling_const_iterator j=t.begin(++parent_it); j!=t.end(parent_it); ++j)
+            for (I3MCTree::sibling_const_iterator j=t.children(parent_it); j!=t.end(parent_it); ++j)
                 daughterList.push_back(j);
             return daughterList;
         }

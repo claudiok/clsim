@@ -1179,11 +1179,8 @@ std::size_t I3CLSimModule::FlushFrameCache()
 namespace {
     bool ParticleHasMuonDaughter(const I3MCTree::const_iterator &particle_it, const I3MCTree &mcTree)
     {
-        I3MCTree::sibling_const_iterator j(particle_it);
-        for (j=mcTree.begin(particle_it); j!=mcTree.end(particle_it); ++j)
+        BOOST_FOREACH( const I3Particle & daughter, mcTree.children(*particle_it))
         {
-            const I3Particle &daughter = *j;
-
             if ((daughter.GetType()==I3Particle::MuMinus) ||
                 (daughter.GetType()==I3Particle::MuPlus))
                 return true;
