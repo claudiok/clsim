@@ -37,16 +37,24 @@ inline int init_MWC_RNG(uint64_t *x, uint32_t *a,
         safeprimes_file = "safeprimes_base32.txt"; 
         if (getenv("I3_SRC")) {
             const fs::path I3_SRC(getenv("I3_SRC"));
-            if (fs::exists(I3_SRC/"clsim/resources/safeprimes_base32.txt")) {
-                safeprimes_file = (I3_SRC/"/clsim/resources/safeprimes_base32.txt").string();
+            if (fs::exists(I3_SRC/"clsim/resources/safeprimes_base32")) {
+                safeprimes_file = (I3_SRC/"/clsim/resources/safeprimes_base32").string();
                 success = 1;
             }
-        }
+            else if (fs::exists(I3_SRC/"clsim/resources/safeprimes_base32.txt")) {
+              safeprimes_file = (I3_SRC/"/clsim/resources/safeprimes_base32.txt").string();
+              success = 1;
+            }
+          }
         if (!success && getenv("I3_DATA")) {
             const fs::path I3_DATA(getenv("I3_DATA"));
-            if (fs::exists(I3_DATA/"safeprimes_base32.txt"))
-                safeprimes_file = (I3_DATA/"safeprimes_base32.txt").string();
-        }
+            if (fs::exists(I3_DATA/"safeprimes_base32")) {
+                safeprimes_file = (I3_DATA/"safeprimes_base32").string();
+            }
+            else if (fs::exists(I3_DATA/"safeprimes_base32.txt")) {
+              safeprimes_file = (I3_DATA/"safeprimes_base32.txt").string();
+            }
+          }
     }
     
     boost::iostreams::filtering_istream ifs;
@@ -87,7 +95,7 @@ inline int init_MWC_RNG(uint64_t *x, uint32_t *a,
                 return 1;
             }
         }
-        
+
         if ((multiplier < std::numeric_limits<uint32_t>::min()) || (multiplier > std::numeric_limits<uint32_t>::max())) {
             log_error("Prime #%u (%" PRIi64 ") is out of range!", i+1, multiplier);
             return 1;

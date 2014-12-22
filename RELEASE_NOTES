@@ -2,6 +2,12 @@
 # $Author$
 # $Date$
 
+December 22, 2014 Alex Olivas  (olivas@icecube.umd.edu)
+--------------------------------------------------------------------
+Release V04-00-05
+
+* Loading safeprimes files (without the .txt extension).
+
 November 24, 2014 Alex Olivas  (olivas@icecube.umd.edu)
 --------------------------------------------------------------------
 Release V04-00-04
