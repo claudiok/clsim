@@ -380,9 +380,7 @@ class I3TabulatorModule(I3Module, tabulator):
         source = frame[self.source]
         photonmap = frame[self.photons]
         
-        for photons in photonmap.values():
-            for photon in photons:
-                self.RecordPhoton(source, photon)
+        self.RecordPhotons(source, photonmap)
         
         # Each I3Photon can only carry a fixed number of intermediate
         # steps, so there may be more than one I3Photon for each generated
@@ -545,10 +543,7 @@ def PhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Units.degre
     from os.path import expandvars
     
     # a random number generator
-    randomService = phys_services.I3SPRNGRandomService(
-        seed = Seed,
-        nstreams = 10000,
-        streamnum = 0)
+    randomService = phys_services.I3GSLRandomService(Seed)
         
     tray.AddModule("I3InfiniteSource",name+"streams",
                    Stream=icetray.I3Frame.DAQ)

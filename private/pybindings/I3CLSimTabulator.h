@@ -55,14 +55,25 @@ public:
 	    I3CLSimFunctionConstPtr angularAcceptance, double domRadius);
 	void SetRandomService(I3RandomServicePtr rng);
 	
-	void RecordPhoton(const I3Particle &source, const I3Photon &photon);
+	void RecordPhotons(const I3Particle &source, const I3Map<ModuleKey, I3Vector<I3Photon> > &photon_map);
 	
 	void Normalize();
 	boost::python::object GetValues() const;
 	
 private:
-	off_t GetBinIndex(const I3Particle &source, const I3Position &pos, double time) const;
+	struct Source {
+		Source(const I3Particle &);
+		I3Position pos;
+		double time;
+		I3Direction dir, perpdir;
+	};
+	
+	off_t GetBinIndex(const I3CLSimTabulator::Source &source, const I3Position &pos, double time) const;
 	double GetBinVolume(off_t idx) const;
+	
+	void RecordPhoton(const I3CLSimTabulator::Source &source, const I3Photon &photon);
+	
+
 	
 	std::vector<std::vector<double> > binEdges_;
 	
