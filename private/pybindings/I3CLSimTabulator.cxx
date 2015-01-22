@@ -186,24 +186,25 @@ I3CLSimTabulator::GetBinIndex(const I3Particle &source, const I3Position &pos, d
 	// Get unit vectors pointing along the source direction
 	// and perpendicular to it, towards +z. For vertical sources,
 	// pick the +x direction.
-	const vector sourceDir = make_vector(source.GetDir());
-	double perpz = hypot(sourceDir[0], sourceDir[1]);
-	const vector perpDir = (perpz > 0.) ?
-	    make_vector(-sourceDir[0]*sourceDir[2]/perpz, -sourceDir[1]*sourceDir[2]/perpz, perpz)
-	    : make_vector(1., 0., 0.);
+	// const vector sourceDir = make_vector(source.GetDir());
+	const I3Direction &sourceDir = source.GetDir();
+	double perpz = hypot(sourceDir.GetX(), sourceDir.GetY());
+	const I3Direction perpDir = (perpz > 0.) ?
+	    I3Direction(-sourceDir.GetX()*sourceDir.GetZ()/perpz, -sourceDir.GetY()*sourceDir.GetZ()/perpz, perpz)
+	    : I3Direction(1., 0., 0.);
 	
-	const vector displacement = subtract(pos,source.GetPos());
-	double l = ublas::inner_prod(sourceDir, displacement);
-	const vector rho = displacement - l*sourceDir;
-	double n_rho = ublas::norm_2(rho);
+	const I3Position displacement = pos-source.GetPos();
+	double l = sourceDir*displacement;
+	const I3Position rho = displacement - l*sourceDir;
+	double n_rho = rho.Magnitude();
 	
 	double coords[4]; // {r, azimuth, cosZen, dt}
-	coords[0] = ublas::norm_2(displacement);
+	coords[0] = displacement.Magnitude();
 	coords[1] = (n_rho > 0) ?
-	    std::acos(ublas::inner_prod(rho, perpDir)/n_rho)/I3Units::degree
+	    std::acos((rho*perpDir)/n_rho)/I3Units::degree
 	    : 0.;
 	coords[2] = (coords[0] > 0) ? l/coords[0] : 1.;
-	coords[3] = I3Calculator::TimeResidual(source, pos, t);
+	coords[3] = t - coords[0]*I3Constants::n_ice_group/I3Constants::c;
 	
 	// Bail if the photon is too delayed at this point to be recorded
 	if (coords[3] > binEdges_[3].back())
@@ -252,8 +253,8 @@ I3CLSimTabulator::RecordPhoton(const I3Particle &source, const I3Photon &photon)
 	
 	uint32_t nsteps = photon.GetNumPositionListEntries();
 	for (uint32_t i = 0; i+1 < nsteps; i++) {
-		I3PositionConstPtr p0 = photon.GetPositionListEntry(i);
-		I3PositionConstPtr p1 = photon.GetPositionListEntry(i+1);
+		boost::optional<I3Position> p0 = photon.GetPositionListEntry(i);
+		boost::optional<I3Position> p1 = photon.GetPositionListEntry(i+1);
 		if (!p0 || !p1)
 			continue;
 		double absLengths[2] = {
