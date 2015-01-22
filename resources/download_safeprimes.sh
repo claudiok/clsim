@@ -4,7 +4,7 @@ set -e
 ## DO NOT COPY THIS SCRIPT INTO YOUR PROJECT
 ## Ask on the dataclass e-mail list how to do this
 
-# helper script to automatically download and extract safeprimes_base32
+# helper script to automatically download and extract safeprimes_base32.gz
 # (it takes a long time to build this file..)
 
 BASE_URL="http://code.icecube.wisc.edu/tools/clsim"
@@ -18,7 +18,7 @@ fi
 RESOURCES_DIR=$1
 
 # if the file exists, exit immediately
-if [ -f $RESOURCES_DIR/safeprimes_base32 ]; then
+if [ -f $RESOURCES_DIR/safeprimes_base32.gz ]; then
     # if possible check the md5 checksum to see if the file is ok
     # (if not, just assume it is ok and exit)
     
@@ -30,20 +30,20 @@ if [ -f $RESOURCES_DIR/safeprimes_base32 ]; then
     fi
     command -v $md5 >/dev/null && FOUND_MD5=1 || FOUND_MD5=0
     if [ $FOUND_MD5 -eq 1 ]; then
-        MD5_SUM_FILE=`$md5 -q $RESOURCES_DIR/safeprimes_base32`
+        MD5_SUM_FILE=`$md5 -q $RESOURCES_DIR/safeprimes_base32.gz`
     else
         # exit if there is no md5 or md5sum tool available
         command -v md5sum >/dev/null || { exit 0; }
-        md5=`md5sum $RESOURCES_DIR/safeprimes_base32`
+        md5=`md5sum $RESOURCES_DIR/safeprimes_base32.gz`
         MD5_SUM_FILE="${md5%% *}" # remove the first space and everything after it
     fi
     
     if [ "$MD5_SUM_FILE" != "$MD5_SUM_EXPECTED" ]; then
-        echo "file $RESOURCES_DIR/safeprimes_base32 does exist, but checksum is not okay! removing and downloading again."
+        echo "file $RESOURCES_DIR/safeprimes_base32.gz does exist, but checksum is not okay! removing and downloading again."
         echo "     found: $MD5_SUM_FILE"
         echo "  expected: $MD5_SUM_EXPECTED"
         
-        rm $RESOURCES_DIR/safeprimes_base32
+        rm $RESOURCES_DIR/safeprimes_base32.gz
     else
         # checksum is OK!
         exit 0
@@ -51,7 +51,7 @@ if [ -f $RESOURCES_DIR/safeprimes_base32 ]; then
 fi 
 
 
-echo "trying to download $RESOURCES_DIR/safeprimes_base32..."
+echo "trying to download $RESOURCES_DIR/safeprimes_base32.gz..."
 
 set +e
 command -v curl >/dev/null && USE_CURL=1 || USE_CURL=0
@@ -62,18 +62,7 @@ if [ $USE_CURL -eq 0 ]; then
 fi
 set -e
 
-set +e
-command -v unxz >/dev/null && USE_XZ=1 || USE_XZ=0
-set -e
-if [ $USE_XZ -eq 1 ]; then
-    FILENAME="safeprimes_base32.xz"
-else
-    # xz not found, use .gz file
-    # (just assume that gunzip is available,
-    # if it is not, this system won't be
-    # usable for IceTray anyway.)
-    FILENAME="safeprimes_base32.gz"
-fi
+FILENAME="safeprimes_base32.gz"
 
 # download
 echo "  downloading $BASE_URL/$FILENAME ..."
@@ -83,12 +72,4 @@ else
     wget -O $RESOURCES_DIR/$FILENAME $BASE_URL/$FILENAME
 fi
 
-# and unzip
-echo "  extracting $BASE_URL/$FILENAME ..."
-if [ $USE_XZ -eq 1 ]; then
-    unxz $RESOURCES_DIR/$FILENAME
-else
-    gunzip $RESOURCES_DIR/$FILENAME
-fi
-
-echo "  $RESOURCES_DIR/safeprimes_base32 downloaded."
+echo "  $RESOURCES_DIR/safeprimes_base32.gz downloaded."

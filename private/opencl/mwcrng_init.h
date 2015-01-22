@@ -48,8 +48,8 @@ inline int init_MWC_RNG(uint64_t *x, uint32_t *a,
           }
         if (!success && getenv("I3_DATA")) {
             const fs::path I3_DATA(getenv("I3_DATA"));
-            if (fs::exists(I3_DATA/"safeprimes_base32")) {
-                safeprimes_file = (I3_DATA/"safeprimes_base32").string();
+            if (fs::exists(I3_DATA/"safeprimes_base32.gz")) {
+                safeprimes_file = (I3_DATA/"safeprimes_base32.gz").string();
             }
             else if (fs::exists(I3_DATA/"safeprimes_base32.txt")) {
               safeprimes_file = (I3_DATA/"safeprimes_base32.txt").string();
