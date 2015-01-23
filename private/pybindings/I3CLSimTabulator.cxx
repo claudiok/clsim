@@ -32,9 +32,6 @@
 #include <dataclasses/I3Position.h>
 #include <dataclasses/I3Direction.h>
 
-#include <boost/numeric/ublas/vector.hpp>
-namespace ublas = boost::numeric::ublas;
-
 #include <boost/python/tuple.hpp>
 namespace bp = boost::python;
 
@@ -106,42 +103,6 @@ I3CLSimTabulator::SetRandomService(I3RandomServicePtr rng)
 	rng_ = rng;
 }
 
-ublas::vector<double>
-make_vector(double x, double y, double z)
-{
-	ublas::vector<double> v(3);
-	v[0] = x;
-	v[1] = y;
-	v[2] = z;
-	
-	return v;
-}
-
-ublas::vector<double>
-make_vector(const I3Direction &dir)
-{
-	return make_vector(dir.GetX(), dir.GetY(), dir.GetZ());
-}
-
-inline ublas::vector<double>
-operator+(const I3Position &p1, const I3Position &p2)
-{
-	return make_vector(p1.GetX()+p2.GetX(), p1.GetY()+p2.GetY(), p1.GetZ()+p2.GetZ());
-}
-
-inline I3Position
-operator+(const I3Position &p1, const ublas::vector<double> p2)
-{
-	assert(p2.size() == 3);
-	return I3Position(p1.GetX()+p2[0], p1.GetY()+p2[1], p1.GetZ()+p2[2]);
-}
-
-inline ublas::vector<double>
-subtract(const I3Position &p1, const I3Position &p2)
-{
-	return make_vector(p1.GetX()-p2.GetX(), p1.GetY()-p2.GetY(), p1.GetZ()-p2.GetZ());
-}
-
 void
 I3CLSimTabulator::Normalize()
 {
@@ -179,31 +140,20 @@ I3CLSimTabulator::GetBinVolume(off_t idx) const
 }
 
 off_t
-I3CLSimTabulator::GetBinIndex(const I3Particle &source, const I3Position &pos, double t) const
+I3CLSimTabulator::GetBinIndex(const I3CLSimTabulator::Source &source, const I3Position &pos, double t) const
 {
-	typedef ublas::vector<double> vector;
-	
-	// Get unit vectors pointing along the source direction
-	// and perpendicular to it, towards +z. For vertical sources,
-	// pick the +x direction.
-	const vector sourceDir = make_vector(source.GetDir());
-	double perpz = hypot(sourceDir[0], sourceDir[1]);
-	const vector perpDir = (perpz > 0.) ?
-	    make_vector(-sourceDir[0]*sourceDir[2]/perpz, -sourceDir[1]*sourceDir[2]/perpz, perpz)
-	    : make_vector(1., 0., 0.);
-	
-	const vector displacement = subtract(pos,source.GetPos());
-	double l = ublas::inner_prod(sourceDir, displacement);
-	const vector rho = displacement - l*sourceDir;
-	double n_rho = ublas::norm_2(rho);
+	const I3Position displacement = pos-source.pos;
+	double l = source.dir*displacement;
+	const I3Position rho = displacement - l*source.dir;
+	double n_rho = rho.Magnitude();
 	
 	double coords[4]; // {r, azimuth, cosZen, dt}
-	coords[0] = ublas::norm_2(displacement);
+	coords[0] = displacement.Magnitude();
 	coords[1] = (n_rho > 0) ?
-	    std::acos(ublas::inner_prod(rho, perpDir)/n_rho)/I3Units::degree
+	    std::acos((rho*source.perpdir)/n_rho)/I3Units::degree
 	    : 0.;
 	coords[2] = (coords[0] > 0) ? l/coords[0] : 1.;
-	coords[3] = I3Calculator::TimeResidual(source, pos, t);
+	coords[3] = t - coords[0]*I3Constants::n_ice_group/I3Constants::c;
 	
 	// Bail if the photon is too delayed at this point to be recorded
 	if (coords[3] > binEdges_[3].back())
@@ -237,40 +187,63 @@ I3CLSimTabulator::GetBinIndex(const I3Particle &source, const I3Position &pos, d
 		
 		idx += (PyArray_STRIDE(values_, i)/sizeof(float))*dimidx;
 	}
-	
 	return idx;
 }
 
-void
-I3CLSimTabulator::RecordPhoton(const I3Particle &source, const I3Photon &photon)
+I3CLSimTabulator::Source::Source(const I3Particle &p)
+    : pos(p.GetPos()), time(p.GetTime()), dir(p.GetDir())
 {
-	typedef ublas::vector<double> vector;
-	
+	// Get unit vectors pointing along the source direction
+	// and perpendicular to it, towards +z. For vertical sources,
+	// pick the +x direction.
+	double perpz = hypot(dir.GetX(), dir.GetY());
+	perpdir = (perpz > 0.) ?
+	    I3Direction(-dir.GetX()*dir.GetZ()/perpz, -dir.GetY()*dir.GetZ()/perpz, perpz)
+	    : I3Direction(1., 0., 0.);
+}
+
+void
+I3CLSimTabulator::RecordPhotons(const I3Particle &source_p, const I3Map<ModuleKey, I3Vector<I3Photon> > &photon_map)
+{
+	Source source(source_p);
+	typedef I3Map<ModuleKey, I3Vector<I3Photon> >::value_type photon_pair;
+	BOOST_FOREACH(const photon_pair &photons, photon_map)
+		BOOST_FOREACH(const I3Photon &photon, photons.second)
+			RecordPhoton(source, photon);
+}
+
+void
+I3CLSimTabulator::RecordPhoton(const I3CLSimTabulator::Source &source, const I3Photon &photon)
+{
 	double t = photon.GetStartTime();
 	double wlenWeight =
 	    wavelengthAcceptance_->GetValue(photon.GetWavelength())*photon.GetWeight();
 	
+	boost::optional<I3Position> p0 = photon.GetPositionListEntry(0);
+	boost::optional<I3Position> p1;
+	double absLengths[2] = {
+		photon.GetDistanceInAbsorptionLengthsAtPositionListEntry(0),
+		0.
+	};
 	uint32_t nsteps = photon.GetNumPositionListEntries();
-	for (uint32_t i = 0; i+1 < nsteps; i++) {
-		I3PositionConstPtr p0 = photon.GetPositionListEntry(i);
-		I3PositionConstPtr p1 = photon.GetPositionListEntry(i+1);
+	for (uint32_t i = 1; i < nsteps; i++, p0 = p1, absLengths[0] = absLengths[1]) {
+		p1 = photon.GetPositionListEntry(i);
+		absLengths[1] =
+			photon.GetDistanceInAbsorptionLengthsAtPositionListEntry(i);
 		if (!p0 || !p1)
 			continue;
-		double absLengths[2] = {
-			photon.GetDistanceInAbsorptionLengthsAtPositionListEntry(i),
-			photon.GetDistanceInAbsorptionLengthsAtPositionListEntry(i+1)};
 		
 		// A vector connecting the two recording points.
-		vector pdir = subtract(*p1,*p0);
-		double distance = ublas::norm_2(pdir);
-		pdir /= distance;
+		I3Position displacement(*p1-*p0);
+		double distance = displacement.Magnitude();
+		I3Direction pdir(displacement);
 		
 		// XXX HACK: the cosine of the impact angle with the
 		// DOM is the same as the z-component of the photon
 		// direction if the DOM is pointed straight down.
 		// This can be modified for detectors with other values
 		// of pi.
-		double impactWeight = wlenWeight*angularAcceptance_->GetValue(pdir[2]);
+		double impactWeight = wlenWeight*angularAcceptance_->GetValue(pdir.GetZ());
 		
 		int nsamples = floorf(distance/stepLength_);
 		nsamples += (rng_->Uniform() < distance/stepLength_ - nsamples);
@@ -319,7 +292,7 @@ register_I3CLSimTabulator()
 	    .def("SetBins", &I3CLSimTabulator::SetBins)
 	    .def("SetEfficiencies", &I3CLSimTabulator::SetEfficiencies)
 	    .def("SetRandomService", &I3CLSimTabulator::SetRandomService)
-	    .def("RecordPhoton", &I3CLSimTabulator::RecordPhoton)
+	    .def("RecordPhotons", &I3CLSimTabulator::RecordPhotons)
 	    .def("Normalize", &I3CLSimTabulator::Normalize)
 	    .def("GetValues", &I3CLSimTabulator::GetValues)
 	;	

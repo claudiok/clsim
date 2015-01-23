@@ -249,25 +249,26 @@ public:
      * The return value may be an invalid shared_ptr if there is no position
      * stored for a certain index.
      */
-    inline I3PositionConstPtr GetPositionListEntry(uint32_t index) const
+    inline boost::optional<I3Position> GetPositionListEntry(uint32_t index) const
     {
+        boost::optional<I3Position> pos;
+        
         if (intermediatePositions_.size() > static_cast<std::size_t>(numScattered_))
             throw std::logic_error("I3Photon has inconsistent internal state.");
         if (index >= numScattered_+2)
             throw std::runtime_error("invalid index");
 
         if (index==0) {
-            return I3PositionConstPtr(new I3Position(startPosition_));
+            pos = startPosition_;
         } else if (index==numScattered_+1) {
-            return I3PositionConstPtr(new I3Position(position_));
+            pos = position_;
         } else {
             const std::size_t num_empty_entries = static_cast<std::size_t>(numScattered_)-intermediatePositions_.size();
-            if (index-1 < num_empty_entries) {
-                return I3PositionConstPtr(); // this entry has not been saved
-            } else {
-                return I3PositionConstPtr(new I3Position(intermediatePositions_[index-1-num_empty_entries].first));
-            }
+            if (index-1 >= num_empty_entries)
+                pos = intermediatePositions_[index-1-num_empty_entries].first;
         }
+        
+        return pos;
     }
 
     /** 
