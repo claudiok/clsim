@@ -193,11 +193,13 @@ if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
     private/clsim/I3CLSimLightSourceToStepConverterFlasher.cxx
     
     private/clsim/tabulator/I3CLSimTabulatorModule.cxx
+    private/clsim/tabulator/I3CLSimStepToTableConverter.cxx
 
     # private/geant4
     private/geant4/I3CLSimLightSourceToStepConverterGeant4.cxx
 
     # private/opencl/
+    private/opencl/I3CLSimHelperMath.cxx
     private/opencl/I3CLSimHelperGenerateGeometrySource.cxx
     private/opencl/I3CLSimHelperGenerateMediumPropertiesSource.cxx
     private/opencl/I3CLSimHelperGenerateMediumPropertiesSource_Optimizers.cxx

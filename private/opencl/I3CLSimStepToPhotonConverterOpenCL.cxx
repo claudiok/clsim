@@ -48,6 +48,7 @@
 #include <icetray/I3Units.h>
 
 #include "clsim/I3CLSimHelperToFloatString.h"
+#include "opencl/I3CLSimHelperMath.h"
 
 #include "opencl/I3CLSimHelperLoadProgramSource.h"
 #include "opencl/I3CLSimHelperGenerateMediumPropertiesSource.h"
@@ -359,59 +360,9 @@ void I3CLSimStepToPhotonConverterOpenCL::Initialize()
     initialized_=true;
 }
 
-namespace {
-    std::string makeGenerateWavelengthMasterFunction(std::size_t num,
-                                                     const std::string &functionName,
-                                                     const std::string &functionArgs,
-                                                     const std::string &functionArgsToCall)
-    {
-        std::string ret = std::string("inline float ") + functionName + "(uint number, " + functionArgs + ");\n\n";
-        ret = ret + std::string("inline float ") + functionName + "(uint number, " + functionArgs + ")\n";
-        ret = ret + "{\n";
-
-        if (num==0) {
-            ret = ret + "    return 0.f;\n";
-            ret = ret + "}\n";
-            return ret;
-        }
-
-        if (num==1) {
-            ret = ret + "    return " + functionName + "_0(" + functionArgsToCall + ");\n";
-            ret = ret + "}\n";
-            return ret;
-        }
-
-        // num>=2:
-        
-        ret = ret + "    if (number==0) {\n";
-        ret = ret + "        return " + functionName + "_0(" + functionArgsToCall + ");\n";
-        
-        for (std::size_t i=1;i<num;++i)
-        {
-            ret = ret + "    } else if (number==" + boost::lexical_cast<std::string>(i) + ") {\n";
-            ret = ret + "        return " + functionName + "_" + boost::lexical_cast<std::string>(i) + "(" + functionArgsToCall + ");\n";
-        }
-
-        ret = ret + "    } else {\n";
-        ret = ret + "        return 0.f;\n";
-        ret = ret + "    }\n";
-        
-        
-        ret = ret + "}\n\n";
-
-        return ret;
-    }
-}
-
 std::string I3CLSimStepToPhotonConverterOpenCL::GetPreambleSource()
 {
-    std::string preamble;
-    
-    // necessary OpenCL extensions
-    preamble = preamble + "#pragma OPENCL EXTENSION cl_khr_global_int32_base_atomics : enable\n";
-    //preamble = preamble + "#pragma OPENCL EXTENSION cl_khr_local_int32_base_atomics : enable\n";
-    preamble = preamble + "#pragma OPENCL EXTENSION cl_khr_byte_addressable_store : enable\n";
-    //preamble = preamble + "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n";
+    std::string preamble = I3CLSimHelper::GetMathPreamble(*device_, doublePrecision_);
 
     // tell the kernel if photons should be stopped once they are detected
     if (stopDetectedPhotons_) {
@@ -460,64 +411,12 @@ std::string I3CLSimStepToPhotonConverterOpenCL::GetPreambleSource()
         }
     }
     
-    
-    
-    // are we using double precision?
-    if (doublePrecision_) {
-        preamble = preamble + "#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n";
-        preamble = preamble + "typedef double floating_t;\n";
-        preamble = preamble + "typedef double2 floating2_t;\n";
-        preamble = preamble + "typedef double4 floating4_t;\n";
-        preamble = preamble + "#define convert_floating_t convert_double\n";
-        preamble = preamble + "#define DOUBLE_PRECISION\n";
-        preamble = preamble + "#define ZERO 0.\n";
-        preamble = preamble + "#define ONE 1.\n";
-        
-        if (device_->GetPlatformName()=="Apple")
-        {
-            preamble = preamble + "#define USE_FABS_WORKAROUND\n";
-            log_info("enabled fabs() workaround for OpenCL double-precision on Apple");
-        }
-        
-        preamble = preamble + "\n";
-    } else {
-        preamble = preamble + "typedef float floating_t;\n";
-        preamble = preamble + "typedef float2 floating2_t;\n";
-        preamble = preamble + "typedef float4 floating4_t;\n";
-        preamble = preamble + "#define convert_floating_t convert_float\n";
-        preamble = preamble + "#define ZERO 0.f\n";
-        preamble = preamble + "#define ONE 1.f\n";
-        preamble = preamble + "\n";
-    }
-    
     return preamble;
 }
 
 std::string I3CLSimStepToPhotonConverterOpenCL::GetWlenGeneratorSource()
 {
-    std::string wlenGeneratorSource;
-    for (std::size_t i=0; i<wlenGenerators_.size(); ++i)
-    {
-        const std::string generatorName = "generateWavelength_" + boost::lexical_cast<std::string>(i);
-        const std::string thisGeneratorSource = 
-        wlenGenerators_[i]->GetOpenCLFunction(generatorName, // name
-                                              // these are all defined as macros by the rng code:
-                                              "RNG_ARGS",               // function arguments for rng
-                                              "RNG_ARGS_TO_CALL",       // if we call anothor function, this is how we pass on the rng state
-                                              "RNG_CALL_UNIFORM_CO",    // the call to the rng for creating a uniform number [0;1[
-                                              "RNG_CALL_UNIFORM_OC"     // the call to the rng for creating a uniform number ]0;1]
-                                              );
-        
-        wlenGeneratorSource = wlenGeneratorSource + thisGeneratorSource + "\n";
-    }
-    wlenGeneratorSource = wlenGeneratorSource+ makeGenerateWavelengthMasterFunction(wlenGenerators_.size(),
-                                                                                      "generateWavelength",
-                                                                                      "RNG_ARGS",               // function arguments for rng
-                                                                                      "RNG_ARGS_TO_CALL"        // if we call anothor function, this is how we pass on the rng state
-                                                                                      );
-    wlenGeneratorSource = wlenGeneratorSource + "\n";
-    
-    return wlenGeneratorSource;
+    return I3CLSimHelper::GenerateWavelengthGeneratorSource(wlenGenerators_);
 }
 
 std::string I3CLSimStepToPhotonConverterOpenCL::GetWlenBiasSource()

@@ -78,6 +78,12 @@ struct __attribute__ ((packed)) I3CLSimPhoton
                                                             // total: 20x 32bit float = 80 bytes
 };
 
+struct __attribute__ ((packed)) I3CLSimTableEntry
+{
+    uint index;
+    float weight;
+};
+
 ///////////////// forward declarations
 
 inline int findLayerForGivenZPos(floating_t posZ);

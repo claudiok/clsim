@@ -10,9 +10,11 @@
 #include "clsim/I3CLSimLightSourceToStepConverter.h"
 #include "clsim/function/I3CLSimFunction.h"
 #include "clsim/I3CLSimModuleHelper.h"
+#include "clsim/tabulator/I3CLSimStepToTableConverter.h"
 
 #include <boost/foreach.hpp>
 #include <boost/thread.hpp>
+#include <boost/make_shared.hpp>
 
 class I3CLSimTabulatorModule : public I3Module {
 public:
@@ -29,10 +31,12 @@ private:
 	I3RandomServicePtr randomService_;
 	I3CLSimFunctionConstPtr wavelengthGenerationBias_;
 	I3CLSimMediumPropertiesConstPtr mediumProperties_;
+	I3CLSimFunctionConstPtr angularAcceptance_;
 	// I3CLSimSpectrumTableConstPtr spectrumTable_;
 	I3CLSimOpenCLDeviceSeries openCLDeviceList_;
 	
 	I3CLSimLightSourceToStepConverterPtr particleToStepsConverter_;
+	I3CLSimStepToTableConverterPtr tabulator_;
 	
 	uint32_t sourceCounter_;
 	boost::thread stepHarvester_;
@@ -47,6 +51,7 @@ I3CLSimTabulatorModule::I3CLSimTabulatorModule(const I3Context &ctx)
 	
 	AddParameter("RandomService", "", "I3RandomService");
 	AddParameter("WavelengthGenerationBias", "", wavelengthGenerationBias_);
+	AddParameter("AngularAcceptance", "", angularAcceptance_);
 	AddParameter("MediumProperties", "", mediumProperties_);
 	AddParameter("ParameterizationList","", parameterizationList_);
 	AddParameter("OpenCLDeviceList", "", openCLDeviceList_);
@@ -56,9 +61,14 @@ void I3CLSimTabulatorModule::Configure()
 {
 	GetParameter("RandomService", randomService_);
 	GetParameter("WavelengthGenerationBias", wavelengthGenerationBias_);
+	GetParameter("AngularAcceptance", angularAcceptance_);
 	GetParameter("MediumProperties", mediumProperties_);
 	GetParameter("ParameterizationList",parameterizationList_);
 	GetParameter("OpenCLDeviceList",openCLDeviceList_);
+	
+	tabulator_ = boost::make_shared<I3CLSimStepToTableConverter>(
+	    openCLDeviceList_[0], mediumProperties_, wavelengthGenerationBias_,
+	    angularAcceptance_, randomService_);
 	
 	particleToStepsConverter_ =
 	    I3CLSimModuleHelper::initializeGeant4(randomService_,
@@ -74,6 +84,7 @@ void I3CLSimTabulatorModule::Configure()
 	sourceCounter_ = 0;
 	
 	stepHarvester_ = boost::thread(boost::bind(&I3CLSimTabulatorModule::HarvestSteps, this));
+	
 	
 }
 

@@ -907,7 +907,7 @@ def I3CLSimTabulatePhotons(tray, name,
     else:
         domEfficiencyCorrection = UnshadowedFraction*1.35      * 1.01 # security margin of +1%
     domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius = DOMRadius*DOMOversizeFactor, efficiency=domEfficiencyCorrection)
-
+    angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(UseHoleIceParameterization)
     # photon generation wavelength bias
     #if isinstance(UnWeightedPhotons, float) or isinstance(UnWeightedPhotons, int):
     #    print("***** running unweighted simulation with a photon pre-scaling of", UnWeightedPhotons)
@@ -967,6 +967,7 @@ def I3CLSimTabulatePhotons(tray, name,
                    #IgnoreNonIceCubeOMNumbers=False,
                    # GenerateCherenkovPhotonsWithoutDispersion=False,
                    WavelengthGenerationBias=wavelengthGenerationBias,
+                   AngularAcceptance=angularAcceptance,
                    ParameterizationList=particleParameterizations,
                    # MaxNumParallelEvents=ParallelEvents,
                    OpenCLDeviceList=openCLDevices,

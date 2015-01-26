@@ -387,7 +387,78 @@ namespace I3CLSimHelper
         
         return code.str();
     }
+
+namespace {
+    std::string makeGenerateWavelengthMasterFunction(std::size_t num,
+                                                     const std::string &functionName,
+                                                     const std::string &functionArgs,
+                                                     const std::string &functionArgsToCall)
+    {
+        std::string ret = std::string("inline float ") + functionName + "(uint number, " + functionArgs + ");\n\n";
+        ret = ret + std::string("inline float ") + functionName + "(uint number, " + functionArgs + ")\n";
+        ret = ret + "{\n";
+
+        if (num==0) {
+            ret = ret + "    return 0.f;\n";
+            ret = ret + "}\n";
+            return ret;
+        }
+
+        if (num==1) {
+            ret = ret + "    return " + functionName + "_0(" + functionArgsToCall + ");\n";
+            ret = ret + "}\n";
+            return ret;
+        }
+
+        // num>=2:
+        
+        ret = ret + "    if (number==0) {\n";
+        ret = ret + "        return " + functionName + "_0(" + functionArgsToCall + ");\n";
+        
+        for (std::size_t i=1;i<num;++i)
+        {
+            ret = ret + "    } else if (number==" + boost::lexical_cast<std::string>(i) + ") {\n";
+            ret = ret + "        return " + functionName + "_" + boost::lexical_cast<std::string>(i) + "(" + functionArgsToCall + ");\n";
+        }
+
+        ret = ret + "    } else {\n";
+        ret = ret + "        return 0.f;\n";
+        ret = ret + "    }\n";
+        
+        
+        ret = ret + "}\n\n";
+
+        return ret;
+    }
+}
+
+std::string
+GenerateWavelengthGeneratorSource(const std::vector<I3CLSimRandomValueConstPtr> &wlenGenerators)
+{
+    std::string wlenGeneratorSource;
+    for (std::size_t i=0; i<wlenGenerators.size(); ++i)
+    {
+        const std::string generatorName = "generateWavelength_" + boost::lexical_cast<std::string>(i);
+        const std::string thisGeneratorSource = 
+        wlenGenerators[i]->GetOpenCLFunction(generatorName, // name
+                                              // these are all defined as macros by the rng code:
+                                              "RNG_ARGS",               // function arguments for rng
+                                              "RNG_ARGS_TO_CALL",       // if we call anothor function, this is how we pass on the rng state
+                                              "RNG_CALL_UNIFORM_CO",    // the call to the rng for creating a uniform number [0;1[
+                                              "RNG_CALL_UNIFORM_OC"     // the call to the rng for creating a uniform number ]0;1]
+                                              );
+        
+        wlenGeneratorSource = wlenGeneratorSource + thisGeneratorSource + "\n";
+    }
+    wlenGeneratorSource = wlenGeneratorSource+ makeGenerateWavelengthMasterFunction(wlenGenerators.size(),
+                                                                                      "generateWavelength",
+                                                                                      "RNG_ARGS",               // function arguments for rng
+                                                                                      "RNG_ARGS_TO_CALL"        // if we call anothor function, this is how we pass on the rng state
+                                                                                      );
+    wlenGeneratorSource = wlenGeneratorSource + "\n";
     
+    return wlenGeneratorSource;
+}
 
 
 };
