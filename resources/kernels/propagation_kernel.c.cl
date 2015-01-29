@@ -235,10 +235,12 @@ inline bool savePath(
     const floating4_t photonPosAndTime,
     const floating4_t photonDirAndWlen,
     const floating_t thisStepLength,
+    floating_t *prevStepLength,
     const floating_t inv_groupvel,
     const floating_t depth, /* distance in absorption lengths */
     const floating_t thisStepDepth, /* additional depth penetrated in this step */
     uint thread_id,
+    bool *stop,
     __global uint *entry_counter,
     __global struct I3CLSimTableEntry *entries)
 {
@@ -254,7 +256,10 @@ inline bool savePath(
         * getAngularAcceptance(photonDirAndWlen.z)
         / getWavelengthBias(photonDirAndWlen.w);
     
-    floating_t d = 0;
+    dbg_printf("step depth %e + %e impactWeight %e\n", depth, thisStepDepth, impactWeight);
+    
+    floating_t d = *prevStepLength;
+    dbg_printf("first step is %f\n", d);
     uint offset = *entry_counter;
     for (; d < thisStepLength && offset < TABLE_ENTRIES_PER_STREAM;
         d += VOLUME_MODE_STEP, offset++) {
@@ -270,21 +275,34 @@ inline bool savePath(
         floating_t r = magnitude(pos);
         floating_t azi = (n_rho > 0) ?
             acos(dot(rho,perpDir)/n_rho)/(M_PI/180) : 0;
-        floating_t ct = (r > 0) ? r/l : 0;
+        floating_t ct = (r > 0) ? my_divide(l, r) : 0;
         // FIXME make this the *maximum* group velocity
-        floating_t dt = pos.w - r*inv_groupvel;
+        floating_t dt = pos.w - r*MIN_INV_GROUPVEL;
+        
+        // TODO: bail if we accumulate too much delay time
+        if (isOutOfBounds(r, azi, ct, dt)) {
+            *stop = true;
+            break;
+        }
         
         entries[thread_id*TABLE_ENTRIES_PER_STREAM + offset].index
             = getBinIndex(r, azi, ct, dt);
-        entries[thread_id*TABLE_ENTRIES_PER_STREAM + offset].weight = 
-            impactWeight*my_exp(depth + (d/thisStepLength)*thisStepDepth);
+        entries[thread_id*TABLE_ENTRIES_PER_STREAM + offset].weight =
+            impactWeight*my_exp(-(depth + (d/thisStepLength)*thisStepDepth));
+        dbg_printf("%.1f %.0f %.2f %.1f -> %u (weight %e)\n", r, azi, ct, dt,
+            entries[thread_id*TABLE_ENTRIES_PER_STREAM + offset].index,
+            entries[thread_id*TABLE_ENTRIES_PER_STREAM + offset].weight
+            );
+        // printMultiIndex(r, azi, ct, dt);
     }
     
-    if (d < thisStepLength) {
+    if (d < thisStepLength && !(*stop)) {
         // we ran out of space. erase.
         return false;
     } else {
+        dbg_printf("Recorded %u subsamples (%u total), %f m remaining\n", offset - *entry_counter, offset, d - thisStepLength);
         *entry_counter = offset;
+        *prevStepLength = d - thisStepLength;
         return true;
     }
 
@@ -371,10 +389,13 @@ inline void saveHit(
     
 }
 
-__kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOutputPhotons
+__kernel void propKernel(
+#ifndef TABULATE
+    __global uint *hitIndex,   // deviceBuffer_CurrentNumOutputPhotons
     const uint maxHitIndex,    // maxNumOutputPhotons_
 #ifndef SAVE_ALL_PHOTONS
     __global unsigned short *geoLayerToOMNumIndexPerStringSet,
+#endif
 #endif
 
     __global struct I3CLSimStep *inputSteps, // deviceBuffer_InputSteps
@@ -490,6 +511,7 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
 #ifdef TABULATE
     ulong prev_rnd_x;
     uint prev_rnd_a;
+    floating_t prevStepRemainder=ZERO;
 #endif // TABULATE
 
     while (photonsLeftToPropagate > 0)
@@ -516,6 +538,12 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             photonNumScatters=0;
             photonTotalPathLength=ZERO;
             
+#ifdef TABULATE
+            // randomize the first sub-step
+            prevStepRemainder = VOLUME_MODE_STEP * RNG_CALL_UNIFORM_OC;
+            dbg_printf("   first step is %f\n", prevStepRemainder);
+#endif // TABULATE
+
 #ifdef PRINTF_ENABLED
             dbg_printf("   created photon %u at: p=(%f,%f,%f), d=(%f,%f,%f), t=%f, wlen=%fnm\n",
                 photonsLeftToPropagate-step.numPhotons,
@@ -697,14 +725,17 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
         
         
 #ifdef TABULATE
+        bool stop = false;
         if (!savePath(&step,
                  photonPosAndTime,
                  photonDirAndWlen,
                  distancePropagated,
+                 &prevStepRemainder,
                  inv_groupvel,
                  depthPropagated,
                  abs_lens_initial-abs_lens_left-depthPropagated,
                  i,
+                 &stop,
                  &numOutputEntries[i],
                  outputTableEntries
                  ))
@@ -712,10 +743,14 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
             // We ran out of space in the output buffer. Mark this step as
             // unfinished, and restore the RNG state from when this photon
             // was spawned.
+            dbg_printf("Ran out of space after %u photons\n", inputSteps[i].numPhotons-photonsLeftToPropagate);
             inputSteps[i].numPhotons = photonsLeftToPropagate;
             MWC_RNG_x[i] = prev_rnd_x;
             MWC_RNG_a[i] = prev_rnd_a;
             return;
+        } else if (stop) {
+            dbg_printf("Photon ran off the end of the table\n");
+            abs_lens_left = ZERO;
         }
         depthPropagated = abs_lens_initial-abs_lens_left;
 #endif
@@ -821,6 +856,11 @@ __kernel void propKernel(__global uint *hitIndex,   // deviceBuffer_CurrentNumOu
 #ifdef PRINTF_ENABLED
     dbg_printf("Stop kernel... (work item %u of %u)\n", i, global_size);
     dbg_printf("Kernel finished.\n");
+#endif
+
+#ifdef TABULATE
+    // mark this step as done
+    inputSteps[i].numPhotons = 0;
 #endif
 
     //upload MWC RNG state

@@ -7,9 +7,12 @@
 #include "clsim/I3CLSimMediumProperties.h"
 #include "clsim/random_value/I3CLSimRandomValue.h"
 #include "clsim/I3CLSimOpenCLDevice.h"
+
+#define __CL_ENABLE_EXCEPTIONS
 #include "clsim/cl.hpp"
 
 #include <boost/noncopyable.hpp>
+#include <boost/thread.hpp>
 
 class I3CLSimStepToTableConverter : boost::noncopyable {
 public:
@@ -18,11 +21,13 @@ public:
 	    I3CLSimFunctionConstPtr wavelengthBias,
 	    I3CLSimFunctionConstPtr angularAcceptance,
 	    I3RandomServicePtr rng);
+	virtual ~I3CLSimStepToTableConverter();
 	void EnqueueSteps(I3CLSimStepSeriesConstPtr);
+	void Finish();
 private:
-	void BuildKernel(I3CLSimOpenCLDevice device,
-	    I3CLSimMediumPropertiesConstPtr mediumProperties,
-	    I3CLSimFunctionConstPtr wavelengthBias);
+	
+	void FetchSteps();
+	void FetchEntries(size_t nsteps);
 	
 	struct DeviceBuffers {
 		DeviceBuffers() {};
@@ -40,9 +45,18 @@ private:
 	cl::Context context_;
 	cl::CommandQueue commandQueue_;
 	cl::Kernel propagationKernel_;
-	size_t maxWorkgroupSize_, entriesPerStream_;
+	size_t maxWorkgroupSize_, maxNumWorkitems_, entriesPerStream_;
 	
 	I3CLSimQueue<I3CLSimStepSeriesConstPtr> stepQueue_;
+	boost::thread harvesterThread_;
+	bool run_;
+	
+	std::vector<float> binContent_;
+	// double rather than an integer because steps have weights
+	uint64_t numPhotons_;
+	double sumOfPhotonWeights_;
+	
+	SET_LOGGER("I3CLSimStepToTableConverter");
 };
 
 I3_POINTER_TYPEDEFS(I3CLSimStepToTableConverter);

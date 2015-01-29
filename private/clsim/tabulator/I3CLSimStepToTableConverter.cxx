@@ -37,7 +37,7 @@ I3CLSimStepToTableConverter::DeviceBuffers::DeviceBuffers(cl::Context context,
 	mwc.a = cl::Buffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
 	    streams*sizeof(uint32_t), &av[0]);
 	
-	inputSteps = cl::Buffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR,
+	inputSteps = cl::Buffer(context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR,
 	    streams*sizeof(I3CLSimStep));
 	outputEntries = cl::Buffer(context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR,
 	    streams*entriesPerStream*sizeof(I3CLSimTableEntry));
@@ -75,10 +75,18 @@ struct Axis {
 		}
 		return ss.str();
 	}
-	std::string GetIndexFunction(std::string var) const
+	std::string GetIndexFunction(std::string var) const {
+		std::ostringstream ss;
+		std::string scale = GetIndex(var);
+		ss << "("<<var<<" >= "<<I3CLSimHelper::ToFloatString(max_)<<" ? "<<(n_bins_-1)<<"u"
+		    <<" : "<<"("<<var<<" < "<<I3CLSimHelper::ToFloatString(min_)<<" ? 0u : (uint)("<<scale<<"))" <<")"
+		;
+		return ss.str();
+	}
+	std::string GetIndex(std::string var) const
 	{
 		std::ostringstream ss;
-		ss << (n_bins_-1)
+		ss << (n_bins_-1) 
 		    << "*(" << itransform(var) << " - " << itransform(I3CLSimHelper::ToFloatString(min_)) << ")"
 		    << "/(" << itransform(I3CLSimHelper::ToFloatString(max_)) << " - " << itransform(I3CLSimHelper::ToFloatString(min_)) << ")"
 		;
@@ -91,7 +99,7 @@ struct Axis {
 
 
 std::string
-GenerateBinningCode(const std::string &functionName, const std::vector<Axis> &axes)
+GenerateIndex(const std::string &functionName, const std::vector<Axis> &axes)
 {
 	std::ostringstream ss;
 	ss << "inline uint " << functionName << "(";
@@ -119,10 +127,80 @@ GenerateBinningCode(const std::string &functionName, const std::vector<Axis> &ax
 	return ss.str();
 }
 
+std::string
+PrintMultiIndex(const std::string &functionName, const std::vector<Axis> &axes)
+{
+	std::ostringstream ss;
+	ss << "inline uint " << functionName << "(";
+	for (uint i = 0; i < axes.size(); i++) {
+		ss << "floating_t c" << i;
+		if (i+1 < axes.size())
+			ss << ", ";
+	}
+	ss << ")\n{\n";
+	ss << "dbg_printf(\"[ ";
+	for (uint i = 0; i < axes.size(); i++)
+		ss << "%d ";
+	ss << "]\\n\", ";
+	for (uint i = 0; i < axes.size(); i++) {
+		std::ostringstream var;
+		var << "c" << i;
+		ss << axes[i].GetIndexFunction(var.str());
+		if (i+1 < axes.size())
+			ss << ", ";
+	}
+	ss << ");\n}\n";
+	
+	return ss.str();
+}
+
+std::string
+GenerateBoundsCheck(const std::string &functionName, const std::vector<Axis> &axes)
+{
+	std::ostringstream ss;
+	ss << "inline bool " << functionName << "(";
+	for (uint i = 0; i < axes.size(); i++) {
+		ss << "floating_t c" << i;
+		if (i+1 < axes.size())
+			ss << ", ";
+	}
+	ss << ")\n{\n";
+	ss << "return (c3 > "<<I3CLSimHelper::ToFloatString(axes.at(3).max_)<<");";
+	ss << "\n}\n";
+	
+	return ss.str();
+}
+
+// Brute-force search for the minimum refractive index
+double
+GetMinimumRefractiveIndex(const I3CLSimMediumProperties &med)
+{
+	double n_min = std::numeric_limits<double>::infinity();
+	
+
+	
+	for (unsigned j = 0; j < med.GetLayersNum(); j++) {
+		if (!med.GetGroupRefractiveIndexOverride(j))
+			log_fatal("Medium properties don't know how to calculate group refractive indices");
+		const I3CLSimFunction &groupIndex = *(med.GetGroupRefractiveIndexOverride(j));
+		double wmin = std::max(med.GetMinWavelength(), groupIndex.GetMinWlen());
+		double wmax = std::min(med.GetMaxWavelength(), groupIndex.GetMaxWlen());
+		for (unsigned i = 0; i < 1000; i++) {
+			double n = groupIndex.GetValue(wmin + i*(wmax-wmin));
+			if (n > 1 && n < n_min) {
+				n_min = n;
+			}
+		}
+	}
+	
+	return n_min;
+}
+
 I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice device,
     I3CLSimMediumPropertiesConstPtr mediumProperties,
     I3CLSimFunctionConstPtr wavelengthBias, I3CLSimFunctionConstPtr angularAcceptance,
-    I3RandomServicePtr rng) : entriesPerStream_(4096)
+    I3RandomServicePtr rng) : entriesPerStream_(1048576), run_(true),
+    numPhotons_(0), sumOfPhotonWeights_(0.)
 {
 	std::vector<I3CLSimRandomValueConstPtr> wavelengthGenerators;
 	wavelengthGenerators.push_back(I3CLSimModuleHelper::makeCherenkovWavelengthGenerator
@@ -143,9 +221,12 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
 	    "#define SAVE_ALL_PHOTONS_PRESCALE 1\n"                               \
 	    "#define PROPAGATE_FOR_FIXED_NUMBER_OF_ABSORPTION_LENGTHS 42\n"       \
 	    "#define TABULATE\n"                                                  \
+	    "//#define PRINTF_ENABLED\n"                                            \
 	;
 	preamble << "#define TABLE_ENTRIES_PER_STREAM " << entriesPerStream_ << "\n";
 	preamble << "#define VOLUME_MODE_STEP 1.0f\n";
+	preamble << "#define MIN_INV_GROUPVEL " << I3CLSimHelper::ToFloatString(
+	    GetMinimumRefractiveIndex(*mediumProperties)/I3Constants::c) << "\n";
 	
 	sources.push_back(I3CLSimHelper::GetMathPreamble(device, false /* single precision for now */));
 	sources.push_back(preamble.str());
@@ -160,16 +241,19 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
 	axes.push_back(Axis(0, 180, 36, 1));
 	axes.push_back(Axis(-1, 1, 100, 1));
 	axes.push_back(Axis(0, 7e3, 105, 2));
-	sources.push_back(GenerateBinningCode("getBinIndex", axes));
+	
+	size_t total_size = 1;
+	BOOST_FOREACH(const Axis &axis, axes)
+		total_size *= axis.n_bins_;
+	binContent_.resize(total_size);
+	
+	sources.push_back(GenerateBoundsCheck("isOutOfBounds", axes));
+	sources.push_back(GenerateIndex("getBinIndex", axes));
 	
 	sources.push_back(loadKernel("propagation_kernel", true));
-	// if (!saveAllPhotons_) {
-	// 	propagationKernelSource += this->GetCollisionDetectionSource(true);
-	// 	propagationKernelSource += this->GetCollisionDetectionSource(false);
-	// }
 	sources.push_back(loadKernel("propagation_kernel", false));
 	
-	{
+	if (0) {
 		std::stringstream source;
 		BOOST_FOREACH(std::string &part, sources)
 			source << part;
@@ -189,40 +273,162 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
 		context_ = cl::Context(devices, properties);
 		
 		std::string BuildOptions;
-		BuildOptions += "-cl-mad-enable ";
+		BuildOptions += "-cl-mad-enable";
 
 		cl::Program::Sources source;
 		BOOST_FOREACH(const std::string &part, sources)
 			source.push_back(std::make_pair(part.c_str(), part.size()));
 		
-		cl::Program program(context_, source);
-		program.build(devices, BuildOptions.c_str());
-		
 		cl::Device device = devices[0];
-        std::string deviceName = device.getInfo<CL_DEVICE_NAME>();
-        log_error("  * build status on %s\"", deviceName.c_str());
-        log_error("==============================");
-        log_error("Build Status: %s", boost::lexical_cast<std::string>(program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(device)).c_str());
-        log_error("Build Options: %s", boost::lexical_cast<std::string>(program.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(device)).c_str());
-        log_error("Build Log: %s", boost::lexical_cast<std::string>(program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device)).c_str());
-        log_error("==============================");
+		cl::Program program(context_, source);
+		try {
+			program.build(devices, BuildOptions.c_str());
+		} catch (cl::Error &err) {
+	        std::string deviceName = device.getInfo<CL_DEVICE_NAME>();
+	        log_error("  * build status on %s\"", deviceName.c_str());
+	        log_error("==============================");
+	        log_error("Build Status: %s", boost::lexical_cast<std::string>(program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(device)).c_str());
+	        log_error("Build Options: %s", boost::lexical_cast<std::string>(program.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(device)).c_str());
+	        log_error("Build Log: %s", boost::lexical_cast<std::string>(program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device)).c_str());
+	        log_error("==============================");
+			log_fatal_stream(err.what() << ": " << err.errstr());
+		}
 		
 		commandQueue_ = cl::CommandQueue(context_, device, 0);
 		propagationKernel_ = cl::Kernel(program, "propKernel");
 		
 		maxWorkgroupSize_ = propagationKernel_.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device);
 		log_debug_stream("max work group size " << maxWorkgroupSize_);
+		maxWorkgroupSize_ = 1;
 		
 		
 		buffers_ = DeviceBuffers(context_, rng, maxWorkgroupSize_, entriesPerStream_);
+		
+		// Set arguments
+		uint args = 0;
+		propagationKernel_.setArg(args++, buffers_.inputSteps);
+		propagationKernel_.setArg(args++, buffers_.outputEntries);
+		propagationKernel_.setArg(args++, buffers_.numEntries);
+		propagationKernel_.setArg(args++, buffers_.mwc.x);
+		propagationKernel_.setArg(args++, buffers_.mwc.a);
 	}
 	
-	
-	exit(1);
+	harvesterThread_ = boost::thread(boost::bind(&I3CLSimStepToTableConverter::FetchSteps, this));
+	// exit(1);
+}
+
+I3CLSimStepToTableConverter::~I3CLSimStepToTableConverter()
+{
+	Finish();
 }
 
 void
 I3CLSimStepToTableConverter::EnqueueSteps(I3CLSimStepSeriesConstPtr steps)
 {
+	if (!steps)
+		return;
+	BOOST_FOREACH(const I3CLSimStep &step, *steps) {
+		numPhotons_ += step.GetNumPhotons();
+		sumOfPhotonWeights_ += step.GetNumPhotons()*step.GetWeight();
+	}
+	
 	stepQueue_.Put(steps);
 }
+
+void
+I3CLSimStepToTableConverter::Finish()
+{
+	run_ = false;
+	log_debug("Finish");
+	harvesterThread_.join();
+	
+	log_info_stream("Propagated " << numPhotons_ << " photons");
+}
+
+void
+I3CLSimStepToTableConverter::FetchSteps()
+{
+	I3CLSimStepSeries osteps(maxWorkgroupSize_);
+	std::vector<uint32_t> numEntries(maxWorkgroupSize_);
+	std::vector<I3CLSimTableEntry> tableEntries(maxWorkgroupSize_*entriesPerStream_);
+	
+	while (1) {
+		I3CLSimStepSeriesConstPtr steps;
+	
+		if (!stepQueue_.GetNonBlocking(steps)) {
+			if (run_) {
+				continue;
+			} else {
+				return;
+			}
+		}
+		
+		VECTOR_CLASS<cl::Event> buffersFilled(2);
+		VECTOR_CLASS<cl::Event> kernelFinished(1);
+		VECTOR_CLASS<cl::Event> buffersRead(3);
+		
+#if 0
+		log_trace_stream("got " << steps->size() << " steps");
+		BOOST_FOREACH(const I3CLSimStep &step, *steps)
+			log_trace_stream(step.GetNumPhotons() << " photons");
+#endif
+		
+		const size_t items = steps->size();
+		assert(items <= maxWorkgroupSize_);
+		commandQueue_.enqueueWriteBuffer(buffers_.inputSteps, CL_FALSE, 0,
+		    items*sizeof(I3CLSimStep), &(*steps)[0], NULL, &buffersFilled[0]);
+		commandQueue_.enqueueFillBuffer<uint32_t>(buffers_.numEntries, 0u /*pattern*/,
+		    0 /*offset*/, items*sizeof(uint32_t) /*size*/, NULL, &buffersFilled[1]);
+		commandQueue_.flush();
+
+		commandQueue_.enqueueNDRangeKernel(propagationKernel_, cl::NullRange,
+		    cl::NDRange(items), cl::NDRange(maxWorkgroupSize_),
+		    &buffersFilled, &kernelFinished[0]);
+	
+		// TODO: enqueue task to consume steps when done
+		commandQueue_.enqueueReadBuffer(buffers_.inputSteps, CL_FALSE, 0,
+		    items*sizeof(I3CLSimStep), &osteps[0], &kernelFinished, &buffersRead[0]);
+		commandQueue_.enqueueReadBuffer(buffers_.numEntries, CL_FALSE, 0,
+		    items*sizeof(uint32_t), &numEntries[0], &kernelFinished, &buffersRead[1]);
+		commandQueue_.enqueueReadBuffer(buffers_.outputEntries, CL_FALSE, 0,
+		    items*entriesPerStream_*sizeof(I3CLSimTableEntry), &tableEntries[0], &kernelFinished, &buffersRead[2]);
+
+		commandQueue_.flush();
+	
+		cl::Event::waitForEvents(buffersRead);
+		I3CLSimStepSeriesPtr rsteps;
+		for (size_t i = 0; i < items; i++) {
+			// If any steps ran out of space, return them to the queue to finish
+			if (osteps[i].GetNumPhotons() > 0) {
+				log_trace_stream(osteps[i].GetNumPhotons() << " left");
+				if (!rsteps)
+					rsteps = I3CLSimStepSeriesPtr(new I3CLSimStepSeries);
+				rsteps->push_back(osteps[i]);
+			}
+		}
+#if 1
+		if (rsteps && rsteps->size() > 0) {
+			assert(rsteps->size() <= maxWorkgroupSize_);
+			stepQueue_.Put(rsteps);
+		}
+		
+		for (size_t i = 0; i < items; i++) {
+			size_t size = numEntries[i];
+			size_t offset = i*entriesPerStream_;
+			for (size_t j = 0; j < size; j++) {
+				binContent_[tableEntries[offset+j].index] += tableEntries[offset+j].weight;
+			}
+		}
+		
+		
+#endif
+	}
+}
+
+// void
+// I3CLSimStepToTableConverter::FetchEntries(size_t nsteps)
+// {
+// 	std::vector<I3CLSimStep> steps(nsteps);
+// 	commandQueue_.enqueueReadBuffer(buffers_.inputSteps, CL_TRUE, 0, nsteps*sizeof(I3CLSimStep),
+// 	    )
+// }

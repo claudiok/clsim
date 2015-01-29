@@ -19,6 +19,7 @@
 class I3CLSimTabulatorModule : public I3Module {
 public:
 	I3CLSimTabulatorModule(const I3Context&);
+	virtual ~I3CLSimTabulatorModule();
 	void Configure();
 	
 	void DAQ(I3FramePtr);
@@ -40,6 +41,8 @@ private:
 	
 	uint32_t sourceCounter_;
 	boost::thread stepHarvester_;
+	
+	SET_LOGGER("I3CLSimTabulatorModule");
 };
 
 I3_MODULE(I3CLSimTabulatorModule);
@@ -90,8 +93,15 @@ void I3CLSimTabulatorModule::Configure()
 
 void I3CLSimTabulatorModule::Finish()
 {
-	stepHarvester_.interrupt();
+	log_trace("finish called");
+	particleToStepsConverter_->EnqueueBarrier();
 	stepHarvester_.join();
+	tabulator_->Finish();
+}
+
+I3CLSimTabulatorModule::~I3CLSimTabulatorModule()
+{
+	log_trace("dtor called");
 }
 
 /// Harvest steps and feed them to OpenCL
@@ -100,13 +110,16 @@ void I3CLSimTabulatorModule::HarvestSteps()
 	for (;;) {
 		I3CLSimStepSeriesConstPtr steps;
 		bool barrierWasJustReset=false;
-		try {
-			steps = particleToStepsConverter_->GetConversionResultWithBarrierInfo(barrierWasJustReset);
-		} catch (boost::thread_interrupted &interrupt) {
-			break;
+		steps = particleToStepsConverter_->GetConversionResultWithBarrierInfo(barrierWasJustReset);
+		
+		if (barrierWasJustReset) {
+			log_trace("Exiting on barrier");
+			return;
 		}
-		if (steps && ! steps->empty()) {
+		if (steps && !steps->empty()) {
 			// Do stuff
+			tabulator_->EnqueueSteps(I3CLSimStepSeriesPtr(new I3CLSimStepSeries(*steps)));
+			log_trace_stream("enqueued " << steps->size() << " steps");
 		}
 	}
 	
