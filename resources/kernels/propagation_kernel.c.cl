@@ -568,8 +568,9 @@ __kernel void propKernel(
             abs_lens_initial = -my_log(RNG_CALL_UNIFORM_OC);
 #endif
             abs_lens_left = abs_lens_initial;
+#ifdef TABULATE
             depthPropagated = ZERO;
-            
+#endif // TABULATE
 #ifdef PRINTF_ENABLED
             dbg_printf("   - total track length will be %f absorption lengths\n", abs_lens_left);
 #endif

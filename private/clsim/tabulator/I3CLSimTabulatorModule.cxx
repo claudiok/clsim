@@ -15,6 +15,11 @@
 #include <boost/foreach.hpp>
 #include <boost/thread.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/filesystem.hpp>
+
+#include <fstream>
+
+namespace fs = boost::filesystem;
 
 class I3CLSimTabulatorModule : public I3Module {
 public:
@@ -39,6 +44,8 @@ private:
 	I3CLSimLightSourceToStepConverterPtr particleToStepsConverter_;
 	I3CLSimStepToTableConverterPtr tabulator_;
 	
+	std::string tablePath_;
+	
 	uint32_t sourceCounter_;
 	boost::thread stepHarvester_;
 	
@@ -58,6 +65,7 @@ I3CLSimTabulatorModule::I3CLSimTabulatorModule(const I3Context &ctx)
 	AddParameter("MediumProperties", "", mediumProperties_);
 	AddParameter("ParameterizationList","", parameterizationList_);
 	AddParameter("OpenCLDeviceList", "", openCLDeviceList_);
+	AddParameter("Filename", "", "");
 }
 
 void I3CLSimTabulatorModule::Configure()
@@ -68,6 +76,18 @@ void I3CLSimTabulatorModule::Configure()
 	GetParameter("MediumProperties", mediumProperties_);
 	GetParameter("ParameterizationList",parameterizationList_);
 	GetParameter("OpenCLDeviceList",openCLDeviceList_);
+	GetParameter("Filename", tablePath_);
+	
+	if (tablePath_.empty())
+		log_fatal("You must specify an output filename!");
+	else if (fs::exists(tablePath_))
+		log_fatal_stream(tablePath_ << " already exists!");
+	try {
+		std::ofstream f(tablePath_.c_str());
+	} catch (...) {
+		log_fatal_stream("Could not open " << tablePath_ << " for writing");
+	}
+	fs::remove(tablePath_);
 	
 	tabulator_ = boost::make_shared<I3CLSimStepToTableConverter>(
 	    openCLDeviceList_[0], mediumProperties_, wavelengthGenerationBias_,
@@ -97,6 +117,8 @@ void I3CLSimTabulatorModule::Finish()
 	particleToStepsConverter_->EnqueueBarrier();
 	stepHarvester_.join();
 	tabulator_->Finish();
+	
+	tabulator_->WriteFITSFile(tablePath_, boost::python::dict());
 }
 
 I3CLSimTabulatorModule::~I3CLSimTabulatorModule()

@@ -588,7 +588,7 @@ def PhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Units.degre
         UnshadowedFraction=1.0,                     # no cable shadow
         DOMOversizeFactor=1.0,                      # no oversizing (there are no DOMs, so this is pointless anyway)
         StopDetectedPhotons=False,                  # do not stop photons on detection (also somewhat pointless without DOMs)
-        PhotonHistoryEntries=10000,                 # record all photon paths
+        PhotonHistoryEntries=5000,                 # record all photon paths
         DoNotParallelize=True,                      # no multithreading
         OverrideApproximateNumberOfWorkItems=1,     # if you *would* use multi-threading, this would be the maximum number of jobs to run in parallel (OpenCL is free to split them)
         ExtraArgumentsToI3CLSimModule=dict(SaveAllPhotons=True,                 # save all photons, regardless of them hitting anything
@@ -975,13 +975,13 @@ def I3CLSimTabulatePhotons(tray, name,
                    # StopDetectedPhotons=StopDetectedPhotons,
                    # PhotonHistoryEntries=PhotonHistoryEntries,
                    # If=If,
-                   # **ExtraArgumentsToI3CLSimModule
+                   **ExtraArgumentsToI3CLSimModule
                    )
 
 @traysegment
 def CombinedPhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Units.degree, ZCoordinate=0.*I3Units.m,
     Energy=1.*I3Units.GeV, FlasherWidth=127, FlasherBrightness=127, Seed=12345, NEvents=100,
-    IceModel='spice_mie', DisableTilt=False):
+    IceModel='spice_mie', DisableTilt=False, Filename=""):
     
     """
 
@@ -1053,13 +1053,7 @@ def CombinedPhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Uni
         DoNotParallelize=True,                      # no multithreading
         UseGeant4=False,
         OverrideApproximateNumberOfWorkItems=1,     # if you *would* use multi-threading, this would be the maximum number of jobs to run in parallel (OpenCL is free to split them)
-        ExtraArgumentsToI3CLSimModule=dict(SaveAllPhotons=True,                 # save all photons, regardless of them hitting anything
-                                           SaveAllPhotonsPrescale=1.,           # do not prescale the generated photons
-                                           StatisticsName="I3CLSimStatistics",  # save a statistics object (contains the initial number of photons)
-                                           FixedNumberOfAbsorptionLengths=46.,  # this is approx. the number used by photonics (it uses -ln(1e-20))
-                                           LimitWorkgroupSize=1,                # this effectively disables all parallelism (there should be only one OpenCL worker thread)
-                                                                                #  it also should save LOTS of memory
-                                          ),
+        ExtraArgumentsToI3CLSimModule=dict(Filename=Filename),
         IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/" + IceModel),
         DisableTilt=DisableTilt,
     )

@@ -24,10 +24,16 @@ public:
 	virtual ~I3CLSimStepToTableConverter();
 	void EnqueueSteps(I3CLSimStepSeriesConstPtr);
 	void Finish();
+	
+	void WriteFITSFile(const std::string &fname,
+	    boost::python::dict tableHeader);
 private:
 	
 	void FetchSteps();
 	void FetchEntries(size_t nsteps);
+	
+	float GetBinVolume(size_t i);
+	void Normalize();
 	
 	struct DeviceBuffers {
 		DeviceBuffers() {};
@@ -51,7 +57,11 @@ private:
 	boost::thread harvesterThread_;
 	bool run_;
 	
+	double domArea_;
+	double stepLength_;
+	
 	std::vector<float> binContent_;
+	std::vector<std::vector<double> > binEdges_;
 	// double rather than an integer because steps have weights
 	uint64_t numPhotons_;
 	double sumOfPhotonWeights_;

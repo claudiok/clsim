@@ -269,7 +269,8 @@ I3CLSimTabulator::RecordPhoton(const I3CLSimTabulator::Source &source, const I3P
 		}
 		t += distance/photon.GetGroupVelocity();
 	}
-	assert( abs(t-photon.GetTime()) < 10 );
+	// This assumption is only valid if all the photon history entries were stored
+	// assert( abs(t-photon.GetTime()) < 10 );
 }
 
 namespace bp = boost::python;
