@@ -7,6 +7,7 @@
 #include "clsim/I3CLSimMediumProperties.h"
 #include "clsim/random_value/I3CLSimRandomValue.h"
 #include "clsim/I3CLSimOpenCLDevice.h"
+#include "dataclasses/physics/I3Particle.h"
 
 #define __CL_ENABLE_EXCEPTIONS
 #include "clsim/cl.hpp"
@@ -17,8 +18,9 @@
 class I3CLSimStepToTableConverter : boost::noncopyable {
 public:
 	I3CLSimStepToTableConverter(I3CLSimOpenCLDevice device,
+	    const I3Particle &referenceSource,
 	    I3CLSimMediumPropertiesConstPtr medium,
-	    I3CLSimFunctionConstPtr wavelengthBias,
+	    I3CLSimFunctionConstPtr wavelengthAcceptance,
 	    I3CLSimFunctionConstPtr angularAcceptance,
 	    I3RandomServicePtr rng);
 	virtual ~I3CLSimStepToTableConverter();
@@ -59,6 +61,8 @@ private:
 	
 	double domArea_;
 	double stepLength_;
+	double minimumRefractiveIndex_;
+	I3Particle referenceSource_;
 	
 	std::vector<float> binContent_;
 	std::vector<std::vector<double> > binEdges_;

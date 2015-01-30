@@ -174,6 +174,33 @@ GenerateBoundsCheck(const std::string &functionName, const std::vector<Axis> &ax
 	return ss.str();
 }
 
+std::string
+GenerateSourcePosition(const I3Particle &source)
+{
+	std::ostringstream ss;
+	ss << "static __constant floating4_t sourcePos = {"
+	    <<I3CLSimHelper::ToFloatString(source.GetPos().GetX())<<","
+	    <<I3CLSimHelper::ToFloatString(source.GetPos().GetY())<<","
+	    <<I3CLSimHelper::ToFloatString(source.GetPos().GetZ())<<","
+	    <<I3CLSimHelper::ToFloatString(source.GetTime())<<"};\n";
+	const I3Direction &dir = source.GetDir();
+	ss << "static __constant floating4_t sourceDir = {"
+	    <<I3CLSimHelper::ToFloatString(dir.GetX())<<","
+	    <<I3CLSimHelper::ToFloatString(dir.GetY())<<","
+	    <<I3CLSimHelper::ToFloatString(dir.GetZ())<<","
+	    <<I3CLSimHelper::ToFloatString(0.)<<"};\n";
+	double perpz = hypot(dir.GetX(), dir.GetY());
+	I3Direction perpdir = (perpz > 0.) ?
+	    I3Direction(-dir.GetX()*dir.GetZ()/perpz, -dir.GetY()*dir.GetZ()/perpz, perpz)
+	    : I3Direction(1., 0., 0.);
+	ss << "static __constant floating4_t perpDir = {"
+	    <<I3CLSimHelper::ToFloatString(perpdir.GetX())<<","
+	    <<I3CLSimHelper::ToFloatString(perpdir.GetY())<<","
+	    <<I3CLSimHelper::ToFloatString(perpdir.GetZ())<<","
+	    <<I3CLSimHelper::ToFloatString(0.)<<"};\n";
+	return ss.str();
+}
+
 // Brute-force search for the minimum refractive index
 double
 GetMinimumRefractiveIndex(const I3CLSimMediumProperties &med)
@@ -200,15 +227,17 @@ GetMinimumRefractiveIndex(const I3CLSimMediumProperties &med)
 }
 
 I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice device,
+    const I3Particle &referenceSource,
     I3CLSimMediumPropertiesConstPtr mediumProperties,
-    I3CLSimFunctionConstPtr wavelengthBias, I3CLSimFunctionConstPtr angularAcceptance,
+    I3CLSimFunctionConstPtr wavelengthAcceptance, I3CLSimFunctionConstPtr angularAcceptance,
     I3RandomServicePtr rng) : entriesPerStream_(1048576), run_(true),
     domArea_(M_PI*std::pow(0.16510*I3Units::m, 2)), stepLength_(1.),
+    referenceSource_(referenceSource),
     numPhotons_(0), sumOfPhotonWeights_(0.)
 {
 	std::vector<I3CLSimRandomValueConstPtr> wavelengthGenerators;
 	wavelengthGenerators.push_back(I3CLSimModuleHelper::makeCherenkovWavelengthGenerator
-	                                (wavelengthBias,
+	                                (wavelengthAcceptance,
 	                                 false /*generateCherenkovPhotonsWithoutDispersion_*/,
 	                                 mediumProperties
 	                                )
@@ -229,16 +258,20 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
 	;
 	preamble << "#define TABLE_ENTRIES_PER_STREAM " << entriesPerStream_ << "\n";
 	preamble << "#define VOLUME_MODE_STEP "<<I3CLSimHelper::ToFloatString(stepLength_)<<"\n";
+	minimumRefractiveIndex_ = GetMinimumRefractiveIndex(*mediumProperties);
+	
 	preamble << "#define MIN_INV_GROUPVEL " << I3CLSimHelper::ToFloatString(
-	    GetMinimumRefractiveIndex(*mediumProperties)/I3Constants::c) << "\n";
+	    minimumRefractiveIndex_/I3Constants::c) << "\n";
 	
 	sources.push_back(I3CLSimHelper::GetMathPreamble(device, false /* single precision for now */));
 	sources.push_back(preamble.str());
 	sources.push_back(I3CLSimHelper::LoadProgramSource(kernelBaseDir+"/mwcrng_kernel.cl"));
 	sources.push_back(I3CLSimHelper::GenerateWavelengthGeneratorSource(wavelengthGenerators));
-	sources.push_back(wavelengthBias->GetOpenCLFunction("getWavelengthBias"));
+	sources.push_back(wavelengthAcceptance->GetOpenCLFunction("getWavelengthBias"));
 	sources.push_back(I3CLSimHelper::GenerateMediumPropertiesSource(*mediumProperties));
 	sources.push_back(angularAcceptance->GetOpenCLFunction("getAngularAcceptance"));
+	sources.push_back(GenerateSourcePosition(referenceSource_));
+	std::cout << GenerateSourcePosition(referenceSource_) << std::endl;;
 	
 	std::vector<Axis> axes;
 	axes.push_back(Axis(0, 580, 200, 2));
@@ -461,7 +494,7 @@ I3CLSimStepToTableConverter::Normalize()
 		double volume = ((std::pow(binEdges_[0][idxs[0]+1], 3) - std::pow(binEdges_[0][idxs[0]], 3))/3.)
 		    * 2*I3Units::degree*(binEdges_[1][idxs[1]+1] - binEdges_[1][idxs[1]])
 		    * (binEdges_[2][idxs[2]+1] - binEdges_[2][idxs[2]]);
-		double norm = volume/(stepLength_*domArea_);
+		double norm = volume/(stepLength_*domArea_);		
 		binContent_[idx] /= norm;
 	}
 }
@@ -512,8 +545,12 @@ void I3CLSimStepToTableConverter::WriteFITSFile(const std::string &path, boost::
 		}
 	}
 	
-	// Write header keywords
+	// Fill in things that only we know
 	tableHeader["n_photons"] = sumOfPhotonWeights_;
+	tableHeader["n_group"] = minimumRefractiveIndex_;
+	tableHeader["z"] = referenceSource_.GetPos().GetZ()/I3Units::m;
+	tableHeader["zenith"] = referenceSource_.GetDir().GetZenith()/I3Units::degree;
+	// Write header keywords
 	{
 		namespace bp = boost::python;
 

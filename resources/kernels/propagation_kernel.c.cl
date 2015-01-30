@@ -244,17 +244,9 @@ inline bool savePath(
     __global uint *entry_counter,
     __global struct I3CLSimTableEntry *entries)
 {
-    // TODO: encode these at compile time (or put them in the kernel args)
-    floating4_t sourcePos = {0.f, 0.f, 0.f, 0.f};
-    floating4_t sourceDir = {1.f, 0.f, 0.f, 0.f};
-    floating4_t perpDir = {0.f, 0.f, 1.f, 0.f};
-    
-    // Account for angular acceptance of the DOM
-    // TODO add acceptance function
-    
     floating_t impactWeight = step->weight
-        * getAngularAcceptance(photonDirAndWlen.z)
-        / getWavelengthBias(photonDirAndWlen.w);
+        * getWavelengthBias(photonDirAndWlen.w)
+        * getAngularAcceptance(photonDirAndWlen.z);
     
     dbg_printf("step depth %e + %e impactWeight %e\n", depth, thisStepDepth, impactWeight);
     
@@ -263,6 +255,8 @@ inline bool savePath(
     uint offset = *entry_counter;
     for (; d < thisStepLength && offset < TABLE_ENTRIES_PER_STREAM;
         d += VOLUME_MODE_STEP, offset++) {
+        // NB: the reference vectors sourcePos, sourceDir, and perpDir are
+        //     defined as static variables at compile time
         floating4_t pos = photonPosAndTime - sourcePos;
         pos.x += d*photonDirAndWlen.x;
         pos.y += d*photonDirAndWlen.y;
@@ -274,7 +268,7 @@ inline bool savePath(
         
         floating_t r = magnitude(pos);
         floating_t azi = (n_rho > 0) ?
-            acos(dot(rho,perpDir)/n_rho)/(M_PI/180) : 0;
+            acos(-dot(rho,perpDir)/n_rho)/(M_PI/180) : 0;
         floating_t ct = (r > 0) ? my_divide(l, r) : 0;
         // FIXME make this the *maximum* group velocity
         floating_t dt = pos.w - r*MIN_INV_GROUPVEL;

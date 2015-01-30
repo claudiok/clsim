@@ -45,6 +45,7 @@ private:
 	I3CLSimStepToTableConverterPtr tabulator_;
 	
 	std::string tablePath_;
+	I3Particle referenceSource_;
 	
 	uint32_t sourceCounter_;
 	boost::thread stepHarvester_;
@@ -60,7 +61,8 @@ I3CLSimTabulatorModule::I3CLSimTabulatorModule(const I3Context &ctx)
 	AddOutBox("OutBox");
 	
 	AddParameter("RandomService", "", "I3RandomService");
-	AddParameter("WavelengthGenerationBias", "", wavelengthGenerationBias_);
+	AddParameter("ReferenceSource", "", referenceSource_);
+	AddParameter("WavelengthAcceptance", "", wavelengthGenerationBias_);
 	AddParameter("AngularAcceptance", "", angularAcceptance_);
 	AddParameter("MediumProperties", "", mediumProperties_);
 	AddParameter("ParameterizationList","", parameterizationList_);
@@ -71,7 +73,8 @@ I3CLSimTabulatorModule::I3CLSimTabulatorModule(const I3Context &ctx)
 void I3CLSimTabulatorModule::Configure()
 {
 	GetParameter("RandomService", randomService_);
-	GetParameter("WavelengthGenerationBias", wavelengthGenerationBias_);
+	GetParameter("ReferenceSource", referenceSource_);
+	GetParameter("WavelengthAcceptance", wavelengthGenerationBias_);
 	GetParameter("AngularAcceptance", angularAcceptance_);
 	GetParameter("MediumProperties", mediumProperties_);
 	GetParameter("ParameterizationList",parameterizationList_);
@@ -90,7 +93,7 @@ void I3CLSimTabulatorModule::Configure()
 	fs::remove(tablePath_);
 	
 	tabulator_ = boost::make_shared<I3CLSimStepToTableConverter>(
-	    openCLDeviceList_[0], mediumProperties_, wavelengthGenerationBias_,
+	    openCLDeviceList_[0], referenceSource_, mediumProperties_, wavelengthGenerationBias_,
 	    angularAcceptance_, randomService_);
 	
 	particleToStepsConverter_ =
@@ -149,7 +152,6 @@ void I3CLSimTabulatorModule::HarvestSteps()
 
 void I3CLSimTabulatorModule::DAQ(I3FramePtr frame)
 {
-	
 	I3MCTreeConstPtr mctree = frame->Get<I3MCTreeConstPtr>();
 	
 	BOOST_FOREACH(const I3Particle &p, *mctree) {

@@ -643,14 +643,12 @@ def I3CLSimTabulatePhotons(tray, name,
                        RandomService=None,
                        IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
                        DisableTilt=False,
-                       UnWeightedPhotons=False,
                        UseGeant4=False,
                        CrossoverEnergyEM=None,
                        CrossoverEnergyHadron=None,
                        StopDetectedPhotons=True,
                        PhotonHistoryEntries=0,
                        DoNotParallelize=False,
-                       DOMOversizeFactor=5.,
                        UnshadowedFraction=0.9,
                        UseHoleIceParameterization=True,
                        OverrideApproximateNumberOfWorkItems=None,
@@ -815,14 +813,6 @@ def I3CLSimTabulatePhotons(tray, name,
     if clsim.I3CLSimLightSourceToStepConverterGeant4.can_use_geant4:
         AutoSetGeant4Environment()
 
-    # warn the user in case they might have done something they probably don't want
-    if UnWeightedPhotons and (DOMOversizeFactor != 1.):
-        print("********************")
-        print("Enabling the clsim.I3CLSimMakeHits() \"UnWeightedPhotons=True\" option without setting")
-        print("\"DOMOversizeFactor=1.\" will still apply a constant weighting factor of DOMOversizeFactor**2.")
-        print("If this is what you want, you can safely ignore this warning.")
-        print("********************")
-
     # some constants
     DOMRadius = 0.16510*icetray.I3Units.m # 13" diameter
     Jitter = 2.*icetray.I3Units.ns
@@ -899,24 +889,15 @@ def I3CLSimTabulatePhotons(tray, name,
     else:
         # get ice model directly if not a string
         mediumProperties = IceModelLocation
+    
+    # The photonics convention for photon table normalization is "per Cherenkov
+    # photon between 400 and 600 nm," of which there are 32582.0 per meter of
+    # track. Since we generate over a wider range, re-normalize to compensate.
+    lightScale = 32582.0/clsim.NumberOfPhotonsPerMeter(mediumProperties.GetPhaseRefractiveIndex(0), clsim.I3CLSimFunctionConstant(1.),
+        mediumProperties.MinWavelength, mediumProperties.MaxWavelength)
 
-    # detector properties
-    if UseHoleIceParameterization:
-        # the hole ice acceptance curve peaks at 0.75 instead of 1
-        domEfficiencyCorrection = UnshadowedFraction*0.75*1.35 * 1.01 # DeepCore DOMs have a relative efficiency of 1.35 plus security margin of +1%
-    else:
-        domEfficiencyCorrection = UnshadowedFraction*1.35      * 1.01 # security margin of +1%
-    domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius = DOMRadius*DOMOversizeFactor, efficiency=domEfficiencyCorrection)
+    domAcceptance = clsim.GetIceCubeDOMAcceptance(efficiency=lightScale)
     angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(UseHoleIceParameterization)
-    # photon generation wavelength bias
-    #if isinstance(UnWeightedPhotons, float) or isinstance(UnWeightedPhotons, int):
-    #    print("***** running unweighted simulation with a photon pre-scaling of", UnWeightedPhotons)
-    #    wavelengthGenerationBias = clsim.I3CLSimFunctionConstant(UnWeightedPhotons)
-    #else:
-    if not UnWeightedPhotons:
-        wavelengthGenerationBias = domAcceptance
-    else:
-        wavelengthGenerationBias = None
 
     # muon&cascade parameterizations
     ppcConverter = clsim.I3CLSimLightSourceToStepConverterPPC(photonsPerStep=200)
@@ -966,7 +947,7 @@ def I3CLSimTabulatePhotons(tray, name,
                    # IgnoreSubdetectors = ["IceTop"],
                    #IgnoreNonIceCubeOMNumbers=False,
                    # GenerateCherenkovPhotonsWithoutDispersion=False,
-                   WavelengthGenerationBias=wavelengthGenerationBias,
+                   WavelengthAcceptance=domAcceptance,
                    AngularAcceptance=angularAcceptance,
                    ParameterizationList=particleParameterizations,
                    # MaxNumParallelEvents=ParallelEvents,
@@ -979,7 +960,7 @@ def I3CLSimTabulatePhotons(tray, name,
                    )
 
 @traysegment
-def CombinedPhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Units.degree, ZCoordinate=0.*I3Units.m,
+def CombinedPhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Units.degree, Azimuth=0*I3Units.degree, ZCoordinate=0.*I3Units.m,
     Energy=1.*I3Units.GeV, FlasherWidth=127, FlasherBrightness=127, Seed=12345, NEvents=100,
     IceModel='spice_mie', DisableTilt=False, Filename=""):
     
@@ -1024,8 +1005,52 @@ def CombinedPhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Uni
 
     ptype = I3Particle.ParticleType.EMinus
 
-    tray.AddModule(MakeParticle, name+"MakeParticle", PhotonSource=PhotonSource, Zenith=Zenith, ZCoordinate=ZCoordinate, 
-        ParticleType=ptype, Energy=Energy, FlasherWidth=FlasherWidth, FlasherBrightness=FlasherBrightness, NEvents=NEvents)
+    def reference_source():
+        source = I3Particle()
+        source.type = ptype
+        source.energy = Energy
+        source.pos = I3Position(0., 0., ZCoordinate)
+        source.dir = I3Direction(Zenith, Azimuth)
+        source.time = 0.
+        source.length = 0.
+        source.location_type = I3Particle.LocationType.InIce
+        
+        return source
+    
+    import copy
+    
+    class MakeParticle(icetray.I3Module):
+        def __init__(self, ctx):
+            super(MakeParticle,self).__init__(ctx)
+            self.AddOutBox("OutBox")
+            self.AddParameter("SourceFunction", "", lambda : None)
+            self.AddParameter("NEvents", "", 100)
+        def Configure(self):
+            self.reference_source = self.GetParameter("SourceFunction")
+            self.nevents = self.GetParameter("NEvents")
+            self.emittedEvents = 0
+        
+        def DAQ(self, frame):
+            source = self.reference_source()
+            primary = I3Particle()
+            # primary.id = I3Particle().id
+            # primary.type = I3Particle.NuE
+            # primary.location_type = primary.Anywhere
+            
+            mctree = I3MCTree()
+            mctree.add_primary(primary)
+            mctree.append_child(primary, source)
+    
+            # clsim likes I3MCTrees
+            frame["I3MCTree"] = mctree
+            
+            self.PushFrame(frame)
+            
+            self.emittedEvents += 1
+            if self.emittedEvents >= self.nevents:
+                self.RequestSuspension()
+
+    tray.AddModule(MakeParticle, SourceFunction=reference_source, NEvents=NEvents)
 
     if PhotonSource.upper() == "FLASHER":
         flasherpulse = "I3FlasherPulseSeriesMap"
@@ -1047,13 +1072,12 @@ def CombinedPhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Uni
         UseGPUs=False,                              # table-making is not a workload particularly suited to GPUs
         UseCPUs=True,                               # it should work fine on CPUs, though
         UnshadowedFraction=1.0,                     # no cable shadow
-        DOMOversizeFactor=1.0,                      # no oversizing (there are no DOMs, so this is pointless anyway)
         StopDetectedPhotons=False,                  # do not stop photons on detection (also somewhat pointless without DOMs)
         PhotonHistoryEntries=10000,                 # record all photon paths
         DoNotParallelize=True,                      # no multithreading
         UseGeant4=False,
         OverrideApproximateNumberOfWorkItems=1,     # if you *would* use multi-threading, this would be the maximum number of jobs to run in parallel (OpenCL is free to split them)
-        ExtraArgumentsToI3CLSimModule=dict(Filename=Filename),
+        ExtraArgumentsToI3CLSimModule=dict(Filename=Filename, ReferenceSource=reference_source()),
         IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/" + IceModel),
         DisableTilt=DisableTilt,
     )
