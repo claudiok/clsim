@@ -45,7 +45,7 @@ I3MCHitConverterWithIDs::FillSingleRow
 (const I3MCHitConverterWithIDs::booked_type &hit, I3TableRowPtr row)
 {
     row->Set<double>  ("time", hit.GetTime());
-    row->Set<double>  ("weight", hit.GetWeight());
+    row->Set<uint64_t>("weight", hit.GetNPE());
     row->Set<double>  ("cherenkov_distance", hit.GetCherenkovDistance());
     row->Set<I3MCHit::HitSource>("source", hit.GetHitSource());
     row->Set<int>     ("id", hit.GetHitID());
