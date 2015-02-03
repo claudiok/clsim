@@ -227,6 +227,7 @@ inline float2 sphDirFromCar(float4 carDir)
 
 inline bool savePath(
     const struct I3CLSimStep *step,
+    const struct I3CLSimReferenceParticle *source,
     const floating4_t photonPosAndTime,
     const floating4_t photonDirAndWlen,
     const floating_t thisStepLength,
@@ -257,7 +258,7 @@ inline bool savePath(
         pos.z = photonPosAndTime.z + d*photonDirAndWlen.z;
         pos.w = photonPosAndTime.w + d*inv_groupvel;
         
-        coordinate_t coords = getCoordinates(pos);
+        coordinate_t coords = getCoordinates(pos, source);
         
         if (isOutOfBounds(coords)) {
             *stop = true;
@@ -385,6 +386,7 @@ __kernel void propKernel(
 #endif
 
 #else // TABULATE
+    __global struct I3CLSimReferenceParticle *referenceParticle,
     __global struct I3CLSimTableEntry *outputTableEntries,
     __global uint *numOutputEntries,
 #endif
@@ -437,6 +439,10 @@ __kernel void propKernel(
     //step.dummy1 = inputSteps[i].dummy1;  // NOT USED
     //step.dummy2 = inputSteps[i].dummy2;  // NOT USED
     //step = inputSteps[i]; // Intel OpenCL does not like this
+
+#ifdef TABULATE
+    struct I3CLSimReferenceParticle refParticle = *referenceParticle;
+#endif
 
     floating4_t stepDir;
     {
@@ -705,7 +711,7 @@ __kernel void propKernel(
         
 #ifdef TABULATE
         bool stop = false;
-        if (!savePath(&step,
+        if (!savePath(&step, &refParticle,
                  photonPosAndTime,
                  photonDirAndWlen,
                  distancePropagated,

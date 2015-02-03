@@ -567,6 +567,8 @@ def CombinedPhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Uni
     
             # clsim likes I3MCTrees
             frame["I3MCTree"] = mctree
+            # use the primary particle as a geometrical reference
+            frame["ReferenceParticle"] = source
             
             self.PushFrame(frame)
             
@@ -618,7 +620,7 @@ def CombinedPhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Uni
         UseGeant4=False,
         OverrideApproximateNumberOfWorkItems=1,     # if you *would* use multi-threading, this would be the maximum number of jobs to run in parallel (OpenCL is free to split them)
         ExtraArgumentsToI3CLSimModule=dict(Filename=Filename, TableHeader=header,
-            ReferenceSource=reference_source(), Axes=Axes),
+            Axes=Axes),
         IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/" + IceModel),
         DisableTilt=DisableTilt,
     )

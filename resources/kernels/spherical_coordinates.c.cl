@@ -7,22 +7,22 @@ inline floating_t magnitude(floating4_t vec)
 }
 
 inline coordinate_t
-getCoordinates(const floating4_t absPos)
+getCoordinates(const floating4_t absPos, const struct I3CLSimReferenceParticle *source)
 {
     coordinate_t coords;
     
     // NB: the reference vectors sourcePos, sourceDir, and perpDir are
     //     defined as static variables at compile time
-    floating4_t pos = absPos - sourcePos;
-    floating_t l = dot(pos, sourceDir);
-    floating4_t rho = pos - l*sourceDir;
+    floating4_t pos = absPos - source->posAndTime;
+    floating_t l = dot(pos, source->dir);
+    floating4_t rho = pos - l*source->dir;
     floating_t n_rho = magnitude(rho);
     
     // radius
     coords.s0 = magnitude(pos);
     // azimuth
     coords.s1 = (n_rho > 0) ?
-        acos(-dot(rho,perpDir)/n_rho)/(PI/180) : 0;
+        acos(-dot(rho,source->perpDir)/n_rho)/(PI/180) : 0;
     // cos(polar angle)
     coords.s2 = (coords.s0 > 0) ? my_divide(l, coords.s0) : 0;
     // delay time

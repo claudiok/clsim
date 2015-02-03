@@ -20,45 +20,32 @@
 class I3CLSimStepToTableConverter : boost::noncopyable {
 public:
 	I3CLSimStepToTableConverter(I3CLSimOpenCLDevice device,
-	    const I3Particle &referenceSource,
 	    clsim::tabulator::AxesConstPtr axes,
 	    I3CLSimMediumPropertiesConstPtr medium,
 	    I3CLSimFunctionConstPtr wavelengthAcceptance,
 	    I3CLSimFunctionConstPtr angularAcceptance,
 	    I3RandomServicePtr rng);
 	virtual ~I3CLSimStepToTableConverter();
-	void EnqueueSteps(I3CLSimStepSeriesConstPtr);
+	void EnqueueSteps(I3CLSimStepSeriesConstPtr, I3ParticleConstPtr);
 	void Finish();
+	
+	size_t GetBunchSize() const { return maxNumWorkitems_; }
 	
 	void WriteFITSFile(const std::string &fname,
 	    boost::python::dict tableHeader);
 private:
 	
-	void FetchSteps();
-	void FetchEntries(size_t nsteps);
+	void FetchSteps(cl::Kernel, I3RandomServicePtr);
 	
 	float GetBinVolume(size_t i);
 	void Normalize();
 	
-	struct DeviceBuffers {
-		DeviceBuffers() {};
-		DeviceBuffers(cl::Context, I3RandomServicePtr, size_t streams,
-		    size_t entriesPerStream);
-		struct {
-			cl::Buffer x, a;
-		} mwc; 
-		cl::Buffer inputSteps;
-		cl::Buffer outputEntries;
-		cl::Buffer numEntries;
-	};
-	DeviceBuffers buffers_;
-	
 	cl::Context context_;
 	cl::CommandQueue commandQueue_;
-	cl::Kernel propagationKernel_;
 	size_t maxWorkgroupSize_, maxNumWorkitems_, entriesPerStream_;
 	
-	I3CLSimQueue<I3CLSimStepSeriesConstPtr> stepQueue_;
+	typedef std::pair<I3CLSimStepSeriesConstPtr, I3ParticleConstPtr> bunch_t;
+	I3CLSimQueue<bunch_t> stepQueue_;
 	boost::thread harvesterThread_;
 	bool run_;
 	
@@ -66,7 +53,6 @@ private:
 	double stepLength_;
 	/// group, phase
 	std::pair<double, double> minimumRefractiveIndex_;
-	I3Particle referenceSource_;
 	
 	clsim::tabulator::AxesConstPtr axes_;
 	std::vector<float> binContent_;

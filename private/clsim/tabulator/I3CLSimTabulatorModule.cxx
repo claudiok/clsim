@@ -47,10 +47,15 @@ private:
 	
 	std::string tablePath_;
 	boost::python::dict tableHeader_;
-	I3Particle referenceSource_;
 	clsim::tabulator::AxesPtr axes_;
 	
 	boost::thread stepHarvester_;
+	struct {
+		boost::mutex mutex;
+		boost::condition_variable cv;
+	} semaphore;
+	I3CLSimQueue<I3ParticleConstPtr> sourceQueue_;
+	bool run_;
 	
 	SET_LOGGER("I3CLSimTabulatorModule");
 };
@@ -58,12 +63,11 @@ private:
 I3_MODULE(I3CLSimTabulatorModule);
 
 I3CLSimTabulatorModule::I3CLSimTabulatorModule(const I3Context &ctx)
-    : I3Module(ctx)
+    : I3Module(ctx), run_(true)
 {
 	AddOutBox("OutBox");
 	
 	AddParameter("RandomService", "", "I3RandomService");
-	AddParameter("ReferenceSource", "", referenceSource_);
 	AddParameter("WavelengthAcceptance", "", wavelengthGenerationBias_);
 	AddParameter("AngularAcceptance", "", angularAcceptance_);
 	AddParameter("MediumProperties", "", mediumProperties_);
@@ -77,7 +81,6 @@ I3CLSimTabulatorModule::I3CLSimTabulatorModule(const I3Context &ctx)
 void I3CLSimTabulatorModule::Configure()
 {
 	GetParameter("RandomService", randomService_);
-	GetParameter("ReferenceSource", referenceSource_);
 	GetParameter("WavelengthAcceptance", wavelengthGenerationBias_);
 	GetParameter("AngularAcceptance", angularAcceptance_);
 	GetParameter("MediumProperties", mediumProperties_);
@@ -99,15 +102,15 @@ void I3CLSimTabulatorModule::Configure()
 	fs::remove(tablePath_);
 	
 	tabulator_ = boost::make_shared<I3CLSimStepToTableConverter>(
-	    openCLDeviceList_[0], referenceSource_, axes_, mediumProperties_,
+	    openCLDeviceList_[0], axes_, mediumProperties_,
 	    wavelengthGenerationBias_, angularAcceptance_, randomService_);
 	
 	particleToStepsConverter_ =
 	    I3CLSimModuleHelper::initializeGeant4(randomService_,
 	                                          mediumProperties_,
 	                                          wavelengthGenerationBias_,
-	                                          1 /*granularity*/,
-	                                          1 /*maxBunchSize*/,
+	                                          tabulator_->GetBunchSize() /*granularity*/,
+	                                          tabulator_->GetBunchSize() /*maxBunchSize*/,
 	                                          parameterizationList_,
 	                                          "QGSP_BERT_EMV" /*geant4PhysicsListName_*/,
 	                                          10.*I3Units::perCent /*geant4MaxBetaChangePerStep_*/,
@@ -122,7 +125,9 @@ void I3CLSimTabulatorModule::Configure()
 void I3CLSimTabulatorModule::Finish()
 {
 	log_trace("finish called");
-	particleToStepsConverter_->EnqueueBarrier();
+	run_ = false;
+	if (!particleToStepsConverter_->BarrierActive())
+		particleToStepsConverter_->EnqueueBarrier();
 	stepHarvester_.join();
 	tabulator_->Finish();
 	
@@ -134,22 +139,33 @@ I3CLSimTabulatorModule::~I3CLSimTabulatorModule()
 	log_trace("dtor called");
 }
 
-/// Harvest steps and feed them to OpenCL
+/// Harvest steps and feed them to the tabulator
 void I3CLSimTabulatorModule::HarvestSteps()
 {
+	// Get the first reference source. This will block until something is
+	// added to the queue.
+	I3ParticleConstPtr reference = sourceQueue_.Get();
 	for (;;) {
 		I3CLSimStepSeriesConstPtr steps;
 		bool barrierWasJustReset=false;
 		steps = particleToStepsConverter_->GetConversionResultWithBarrierInfo(barrierWasJustReset);
 		
-		if (barrierWasJustReset) {
-			log_trace("Exiting on barrier");
-			return;
-		}
 		if (steps && !steps->empty()) {
 			// Do stuff
-			tabulator_->EnqueueSteps(I3CLSimStepSeriesPtr(new I3CLSimStepSeries(*steps)));
-			log_trace_stream("enqueued " << steps->size() << " steps");
+			tabulator_->EnqueueSteps(I3CLSimStepSeriesPtr(new I3CLSimStepSeries(*steps)), reference);
+			log_debug_stream("enqueued " << steps->size() << " steps");
+		}
+		
+		if (barrierWasJustReset) {
+			if (!run_) {
+				log_trace("Exiting on barrier");
+				return;
+			} else {
+				// Signal main thread to continue
+				semaphore.cv.notify_one();
+				// Get the reference source for the next frame
+				reference = sourceQueue_.Get();
+			}
 		}
 	}
 	
@@ -157,12 +173,23 @@ void I3CLSimTabulatorModule::HarvestSteps()
 
 void I3CLSimTabulatorModule::DAQ(I3FramePtr frame)
 {
+	I3ParticleConstPtr reference = frame->Get<I3ParticleConstPtr>("ReferenceParticle");
+	if (!reference)
+		log_fatal("Frame does not contain an I3Particle 'ReferenceParticle'!");
 	I3MCTreeConstPtr mctree = frame->Get<I3MCTreeConstPtr>();
 	
+	{
+		// Wait for particles from the previous event to be consumed
+		boost::unique_lock<boost::mutex> lock(semaphore.mutex);
+		while (particleToStepsConverter_->BarrierActive())
+			semaphore.cv.wait(lock);
+	}
+	
+	sourceQueue_.Put(reference);
 	BOOST_FOREACH(const I3Particle &p, *mctree) {
 		if (p.GetShape() != I3Particle::Dark && p.GetLocationType() == I3Particle::InIce)
 			particleToStepsConverter_->EnqueueLightSource(I3CLSimLightSource(p), 0);
 	}
-
+	particleToStepsConverter_->EnqueueBarrier();
 }
 

@@ -86,6 +86,13 @@ struct __attribute__ ((packed)) I3CLSimTableEntry
     float weight;
 };
 
+struct __attribute__ ((packed)) I3CLSimReferenceParticle
+{
+    float4 posAndTime;   // x,y,z,time
+    float4 dir;          // dx,dy,dz,0
+    float4 perpDir;
+};
+
 ///////////////// forward declarations
 
 inline int findLayerForGivenZPos(floating_t posZ);

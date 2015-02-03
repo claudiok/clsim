@@ -30,34 +30,35 @@ loadKernel(const std::string& name, bool header)
 struct I3CLSimTableEntry {
 	uint32_t index;
 	float weight;
-};
+} __attribute__ ((packed));
 
-std::string
-GenerateSourcePosition(const I3Particle &source)
-{
-	std::ostringstream ss;
-	ss << "static __constant floating4_t sourcePos = {"
-	    <<I3CLSimHelper::ToFloatString(source.GetPos().GetX())<<","
-	    <<I3CLSimHelper::ToFloatString(source.GetPos().GetY())<<","
-	    <<I3CLSimHelper::ToFloatString(source.GetPos().GetZ())<<","
-	    <<I3CLSimHelper::ToFloatString(source.GetTime())<<"};\n";
-	const I3Direction &dir = source.GetDir();
-	ss << "static __constant floating4_t sourceDir = {"
-	    <<I3CLSimHelper::ToFloatString(dir.GetX())<<","
-	    <<I3CLSimHelper::ToFloatString(dir.GetY())<<","
-	    <<I3CLSimHelper::ToFloatString(dir.GetZ())<<","
-	    <<I3CLSimHelper::ToFloatString(0.)<<"};\n";
-	double perpz = hypot(dir.GetX(), dir.GetY());
-	I3Direction perpdir = (perpz > 0.) ?
-	    I3Direction(-dir.GetX()*dir.GetZ()/perpz, -dir.GetY()*dir.GetZ()/perpz, perpz)
-	    : I3Direction(1., 0., 0.);
-	ss << "static __constant floating4_t perpDir = {"
-	    <<I3CLSimHelper::ToFloatString(perpdir.GetX())<<","
-	    <<I3CLSimHelper::ToFloatString(perpdir.GetY())<<","
-	    <<I3CLSimHelper::ToFloatString(perpdir.GetZ())<<","
-	    <<I3CLSimHelper::ToFloatString(0.)<<"};\n";
-	return ss.str();
-}
+struct I3CLSimReferenceParticle {
+	I3CLSimReferenceParticle(const I3Particle &source) {
+		((cl_float *)(&posAndTime))[0] = source.GetPos().GetX();
+		((cl_float *)(&posAndTime))[1] = source.GetPos().GetY();
+		((cl_float *)(&posAndTime))[2] = source.GetPos().GetZ();
+		((cl_float *)(&posAndTime))[3] = source.GetTime();
+		
+		((cl_float *)(&dir))[0] = source.GetDir().GetX();
+		((cl_float *)(&dir))[1] = source.GetDir().GetY();
+		((cl_float *)(&dir))[2] = source.GetDir().GetZ();
+		((cl_float *)(&dir))[3] = 0.;
+		
+		const I3Direction &dir = source.GetDir();
+		double perpz = hypot(dir.GetX(), dir.GetY());
+		I3Direction perpdir = (perpz > 0.) ?
+		    I3Direction(-dir.GetX()*dir.GetZ()/perpz, -dir.GetY()*dir.GetZ()/perpz, perpz)
+		    : I3Direction(1., 0., 0.);
+		((cl_float *)(&perpDir))[0] = perpdir.GetX();
+		((cl_float *)(&perpDir))[1] = perpdir.GetY();
+		((cl_float *)(&perpDir))[2] = perpdir.GetZ();
+		((cl_float *)(&perpDir))[3] = 0.;
+		
+	}
+	cl_float4 posAndTime;   // x,y,z,time
+	cl_float4 dir;          // dx,dy,dz,0
+	cl_float4 perpDir;
+} __attribute__ ((packed));
 
 // Brute-force search for the minimum refractive index
 std::pair<double, double>
@@ -88,34 +89,12 @@ GetMinimumRefractiveIndex(const I3CLSimMediumProperties &med)
 
 }
 
-I3CLSimStepToTableConverter::DeviceBuffers::DeviceBuffers(cl::Context context,
-    I3RandomServicePtr rng, size_t streams, size_t entriesPerStream)
-{
-	std::vector<uint64_t> xv(streams);
-	std::vector<uint32_t> av(streams);
-	
-	init_MWC_RNG(&xv[0], &av[0], streams, rng);
-	
-	mwc.x = cl::Buffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-	    streams*sizeof(uint64_t), &xv[0]);
-	mwc.a = cl::Buffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-	    streams*sizeof(uint32_t), &av[0]);
-	
-	inputSteps = cl::Buffer(context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR,
-	    streams*sizeof(I3CLSimStep));
-	outputEntries = cl::Buffer(context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR,
-	    streams*entriesPerStream*sizeof(I3CLSimTableEntry));
-	numEntries = cl::Buffer(context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR,
-	    streams*sizeof(uint32_t));
-}
-
 I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice device,
-    const I3Particle &referenceSource, clsim::tabulator::AxesConstPtr axes,
+    clsim::tabulator::AxesConstPtr axes,
     I3CLSimMediumPropertiesConstPtr mediumProperties,
     I3CLSimFunctionConstPtr wavelengthAcceptance, I3CLSimFunctionConstPtr angularAcceptance,
     I3RandomServicePtr rng) : entriesPerStream_(1048576), run_(true),
-    domArea_(M_PI*std::pow(0.16510*I3Units::m, 2)), stepLength_(1.),
-    referenceSource_(referenceSource), axes_(axes),
+    domArea_(M_PI*std::pow(0.16510*I3Units::m, 2)), stepLength_(1.), axes_(axes),
     numPhotons_(0), sumOfPhotonWeights_(0.)
 {
 	std::vector<I3CLSimRandomValueConstPtr> wavelengthGenerators;
@@ -155,7 +134,6 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
 	sources.push_back(wavelengthAcceptance->GetOpenCLFunction("getWavelengthBias"));
 	sources.push_back(I3CLSimHelper::GenerateMediumPropertiesSource(*mediumProperties));
 	sources.push_back(angularAcceptance->GetOpenCLFunction("getAngularAcceptance"));
-	sources.push_back(GenerateSourcePosition(referenceSource_));
 	
 	sources.push_back(loadKernel("propagation_kernel", true));
 	sources.push_back(axes_->GenerateBinningCode());
@@ -205,25 +183,14 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
 		}
 		
 		commandQueue_ = cl::CommandQueue(context_, device, 0);
-		propagationKernel_ = cl::Kernel(program, "propKernel");
+		cl::Kernel kernel(program, "propKernel");
 		
-		maxWorkgroupSize_ = propagationKernel_.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device);
-		log_debug_stream("max work group size " << maxWorkgroupSize_);
-		maxWorkgroupSize_ = 1;
+		maxNumWorkitems_ = kernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device);
+		log_debug_stream("max work group size " << maxNumWorkitems_);
 		
-		
-		buffers_ = DeviceBuffers(context_, rng, maxWorkgroupSize_, entriesPerStream_);
-		
-		// Set arguments
-		uint args = 0;
-		propagationKernel_.setArg(args++, buffers_.inputSteps);
-		propagationKernel_.setArg(args++, buffers_.outputEntries);
-		propagationKernel_.setArg(args++, buffers_.numEntries);
-		propagationKernel_.setArg(args++, buffers_.mwc.x);
-		propagationKernel_.setArg(args++, buffers_.mwc.a);
+		harvesterThread_ = boost::thread(boost::bind(&I3CLSimStepToTableConverter::FetchSteps, this, kernel, rng));
 	}
 	
-	harvesterThread_ = boost::thread(boost::bind(&I3CLSimStepToTableConverter::FetchSteps, this));
 }
 
 I3CLSimStepToTableConverter::~I3CLSimStepToTableConverter()
@@ -232,7 +199,7 @@ I3CLSimStepToTableConverter::~I3CLSimStepToTableConverter()
 }
 
 void
-I3CLSimStepToTableConverter::EnqueueSteps(I3CLSimStepSeriesConstPtr steps)
+I3CLSimStepToTableConverter::EnqueueSteps(I3CLSimStepSeriesConstPtr steps, I3ParticleConstPtr reference)
 {
 	if (!steps)
 		return;
@@ -241,7 +208,7 @@ I3CLSimStepToTableConverter::EnqueueSteps(I3CLSimStepSeriesConstPtr steps)
 		sumOfPhotonWeights_ += step.GetNumPhotons()*step.GetWeight();
 	}
 	
-	stepQueue_.Put(steps);
+	stepQueue_.Put(bunch_t(steps, reference));
 }
 
 void
@@ -254,17 +221,69 @@ I3CLSimStepToTableConverter::Finish()
 	log_info_stream("Propagated " << numPhotons_ << " photons");
 }
 
-void
-I3CLSimStepToTableConverter::FetchSteps()
+namespace {
+
+struct DeviceBuffers {
+	DeviceBuffers() {};
+	DeviceBuffers(cl::Context, I3RandomServicePtr, size_t streams,
+	    size_t entriesPerStream);
+	struct {
+		cl::Buffer x, a;
+	} mwc; 
+	cl::Buffer inputSteps;
+	cl::Buffer referenceSource;
+	cl::Buffer outputEntries;
+	cl::Buffer numEntries;
+};
+
+DeviceBuffers::DeviceBuffers(cl::Context context,
+    I3RandomServicePtr rng, size_t streams, size_t entriesPerStream)
 {
-	I3CLSimStepSeries osteps(maxWorkgroupSize_);
-	std::vector<uint32_t> numEntries(maxWorkgroupSize_);
-	std::vector<I3CLSimTableEntry> tableEntries(maxWorkgroupSize_*entriesPerStream_);
+	std::vector<uint64_t> xv(streams);
+	std::vector<uint32_t> av(streams);
+	
+	init_MWC_RNG(&xv[0], &av[0], streams, rng);
+	
+	mwc.x = cl::Buffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+	    streams*sizeof(uint64_t), &xv[0]);
+	mwc.a = cl::Buffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+	    streams*sizeof(uint32_t), &av[0]);
+	
+	inputSteps = cl::Buffer(context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR,
+	    streams*sizeof(I3CLSimStep));
+	referenceSource = cl::Buffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR,
+	    sizeof(I3CLSimReferenceParticle));
+	outputEntries = cl::Buffer(context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR,
+	    streams*entriesPerStream*sizeof(I3CLSimTableEntry));
+	numEntries = cl::Buffer(context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR,
+	    streams*sizeof(uint32_t));
+}
+
+}
+
+void
+I3CLSimStepToTableConverter::FetchSteps(cl::Kernel kernel, I3RandomServicePtr rng)
+{
+	
+	DeviceBuffers buffers(context_, rng, maxNumWorkitems_, entriesPerStream_);
+
+	// Set kernel arguments
+	uint args = 0;
+	kernel.setArg(args++, buffers.inputSteps);
+	kernel.setArg(args++, buffers.referenceSource);
+	kernel.setArg(args++, buffers.outputEntries);
+	kernel.setArg(args++, buffers.numEntries);
+	kernel.setArg(args++, buffers.mwc.x);
+	kernel.setArg(args++, buffers.mwc.a);
+	
+	I3CLSimStepSeries osteps(maxNumWorkitems_);
+	std::vector<uint32_t> numEntries(maxNumWorkitems_);
+	std::vector<I3CLSimTableEntry> tableEntries(maxNumWorkitems_*entriesPerStream_);
 	
 	while (1) {
-		I3CLSimStepSeriesConstPtr steps;
+		bunch_t bunch;
 	
-		if (!stepQueue_.GetNonBlocking(steps)) {
+		if (!stepQueue_.GetNonBlocking(bunch)) {
 			if (run_) {
 				continue;
 			} else {
@@ -272,7 +291,7 @@ I3CLSimStepToTableConverter::FetchSteps()
 			}
 		}
 		
-		VECTOR_CLASS<cl::Event> buffersFilled(2);
+		VECTOR_CLASS<cl::Event> buffersFilled(3);
 		VECTOR_CLASS<cl::Event> kernelFinished(1);
 		VECTOR_CLASS<cl::Event> buffersRead(3);
 		
@@ -282,24 +301,34 @@ I3CLSimStepToTableConverter::FetchSteps()
 			log_trace_stream(step.GetNumPhotons() << " photons");
 #endif
 		
-		const size_t items = steps->size();
-		assert(items <= maxWorkgroupSize_);
-		commandQueue_.enqueueWriteBuffer(buffers_.inputSteps, CL_FALSE, 0,
-		    items*sizeof(I3CLSimStep), &(*steps)[0], NULL, &buffersFilled[0]);
-		commandQueue_.enqueueFillBuffer<uint32_t>(buffers_.numEntries, 0u /*pattern*/,
-		    0 /*offset*/, items*sizeof(uint32_t) /*size*/, NULL, &buffersFilled[1]);
+		const size_t items = bunch.first->size();
+		assert(items <= maxNumWorkItems_);
+		commandQueue_.enqueueWriteBuffer(buffers.inputSteps, CL_FALSE, 0,
+		    items*sizeof(I3CLSimStep), &(*bunch.first)[0], NULL, &buffersFilled[0]);
+		
+		I3CLSimReferenceParticle ref(*bunch.second);
+		commandQueue_.enqueueWriteBuffer(buffers.referenceSource, CL_FALSE, 0,
+		    sizeof(I3CLSimReferenceParticle), &ref, NULL, &buffersFilled[1]);
+		
+		commandQueue_.enqueueFillBuffer<uint32_t>(buffers.numEntries, 0u /*pattern*/,
+		    0 /*offset*/, items*sizeof(uint32_t) /*size*/, NULL, &buffersFilled[2]);
 		commandQueue_.flush();
-
-		commandQueue_.enqueueNDRangeKernel(propagationKernel_, cl::NullRange,
-		    cl::NDRange(items), cl::NDRange(maxWorkgroupSize_),
+		
+		try {
+		commandQueue_.enqueueNDRangeKernel(kernel, cl::NullRange,
+		    cl::NDRange(items), cl::NDRange(maxNumWorkitems_),
 		    &buffersFilled, &kernelFinished[0]);
+		} catch (cl::Error &err) {
+			log_error_stream(err.what() << " " << err.errstr());
+			throw;
+		}
 	
 		// TODO: enqueue task to consume steps when done
-		commandQueue_.enqueueReadBuffer(buffers_.inputSteps, CL_FALSE, 0,
+		commandQueue_.enqueueReadBuffer(buffers.inputSteps, CL_FALSE, 0,
 		    items*sizeof(I3CLSimStep), &osteps[0], &kernelFinished, &buffersRead[0]);
-		commandQueue_.enqueueReadBuffer(buffers_.numEntries, CL_FALSE, 0,
+		commandQueue_.enqueueReadBuffer(buffers.numEntries, CL_FALSE, 0,
 		    items*sizeof(uint32_t), &numEntries[0], &kernelFinished, &buffersRead[1]);
-		commandQueue_.enqueueReadBuffer(buffers_.outputEntries, CL_FALSE, 0,
+		commandQueue_.enqueueReadBuffer(buffers.outputEntries, CL_FALSE, 0,
 		    items*entriesPerStream_*sizeof(I3CLSimTableEntry), &tableEntries[0], &kernelFinished, &buffersRead[2]);
 
 		commandQueue_.flush();
@@ -317,8 +346,9 @@ I3CLSimStepToTableConverter::FetchSteps()
 		}
 
 		if (rsteps && rsteps->size() > 0) {
-			assert(rsteps->size() <= maxWorkgroupSize_);
-			stepQueue_.Put(rsteps);
+			assert(rsteps->size() <= maxNumWorkItems_);
+			bunch.first = rsteps;
+			stepQueue_.Put(bunch);
 		}
 
 		for (size_t i = 0; i < items; i++) {
@@ -398,6 +428,41 @@ void I3CLSimStepToTableConverter::WriteFITSFile(const std::string &path, boost::
 		}
 	}
 	
+	// Fill in things that only we know
+	tableHeader["n_photons"] = sumOfPhotonWeights_;
+	tableHeader["n_group"] = minimumRefractiveIndex_.first;
+	tableHeader["n_phase"] = minimumRefractiveIndex_.second;
+	// Write header keywords
+	{
+		namespace bp = boost::python;
+
+		bp::list keys = tableHeader.keys();
+		for (int i = 0; i < bp::len(keys); i++) {
+			bp::object key = keys[i];
+			bp::object value = tableHeader[key];
+			
+			std::ostringstream name;
+			name << "hierarch _i3_" << bp::extract<std::string>(key)();
+			
+			bp::extract<int> inty(value);
+			bp::extract<double> doubly(value);
+			if (inty.check()) {
+				int v = inty();
+				fits_write_key(fits, TINT, name.str().c_str(), &v,
+				    NULL, &error);
+			} else if (doubly.check()) {
+				double v = doubly();
+				fits_write_key(fits, TDOUBLE, name.str().c_str(), &v,
+				    NULL, &error);
+			}
+			if (error != 0) {
+				char err_text[30];
+				fits_get_errstatus(error, err_text);
+				log_fatal_stream("Could not write header keyword "<<name.str()<<": " << err_text);
+			}
+		}
+	}
+	
 	/*
 	 * Write each of the bin edge vectors in an extension HDU
 	 */
@@ -428,43 +493,6 @@ void I3CLSimStepToTableConverter::WriteFITSFile(const std::string &path, boost::
 			char err_text[30];
 			fits_get_errstatus(error, err_text);
 			log_fatal_stream("Could not write edge array "<<i<<": " << err_text);
-		}
-	}
-	
-	// Fill in things that only we know
-	tableHeader["n_photons"] = sumOfPhotonWeights_;
-	tableHeader["n_group"] = minimumRefractiveIndex_.first;
-	tableHeader["n_phase"] = minimumRefractiveIndex_.second;
-	tableHeader["z"] = referenceSource_.GetPos().GetZ()/I3Units::m;
-	tableHeader["zenith"] = referenceSource_.GetDir().GetZenith()/I3Units::degree;
-	// Write header keywords
-	{
-		namespace bp = boost::python;
-
-		bp::list keys = tableHeader.keys();
-		for (int i = 0; i < bp::len(keys); i++) {
-			bp::object key = keys[i];
-			bp::object value = tableHeader[key];
-			
-			std::ostringstream name;
-			name << "hierarch _i3_" << bp::extract<std::string>(key)();
-			
-			bp::extract<int> inty(value);
-			bp::extract<double> doubly(value);
-			if (inty.check()) {
-				int v = inty();
-				fits_write_key(fits, TINT, name.str().c_str(), &v,
-				    NULL, &error);
-			} else if (doubly.check()) {
-				double v = doubly();
-				fits_write_key(fits, TDOUBLE, name.str().c_str(), &v,
-				    NULL, &error);
-			}
-			if (error != 0) {
-				char err_text[30];
-				fits_get_errstatus(error, err_text);
-				log_fatal_stream("Could not write header keyword "<<name.str()<<": " << err_text);
-			}
 		}
 	}
 	
