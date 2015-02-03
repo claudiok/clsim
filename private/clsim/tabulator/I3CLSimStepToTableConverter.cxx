@@ -1,5 +1,7 @@
 
 #include "clsim/tabulator/I3CLSimStepToTableConverter.h"
+#include "clsim/tabulator/Axes.h"
+
 #include "opencl/I3CLSimHelperMath.h"
 #include "opencl/I3CLSimHelperGenerateMediumPropertiesSource.h"
 #include "opencl/I3CLSimHelperLoadProgramSource.h"
@@ -12,8 +14,11 @@
 #include <fitsio2.h>
 
 #include <boost/foreach.hpp>
+#include <boost/make_shared.hpp>
 
-static std::string 
+namespace  {
+
+std::string 
 loadKernel(const std::string& name, bool header)
 {
     const std::string I3_SRC(getenv("I3_SRC"));
@@ -26,153 +31,6 @@ struct I3CLSimTableEntry {
 	uint32_t index;
 	float weight;
 };
-
-I3CLSimStepToTableConverter::DeviceBuffers::DeviceBuffers(cl::Context context,
-    I3RandomServicePtr rng, size_t streams, size_t entriesPerStream)
-{
-	std::vector<uint64_t> xv(streams);
-	std::vector<uint32_t> av(streams);
-	
-	init_MWC_RNG(&xv[0], &av[0], streams, rng);
-	
-	mwc.x = cl::Buffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-	    streams*sizeof(uint64_t), &xv[0]);
-	mwc.a = cl::Buffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-	    streams*sizeof(uint32_t), &av[0]);
-	
-	inputSteps = cl::Buffer(context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR,
-	    streams*sizeof(I3CLSimStep));
-	outputEntries = cl::Buffer(context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR,
-	    streams*entriesPerStream*sizeof(I3CLSimTableEntry));
-	numEntries = cl::Buffer(context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR,
-	    streams*sizeof(uint32_t));
-}
-
-struct Axis {
-	Axis(double min, double max, size_t n_bins, uint power = 1)
-		: min_(min), max_(max), n_bins_(n_bins), power_(power)
-	{};
-	std::string transform(std::string var) const
-	{
-		std::ostringstream ss;
-		if (power_ < 4) {
-			ss << var;
-			for (uint i = 1; i < power_; i++)
-				ss << "*" << var;
-		} else {
-			ss << "pow(" << var << "," << I3CLSimHelper::ToFloatString(power_) << ")";
-		}
-		return ss.str();
-	}
-	std::string itransform(std::string var) const
-	{
-		std::ostringstream ss;
-		if (power_ == 1) {
-			ss << var;
-		} else if (power_ == 2) {
-			ss << "sqrt(" << var << ")";
-		} else if (power_ == 3) {
-			ss << "cbrt(" << var << ")";
-		} else {
-			ss << "pow(" << var << "," << I3CLSimHelper::ToFloatString(1./power_) << ")";
-		}
-		return ss.str();
-	}
-	std::string GetIndexFunction(std::string var) const {
-		std::ostringstream ss;
-		std::string scale = GetIndex(var);
-		ss << "("<<var<<" >= "<<I3CLSimHelper::ToFloatString(max_)<<" ? "<<(n_bins_-1)<<"u"
-		    <<" : "<<"("<<var<<" < "<<I3CLSimHelper::ToFloatString(min_)<<" ? 0u : (uint)("<<scale<<"))" <<")"
-		;
-		return ss.str();
-	}
-	std::string GetIndex(std::string var) const
-	{
-		std::ostringstream ss;
-		ss << (n_bins_) 
-		    << "*(" << itransform(var) << " - " << itransform(I3CLSimHelper::ToFloatString(min_)) << ")"
-		    << "/(" << itransform(I3CLSimHelper::ToFloatString(max_)) << " - " << itransform(I3CLSimHelper::ToFloatString(min_)) << ")"
-		;
-		return ss.str();
-	}
-	double min_, max_;
-	size_t n_bins_;
-	uint power_;
-};
-
-
-std::string
-GenerateIndex(const std::string &functionName, const std::vector<Axis> &axes)
-{
-	std::ostringstream ss;
-	ss << "inline uint " << functionName << "(";
-	for (uint i = 0; i < axes.size(); i++) {
-		ss << "floating_t c" << i;
-		if (i+1 < axes.size())
-			ss << ", ";
-	}
-	ss << ")\n{\n";
-	ss << "return ";
-	
-	std::vector<size_t> strides(axes.size(), 1);
-	for (int i = axes.size()-2; i >= 0; i--)
-		strides[i] *= strides[i+1]*axes[i+1].n_bins_;
-	for (uint i = 0; i < axes.size(); i++) {
-		std::ostringstream var;
-		var << "c" << i;
-		ss << strides[i] << "*" << axes[i].GetIndexFunction(var.str());
-		if (i+1 < axes.size())
-			ss << "\n + ";
-	}
-	
-	ss << ";\n}\n";
-	
-	return ss.str();
-}
-
-std::string
-PrintMultiIndex(const std::string &functionName, const std::vector<Axis> &axes)
-{
-	std::ostringstream ss;
-	ss << "inline uint " << functionName << "(";
-	for (uint i = 0; i < axes.size(); i++) {
-		ss << "floating_t c" << i;
-		if (i+1 < axes.size())
-			ss << ", ";
-	}
-	ss << ")\n{\n";
-	ss << "dbg_printf(\"[ ";
-	for (uint i = 0; i < axes.size(); i++)
-		ss << "%d ";
-	ss << "]\\n\", ";
-	for (uint i = 0; i < axes.size(); i++) {
-		std::ostringstream var;
-		var << "c" << i;
-		ss << axes[i].GetIndexFunction(var.str());
-		if (i+1 < axes.size())
-			ss << ", ";
-	}
-	ss << ");\n}\n";
-	
-	return ss.str();
-}
-
-std::string
-GenerateBoundsCheck(const std::string &functionName, const std::vector<Axis> &axes)
-{
-	std::ostringstream ss;
-	ss << "inline bool " << functionName << "(";
-	for (uint i = 0; i < axes.size(); i++) {
-		ss << "floating_t c" << i;
-		if (i+1 < axes.size())
-			ss << ", ";
-	}
-	ss << ")\n{\n";
-	ss << "return (c3 > "<<I3CLSimHelper::ToFloatString(axes.at(3).max_)<<");";
-	ss << "\n}\n";
-	
-	return ss.str();
-}
 
 std::string
 GenerateSourcePosition(const I3Particle &source)
@@ -202,23 +60,25 @@ GenerateSourcePosition(const I3Particle &source)
 }
 
 // Brute-force search for the minimum refractive index
-double
+std::pair<double, double>
 GetMinimumRefractiveIndex(const I3CLSimMediumProperties &med)
 {
-	double n_min = std::numeric_limits<double>::infinity();
-	
-
+	std::pair<double, double> n_min(
+	    std::numeric_limits<double>::infinity(),
+	    std::numeric_limits<double>::infinity());
 	
 	for (unsigned j = 0; j < med.GetLayersNum(); j++) {
 		if (!med.GetGroupRefractiveIndexOverride(j))
 			log_fatal("Medium properties don't know how to calculate group refractive indices");
 		const I3CLSimFunction &groupIndex = *(med.GetGroupRefractiveIndexOverride(j));
+		const I3CLSimFunction &phaseIndex = *(med.GetPhaseRefractiveIndex(j));
+		
 		double wmin = std::max(med.GetMinWavelength(), groupIndex.GetMinWlen());
 		double wmax = std::min(med.GetMaxWavelength(), groupIndex.GetMaxWlen());
 		for (unsigned i = 0; i < 1000; i++) {
 			double n = groupIndex.GetValue(wmin + i*(wmax-wmin));
-			if (n > 1 && n < n_min) {
-				n_min = n;
+			if (n > 1 && n < n_min.first) {
+				n_min = std::make_pair(n, phaseIndex.GetValue(wmin + i*(wmax-wmin)));
 			}
 		}
 	}
@@ -226,13 +86,36 @@ GetMinimumRefractiveIndex(const I3CLSimMediumProperties &med)
 	return n_min;
 }
 
+}
+
+I3CLSimStepToTableConverter::DeviceBuffers::DeviceBuffers(cl::Context context,
+    I3RandomServicePtr rng, size_t streams, size_t entriesPerStream)
+{
+	std::vector<uint64_t> xv(streams);
+	std::vector<uint32_t> av(streams);
+	
+	init_MWC_RNG(&xv[0], &av[0], streams, rng);
+	
+	mwc.x = cl::Buffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+	    streams*sizeof(uint64_t), &xv[0]);
+	mwc.a = cl::Buffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+	    streams*sizeof(uint32_t), &av[0]);
+	
+	inputSteps = cl::Buffer(context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR,
+	    streams*sizeof(I3CLSimStep));
+	outputEntries = cl::Buffer(context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR,
+	    streams*entriesPerStream*sizeof(I3CLSimTableEntry));
+	numEntries = cl::Buffer(context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR,
+	    streams*sizeof(uint32_t));
+}
+
 I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice device,
-    const I3Particle &referenceSource,
+    const I3Particle &referenceSource, clsim::tabulator::AxesConstPtr axes,
     I3CLSimMediumPropertiesConstPtr mediumProperties,
     I3CLSimFunctionConstPtr wavelengthAcceptance, I3CLSimFunctionConstPtr angularAcceptance,
     I3RandomServicePtr rng) : entriesPerStream_(1048576), run_(true),
     domArea_(M_PI*std::pow(0.16510*I3Units::m, 2)), stepLength_(1.),
-    referenceSource_(referenceSource),
+    referenceSource_(referenceSource), axes_(axes),
     numPhotons_(0), sumOfPhotonWeights_(0.)
 {
 	std::vector<I3CLSimRandomValueConstPtr> wavelengthGenerators;
@@ -260,8 +143,10 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
 	preamble << "#define VOLUME_MODE_STEP "<<I3CLSimHelper::ToFloatString(stepLength_)<<"\n";
 	minimumRefractiveIndex_ = GetMinimumRefractiveIndex(*mediumProperties);
 	
-	preamble << "#define MIN_INV_GROUPVEL " << I3CLSimHelper::ToFloatString(
-	    minimumRefractiveIndex_/I3Constants::c) << "\n";
+	preamble << "__constant floating_t min_invPhaseVel = " << I3CLSimHelper::ToFloatString(
+	    minimumRefractiveIndex_.first/I3Constants::c) << ";\n";
+	preamble << "__constant floating_t tan_thetaC = " << I3CLSimHelper::ToFloatString(
+	    std::sqrt(minimumRefractiveIndex_.second*minimumRefractiveIndex_.second-1.)) << ";\n";
 	
 	sources.push_back(I3CLSimHelper::GetMathPreamble(device, false /* single precision for now */));
 	sources.push_back(preamble.str());
@@ -271,35 +156,20 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
 	sources.push_back(I3CLSimHelper::GenerateMediumPropertiesSource(*mediumProperties));
 	sources.push_back(angularAcceptance->GetOpenCLFunction("getAngularAcceptance"));
 	sources.push_back(GenerateSourcePosition(referenceSource_));
-	std::cout << GenerateSourcePosition(referenceSource_) << std::endl;;
 	
-	std::vector<Axis> axes;
-	axes.push_back(Axis(0, 580, 200, 2));
-	axes.push_back(Axis(0, 180, 36, 1));
-	axes.push_back(Axis(-1, 1, 100, 1));
-	axes.push_back(Axis(0, 7e3, 105, 2));
-	
-	size_t total_size = 1;
-	BOOST_FOREACH(const Axis &axis, axes) {
-		binEdges_.push_back(std::vector<double>());
-		double imin = std::pow(axis.min_, 1./axis.power_);
-		double imax = std::pow(axis.max_, 1./axis.power_);
-		double istep = (imax-imin)/(axis.n_bins_);
-		for (unsigned i = 0; i <= axis.n_bins_; i++) {
-			binEdges_.back().push_back(std::pow(imin + i*istep, axis.power_));
-		}
-		
-		total_size *= axis.n_bins_;
-	}
-	binContent_.resize(total_size);
-	
-	sources.push_back(GenerateBoundsCheck("isOutOfBounds", axes));
-	sources.push_back(GenerateIndex("getBinIndex", axes));
+	// clsim::tabulator::SphericalAxes axes;
+	// axes.push_back(boost::make_shared<clsim::tabulator::PowerAxis>(0, 580, 200, 2));
+	// axes.push_back(boost::make_shared<clsim::tabulator::LinearAxis>(0, 180, 36));
+	// axes.push_back(boost::make_shared<clsim::tabulator::LinearAxis>(-1, 1, 100));
+	// axes.push_back(boost::make_shared<clsim::tabulator::PowerAxis>(0, 7e3, 105, 2));
 	
 	sources.push_back(loadKernel("propagation_kernel", true));
+	sources.push_back(axes_->GenerateBinningCode());
 	sources.push_back(loadKernel("propagation_kernel", false));
 	
-	if (0) {
+	binContent_.resize(axes_->GetNBins());
+	
+	if (1) {
 		std::stringstream source;
 		BOOST_FOREACH(std::string &part, sources)
 			source << part;
@@ -471,30 +341,11 @@ I3CLSimStepToTableConverter::FetchSteps()
 	}
 }
 
-// FIXME: factor binning-related calculations out into a worker class
 void
 I3CLSimStepToTableConverter::Normalize()
 {
-	std::vector<size_t> strides(binEdges_.size(), 1);
-	std::vector<size_t> dims(binEdges_.size(), 1);
-	for (unsigned i = 0; i < binEdges_.size(); i++)
-		dims[i] = binEdges_[i].size()-1;
-	for (int i = binEdges_.size()-2; i >= 0; i--)
-		strides[i] *= strides[i+1]*dims[i+1];
-	
 	for (size_t idx = 0; idx < binContent_.size(); idx++) {
-		// unravel index
-		size_t idxs[4];
-		for (int j = 0; j < 4; j++) {
-			idxs[j] = idx/strides[j] % dims[j];
-		}
-		
-		// NB: since we combine the bins at azimuth > 180 degrees with the other half of
-		// the sphere, the true volume of an azimuthal bin is twice its nominal value.
-		double volume = ((std::pow(binEdges_[0][idxs[0]+1], 3) - std::pow(binEdges_[0][idxs[0]], 3))/3.)
-		    * 2*I3Units::degree*(binEdges_[1][idxs[1]+1] - binEdges_[1][idxs[1]])
-		    * (binEdges_[2][idxs[2]+1] - binEdges_[2][idxs[2]]);
-		double norm = volume/(stepLength_*domArea_);		
+		double norm = axes_->GetBinVolume(idx)/(stepLength_*domArea_);
 		binContent_[idx] /= norm;
 	}
 }
@@ -518,11 +369,9 @@ void I3CLSimStepToTableConverter::WriteFITSFile(const std::string &path, boost::
 	 * counts, like PyFITS does.
 	 */
 	{
-		std::vector<long> naxes(binEdges_.size());
-		for (unsigned i = 0; i < binEdges_.size(); i++)
-			naxes[i] = binEdges_[binEdges_.size() - i - 1].size()-1;
-	
-		fits_create_img(fits, FLOAT_IMG, binEdges_.size(), &naxes[0], &error);
+		std::vector<size_t> shape(axes_->GetShape());
+		std::vector<long> naxes(shape.begin(), shape.end());
+		fits_create_img(fits, FLOAT_IMG, axes_->GetNDim(), &naxes[0], &error);
 		if (error != 0) {
 			char err_text[30];
 			fits_get_errstatus(error, err_text);
@@ -535,7 +384,7 @@ void I3CLSimStepToTableConverter::WriteFITSFile(const std::string &path, boost::
 	 */
 	Normalize();
 	{
-		std::vector<long> fpixel(binEdges_.size(), 1);
+		std::vector<long> fpixel(axes_->GetNDim(), 1);
 		fits_write_pix(fits, TFLOAT, &fpixel[0], binContent_.size(),
 		    &binContent_[0], &error);
 		if (error != 0) {
@@ -547,7 +396,8 @@ void I3CLSimStepToTableConverter::WriteFITSFile(const std::string &path, boost::
 	
 	// Fill in things that only we know
 	tableHeader["n_photons"] = sumOfPhotonWeights_;
-	tableHeader["n_group"] = minimumRefractiveIndex_;
+	tableHeader["n_group"] = minimumRefractiveIndex_.first;
+	tableHeader["n_phase"] = minimumRefractiveIndex_.second;
 	tableHeader["z"] = referenceSource_.GetPos().GetZ()/I3Units::m;
 	tableHeader["zenith"] = referenceSource_.GetDir().GetZenith()/I3Units::degree;
 	// Write header keywords
@@ -585,11 +435,12 @@ void I3CLSimStepToTableConverter::WriteFITSFile(const std::string &path, boost::
 	/*
 	 * Write each of the bin edge vectors in an extension HDU
 	 */
-	for (unsigned i = 0; i < binEdges_.size(); i++) {
+	for (unsigned i = 0; i < axes_->GetNDim(); i++) {
 		std::ostringstream name;
 		name << "EDGES" << i;
 		long fpixel = 1;
-		long size = binEdges_[i].size();
+		std::vector<double> edges = axes_->at(i)->GetBinEdges();
+		long size = edges.size();
 		
 		fits_create_img(fits, DOUBLE_IMG, 1, &size, &error);
 		if (error != 0) {
@@ -606,7 +457,7 @@ void I3CLSimStepToTableConverter::WriteFITSFile(const std::string &path, boost::
 		}
 		
 		fits_write_pix(fits, TDOUBLE, &fpixel, size,
-		    &binEdges_[i][0], &error);
+		    &edges[0], &error);
 		if (error != 0) {
 			char err_text[30];
 			fits_get_errstatus(error, err_text);

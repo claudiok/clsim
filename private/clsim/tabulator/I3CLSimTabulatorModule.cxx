@@ -11,6 +11,7 @@
 #include "clsim/function/I3CLSimFunction.h"
 #include "clsim/I3CLSimModuleHelper.h"
 #include "clsim/tabulator/I3CLSimStepToTableConverter.h"
+#include "clsim/tabulator/Axes.h"
 
 #include <boost/foreach.hpp>
 #include <boost/thread.hpp>
@@ -45,9 +46,10 @@ private:
 	I3CLSimStepToTableConverterPtr tabulator_;
 	
 	std::string tablePath_;
+	boost::python::dict tableHeader_;
 	I3Particle referenceSource_;
+	clsim::tabulator::AxesConstPtr axes_;
 	
-	uint32_t sourceCounter_;
 	boost::thread stepHarvester_;
 	
 	SET_LOGGER("I3CLSimTabulatorModule");
@@ -68,6 +70,8 @@ I3CLSimTabulatorModule::I3CLSimTabulatorModule(const I3Context &ctx)
 	AddParameter("ParameterizationList","", parameterizationList_);
 	AddParameter("OpenCLDeviceList", "", openCLDeviceList_);
 	AddParameter("Filename", "", "");
+	AddParameter("TableHeader", "", boost::python::dict());
+	AddParameter("Axes", "", axes_);
 }
 
 void I3CLSimTabulatorModule::Configure()
@@ -80,6 +84,8 @@ void I3CLSimTabulatorModule::Configure()
 	GetParameter("ParameterizationList",parameterizationList_);
 	GetParameter("OpenCLDeviceList",openCLDeviceList_);
 	GetParameter("Filename", tablePath_);
+	GetParameter("TableHeader", tableHeader_);
+	GetParameter("Axes", axes_);
 	
 	if (tablePath_.empty())
 		log_fatal("You must specify an output filename!");
@@ -93,8 +99,8 @@ void I3CLSimTabulatorModule::Configure()
 	fs::remove(tablePath_);
 	
 	tabulator_ = boost::make_shared<I3CLSimStepToTableConverter>(
-	    openCLDeviceList_[0], referenceSource_, mediumProperties_, wavelengthGenerationBias_,
-	    angularAcceptance_, randomService_);
+	    openCLDeviceList_[0], referenceSource_, axes_, mediumProperties_,
+	    wavelengthGenerationBias_, angularAcceptance_, randomService_);
 	
 	particleToStepsConverter_ =
 	    I3CLSimModuleHelper::initializeGeant4(randomService_,
@@ -107,8 +113,7 @@ void I3CLSimTabulatorModule::Configure()
 	                                          10.*I3Units::perCent /*geant4MaxBetaChangePerStep_*/,
 	                                          200 /*geant4MaxNumPhotonsPerStep_*/,
 	                                          false); // the multiprocessor version is not yet safe to use
-	sourceCounter_ = 0;
-	
+
 	stepHarvester_ = boost::thread(boost::bind(&I3CLSimTabulatorModule::HarvestSteps, this));
 	
 	
@@ -121,7 +126,7 @@ void I3CLSimTabulatorModule::Finish()
 	stepHarvester_.join();
 	tabulator_->Finish();
 	
-	tabulator_->WriteFITSFile(tablePath_, boost::python::dict());
+	tabulator_->WriteFITSFile(tablePath_, tableHeader_);
 }
 
 I3CLSimTabulatorModule::~I3CLSimTabulatorModule()
@@ -156,7 +161,7 @@ void I3CLSimTabulatorModule::DAQ(I3FramePtr frame)
 	
 	BOOST_FOREACH(const I3Particle &p, *mctree) {
 		if (p.GetShape() != I3Particle::Dark && p.GetLocationType() == I3Particle::InIce)
-			particleToStepsConverter_->EnqueueLightSource(I3CLSimLightSource(p), sourceCounter_++);
+			particleToStepsConverter_->EnqueueLightSource(I3CLSimLightSource(p), 0);
 	}
 
 }

@@ -9,6 +9,8 @@
 #include "clsim/I3CLSimOpenCLDevice.h"
 #include "dataclasses/physics/I3Particle.h"
 
+#include "clsim/tabulator/Axes.h"
+
 #define __CL_ENABLE_EXCEPTIONS
 #include "clsim/cl.hpp"
 
@@ -19,6 +21,7 @@ class I3CLSimStepToTableConverter : boost::noncopyable {
 public:
 	I3CLSimStepToTableConverter(I3CLSimOpenCLDevice device,
 	    const I3Particle &referenceSource,
+	    clsim::tabulator::AxesConstPtr axes,
 	    I3CLSimMediumPropertiesConstPtr medium,
 	    I3CLSimFunctionConstPtr wavelengthAcceptance,
 	    I3CLSimFunctionConstPtr angularAcceptance,
@@ -61,11 +64,12 @@ private:
 	
 	double domArea_;
 	double stepLength_;
-	double minimumRefractiveIndex_;
+	/// group, phase
+	std::pair<double, double> minimumRefractiveIndex_;
 	I3Particle referenceSource_;
 	
+	clsim::tabulator::AxesConstPtr axes_;
 	std::vector<float> binContent_;
-	std::vector<std::vector<double> > binEdges_;
 	// double rather than an integer because steps have weights
 	uint64_t numPhotons_;
 	double sumOfPhotonWeights_;

@@ -47,13 +47,8 @@ tray = I3Tray()
 icetray.logging.set_level_for_unit('I3CLSimStepToTableConverter', 'TRACE')
 icetray.logging.set_level_for_unit('I3CLSimTabulatorModule', 'DEBUG')
 
-rng, header = tray.AddSegment(CombinedPhotonGenerator, 'generator', Seed=opts.seed,
+tray.AddSegment(CombinedPhotonGenerator, 'generator', Seed=opts.seed,
     Zenith=opts.zenith, ZCoordinate=opts.z, Energy=opts.energy, NEvents=opts.nevents, Filename=outfile)
-    
-# tray.AddModule(I3TabulatorModule, 'beancounter',
-#     Source='Source', Photons='PropagatedPhotons', Statistics='I3CLSimStatistics',
-#     Filename=outfile, StepLength=opts.steplength, RandomService=rng,
-#     TableHeader=header)
     
 tray.AddModule('TrashCan', 'MemoryHole')
 tray.Execute()

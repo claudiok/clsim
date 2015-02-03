@@ -199,6 +199,8 @@ if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
     
     private/clsim/tabulator/I3CLSimTabulatorModule.cxx
     private/clsim/tabulator/I3CLSimStepToTableConverter.cxx
+    private/clsim/tabulator/Axis.cxx
+    private/clsim/tabulator/Axes.cxx
 
     # private/geant4
     private/geant4/I3CLSimLightSourceToStepConverterGeant4.cxx

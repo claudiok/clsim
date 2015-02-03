@@ -225,11 +225,6 @@ inline float2 sphDirFromCar(float4 carDir)
 
 #ifdef TABULATE
 
-inline floating_t magnitude(floating4_t vec)
-{
-    return my_sqrt(vec.x*vec.x + vec.y*vec.y + vec.z*vec.z);
-}
-
 inline bool savePath(
     const struct I3CLSimStep *step,
     const floating4_t photonPosAndTime,
@@ -255,39 +250,24 @@ inline bool savePath(
     uint offset = *entry_counter;
     for (; d < thisStepLength && offset < TABLE_ENTRIES_PER_STREAM;
         d += VOLUME_MODE_STEP, offset++) {
-        // NB: the reference vectors sourcePos, sourceDir, and perpDir are
-        //     defined as static variables at compile time
-        floating4_t pos = photonPosAndTime - sourcePos;
-        pos.x += d*photonDirAndWlen.x;
-        pos.y += d*photonDirAndWlen.y;
-        pos.z += d*photonDirAndWlen.z;
-        pos.w += d*inv_groupvel;
-        floating_t l = dot(pos, sourceDir);
-        floating4_t rho = pos - l*sourceDir;
-        floating_t n_rho = magnitude(rho);
+
+        floating4_t pos = photonPosAndTime;
+        pos.x = photonPosAndTime.x + d*photonDirAndWlen.x;
+        pos.y = photonPosAndTime.y + d*photonDirAndWlen.y;
+        pos.z = photonPosAndTime.z + d*photonDirAndWlen.z;
+        pos.w = photonPosAndTime.w + d*inv_groupvel;
         
-        floating_t r = magnitude(pos);
-        floating_t azi = (n_rho > 0) ?
-            acos(-dot(rho,perpDir)/n_rho)/(M_PI/180) : 0;
-        floating_t ct = (r > 0) ? my_divide(l, r) : 0;
-        // FIXME make this the *maximum* group velocity
-        floating_t dt = pos.w - r*MIN_INV_GROUPVEL;
+        coordinate_t coords = getCoordinates(pos);
         
-        // TODO: bail if we accumulate too much delay time
-        if (isOutOfBounds(r, azi, ct, dt)) {
+        if (isOutOfBounds(coords)) {
             *stop = true;
             break;
         }
         
         entries[thread_id*TABLE_ENTRIES_PER_STREAM + offset].index
-            = getBinIndex(r, azi, ct, dt);
+            = getBinIndex(coords);
         entries[thread_id*TABLE_ENTRIES_PER_STREAM + offset].weight =
             impactWeight*my_exp(-(depth + (d/thisStepLength)*thisStepDepth));
-        dbg_printf("%.1f %.0f %.2f %.1f -> %u (weight %e)\n", r, azi, ct, dt,
-            entries[thread_id*TABLE_ENTRIES_PER_STREAM + offset].index,
-            entries[thread_id*TABLE_ENTRIES_PER_STREAM + offset].weight
-            );
-        // printMultiIndex(r, azi, ct, dt);
     }
     
     if (d < thisStepLength && !(*stop)) {
