@@ -490,7 +490,7 @@ def CombinedPhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Uni
     
     """
 
-    :param PhotonSource: the type of photon source (CASCADE or FLASHER)
+    :param PhotonSource: the type of photon source ('cascade', 'flasher', or 'infinite-muon')
     :param Zenith: the orientation of the source
     :param ZCoordinate: the depth of the source
     :param Energy: the energy of the source (only for cascade tables)
@@ -507,9 +507,9 @@ def CombinedPhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Uni
     """
 
     # check sanity of args
-    if PhotonSource.upper() != "CASCADE" and PhotonSource.upper() != "FLASHER":
-        print("photon source %s is unknown. Please specify either CASCADE or FLASHER!" % PhotonSource)
-        sys.exit(1)
+    PhotonSource = PhotonSource.lower()
+    if PhotonSource not in ['cascade', 'flasher', 'infinite-muon']:
+        raise ValueError("photon source %s is unknown. Please specify either 'cascade', 'flasher', or 'infinite-muon'" % PhotonSource)
     
     from icecube import icetray, dataclasses, dataio, phys_services, sim_services, clsim
     from os.path import expandvars
@@ -527,19 +527,44 @@ def CombinedPhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Uni
                    EventID=1,
                    IncrementEventID=True)
 
-    ptype = I3Particle.ParticleType.EMinus
+    if PhotonSource == 'cascade':
 
-    def reference_source():
-        source = I3Particle()
-        source.type = ptype
-        source.energy = Energy
-        source.pos = I3Position(0., 0., ZCoordinate)
-        source.dir = I3Direction(Zenith, Azimuth)
-        source.time = 0.
-        source.length = 0.
-        source.location_type = I3Particle.LocationType.InIce
+        ptype = I3Particle.ParticleType.EMinus
+
+        def reference_source():
+            source = I3Particle()
+            source.type = ptype
+            source.energy = Energy
+            source.pos = I3Position(0., 0., ZCoordinate)
+            source.dir = I3Direction(Zenith, Azimuth)
+            source.time = 0.
+            source.length = 0.
+            source.location_type = I3Particle.LocationType.InIce
         
-        return source
+            return source
+    
+    elif PhotonSource == 'flasher':
+        raise ValueError("Flashers aren't reimplemented yet. Want to fix it?")
+    
+    elif PhotonSource == 'infinite-muon':
+        
+        from icecube import MuonGun
+        surface = MuonGun.Cylinder(1600, 800)
+        
+        ptype = I3Particle.ParticleType.MuMinus
+        
+        def reference_source():
+            source = I3Particle()
+            source.type = ptype
+            source.energy = Energy
+            source.dir = I3Direction(Zenith, Azimuth)
+            source.pos = surface.sample_impact_position(source.dir, randomService)
+            crossings = surface.intersection(source.pos, source.dir)
+            source.length = crossings.second-crossings.first
+            source.time = 0.
+            source.location_type = I3Particle.LocationType.InIce
+            
+            return source
     
     import copy
     
@@ -557,10 +582,6 @@ def CombinedPhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Uni
         def DAQ(self, frame):
             source = self.reference_source()
             primary = I3Particle()
-            # primary.id = I3Particle().id
-            # primary.type = I3Particle.NuE
-            # primary.location_type = primary.Anywhere
-            
             mctree = I3MCTree()
             mctree.add_primary(primary)
             mctree.append_child(primary, source)
@@ -578,20 +599,12 @@ def CombinedPhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Uni
 
     tray.AddModule(MakeParticle, SourceFunction=reference_source, NEvents=NEvents)
 
-    if PhotonSource.upper() == "FLASHER":
+    if PhotonSource == "flasher":
         flasherpulse = "I3FlasherPulseSeriesMap"
         mctree = None
-    elif PhotonSource.upper() == "CASCADE":
+    else:
         flasherpulse = None
         mctree = "I3MCTree"
-    
-    if Axes is None:
-        Axes = clsim.tabulator.SphericalAxes([
-            clsim.tabulator.PowerAxis(0, 580, 200, 2),
-            clsim.tabulator.LinearAxis(0, 180, 36),
-            clsim.tabulator.LinearAxis(-1, 1, 100),
-            clsim.tabulator.PowerAxis(0, 7e3, 105, 2),
-        ])
     
     header = dict(FITSTable.empty_header)
     header['zenith'] = Zenith/I3Units.degree
@@ -599,6 +612,24 @@ def CombinedPhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Uni
     header['energy'] = Energy
     header['type'] = int(ptype)
     header['efficiency'] = Efficiency.RECEIVER | Efficiency.WAVELENGTH
+    
+    if Axes is None:
+        if PhotonSource != "infinite-muon":
+            Axes = clsim.tabulator.SphericalAxes([
+                clsim.tabulator.PowerAxis(0, 580, 200, 2),
+                clsim.tabulator.LinearAxis(0, 180, 36),
+                clsim.tabulator.LinearAxis(-1, 1, 100),
+                clsim.tabulator.PowerAxis(0, 7e3, 105, 2),
+            ])
+        else:
+            Axes = clsim.tabulator.CylindricalAxes([
+                clsim.tabulator.PowerAxis(0, 580, 200, 2),
+                clsim.tabulator.LinearAxis(0, numpy.pi, 36),
+                clsim.tabulator.LinearAxis(-1e3, 1e3, 100),
+                clsim.tabulator.PowerAxis(0, 7e3, 105, 2),
+            ])
+    
+
     if PhotonSource.upper() == "FLASHER":
         header['flasherwidth'] = FlasherWidth
         header['flasherbrightness'] = FlasherBrightness

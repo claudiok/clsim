@@ -16,6 +16,8 @@ parser.add_option("--zenith", dest="zenith", type="float", default=0.,
     help="Zenith angle of source, in IceCube convention and degrees [%default]")
 parser.add_option("--energy", dest="energy", type="float", default=1,
     help="Energy of light source, in GeV [%default]")
+parser.add_option("--light-source", choices=('cascade', 'flasher', 'infinite-muon'), default='cascade',
+    help="Type of light source. If 'infinite-muon', Z will be ignored, and tracks sampled over all depths. [%default]")
 parser.add_option("--step", dest="steplength", type="float", default=1,
     help="Sampling step length in meters [%default]")
 parser.add_option("--overwrite", dest="overwrite", action="store_true", default=False,
@@ -47,7 +49,7 @@ tray = I3Tray()
 icetray.logging.set_level_for_unit('I3CLSimStepToTableConverter', 'TRACE')
 icetray.logging.set_level_for_unit('I3CLSimTabulatorModule', 'DEBUG')
 
-tray.AddSegment(CombinedPhotonGenerator, 'generator', Seed=opts.seed,
+tray.AddSegment(CombinedPhotonGenerator, 'generator', Seed=opts.seed, PhotonSource=opts.light_source,
     Zenith=opts.zenith, ZCoordinate=opts.z, Energy=opts.energy, NEvents=opts.nevents, Filename=outfile)
     
 tray.AddModule('TrashCan', 'MemoryHole')

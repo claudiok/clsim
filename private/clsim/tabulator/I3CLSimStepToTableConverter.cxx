@@ -206,6 +206,8 @@ I3CLSimStepToTableConverter::EnqueueSteps(I3CLSimStepSeriesConstPtr steps, I3Par
 	BOOST_FOREACH(const I3CLSimStep &step, *steps) {
 		numPhotons_ += step.GetNumPhotons();
 		sumOfPhotonWeights_ += step.GetNumPhotons()*step.GetWeight();
+		if (step.GetNumPhotons() > 0)
+			log_info_stream(numPhotons_ << " to propagate");
 	}
 	
 	stepQueue_.Put(bunch_t(steps, reference));
