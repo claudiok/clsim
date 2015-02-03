@@ -20,6 +20,7 @@ public:
 	typedef boost::shared_ptr<Axis> value_type;
 	
 	Axes(const std::vector<value_type> &);
+	virtual ~Axes();
 	
 	const value_type& at(unsigned i) const { return axes_.at(i); };
 	
@@ -35,10 +36,10 @@ public:
 	/// into source-relative positions and calculate the corresponding index
 	/// in the flattened bin-content array.
 	std::string GenerateBinningCode() const;
-	
-	/// Calculate the volume (in m^3) of the cell at index *idx* in the
-	/// flattened bin-content array
-	double GetBinVolume(size_t idx) const;
+
+	/// Calculate the volume (in m^3) of the cell at index multiIndex in
+	/// the bin-content array
+	virtual double GetBinVolume(const std::vector<size_t> &multiIndex) const = 0;
 
 protected:
 	/// Generate an OpenCL function that calculates the source-relative
@@ -48,7 +49,6 @@ protected:
 	/// exited the recording volume and should be stopped
 	virtual std::string GetBoundsCheckFunction() const = 0;
 	
-	virtual double GetBinVolume(size_t *const multiIdx) const = 0;
 
 private:
 	/// Generate an OpenCL function that transforms a set of coordinates
@@ -68,11 +68,15 @@ I3_POINTER_TYPEDEFS(Axes);
 /// [Half]-Spherical coordinate system centered on the source position,
 /// appropriate for approximately point-like sources
 class SphericalAxes : public Axes {
+public:
+	SphericalAxes(const std::vector<value_type> &axes) : Axes(axes) {}
+	
+	virtual double GetBinVolume(const std::vector<size_t> &multiIndex) const;
+	
 protected:
 	virtual std::string GetCoordinateFunction() const;
 	virtual std::string GetBoundsCheckFunction() const;
 	
-	virtual double GetBinVolume(size_t *const multiIdx) const;
 };
 
 /// [Half]-Cylindrical coordinate system centered on the source axis,
@@ -80,11 +84,14 @@ protected:
 /// NB: since the position of the source is degenerate with time, the reciever
 ///     depth is used as a coordinate instead of the source depth.
 class CylindricalAxes : public Axes {
+public:
+	CylindricalAxes(const std::vector<value_type> &axes) : Axes(axes) {}
+	
+	virtual double GetBinVolume(const std::vector<size_t> &multiIndex) const;
 protected:
 	virtual std::string GetCoordinateFunction() const;
 	virtual std::string GetBoundsCheckFunction() const;
 	
-	virtual double GetBinVolume(size_t *const multiIdx) const;
 };
 
 }

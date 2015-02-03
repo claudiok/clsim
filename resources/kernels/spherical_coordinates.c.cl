@@ -28,5 +28,7 @@ getCoordinates(const floating4_t absPos)
     // delay time
     coords.s3 = pos.w - coords.s0*min_invPhaseVel;
     
+    dbg_printf("     %4.1f %4.1f %4.2f %6.2f\n", coords.s0, coords.s1, coords.s2, coords.s3);
+    
     return coords;
 }

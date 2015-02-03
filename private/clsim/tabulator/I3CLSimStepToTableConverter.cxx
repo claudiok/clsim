@@ -157,12 +157,6 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
 	sources.push_back(angularAcceptance->GetOpenCLFunction("getAngularAcceptance"));
 	sources.push_back(GenerateSourcePosition(referenceSource_));
 	
-	// clsim::tabulator::SphericalAxes axes;
-	// axes.push_back(boost::make_shared<clsim::tabulator::PowerAxis>(0, 580, 200, 2));
-	// axes.push_back(boost::make_shared<clsim::tabulator::LinearAxis>(0, 180, 36));
-	// axes.push_back(boost::make_shared<clsim::tabulator::LinearAxis>(-1, 1, 100));
-	// axes.push_back(boost::make_shared<clsim::tabulator::PowerAxis>(0, 7e3, 105, 2));
-	
 	sources.push_back(loadKernel("propagation_kernel", true));
 	sources.push_back(axes_->GenerateBinningCode());
 	sources.push_back(loadKernel("propagation_kernel", false));
@@ -230,7 +224,6 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
 	}
 	
 	harvesterThread_ = boost::thread(boost::bind(&I3CLSimStepToTableConverter::FetchSteps, this));
-	// exit(1);
 }
 
 I3CLSimStepToTableConverter::~I3CLSimStepToTableConverter()
@@ -322,12 +315,12 @@ I3CLSimStepToTableConverter::FetchSteps()
 				rsteps->push_back(osteps[i]);
 			}
 		}
-#if 1
+
 		if (rsteps && rsteps->size() > 0) {
 			assert(rsteps->size() <= maxWorkgroupSize_);
 			stepQueue_.Put(rsteps);
 		}
-		
+
 		for (size_t i = 0; i < items; i++) {
 			size_t size = numEntries[i];
 			size_t offset = i*entriesPerStream_;
@@ -335,18 +328,29 @@ I3CLSimStepToTableConverter::FetchSteps()
 				binContent_[tableEntries[offset+j].index] += tableEntries[offset+j].weight;
 			}
 		}
-		
-		
-#endif
-	}
+	} // while (1)
 }
 
 void
 I3CLSimStepToTableConverter::Normalize()
 {
-	for (size_t idx = 0; idx < binContent_.size(); idx++) {
-		double norm = axes_->GetBinVolume(idx)/(stepLength_*domArea_);
-		binContent_[idx] /= norm;
+	const unsigned ndim = axes_->GetNDim();
+	const std::vector<size_t> shape = axes_->GetShape();
+	const std::vector<size_t> strides = axes_->GetStrides();
+	std::vector<size_t> idxs(ndim);
+
+	// NB: assume that the first 3 dimensions are spatial
+	const size_t spatial_stride = strides[2];
+	for (size_t offset = 0; offset < binContent_.size(); offset += spatial_stride) {
+		// unravel index
+		for (unsigned j=0; j < ndim; j++)
+			idxs[j] = offset/strides[j] % shape[j];
+		assert(idxs[ndim-1] == 0);
+		
+		// apply volume normalization to each spatial cell
+		double norm = axes_->GetBinVolume(idxs)/(stepLength_*domArea_);
+		for (size_t i=0; i < spatial_stride; i++)
+			binContent_[i+offset] /= norm;
 	}
 }
 
@@ -355,8 +359,7 @@ void I3CLSimStepToTableConverter::WriteFITSFile(const std::string &path, boost::
 {
 	fitsfile *fits;
 	int error = 0;
-	char *err_text;
-	
+
 	fits_create_diskfile(&fits, path.c_str(), &error);
 	if (error != 0) {
 		char err_text[30];
@@ -370,7 +373,8 @@ void I3CLSimStepToTableConverter::WriteFITSFile(const std::string &path, boost::
 	 */
 	{
 		std::vector<size_t> shape(axes_->GetShape());
-		std::vector<long> naxes(shape.begin(), shape.end());
+		std::vector<long> naxes(shape.size());
+		std::reverse_copy(shape.begin(), shape.end(), naxes.begin());
 		fits_create_img(fits, FLOAT_IMG, axes_->GetNDim(), &naxes[0], &error);
 		if (error != 0) {
 			char err_text[30];
@@ -391,6 +395,39 @@ void I3CLSimStepToTableConverter::WriteFITSFile(const std::string &path, boost::
 			char err_text[30];
 			fits_get_errstatus(error, err_text);
 			log_fatal_stream("Could not fill image: " << err_text);
+		}
+	}
+	
+	/*
+	 * Write each of the bin edge vectors in an extension HDU
+	 */
+	for (unsigned i = 0; i < axes_->GetNDim(); i++) {
+		std::ostringstream name;
+		name << "EDGES" << i;
+		long fpixel = 1;
+		std::vector<double> edges = axes_->at(i)->GetBinEdges();
+		long size = edges.size();
+		
+		fits_create_img(fits, DOUBLE_IMG, 1, &size, &error);
+		if (error != 0) {
+			char err_text[30];
+			fits_get_errstatus(error, err_text);
+			log_fatal_stream("Could not create edge array "<<i<<": " << err_text);
+		}
+		fits_write_key(fits, TSTRING, "EXTNAME", (void*)(name.str().c_str()),
+		    NULL, &error);
+		if (error != 0) {
+			char err_text[30];
+			fits_get_errstatus(error, err_text);
+			log_fatal_stream("Could not name HDU "<<name.str()<<": " << err_text);
+		}
+		
+		fits_write_pix(fits, TDOUBLE, &fpixel, size,
+		    &edges[0], &error);
+		if (error != 0) {
+			char err_text[30];
+			fits_get_errstatus(error, err_text);
+			log_fatal_stream("Could not write edge array "<<i<<": " << err_text);
 		}
 	}
 	
@@ -430,42 +467,6 @@ void I3CLSimStepToTableConverter::WriteFITSFile(const std::string &path, boost::
 			}
 		}
 	}
-
-	
-	/*
-	 * Write each of the bin edge vectors in an extension HDU
-	 */
-	for (unsigned i = 0; i < axes_->GetNDim(); i++) {
-		std::ostringstream name;
-		name << "EDGES" << i;
-		long fpixel = 1;
-		std::vector<double> edges = axes_->at(i)->GetBinEdges();
-		long size = edges.size();
-		
-		fits_create_img(fits, DOUBLE_IMG, 1, &size, &error);
-		if (error != 0) {
-			char err_text[30];
-			fits_get_errstatus(error, err_text);
-			log_fatal_stream("Could not create edge array "<<i<<": " << err_text);
-		}
-		fits_write_key(fits, TSTRING, "EXTNAME", (void*)(name.str().c_str()),
-		    NULL, &error);
-		if (error != 0) {
-			char err_text[30];
-			fits_get_errstatus(error, err_text);
-			log_fatal_stream("Could not name HDU "<<name.str()<<": " << err_text);
-		}
-		
-		fits_write_pix(fits, TDOUBLE, &fpixel, size,
-		    &edges[0], &error);
-		if (error != 0) {
-			char err_text[30];
-			fits_get_errstatus(error, err_text);
-			log_fatal_stream("Could not write edge array "<<i<<": " << err_text);
-		}
-	}
-	
-	// TODO write header keywords
 	
 	fits_close_file(fits, &error);
 	if (error != 0) {
@@ -474,12 +475,3 @@ void I3CLSimStepToTableConverter::WriteFITSFile(const std::string &path, boost::
 		log_fatal_stream("Could not close " << path << ": " << err_text);
 	}
 }
-
-
-// void
-// I3CLSimStepToTableConverter::FetchEntries(size_t nsteps)
-// {
-// 	std::vector<I3CLSimStep> steps(nsteps);
-// 	commandQueue_.enqueueReadBuffer(buffers_.inputSteps, CL_TRUE, 0, nsteps*sizeof(I3CLSimStep),
-// 	    )
-// }

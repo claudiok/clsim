@@ -48,7 +48,7 @@ private:
 	std::string tablePath_;
 	boost::python::dict tableHeader_;
 	I3Particle referenceSource_;
-	clsim::tabulator::AxesConstPtr axes_;
+	clsim::tabulator::AxesPtr axes_;
 	
 	boost::thread stepHarvester_;
 	

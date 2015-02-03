@@ -266,6 +266,10 @@ inline bool savePath(
         
         entries[thread_id*TABLE_ENTRIES_PER_STREAM + offset].index
             = getBinIndex(coords);
+        // Weight the photon by its probability of:
+        // 1) Being detected, given its wavelength
+        // 2) Being detected, given its impact angle with the DOM
+        // 3) Having survived this far without being absorbed
         entries[thread_id*TABLE_ENTRIES_PER_STREAM + offset].weight =
             impactWeight*my_exp(-(depth + (d/thisStepLength)*thisStepDepth));
     }
@@ -520,7 +524,7 @@ __kernel void propKernel(
 
 #ifdef PRINTF_ENABLED
             dbg_printf("   created photon %u at: p=(%f,%f,%f), d=(%f,%f,%f), t=%f, wlen=%fnm\n",
-                photonsLeftToPropagate-step.numPhotons,
+                step.numPhotons-photonsLeftToPropagate,
                 photonPosAndTime.x, photonPosAndTime.y, photonPosAndTime.z,
                 photonDirAndWlen.x, photonDirAndWlen.y, photonDirAndWlen.z,
                 photonPosAndTime.w, photonDirAndWlen.w/1e-9f);

@@ -24,14 +24,20 @@ namespace clsim {
 namespace tabulator {
 
 Axes::Axes(const std::vector<value_type> &axes) : axes_(axes), n_dim_(axes_.size()),
-    shape_(n_dim_, 1), strides_(n_dim_, 1)
+    shape_(n_dim_), strides_(n_dim_)
 {
 	int i = n_dim_-1;
 	shape_[i] = axes_[i]->GetNBins();
-	for (i--; i >= 0; i--)
-		strides_[i] *= strides_[i+1]*shape_[i+1];
+	strides_[i] = 1;
+	for (i--; i >= 0; i--) {
+		shape_[i] = axes_[i]->GetNBins();
+		strides_[i] = strides_[i+1]*shape_[i+1];
+	}
 	n_bins_ = strides_[0]*shape_[0];
 }
+
+Axes::~Axes()
+{}
 
 std::string
 Axes::GetBinIndexFunction() const
@@ -62,17 +68,6 @@ Axes::GenerateBinningCode() const
 	    + GetBinIndexFunction() + "\n";
 }
 
-double
-Axes::GetBinVolume(size_t idx) const
-{
-	// unravel index
-	size_t idxs[n_dim_];
-	for (unsigned j=0; j < n_dim_; j++) 
-		idxs[j] = idx/strides_[j] % shape_[j];
-
-	return GetBinVolume(idxs);
-}
-
 std::string
 SphericalAxes::GetCoordinateFunction() const
 {
@@ -92,11 +87,12 @@ SphericalAxes::GetBoundsCheckFunction() const
 }
 
 double
-SphericalAxes::GetBinVolume(size_t *const idxs) const
+SphericalAxes::GetBinVolume(const std::vector<size_t> &idxs) const
 {
 	// NB: since we combine the bins at azimuth > 180 degrees with the
 	// other half of the sphere, the true volume of an azimuthal bin is
 	// twice its nominal value.
+	assert(idxs.size() >= 3);
 	return ((std::pow(at(0)->GetBinEdge(idxs[0]+1), 3) - std::pow(at(0)->GetBinEdge(idxs[0]), 3))/3.)
 	    * 2*I3Units::degree*(at(1)->GetBinEdge(idxs[1]+1) - at(1)->GetBinEdge(idxs[1]))
 	    * (at(2)->GetBinEdge(idxs[2]+1) - at(2)->GetBinEdge(idxs[2]));
@@ -121,11 +117,12 @@ CylindricalAxes::GetBoundsCheckFunction() const
 }
 
 double
-CylindricalAxes::GetBinVolume(size_t *const idxs) const
+CylindricalAxes::GetBinVolume(const std::vector<size_t> &idxs) const
 {
 	// NB: since we combine the bins at azimuth > pi with the
 	// other half of the cylinder, the true volume of an azimuthal bin is
 	// twice its nominal value.
+	assert(idxs.size() >= 3);
 	return ((std::pow(at(0)->GetBinEdge(idxs[0]+1), 2) - std::pow(at(0)->GetBinEdge(idxs[0]), 2))/2.)
 	    * 2*(at(1)->GetBinEdge(idxs[1]+1) - at(1)->GetBinEdge(idxs[1]))
 	    * (at(2)->GetBinEdge(idxs[2]+1) - at(2)->GetBinEdge(idxs[2]));

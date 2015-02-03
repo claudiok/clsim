@@ -28,7 +28,8 @@ from __future__ import print_function
 from icecube.icetray import I3Units, I3Module, traysegment
 from icecube.dataclasses import I3Position, I3Particle, I3MCTree, I3Direction, I3Constants
 from icecube.phys_services import I3Calculator, I3GSLRandomService
-from icecube.clsim import I3Photon, I3CLSimTabulator, GetIceCubeDOMAcceptance, GetIceCubeDOMAngularSensitivity
+# from icecube.clsim import I3Photon, I3CLSimTabulator
+from icecube.clsim import GetIceCubeDOMAcceptance, GetIceCubeDOMAngularSensitivity
 from icecube.clsim import FlasherInfoVectToFlasherPulseSeriesConverter, I3CLSimFlasherPulse, I3CLSimFlasherPulseSeries
 from icecube.clsim.traysegments.common import parseIceModel
 from icecube.clsim.util import GetRefractiveIndexRange
@@ -485,7 +486,7 @@ def I3CLSimTabulatePhotons(tray, name,
 @traysegment
 def CombinedPhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Units.degree, Azimuth=0*I3Units.degree, ZCoordinate=0.*I3Units.m,
     Energy=1.*I3Units.GeV, FlasherWidth=127, FlasherBrightness=127, Seed=12345, NEvents=100,
-    IceModel='spice_mie', DisableTilt=False, Filename=""):
+    IceModel='spice_mie', DisableTilt=False, Filename="", Axes=None):
     
     """
 
@@ -582,6 +583,14 @@ def CombinedPhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Uni
         flasherpulse = None
         mctree = "I3MCTree"
     
+    if Axes is None:
+        Axes = clsim.tabulator.SphericalAxes([
+            clsim.tabulator.PowerAxis(0, 580, 200, 2),
+            clsim.tabulator.LinearAxis(0, 180, 36),
+            clsim.tabulator.LinearAxis(-1, 1, 100),
+            clsim.tabulator.PowerAxis(0, 7e3, 105, 2),
+        ])
+    
     header = dict(FITSTable.empty_header)
     header['zenith'] = Zenith/I3Units.degree
     header['z'] = ZCoordinate
@@ -609,7 +618,7 @@ def CombinedPhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Uni
         UseGeant4=False,
         OverrideApproximateNumberOfWorkItems=1,     # if you *would* use multi-threading, this would be the maximum number of jobs to run in parallel (OpenCL is free to split them)
         ExtraArgumentsToI3CLSimModule=dict(Filename=Filename, TableHeader=header,
-            ReferenceSource=reference_source()),
+            ReferenceSource=reference_source(), Axes=Axes),
         IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/" + IceModel),
         DisableTilt=DisableTilt,
     )
