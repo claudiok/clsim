@@ -438,7 +438,6 @@ private:
     
     I3CLSimOpenCLDevicePtr device_;
     bool useNativeMath_;
-    std::size_t selectedDeviceIndex_;
     bool deviceIsSelected_;
     
     bool disableDoubleBuffering_;

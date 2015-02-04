@@ -88,7 +88,6 @@ private:
     double OMRadius_;
     double oversizeFactor_;
     
-    bool splitIntoPartsAccordingToPosition_;
     std::size_t numOMs_;
     
     std::vector<int32_t> stringIDs_;

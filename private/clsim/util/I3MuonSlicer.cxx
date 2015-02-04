@@ -102,11 +102,6 @@ namespace {
         return false;
     }
     
-    inline bool DoesItHaveChildren(const I3MCTree &mcTree, const I3Particle &particle)
-    {
-        return (bool) mcTree.first_child(particle);
-    }
-    
     inline bool AreParticlesSortedInTime(const std::vector<I3MCTree::const_iterator> &particles)
     {
         bool firstIt=true;

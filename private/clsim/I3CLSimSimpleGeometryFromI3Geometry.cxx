@@ -65,12 +65,12 @@ I3CLSimSimpleGeometryFromI3Geometry(double OMRadius,
                                     int32_t ignoreStringIDsLargerThan,
                                     uint32_t ignoreDomIDsSmallerThan,
                                     uint32_t ignoreDomIDsLargerThan,
-                                    bool splitIntoPartsAccordingToPosition,
+                                    // keep here for backwards compatibility - it's unused, so don't warn
+                                    __attribute__((__unused__)) bool splitIntoPartsAccordingToPosition,
                                     bool useHardcodedDeepCoreSubdetector)
 :
 OMRadius_(OMRadius),
 oversizeFactor_(oversizeFactor),
-splitIntoPartsAccordingToPosition_(splitIntoPartsAccordingToPosition),
 ignoreStrings_(ignoreStrings),
 ignoreDomIDs_(ignoreDomIDs),
 ignoreSubdetectors_(ignoreSubdetectors),

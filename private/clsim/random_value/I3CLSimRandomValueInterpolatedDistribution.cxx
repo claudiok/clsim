@@ -89,8 +89,6 @@ double I3CLSimRandomValueInterpolatedDistribution::SampleFromDistribution(const 
 
     typedef std::vector<double>::size_type sizeType;
 
-    const sizeType numEntries=y_.size();
-
     const double randomNumber = random->Uniform();
 
     unsigned int k=0;

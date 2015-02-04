@@ -143,10 +143,10 @@ std::ostream& I3ExtraGeometryItemUnion::operator<<(std::ostream& oss) const
 {
     oss << "[ I3ExtraGeometryItemUnion :" << std::endl;
 
-    BOOST_FOREACH(const I3ExtraGeometryItemConstPtr &ptr, elements_)
-    {
-        oss << "  -> subitem: (not impl yet)" << std::endl;
-    }
+    // BOOST_FOREACH(const I3ExtraGeometryItemConstPtr &ptr, elements_)
+    // {
+    //     oss << "  -> subitem: (not impl yet)" << std::endl;
+    // }
     
     oss << "]" << std::endl;
     return oss;
