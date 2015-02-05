@@ -48,6 +48,8 @@ tray = I3Tray()
 
 icetray.logging.set_level_for_unit('I3CLSimStepToTableConverter', 'TRACE')
 icetray.logging.set_level_for_unit('I3CLSimTabulatorModule', 'DEBUG')
+icetray.logging.set_level_for_unit('I3CLSimLightSourceToStepConverterGeant4', 'TRACE')
+icetray.logging.set_level_for_unit('I3CLSimLightSourceToStepConverterFlasher', 'TRACE')
 
 tray.AddSegment(CombinedPhotonGenerator, 'generator', Seed=opts.seed, PhotonSource=opts.light_source,
     Zenith=opts.zenith, ZCoordinate=opts.z, Energy=opts.energy, NEvents=opts.nevents, Filename=outfile)

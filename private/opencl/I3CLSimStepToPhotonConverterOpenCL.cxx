@@ -79,7 +79,6 @@ randomService_(randomService),
 initialized_(false),
 compiled_(false),
 useNativeMath_(useNativeMath),
-selectedDeviceIndex_(0),
 deviceIsSelected_(false),
 disableDoubleBuffering_(true),
 doublePrecision_(false),
@@ -941,7 +940,6 @@ namespace {
                 currentScatterIndex=numScatters%photonHistoryEntries;
             }
             
-            float lastTime=NAN;
             for (uint32_t j=0;j<numRecordedScatters;++j)
             {
                 // [0], [1] and [2] are x,y,z

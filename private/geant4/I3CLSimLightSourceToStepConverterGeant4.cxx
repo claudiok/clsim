@@ -255,6 +255,8 @@ void I3CLSimLightSourceToStepConverterGeant4::Initialize()
     initialized_=true;
 }
 
+#ifdef HAS_GEANT4
+
 namespace {
     static double GetMaxRIndex(I3CLSimMediumPropertiesConstPtr mProp)
     {
@@ -287,7 +289,6 @@ namespace {
     }
 }
 
-#ifdef HAS_GEANT4
 
 #include "G4VStateDependent.hh"
 

@@ -7,6 +7,7 @@
 #include "clsim/I3CLSimOpenCLDevice.h"
 #include "clsim/I3CLSimLightSourceParameterization.h"
 #include "clsim/I3CLSimMediumProperties.h"
+#include "clsim/I3CLSimSpectrumTable.h"
 #include "clsim/I3CLSimLightSourceToStepConverter.h"
 #include "clsim/function/I3CLSimFunction.h"
 #include "clsim/I3CLSimModuleHelper.h"
@@ -34,13 +35,15 @@ public:
 private:
 	void HarvestSteps();
 	
+	std::string mctreeName_, flasherPulseSeriesName_;
 	I3CLSimLightSourceParameterizationSeries parameterizationList_;
 	I3RandomServicePtr randomService_;
 	I3CLSimFunctionConstPtr wavelengthGenerationBias_;
 	I3CLSimMediumPropertiesConstPtr mediumProperties_;
 	I3CLSimFunctionConstPtr angularAcceptance_;
-	// I3CLSimSpectrumTableConstPtr spectrumTable_;
+	I3CLSimSpectrumTableConstPtr spectrumTable_;
 	I3CLSimOpenCLDeviceSeries openCLDeviceList_;
+	size_t photonsPerBunch_, entriesPerPhoton_;
 	
 	I3CLSimLightSourceToStepConverterPtr particleToStepsConverter_;
 	I3CLSimStepToTableConverterPtr tabulator_;
@@ -67,12 +70,17 @@ I3CLSimTabulatorModule::I3CLSimTabulatorModule(const I3Context &ctx)
 {
 	AddOutBox("OutBox");
 	
+	AddParameter("MCTreeName", "", "I3MCTree");
+	AddParameter("FlasherPulseSeriesName", "", "");
 	AddParameter("RandomService", "", "I3RandomService");
 	AddParameter("WavelengthAcceptance", "", wavelengthGenerationBias_);
 	AddParameter("AngularAcceptance", "", angularAcceptance_);
 	AddParameter("MediumProperties", "", mediumProperties_);
 	AddParameter("ParameterizationList","", parameterizationList_);
+	AddParameter("SpectrumTable", "", spectrumTable_);
 	AddParameter("OpenCLDeviceList", "", openCLDeviceList_);
+	AddParameter("PhotonsPerBunch", "", 200);
+	AddParameter("EntriesPerPhoton", "", 3000);
 	AddParameter("Filename", "", "");
 	AddParameter("TableHeader", "", boost::python::dict());
 	AddParameter("Axes", "", axes_);
@@ -80,12 +88,17 @@ I3CLSimTabulatorModule::I3CLSimTabulatorModule(const I3Context &ctx)
 
 void I3CLSimTabulatorModule::Configure()
 {
+	GetParameter("MCTreeName", mctreeName_);
+	GetParameter("FlasherPulseSeriesName", flasherPulseSeriesName_);
 	GetParameter("RandomService", randomService_);
 	GetParameter("WavelengthAcceptance", wavelengthGenerationBias_);
 	GetParameter("AngularAcceptance", angularAcceptance_);
 	GetParameter("MediumProperties", mediumProperties_);
 	GetParameter("ParameterizationList",parameterizationList_);
+	GetParameter("SpectrumTable", spectrumTable_);
 	GetParameter("OpenCLDeviceList",openCLDeviceList_);
+	GetParameter("PhotonsPerBunch", photonsPerBunch_);
+	GetParameter("EntriesPerPhoton", entriesPerPhoton_);
 	GetParameter("Filename", tablePath_);
 	GetParameter("TableHeader", tableHeader_);
 	GetParameter("Axes", axes_);
@@ -102,7 +115,7 @@ void I3CLSimTabulatorModule::Configure()
 	fs::remove(tablePath_);
 	
 	tabulator_ = boost::make_shared<I3CLSimStepToTableConverter>(
-	    openCLDeviceList_[0], axes_, mediumProperties_,
+	    openCLDeviceList_[0], axes_, entriesPerPhoton_*photonsPerBunch_, mediumProperties_,
 	    wavelengthGenerationBias_, angularAcceptance_, randomService_);
 	
 	particleToStepsConverter_ =
@@ -114,7 +127,7 @@ void I3CLSimTabulatorModule::Configure()
 	                                          parameterizationList_,
 	                                          "QGSP_BERT_EMV" /*geant4PhysicsListName_*/,
 	                                          10.*I3Units::perCent /*geant4MaxBetaChangePerStep_*/,
-	                                          200 /*geant4MaxNumPhotonsPerStep_*/,
+	                                          photonsPerBunch_ /*geant4MaxNumPhotonsPerStep_*/,
 	                                          false); // the multiprocessor version is not yet safe to use
 
 	stepHarvester_ = boost::thread(boost::bind(&I3CLSimTabulatorModule::HarvestSteps, this));
@@ -122,14 +135,39 @@ void I3CLSimTabulatorModule::Configure()
 	
 }
 
+namespace {
+    class ScopedGILRelease
+    {
+    public:
+        inline ScopedGILRelease()
+        {
+            m_thread_state = PyEval_SaveThread();
+        }
+        
+        inline ~ScopedGILRelease()
+        {
+            PyEval_RestoreThread(m_thread_state);
+            m_thread_state = NULL;
+        }
+        
+    private:
+        PyThreadState *m_thread_state;
+    };    
+}
+
+
 void I3CLSimTabulatorModule::Finish()
 {
 	log_trace("finish called");
 	run_ = false;
 	if (!particleToStepsConverter_->BarrierActive())
 		particleToStepsConverter_->EnqueueBarrier();
-	stepHarvester_.join();
-	tabulator_->Finish();
+	{
+		// Release the GIL while we wait
+		ScopedGILRelease release;
+		stepHarvester_.join();
+		tabulator_->Finish();
+	}
 	
 	tabulator_->WriteFITSFile(tablePath_, tableHeader_);
 }
@@ -153,7 +191,7 @@ void I3CLSimTabulatorModule::HarvestSteps()
 		if (steps && !steps->empty()) {
 			// Do stuff
 			tabulator_->EnqueueSteps(I3CLSimStepSeriesPtr(new I3CLSimStepSeries(*steps)), reference);
-			log_debug_stream("enqueued " << steps->size() << " steps");
+			log_trace_stream("enqueued " << steps->size() << " steps");
 		}
 		
 		if (barrierWasJustReset) {
@@ -173,23 +211,36 @@ void I3CLSimTabulatorModule::HarvestSteps()
 
 void I3CLSimTabulatorModule::DAQ(I3FramePtr frame)
 {
+	I3MCTreeConstPtr mctree;
+	I3CLSimFlasherPulseSeriesConstPtr flashers;
 	I3ParticleConstPtr reference = frame->Get<I3ParticleConstPtr>("ReferenceParticle");
 	if (!reference)
 		log_fatal("Frame does not contain an I3Particle 'ReferenceParticle'!");
-	I3MCTreeConstPtr mctree = frame->Get<I3MCTreeConstPtr>();
 	
 	{
-		// Wait for particles from the previous event to be consumed
+		// Release the Python interpreter lock
+		ScopedGILRelease release;
+		// Wait for steps from the previous event to be consumed
 		boost::unique_lock<boost::mutex> lock(semaphore.mutex);
 		while (particleToStepsConverter_->BarrierActive())
 			semaphore.cv.wait(lock);
 	}
 	
-	sourceQueue_.Put(reference);
-	BOOST_FOREACH(const I3Particle &p, *mctree) {
-		if (p.GetShape() != I3Particle::Dark && p.GetLocationType() == I3Particle::InIce)
-			particleToStepsConverter_->EnqueueLightSource(I3CLSimLightSource(p), 0);
+	// Enqueue a copy to ensure that the deleter does not invoke the Python interpreter
+	sourceQueue_.Put(I3ParticlePtr(new I3Particle(*reference)));
+	if ((mctree = frame->Get<I3MCTreeConstPtr>(mctreeName_))) {
+		BOOST_FOREACH(const I3Particle &p, *mctree) {
+			if (p.GetShape() != I3Particle::Dark && p.GetLocationType() == I3Particle::InIce)
+				particleToStepsConverter_->EnqueueLightSource(I3CLSimLightSource(p), 0);
+		}
 	}
+	if ((flashers = frame->Get<I3CLSimFlasherPulseSeriesConstPtr>(flasherPulseSeriesName_))) {
+		BOOST_FOREACH(const I3CLSimFlasherPulse &p, *flashers) {
+			particleToStepsConverter_->EnqueueLightSource(I3CLSimLightSource(p), 0);
+			log_trace_stream("enqueued a pulse of "<<p.GetNumberOfPhotonsNoBias()<<" photons");
+		}
+	}
+
 	particleToStepsConverter_->EnqueueBarrier();
 }
 

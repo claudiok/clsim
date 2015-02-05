@@ -806,11 +806,6 @@ namespace {
     {
         return ModuleKey(stringID, domID);
     }
-
-    static inline OMKey OMKeyFromOpenCLSimIDs(int16_t stringID, uint16_t domID)
-    {
-        return OMKey(stringID, domID);
-    }
 }
 
 void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,

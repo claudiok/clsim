@@ -75,7 +75,8 @@ bool I3CLSimVectorTransformConstant::CompareTo(const I3CLSimVectorTransform &oth
 {
     try
     {
-        const I3CLSimVectorTransformConstant &other_ = dynamic_cast<const I3CLSimVectorTransformConstant &>(other);
+        // this would be used if this class had any members to compare
+        //const I3CLSimVectorTransformConstant &other_ = dynamic_cast<const I3CLSimVectorTransformConstant &>(other);
         
         return true;
     }

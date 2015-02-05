@@ -455,17 +455,19 @@ def I3CLSimTabulatePhotons(tray, name,
         DoNotParallelize=DoNotParallelize,
         UseOnlyDeviceNumber=UseOnlyDeviceNumber
 	)
+    
+    print(openCLDevices)
 
     tray.AddModule("I3CLSimTabulatorModule", name + "_clsim",
-                   # MCTreeName=clSimMCTreeName,
+                   MCTreeName=clSimMCTreeName,
                    # PhotonSeriesMapName=PhotonSeriesName,
                    # DOMRadius = DOMRadius,
                    # DOMOversizeFactor = DOMOversizeFactor,
                    # DOMPancakeFactor = DOMOversizeFactor, # you will probably want this to be the same as DOMOversizeFactor
                    RandomService=RandomService,
                    MediumProperties=mediumProperties,
-                   # SpectrumTable=spectrumTable,
-                   # FlasherPulseSeriesName=clSimFlasherPulseSeriesName,
+                   SpectrumTable=spectrumTable,
+                   FlasherPulseSeriesName=clSimFlasherPulseSeriesName,
                    # OMKeyMaskName=clSimOMKeyMaskName,
                    # ignore IceTop
                    # IgnoreSubdetectors = ["IceTop"],
@@ -527,7 +529,7 @@ def CombinedPhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Uni
                    EventID=1,
                    IncrementEventID=True)
 
-    if PhotonSource == 'cascade':
+    if PhotonSource == 'cascade' or PhotonSource == 'flasher':
 
         ptype = I3Particle.ParticleType.EMinus
 
@@ -542,9 +544,6 @@ def CombinedPhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Uni
             source.location_type = I3Particle.LocationType.InIce
         
             return source
-    
-    elif PhotonSource == 'flasher':
-        raise ValueError("Flashers aren't reimplemented yet. Want to fix it?")
     
     elif PhotonSource == 'infinite-muon':
         
@@ -586,8 +585,10 @@ def CombinedPhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Uni
             mctree.add_primary(primary)
             mctree.append_child(primary, source)
     
-            # clsim likes I3MCTrees
-            frame["I3MCTree"] = mctree
+            if PhotonSource != "flasher":
+                frame["I3MCTree"] = mctree
+            else:
+                frame["I3FlasherPulseSeriesMap"] = I3CLSimFlasherPulseSeries([makeFlasherPulse(0, 0, ZCoordinate, Zenith, Azimuth, FlasherWidth, FlasherBrightness)])
             # use the primary particle as a geometrical reference
             frame["ReferenceParticle"] = source
             
@@ -651,7 +652,7 @@ def CombinedPhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Uni
         UseGeant4=False,
         OverrideApproximateNumberOfWorkItems=1,     # if you *would* use multi-threading, this would be the maximum number of jobs to run in parallel (OpenCL is free to split them)
         ExtraArgumentsToI3CLSimModule=dict(Filename=Filename, TableHeader=header,
-            Axes=Axes),
+            Axes=Axes, PhotonsPerBunch=200, EntriesPerPhoton=5000),
         IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/" + IceModel),
         DisableTilt=DisableTilt,
     )

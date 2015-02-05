@@ -80,7 +80,9 @@ SphericalAxes::GetBoundsCheckFunction() const
 	std::ostringstream ss;
 	ss << "inline bool isOutOfBounds(const coordinate_t coords)";
 	ss << "\n{\n";
-	ss << "    return (coords.s3 > "<<I3CLSimHelper::ToFloatString(this->at(3)->GetMax())<<");";
+	ss << "    return (coords.s3 > "<<I3CLSimHelper::ToFloatString(this->at(3)->GetMax())<<")"
+	    << "|| (coords.s0 > "<<I3CLSimHelper::ToFloatString(this->at(0)->GetMax())<<")"
+	    << ";";
 	ss << "\n}\n";
 
 	return ss.str();

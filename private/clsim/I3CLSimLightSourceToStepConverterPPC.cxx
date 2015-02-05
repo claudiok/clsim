@@ -723,7 +723,6 @@ I3CLSimLightSourceToStepConverterPPC::GenerateStepPreCalculator::GenerateStepPre
                                                      double angularDist_b,
                                                      std::size_t numberOfValues)
 :
-angularDist_a_(angularDist_a),
 one_over_angularDist_a_(1./angularDist_a),
 angularDist_b_(angularDist_b),
 angularDist_I_(1.-std::exp(-angularDist_b*std::pow(2., angularDist_a)) ),

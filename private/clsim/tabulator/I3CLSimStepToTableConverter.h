@@ -20,7 +20,7 @@
 class I3CLSimStepToTableConverter : boost::noncopyable {
 public:
 	I3CLSimStepToTableConverter(I3CLSimOpenCLDevice device,
-	    clsim::tabulator::AxesConstPtr axes,
+	    clsim::tabulator::AxesConstPtr axes, size_t entriesPerStream,
 	    I3CLSimMediumPropertiesConstPtr medium,
 	    I3CLSimFunctionConstPtr wavelengthAcceptance,
 	    I3CLSimFunctionConstPtr angularAcceptance,

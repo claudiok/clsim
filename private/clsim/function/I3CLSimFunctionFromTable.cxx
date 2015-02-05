@@ -97,13 +97,7 @@ I3CLSimFunctionFromTable::~I3CLSimFunctionFromTable()
 {;}
 
 namespace {
-    inline static double modf(double value, double &iptr)
-    {
-        iptr = trunc(value);
-        return copysign(std::isinf(value) ? 0.0 : value - iptr, value);
-    }
-
-    inline static double mix(double min, double max, double t)
+    inline double mix(double min, double max, double t)
     {
         return min+(max-min)*t;
     }

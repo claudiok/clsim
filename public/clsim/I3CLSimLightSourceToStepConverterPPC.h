@@ -202,7 +202,6 @@ private:
         }
         
     private:
-        double angularDist_a_;
         double one_over_angularDist_a_;
         double angularDist_b_;
         double angularDist_I_;

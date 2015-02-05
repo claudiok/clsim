@@ -90,10 +90,10 @@ GetMinimumRefractiveIndex(const I3CLSimMediumProperties &med)
 }
 
 I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice device,
-    clsim::tabulator::AxesConstPtr axes,
+    clsim::tabulator::AxesConstPtr axes, size_t entriesPerStream,
     I3CLSimMediumPropertiesConstPtr mediumProperties,
     I3CLSimFunctionConstPtr wavelengthAcceptance, I3CLSimFunctionConstPtr angularAcceptance,
-    I3RandomServicePtr rng) : entriesPerStream_(1048576), run_(true),
+    I3RandomServicePtr rng) : entriesPerStream_(entriesPerStream), run_(true),
     domArea_(M_PI*std::pow(0.16510*I3Units::m, 2)), stepLength_(1.), axes_(axes),
     numPhotons_(0), sumOfPhotonWeights_(0.)
 {
@@ -182,11 +182,13 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
 			log_fatal_stream(err.what() << ": " << err.errstr());
 		}
 		
-		commandQueue_ = cl::CommandQueue(context_, device, 0);
+		commandQueue_ = cl::CommandQueue(context_, device, CL_QUEUE_PROFILING_ENABLE);
+		
 		cl::Kernel kernel(program, "propKernel");
 		
 		maxNumWorkitems_ = kernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device);
 		log_debug_stream("max work group size " << maxNumWorkitems_);
+		log_info_stream(device.getInfo<CL_DEVICE_NAME>() << " max memory "<<device.getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>());
 		
 		harvesterThread_ = boost::thread(boost::bind(&I3CLSimStepToTableConverter::FetchSteps, this, kernel, rng));
 	}
@@ -206,8 +208,6 @@ I3CLSimStepToTableConverter::EnqueueSteps(I3CLSimStepSeriesConstPtr steps, I3Par
 	BOOST_FOREACH(const I3CLSimStep &step, *steps) {
 		numPhotons_ += step.GetNumPhotons();
 		sumOfPhotonWeights_ += step.GetNumPhotons()*step.GetWeight();
-		if (step.GetNumPhotons() > 0)
-			log_info_stream(numPhotons_ << " to propagate");
 	}
 	
 	stepQueue_.Put(bunch_t(steps, reference));
@@ -216,11 +216,11 @@ I3CLSimStepToTableConverter::EnqueueSteps(I3CLSimStepSeriesConstPtr steps, I3Par
 void
 I3CLSimStepToTableConverter::Finish()
 {
-	run_ = false;
-	log_debug("Finish");
-	harvesterThread_.join();
-	
-	log_info_stream("Propagated " << numPhotons_ << " photons");
+	if (harvesterThread_.joinable()) {
+		run_ = false;
+		log_debug("Finish");
+		harvesterThread_.join();
+	}
 }
 
 namespace {
@@ -246,6 +246,7 @@ DeviceBuffers::DeviceBuffers(cl::Context context,
 	
 	init_MWC_RNG(&xv[0], &av[0], streams, rng);
 	
+
 	mwc.x = cl::Buffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
 	    streams*sizeof(uint64_t), &xv[0]);
 	mwc.a = cl::Buffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
@@ -255,11 +256,61 @@ DeviceBuffers::DeviceBuffers(cl::Context context,
 	    streams*sizeof(I3CLSimStep));
 	referenceSource = cl::Buffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR,
 	    sizeof(I3CLSimReferenceParticle));
+	try {
 	outputEntries = cl::Buffer(context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR,
 	    streams*entriesPerStream*sizeof(I3CLSimTableEntry));
+	} catch (cl::Error &err) {
+		log_error_stream(err.what() << " " << err.errstr());
+		throw;
+	}
 	numEntries = cl::Buffer(context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR,
 	    streams*sizeof(uint32_t));
+
 }
+
+struct KernelStatistics {
+	
+	KernelStatistics() : last_timestamp_(boost::posix_time::microsec_clock::universal_time()),
+	    photons_(0), steps_(0), misses_(0), hostTime_(0), deviceTime_(0)
+	{}
+	~KernelStatistics()
+	{
+		double util = 100.*double(deviceTime_)/hostTime_;
+		log_info_stream("Tracked "<<photons_<<" photons in "<<(double(hostTime_)*1e-9)<<"s: "<<1e-6*double(hostTime_)/photons_ << " millisec/photon ("<<util<<"% in kernel)");
+		if (misses_*100 > steps_)
+			log_warn_stream(misses_<<" of "<<steps_
+			    <<" photon bunches ("<<std::setprecision(2)<<((100.*misses_)/steps_)
+			    <<"%) ran out of storage space. "
+			    "You might want to increase the storage space per photon bunch.");
+	}
+
+	void Record(const cl::Event &kernelFinished, uint64_t n_photons, size_t steps, size_t misses)
+	{
+		boost::posix_time::ptime this_timestamp(boost::posix_time::microsec_clock::universal_time());
+	
+		uint64_t timeStart, timeEnd;
+		kernelFinished.getProfilingInfo(CL_PROFILING_COMMAND_START, &timeStart);
+		kernelFinished.getProfilingInfo(CL_PROFILING_COMMAND_END, &timeEnd);
+	
+		photons_ += n_photons;
+		deviceTime_ += (timeEnd-timeStart);
+		hostTime_ += (this_timestamp - last_timestamp_).total_nanoseconds();
+		misses_ += misses;
+		steps_ += steps;
+		
+		last_timestamp_ = this_timestamp;
+	}
+	
+	void Start()
+	{
+		last_timestamp_ = boost::posix_time::microsec_clock::universal_time();
+	}
+
+	boost::posix_time::ptime last_timestamp_;
+	size_t photons_, steps_, misses_, hostTime_, deviceTime_;
+	
+	SET_LOGGER("I3CLSimStepToTableConverter");
+};
 
 }
 
@@ -282,6 +333,8 @@ I3CLSimStepToTableConverter::FetchSteps(cl::Kernel kernel, I3RandomServicePtr rn
 	std::vector<uint32_t> numEntries(maxNumWorkitems_);
 	std::vector<I3CLSimTableEntry> tableEntries(maxNumWorkitems_*entriesPerStream_);
 	
+	KernelStatistics stats;
+	
 	while (1) {
 		bunch_t bunch;
 	
@@ -293,18 +346,21 @@ I3CLSimStepToTableConverter::FetchSteps(cl::Kernel kernel, I3RandomServicePtr rn
 			}
 		}
 		
+		size_t n_photons = 0;
+		size_t real_steps = 0;
+		BOOST_FOREACH(const I3CLSimStep &step, *bunch.first) {
+			if (step.GetNumPhotons() > 0) {
+				n_photons += step.GetNumPhotons();
+				real_steps++;
+			}
+		}
+		
 		VECTOR_CLASS<cl::Event> buffersFilled(3);
 		VECTOR_CLASS<cl::Event> kernelFinished(1);
 		VECTOR_CLASS<cl::Event> buffersRead(3);
 		
-#if 0
-		log_trace_stream("got " << steps->size() << " steps");
-		BOOST_FOREACH(const I3CLSimStep &step, *steps)
-			log_trace_stream(step.GetNumPhotons() << " photons");
-#endif
-		
 		const size_t items = bunch.first->size();
-		assert(items <= maxNumWorkItems_);
+		assert(items <= maxNumWorkitems_);
 		commandQueue_.enqueueWriteBuffer(buffers.inputSteps, CL_FALSE, 0,
 		    items*sizeof(I3CLSimStep), &(*bunch.first)[0], NULL, &buffersFilled[0]);
 		
@@ -336,7 +392,9 @@ I3CLSimStepToTableConverter::FetchSteps(cl::Kernel kernel, I3RandomServicePtr rn
 		commandQueue_.flush();
 	
 		cl::Event::waitForEvents(buffersRead);
+		
 		I3CLSimStepSeriesPtr rsteps;
+		size_t misses = 0;
 		for (size_t i = 0; i < items; i++) {
 			// If any steps ran out of space, return them to the queue to finish
 			if (osteps[i].GetNumPhotons() > 0) {
@@ -344,14 +402,22 @@ I3CLSimStepToTableConverter::FetchSteps(cl::Kernel kernel, I3RandomServicePtr rn
 				if (!rsteps)
 					rsteps = I3CLSimStepSeriesPtr(new I3CLSimStepSeries);
 				rsteps->push_back(osteps[i]);
+				n_photons -= osteps[i].GetNumPhotons();
+				misses++;
 			}
 		}
-
+		
 		if (rsteps && rsteps->size() > 0) {
-			assert(rsteps->size() <= maxNumWorkItems_);
+			assert(rsteps->size() <= maxNumWorkitems_);
+			// Pad out to workgroup size
+			I3CLSimStep dummy = rsteps->front();
+			dummy.SetNumPhotons(0);
+			while (rsteps->size() < maxNumWorkitems_)
+				rsteps->push_back(dummy);
 			bunch.first = rsteps;
 			stepQueue_.Put(bunch);
 		}
+		
 
 		for (size_t i = 0; i < items; i++) {
 			size_t size = numEntries[i];
@@ -360,6 +426,8 @@ I3CLSimStepToTableConverter::FetchSteps(cl::Kernel kernel, I3RandomServicePtr rn
 				binContent_[tableEntries[offset+j].index] += tableEntries[offset+j].weight;
 			}
 		}
+		
+		stats.Record(kernelFinished[0], n_photons, real_steps, misses);
 	} // while (1)
 }
 
