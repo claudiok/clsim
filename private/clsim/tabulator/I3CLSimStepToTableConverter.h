@@ -5,6 +5,7 @@
 #include "clsim/I3CLSimStep.h"
 #include "clsim/I3CLSimQueue.h"
 #include "clsim/I3CLSimMediumProperties.h"
+#include "clsim/I3CLSimSpectrumTable.h"
 #include "clsim/random_value/I3CLSimRandomValue.h"
 #include "clsim/I3CLSimOpenCLDevice.h"
 #include "dataclasses/physics/I3Particle.h"
@@ -22,6 +23,7 @@ public:
 	I3CLSimStepToTableConverter(I3CLSimOpenCLDevice device,
 	    clsim::tabulator::AxesConstPtr axes, size_t entriesPerStream,
 	    I3CLSimMediumPropertiesConstPtr medium,
+	    I3CLSimSpectrumTableConstPtr spectrumTable,
 	    I3CLSimFunctionConstPtr wavelengthAcceptance,
 	    I3CLSimFunctionConstPtr angularAcceptance,
 	    I3RandomServicePtr rng);

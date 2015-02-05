@@ -115,7 +115,8 @@ void I3CLSimTabulatorModule::Configure()
 	fs::remove(tablePath_);
 	
 	tabulator_ = boost::make_shared<I3CLSimStepToTableConverter>(
-	    openCLDeviceList_[0], axes_, entriesPerPhoton_*photonsPerBunch_, mediumProperties_,
+	    openCLDeviceList_[0], axes_, entriesPerPhoton_*photonsPerBunch_,
+	    mediumProperties_, spectrumTable_,
 	    wavelengthGenerationBias_, angularAcceptance_, randomService_);
 	
 	particleToStepsConverter_ =

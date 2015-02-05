@@ -91,7 +91,7 @@ GetMinimumRefractiveIndex(const I3CLSimMediumProperties &med)
 
 I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice device,
     clsim::tabulator::AxesConstPtr axes, size_t entriesPerStream,
-    I3CLSimMediumPropertiesConstPtr mediumProperties,
+    I3CLSimMediumPropertiesConstPtr mediumProperties, I3CLSimSpectrumTableConstPtr spectrumTable,
     I3CLSimFunctionConstPtr wavelengthAcceptance, I3CLSimFunctionConstPtr angularAcceptance,
     I3RandomServicePtr rng) : entriesPerStream_(entriesPerStream), run_(true),
     domArea_(M_PI*std::pow(0.16510*I3Units::m, 2)), stepLength_(1.), axes_(axes),
@@ -104,6 +104,23 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
 	                                 mediumProperties
 	                                )
 	                               );
+	if ((spectrumTable) && (spectrumTable->size() > 1)) {
+	    // a spectrum table has been configured and it contains more than the
+	    // default Cherenkov spectrum at index #0.
+
+	    for (std::size_t i=1;i<spectrumTable->size();++i)
+	    {
+	        wavelengthGenerators.push_back(I3CLSimModuleHelper::makeWavelengthGenerator
+	                                        ((*spectrumTable)[i],
+	                                         wavelengthAcceptance,
+	                                         mediumProperties
+	                                         )
+	                                        );
+	    }
+
+	    log_info("%zu additional (non-Cherenkov) wavelength generators (spectra) have been configured.",
+	             spectrumTable->size()-1);
+	}
 	
 	std::vector<std::string> sources;
 	
@@ -141,17 +158,17 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
 	
 	binContent_.resize(axes_->GetNBins());
 	
-	if (1) {
-		std::stringstream source;
-		BOOST_FOREACH(std::string &part, sources)
-			source << part;
-		std::string line;
-		unsigned lineno = 1;
-		while (std::getline(source, line)) {
-			std::cout << std::setw(4) << lineno << " " << line << std::endl;
-			lineno++;
-		}
+#ifndef NDEBUG
+	std::stringstream source;
+	BOOST_FOREACH(std::string &part, sources)
+		source << part;
+	std::string line;
+	unsigned lineno = 1;
+	while (std::getline(source, line)) {
+		std::cout << std::setw(4) << lineno << " " << line << std::endl;
+		lineno++;
 	}
+#endif
 
 	{
 		VECTOR_CLASS<cl::Device> devices(1, *(device.GetDeviceHandle()));
@@ -188,7 +205,7 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
 		
 		maxNumWorkitems_ = kernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device);
 		log_debug_stream("max work group size " << maxNumWorkitems_);
-		log_info_stream(device.getInfo<CL_DEVICE_NAME>() << " max memory "<<device.getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>());
+		log_debug_stream(device.getInfo<CL_DEVICE_NAME>() << " max memory "<<device.getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>());
 		
 		harvesterThread_ = boost::thread(boost::bind(&I3CLSimStepToTableConverter::FetchSteps, this, kernel, rng));
 	}
@@ -381,7 +398,6 @@ I3CLSimStepToTableConverter::FetchSteps(cl::Kernel kernel, I3RandomServicePtr rn
 			throw;
 		}
 	
-		// TODO: enqueue task to consume steps when done
 		commandQueue_.enqueueReadBuffer(buffers.inputSteps, CL_FALSE, 0,
 		    items*sizeof(I3CLSimStep), &osteps[0], &kernelFinished, &buffersRead[0]);
 		commandQueue_.enqueueReadBuffer(buffers.numEntries, CL_FALSE, 0,
