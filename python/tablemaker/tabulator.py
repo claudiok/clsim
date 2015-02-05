@@ -443,7 +443,7 @@ def I3CLSimTabulatePhotons(tray, name,
         spectrumTable = clsim.I3CLSimSpectrumTable()
         particleParameterizations += GetFlasherParameterizationList(spectrumTable)
         
-        print("number of spectra (1x Cherenkov + Nx flasher):", len(spectrumTable))
+        icetray.logging.log_debug("number of spectra (1x Cherenkov + Nx flasher): %d" % len(spectrumTable), unit="clsim")
     else:
         # no spectrum table is necessary when only using the Cherenkov spectrum
         spectrumTable = None
@@ -456,32 +456,17 @@ def I3CLSimTabulatePhotons(tray, name,
         UseOnlyDeviceNumber=UseOnlyDeviceNumber
 	)
     
-    print(openCLDevices)
-
     tray.AddModule("I3CLSimTabulatorModule", name + "_clsim",
                    MCTreeName=clSimMCTreeName,
-                   # PhotonSeriesMapName=PhotonSeriesName,
-                   # DOMRadius = DOMRadius,
-                   # DOMOversizeFactor = DOMOversizeFactor,
-                   # DOMPancakeFactor = DOMOversizeFactor, # you will probably want this to be the same as DOMOversizeFactor
                    RandomService=RandomService,
                    MediumProperties=mediumProperties,
                    SpectrumTable=spectrumTable,
                    FlasherPulseSeriesName=clSimFlasherPulseSeriesName,
-                   # OMKeyMaskName=clSimOMKeyMaskName,
-                   # ignore IceTop
-                   # IgnoreSubdetectors = ["IceTop"],
-                   #IgnoreNonIceCubeOMNumbers=False,
-                   # GenerateCherenkovPhotonsWithoutDispersion=False,
                    WavelengthAcceptance=domAcceptance,
                    AngularAcceptance=angularAcceptance,
                    ParameterizationList=particleParameterizations,
                    # MaxNumParallelEvents=ParallelEvents,
                    OpenCLDeviceList=openCLDevices,
-                   #UseHardcodedDeepCoreSubdetector=False, # setting this to true saves GPU constant memory but will reduce performance
-                   # StopDetectedPhotons=StopDetectedPhotons,
-                   # PhotonHistoryEntries=PhotonHistoryEntries,
-                   # If=If,
                    **ExtraArgumentsToI3CLSimModule
                    )
 

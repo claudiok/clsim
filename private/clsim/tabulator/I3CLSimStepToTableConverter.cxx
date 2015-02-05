@@ -118,7 +118,7 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
 	                                        );
 	    }
 
-	    log_info("%zu additional (non-Cherenkov) wavelength generators (spectra) have been configured.",
+	    log_debug("%zu additional (non-Cherenkov) wavelength generators (spectra) have been configured.",
 	             spectrumTable->size()-1);
 	}
 	
