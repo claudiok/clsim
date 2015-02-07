@@ -105,11 +105,7 @@ from icecube import clsim
 icetray.I3Logger.global_logger.set_level(icetray.I3LogLevel.LOG_INFO)
 
 # a random number generator
-randomService = phys_services.I3SPRNGRandomService(
-    seed = options.SEED,
-    nstreams = 10000,
-    streamnum = options.RUNNUMBER)
-
+randomService = phys_services.I3GSLRandomService(options.SEED)
 
 tray = I3Tray()
 

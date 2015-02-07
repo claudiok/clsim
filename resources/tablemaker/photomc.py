@@ -35,7 +35,7 @@ if path.exists(outfile):
 		parser.error("Output file exists! Pass --overwrite to overwrite it.")
 
 from icecube import icetray
-from icecube.clsim.tablemaker.tabulator import CombinedPhotonGenerator, generate_seed
+from icecube.clsim.tablemaker.tabulator import TabulatePhotonsFromSource, generate_seed
 
 outfile = args[0]
 if opts.seed is None:
@@ -51,7 +51,7 @@ icetray.logging.set_level_for_unit('I3CLSimTabulatorModule', 'DEBUG')
 icetray.logging.set_level_for_unit('I3CLSimLightSourceToStepConverterGeant4', 'TRACE')
 icetray.logging.set_level_for_unit('I3CLSimLightSourceToStepConverterFlasher', 'TRACE')
 
-tray.AddSegment(CombinedPhotonGenerator, 'generator', Seed=opts.seed, PhotonSource=opts.light_source,
+tray.AddSegment(TabulatePhotonsFromSource, 'generator', Seed=opts.seed, PhotonSource=opts.light_source,
     Zenith=opts.zenith, ZCoordinate=opts.z, Energy=opts.energy, NEvents=opts.nevents, Filename=outfile)
     
 tray.AddModule('TrashCan', 'MemoryHole')

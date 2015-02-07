@@ -61,6 +61,8 @@ private:
 	// double rather than an integer because steps have weights
 	uint64_t numPhotons_;
 	double sumOfPhotonWeights_;
+	/// number of Photonics photons represented by each clsim photon
+	double spectralBiasFactor_;
 	
 	SET_LOGGER("I3CLSimStepToTableConverter");
 };

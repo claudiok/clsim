@@ -414,13 +414,7 @@ def I3CLSimTabulatePhotons(tray, name,
         # get ice model directly if not a string
         mediumProperties = IceModelLocation
     
-    # The photonics convention for photon table normalization is "per Cherenkov
-    # photon between 400 and 600 nm," of which there are 32582.0 per meter of
-    # track. Since we generate over a wider range, re-normalize to compensate.
-    lightScale = 32582.0/clsim.NumberOfPhotonsPerMeter(mediumProperties.GetPhaseRefractiveIndex(0), clsim.I3CLSimFunctionConstant(1.),
-        mediumProperties.MinWavelength, mediumProperties.MaxWavelength)
-
-    domAcceptance = clsim.GetIceCubeDOMAcceptance(efficiency=lightScale)
+    domAcceptance = clsim.GetIceCubeDOMAcceptance()
     angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(UseHoleIceParameterization)
 
     # muon&cascade parameterizations
@@ -471,13 +465,40 @@ def I3CLSimTabulatePhotons(tray, name,
                    )
 
 @traysegment
-def CombinedPhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Units.degree, Azimuth=0*I3Units.degree, ZCoordinate=0.*I3Units.m,
+def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=90.*I3Units.degree, Azimuth=0*I3Units.degree, ZCoordinate=0.*I3Units.m,
     Energy=1.*I3Units.GeV, FlasherWidth=127, FlasherBrightness=127, Seed=12345, NEvents=100,
     IceModel='spice_mie', DisableTilt=False, Filename="", Axes=None):
     
     """
+    Tabulate the distribution of photoelectron yields on IceCube DOMs from various
+    light sources. The light profiles of the sources are computed from the same
+    parameterizations used in PPC, but like in the direct propagation mode can
+    be computed using GEANT4 instead.
 
-    :param PhotonSource: the type of photon source ('cascade', 'flasher', or 'infinite-muon')
+    The mode of tabulation is controlled primarily by the **PhotonSource** parameter.
+    
+    - *'cascade'* will simulate an electromagnetic cascade of **Energy** GeV at
+      (0, 0, **ZCoordinate**), oriented according to **Zenith** and **Azimuth**.
+      The default coordinate system is spherical and centered the given vertex,
+      with 200 quadratically spaced bins in radius, 36 linear bins in azimuthal
+      angle (only from 0 to 180 degrees by default), 100 linear bins in the
+      cosine of the polar angle, and 105 quadratic bins in time residual w.r.t
+      the direct path from (0, 0, **ZCoordinate**).
+    - *'flasher'* will simulate a 405 nm LED flasher pulse with the given
+      **FlasherWidth** and **FlasherBrightness** settings. The source position
+      and coordinate system are the same as for the 'cascade' case.
+    - *'infinite-muon'* will simulate a "bare" muon of infinite length. The
+      coordinate system is cylindrical and centered on the axis of the muon.
+      Since the muon's position is degenerate with time, the usual parallel
+      distance is replaced by the z coordinate of the closest approach to the
+      detection position, and the starting positions of the simulated muons are
+      sampled randomly (**ZCoordinate** is ignored). There are 200 quadratic
+      bins in perpendicular distance to the source axis, 36 linear bin in
+      azimuthal angle (0 to :math:`\pi` radians), 100 linear bins in z
+      coordinate of closest approach, and 105 quadratic bins in time residual
+      w.r.t. the earliest possible Cherenkov photon.
+
+    :param PhotonSource: the type of photon source ('cascade', 'flasher', or 'infinite-muon').
     :param Zenith: the orientation of the source
     :param ZCoordinate: the depth of the source
     :param Energy: the energy of the source (only for cascade tables)
@@ -490,7 +511,9 @@ def CombinedPhotonGenerator(tray, name, PhotonSource="CASCADE", Zenith=90.*I3Uni
         'photonics_spice_1/Ice_table.spice.i3coords.cos080.10feb2010.txt' Photonics-style SPICE1 table
         'photonics_wham/Ice_table.wham.i3coords.cos094.11jul2011.txt' Photonics-style WHAM! table
     :param DisableTilt: if true, disable tilt in ice model
-    
+    :param Filename: the name of the FITS file to write
+    :param Axes: a subclass of :cpp:class:`clsim::tabulator::Axes` that defines the coordinate system.
+                 If None, an appropriate default will be chosen based on **PhotonSource**.
     """
 
     # check sanity of args

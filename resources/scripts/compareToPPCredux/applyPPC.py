@@ -54,10 +54,9 @@ load("libppc-eff")
 
 tray = I3Tray()
 
-tray.AddService("I3SPRNGRandomServiceFactory", "random",
+tray.AddService("I3GSLRandomServiceFactory", "random",
     Seed = options.SEED,
-    NStreams = 2,
-    StreamNum = 1)
+)
 
 tray.AddModule("I3Reader","reader",
                Filename=options.INFILE)

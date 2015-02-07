@@ -2,11 +2,14 @@
 #include "clsim/tabulator/I3CLSimStepToTableConverter.h"
 #include "clsim/tabulator/Axes.h"
 
+#include "clsim/function/I3CLSimFunctionConstant.h"
+
 #include "opencl/I3CLSimHelperMath.h"
 #include "opencl/I3CLSimHelperGenerateMediumPropertiesSource.h"
 #include "opencl/I3CLSimHelperLoadProgramSource.h"
 #include "opencl/mwcrng_init.h"
 #include "clsim/I3CLSimModuleHelper.h"
+#include "clsim/I3CLSimLightSourceToStepConverterUtils.h"
 #include "clsim/I3CLSimHelperToFloatString.h"
 #include "clsim/cl.hpp"
 
@@ -98,12 +101,28 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
     numPhotons_(0), sumOfPhotonWeights_(0.)
 {
 	std::vector<I3CLSimRandomValueConstPtr> wavelengthGenerators;
+	
 	wavelengthGenerators.push_back(I3CLSimModuleHelper::makeCherenkovWavelengthGenerator
 	                                (wavelengthAcceptance,
 	                                 false /*generateCherenkovPhotonsWithoutDispersion_*/,
 	                                 mediumProperties
 	                                )
 	                               );
+	// Photonics tables are normalized "per photon", but those photons were
+	// drawn from a Cherenkov spectrum between 300 and 600 nm and then
+	// weighted by the DOM quantum efficiency (QE) at recording time. Since 
+	// we draw photon wavelengths directly from a QE-weighted Cherenkov 
+	// spectrum, each of our photons represents on average more than one
+	// Photonics photon.
+	{
+		using I3CLSimLightSourceToStepConverterUtils::NumberOfPhotonsPerMeter;
+		
+		I3CLSimFunctionConstant uno(1.);
+		I3CLSimFunctionConstPtr nPhase = mediumProperties->GetPhaseRefractiveIndex(0);
+		spectralBiasFactor_ = NumberOfPhotonsPerMeter(*nPhase, uno, 300*I3Units::nanometer, 600*I3Units::nanometer)
+		    / NumberOfPhotonsPerMeter(*nPhase, *wavelengthAcceptance, mediumProperties->GetMinWavelength(), mediumProperties->GetMaxWavelength());
+		log_info_stream("Each photon is worth "<<spectralBiasFactor_<<" Photonics photons");
+	}
 	if ((spectrumTable) && (spectrumTable->size() > 1)) {
 	    // a spectrum table has been configured and it contains more than the
 	    // default Cherenkov spectrum at index #0.
@@ -515,7 +534,7 @@ void I3CLSimStepToTableConverter::WriteFITSFile(const std::string &path, boost::
 	}
 	
 	// Fill in things that only we know
-	tableHeader["n_photons"] = sumOfPhotonWeights_;
+	tableHeader["n_photons"] = spectralBiasFactor_*sumOfPhotonWeights_;
 	tableHeader["n_group"] = minimumRefractiveIndex_.first;
 	tableHeader["n_phase"] = minimumRefractiveIndex_.second;
 	// Write header keywords

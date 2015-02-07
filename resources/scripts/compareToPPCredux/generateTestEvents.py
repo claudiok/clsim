@@ -104,10 +104,7 @@ class generateEvent(icetray.I3Module):
 tray = I3Tray()
 
 # a random number generator
-randomService = phys_services.I3SPRNGRandomService(
-    seed = options.SEED,
-    nstreams = 10000,
-    streamnum = options.RUNNUMBER)
+randomService = phys_services.I3GSLRandomService(options.SEED)
 
 tray.AddModule("I3InfiniteSource","streams",
                Prefix=options.GCDFILE,

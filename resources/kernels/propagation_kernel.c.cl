@@ -240,9 +240,9 @@ inline bool savePath(
     __global uint *entry_counter,
     __global struct I3CLSimTableEntry *entries)
 {
-    floating_t impactWeight = step->weight
-        * getWavelengthBias(photonDirAndWlen.w)
-        * getAngularAcceptance(photonDirAndWlen.z);
+    // NB: the quantum efficiency of the receiver is already taken into
+    //     account though the bias in the input photon spectrum
+    floating_t impactWeight = step->weight*getAngularAcceptance(photonDirAndWlen.z);
     
     dbg_printf("step depth %e + %e impactWeight %e\n", depth, thisStepDepth, impactWeight);
     
