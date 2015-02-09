@@ -68,7 +68,7 @@ def extractMCTreeParticles(frame):
     mctree = frame["I3MCTree"]
     
     # get tracks in ice/water
-    mctracksinice = mctree.in_ice
+    mctracksinice = mctree.get_filter(lambda p: p.location_type==p.InIce)
     mcmuontrack = None
     highestEnergy=-1.
     for track in mctracksinice:
@@ -78,7 +78,7 @@ def extractMCTreeParticles(frame):
 
     if mcmuontrack is None:
         mcmuontrack = dataclasses.I3Particle()
-    primary = mctree.most_energetic_primary
+    primary = dataclasses.get_most_energetic_primary(mctree)
     
     if primary is None:
         primary = dataclasses.I3Particle()
