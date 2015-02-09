@@ -1,10 +1,39 @@
+#!/usr/bin/env python
+#
+# Copyright (c) 2012, 2015
+# Jakob van Santen <jvansanten@icecube.wisc.edu>
+# and the IceCube Collaboration <http://www.icecube.wisc.edu>
+# 
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+# OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+# CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+# 
+# 
+# $Id$
+# 
+# @file photomc.py
+# @version $LastChangedRevision$
+# @date $Date$
+# @author Jakob van Santen
+
+"""
+Tabulate the photon flux from a light source in South Pole ice.
+"""
 
 from optparse import OptionParser
 from icecube.icetray import I3Units
 from os import path, unlink
 
 usage = "usage: %prog [options] outputfile"
-parser = OptionParser(usage)
+parser = OptionParser(usage, description=__doc__)
 
 parser.add_option("--seed", dest="seed", type="int", default=None,
     help="Seed for random number generators; harvested from /dev/random if unspecified.")

@@ -1,5 +1,28 @@
-
-
+.. 
+.. Copyright (c) 2015
+.. Jakob van Santen <jvansanten@icecube.wisc.edu>
+.. and the IceCube Collaboration <http://www.icecube.wisc.edu>
+.. 
+.. Permission to use, copy, modify, and/or distribute this software for any
+.. purpose with or without fee is hereby granted, provided that the above
+.. copyright notice and this permission notice appear in all copies.
+.. 
+.. THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.. WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.. MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+.. SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.. WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+.. OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+.. CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.. 
+.. 
+.. $Id$
+.. 
+.. @file tabulator.rst
+.. @version $LastChangedRevision$
+.. @date $Date$
+.. @author Jakob van Santen
+.. 
 
 The Tabulator
 =============
@@ -216,6 +239,11 @@ Open issues
   capture the azimuthal asymmetry, we have to record in the full volume and
   make tables for sources from all azimuths.
 
+- For cascades the center of the spherical coordinate system is the cascade
+  vertex, not the shower maximum. While physically correct, this is different
+  from the reference point in Photonics simulation, where the shower was
+  compressed down to a point.
+
 - There are no over- or under-flow bins. For dimensions like azimuth or polar
   angle that cannot be out of range this is fine, but is a bit wrong for e.g.
   radius.
@@ -227,3 +255,7 @@ Open issues
   displacing the point at which the photon is recorded to the center of a
   sphere (or more properly, hemisphere) that intersects the current recording
   point.
+
+- There's no way for the user to directly set the number of photons to be
+  propagated. The step generators would need to gain some concept of a prescale
+  to make this happen.
