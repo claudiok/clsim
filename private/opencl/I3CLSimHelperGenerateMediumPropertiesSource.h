@@ -37,6 +37,8 @@ namespace I3CLSimHelper
      * generates the OpenCL source code for a given mediumProperties object.
      */
     std::string GenerateMediumPropertiesSource(const I3CLSimMediumProperties &mediumProperties);
+    
+    std::string GenerateWavelengthGeneratorSource(const std::vector<I3CLSimRandomValueConstPtr>&);
 
 };
 

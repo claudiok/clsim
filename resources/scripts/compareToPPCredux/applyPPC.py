@@ -47,17 +47,16 @@ from icecube import icetray, dataclasses, dataio, phys_services
 os.putenv("PPCTABLESDIR", options.ICEMODEL)
 
 
-load("libcudart")
+#load("libcudart")
 load("libxppc")
 load("libppc")
 load("libppc-eff")
 
 tray = I3Tray()
 
-tray.AddService("I3SPRNGRandomServiceFactory", "random",
+tray.AddService("I3GSLRandomServiceFactory", "random",
     Seed = options.SEED,
-    NStreams = 2,
-    StreamNum = 1)
+)
 
 tray.AddModule("I3Reader","reader",
                Filename=options.INFILE)
@@ -67,7 +66,8 @@ tray.AddModule("I3Reader","reader",
 tray.AddModule("i3ppc", "ppc",
     gpu = 0,
     bad = [],
-    JPALpulses=False)
+    #JPALpulses=False,
+)
 
 # WARNING: this will adjust *all* the MCHitSeriesMaps in the frame.
 tray.AddModule("AdjEff", "ppc-eff",

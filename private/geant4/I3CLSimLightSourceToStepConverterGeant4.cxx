@@ -121,6 +121,7 @@ maxBunchSize_(512000)
     if ((maxNumPhotonsPerStep_<=0.))
         throw I3CLSimLightSourceToStepConverter_exception("Invalid maxNumPhotonsPerStep.");
 
+#ifdef HAS_GEANT4
     // check for the braindead Geant4 environment variables
     if ((!getenv("G4LEVELGAMMADATA")) ||
         (!getenv("G4RADIOACTIVEDATA")) ||
@@ -139,6 +140,7 @@ maxBunchSize_(512000)
     {
         log_info("Geant4.9.5 requires the following environment variables to be set: \"G4NEUTRONXSDATA\", \"G4PIIDATA\", \"G4REALSURFACEDATA\"");
     }
+#endif
 #endif
     
 }

@@ -1,10 +1,39 @@
+#!/usr/bin/env python
+#
+# Copyright (c) 2012, 2015
+# Jakob van Santen <jvansanten@icecube.wisc.edu>
+# and the IceCube Collaboration <http://www.icecube.wisc.edu>
+# 
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+# OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+# CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+# 
+# 
+# $Id$
+# 
+# @file photomc.py
+# @version $LastChangedRevision$
+# @date $Date$
+# @author Jakob van Santen
+
+"""
+Tabulate the photon flux from a light source in South Pole ice.
+"""
 
 from optparse import OptionParser
 from icecube.icetray import I3Units
 from os import path, unlink
 
 usage = "usage: %prog [options] outputfile"
-parser = OptionParser(usage)
+parser = OptionParser(usage, description=__doc__)
 
 parser.add_option("--seed", dest="seed", type="int", default=None,
     help="Seed for random number generators; harvested from /dev/random if unspecified.")
@@ -16,6 +45,8 @@ parser.add_option("--zenith", dest="zenith", type="float", default=0.,
     help="Zenith angle of source, in IceCube convention and degrees [%default]")
 parser.add_option("--energy", dest="energy", type="float", default=1,
     help="Energy of light source, in GeV [%default]")
+parser.add_option("--light-source", choices=('cascade', 'flasher', 'infinite-muon'), default='cascade',
+    help="Type of light source. If 'infinite-muon', Z will be ignored, and tracks sampled over all depths. [%default]")
 parser.add_option("--step", dest="steplength", type="float", default=1,
     help="Sampling step length in meters [%default]")
 parser.add_option("--overwrite", dest="overwrite", action="store_true", default=False,
@@ -33,7 +64,7 @@ if path.exists(outfile):
 		parser.error("Output file exists! Pass --overwrite to overwrite it.")
 
 from icecube import icetray
-from icecube.clsim.tablemaker.tabulator import PhotonGenerator, I3TabulatorModule, generate_seed
+from icecube.clsim.tablemaker.tabulator import TabulatePhotonsFromSource, generate_seed
 
 outfile = args[0]
 if opts.seed is None:
@@ -44,13 +75,13 @@ from I3Tray import I3Tray
 
 tray = I3Tray()
 
-rng, header = tray.AddSegment(PhotonGenerator, 'generator', Seed=opts.seed,
-    Zenith=opts.zenith, ZCoordinate=opts.z, Energy=opts.energy, NEvents=opts.nevents)
-    
-tray.AddModule(I3TabulatorModule, 'beancounter',
-    Source='Source', Photons='PropagatedPhotons', Statistics='I3CLSimStatistics',
-    Filename=outfile, StepLength=opts.steplength, RandomService=rng,
-    TableHeader=header)
+icetray.logging.set_level_for_unit('I3CLSimStepToTableConverter', 'TRACE')
+icetray.logging.set_level_for_unit('I3CLSimTabulatorModule', 'DEBUG')
+icetray.logging.set_level_for_unit('I3CLSimLightSourceToStepConverterGeant4', 'TRACE')
+icetray.logging.set_level_for_unit('I3CLSimLightSourceToStepConverterFlasher', 'TRACE')
+
+tray.AddSegment(TabulatePhotonsFromSource, 'generator', Seed=opts.seed, PhotonSource=opts.light_source,
+    Zenith=opts.zenith, ZCoordinate=opts.z, Energy=opts.energy, NEvents=opts.nevents, Filename=outfile)
     
 tray.AddModule('TrashCan', 'MemoryHole')
 tray.Execute()

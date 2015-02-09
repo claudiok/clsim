@@ -135,6 +135,11 @@ else(NUMPY_FOUND)
   colormsg(GREEN "+-- no numpy support (tabulator will not be built)")
 endif(NUMPY_FOUND)
 
+if(CFITSIO_FOUND)
+  ADD_DEFINITIONS(-DUSE_CFITSIO)
+  LIST(APPEND LIB_${PROJECT_NAME}_TOOLS cfitsio)
+endif(CFITSIO_FOUND)
+
 # The icecube master header file I3.h seems to include inttypes.h without setting
 # __STDC_FORMAT_MACROS. clsim makes use of the PRI* preprocessor definitions,
 # so it needs those macros. Add the definition right here to work around this.
@@ -191,11 +196,17 @@ if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
     private/clsim/I3CLSimLightSource.cxx
     private/clsim/I3CLSimSpectrumTable.cxx
     private/clsim/I3CLSimLightSourceToStepConverterFlasher.cxx
+    
+    private/clsim/tabulator/I3CLSimTabulatorModule.cxx
+    private/clsim/tabulator/I3CLSimStepToTableConverter.cxx
+    private/clsim/tabulator/Axis.cxx
+    private/clsim/tabulator/Axes.cxx
 
     # private/geant4
     private/geant4/I3CLSimLightSourceToStepConverterGeant4.cxx
 
     # private/opencl/
+    private/opencl/I3CLSimHelperMath.cxx
     private/opencl/I3CLSimHelperGenerateGeometrySource.cxx
     private/opencl/I3CLSimHelperGenerateMediumPropertiesSource.cxx
     private/opencl/I3CLSimHelperGenerateMediumPropertiesSource_Optimizers.cxx
