@@ -22,7 +22,7 @@ def configureOpenCLDevices(UseGPUs=True, UseCPUs=False, OverrideApproximateNumbe
         if string.count(device.device, 'Tesla') > 0 or string.count(device.device, 'GTX') > 0:
             # assume these are "fast", all others are "slow"
             device.useNativeMath=True
-            if string.count(device.device, 'Tesla') > 0 or string.count(device.device, '580') > 0 or string.count(device.device, '680') > 0:
+            if string.count(device.device, 'Tesla') > 0 or string.count(device.device, '580') > 0 or string.count(device.device, '680') > 0 or string.count(device.device, '980') > 0:
                 # these cards should have enough ram to support this
                 device.approximateNumberOfWorkItems=1024000
             else:
