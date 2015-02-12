@@ -121,7 +121,7 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
     clsim::tabulator::AxesConstPtr axes, size_t entriesPerStream,
     I3CLSimMediumPropertiesConstPtr mediumProperties, I3CLSimSpectrumTableConstPtr spectrumTable,
     I3CLSimFunctionConstPtr wavelengthAcceptance, I3CLSimFunctionConstPtr angularAcceptance,
-    I3RandomServicePtr rng) : entriesPerStream_(entriesPerStream), run_(true),
+    I3RandomServicePtr rng) : entriesPerStream_(entriesPerStream), stepQueue_(1), run_(true),
     domArea_(M_PI*std::pow(0.16510*I3Units::m, 2)), stepLength_(1.), axes_(axes),
     numPhotons_(0), sumOfPhotonWeights_(0.)
 {
@@ -175,8 +175,9 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
 	preamble <<                                                               \
 	    "#define SAVE_ALL_PHOTONS\n"                                          \
 	    "#define SAVE_ALL_PHOTONS_PRESCALE 1\n"                               \
-	    "#define PROPAGATE_FOR_FIXED_NUMBER_OF_ABSORPTION_LENGTHS 42\n"       \
+	    "#define PROPAGATE_FOR_FIXED_NUMBER_OF_ABSORPTION_LENGTHS 1\n"       \
 	    "#define TABULATE\n"                                                  \
+	    "//#define DOM_RADIUS "<<I3CLSimHelper::ToFloatString(0.16510*I3Units::m)<<"\n"\
 	    "//#define PRINTF_ENABLED\n"                                            \
 	;
 	preamble << "#define TABLE_ENTRIES_PER_STREAM " << entriesPerStream_ << "\n";

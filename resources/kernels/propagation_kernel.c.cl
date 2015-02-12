@@ -238,7 +238,8 @@ inline bool savePath(
     uint thread_id,
     bool *stop,
     __global uint *entry_counter,
-    __global struct I3CLSimTableEntry *entries)
+    __global struct I3CLSimTableEntry *entries,
+    RNG_ARGS)
 {
     // NB: the quantum efficiency of the receiver is already taken into
     //     account though the bias in the input photon spectrum
@@ -257,6 +258,15 @@ inline bool savePath(
         pos.y = photonPosAndTime.y + d*photonDirAndWlen.y;
         pos.z = photonPosAndTime.z + d*photonDirAndWlen.z;
         pos.w = photonPosAndTime.w + d*inv_groupvel;
+
+#ifdef DOM_RADIUS
+        floating_t cosa = RNG_CALL_UNIFORM_CO;
+        floating4_t toCenter = photonDirAndWlen;
+        scatterDirectionByAngle(cosa, my_sqrt(1-cosa*cosa), &toCenter, RNG_CALL_UNIFORM_CO);
+        pos.x += DOM_RADIUS*toCenter.x;
+        pos.y += DOM_RADIUS*toCenter.y;
+        pos.z += DOM_RADIUS*toCenter.z;
+#endif
         
         coordinate_t coords = getCoordinates(pos, source);
         
@@ -722,7 +732,8 @@ __kernel void propKernel(
                  i,
                  &stop,
                  &numOutputEntries[i],
-                 outputTableEntries
+                 outputTableEntries,
+                 RNG_ARGS_TO_CALL
                  ))
         {
             // We ran out of space in the output buffer. Mark this step as
