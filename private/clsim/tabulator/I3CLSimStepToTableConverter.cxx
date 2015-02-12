@@ -175,7 +175,7 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
 	preamble <<                                                               \
 	    "#define SAVE_ALL_PHOTONS\n"                                          \
 	    "#define SAVE_ALL_PHOTONS_PRESCALE 1\n"                               \
-	    "#define PROPAGATE_FOR_FIXED_NUMBER_OF_ABSORPTION_LENGTHS 1\n"       \
+	    "#define PROPAGATE_FOR_FIXED_NUMBER_OF_ABSORPTION_LENGTHS 42\n"       \
 	    "#define TABULATE\n"                                                  \
 	    "//#define DOM_RADIUS "<<I3CLSimHelper::ToFloatString(0.16510*I3Units::m)<<"\n"\
 	    "//#define PRINTF_ENABLED\n"                                            \
