@@ -42,13 +42,17 @@ Axis::~Axis()
 
 std::string
 Axis::GetIndexCode(const std::string &var) const {
+	
 	std::ostringstream ss;
-	ss << "("<<var<<" >= "<<I3CLSimHelper::ToFloatString(max_)<<" ? "<<(n_bins_-1)<<"u"
-	    <<" : "<<"("<<var<<" < "<<I3CLSimHelper::ToFloatString(min_)<<" ? 0u : (uint)("
-	    << (n_bins_) << "*(" << GetInverseTransformCode(var) << " - " << GetInverseTransformCode(I3CLSimHelper::ToFloatString(min_)) << ")"
-	    << "/(" << GetInverseTransformCode(I3CLSimHelper::ToFloatString(max_)) << " - " << GetInverseTransformCode(I3CLSimHelper::ToFloatString(min_)) << ")"
-	    <<")))";
-	;
+	double scale = n_bins_/(InverseTransform(max_)-InverseTransform(min_));
+	double offset = scale*InverseTransform(min_);
+
+	using I3CLSimHelper::ToFloatString;
+	ss << "clamp(convert_int_sat_rtz("
+	    <<ToFloatString(scale)<<"*"<<GetInverseTransformCode(var)
+	    <<" - "<<ToFloatString(offset)
+	    <<"), 0, "<<(n_bins_-1)<<")";
+	
 	return ss.str();
 }
 

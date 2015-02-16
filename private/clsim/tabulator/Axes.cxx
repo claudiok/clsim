@@ -77,7 +77,7 @@ Axes::GetBinIndexFunction() const
 		var << "coords.s" << i;
 		ss << strides_[i] << "*" << axes_[i]->GetIndexCode(var.str());
 		if (i+1 < axes_.size())
-			ss << "\n + ";
+			ss << "\n         + ";
 	}
 	
 	ss << ";\n}\n";
