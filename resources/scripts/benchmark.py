@@ -272,7 +272,7 @@ if options.MINIMALGCD:
 else:
     # use a real GCD file for a real-world test
     tray.AddModule("I3InfiniteSource","streams",
-        Prefix = expandvars("$I3_PORTS/test-data/sim/GeoCalibDetectorStatus_IC86.55697_corrected_V2.i3.gz"),
+        Prefix = expandvars("$I3_TESTDATA/sim/GeoCalibDetectorStatus_IC86.55697_corrected_V2.i3.gz"),
         Stream=icetray.I3Frame.DAQ)
 
 tray.AddModule("I3MCEventHeaderGenerator","gen_header",
