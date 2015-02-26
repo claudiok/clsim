@@ -162,7 +162,6 @@ def I3CLSimTabulatePhotons(tray, name,
                        FlasherInfoVectName=None,
                        FlasherPulseSeriesName=None,
                        MMCTrackListName="MMCTrackList",
-                       PhotonSeriesName="PhotonSeriesMap",
                        ParallelEvents=1000,
                        RandomService=None,
                        IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
@@ -170,10 +169,8 @@ def I3CLSimTabulatePhotons(tray, name,
                        UseGeant4=False,
                        CrossoverEnergyEM=None,
                        CrossoverEnergyHadron=None,
-                       StopDetectedPhotons=True,
-                       PhotonHistoryEntries=0,
                        DoNotParallelize=False,
-                       UnshadowedFraction=0.9,
+                       DOMOversizeFactor=1,
                        UseHoleIceParameterization=True,
                        OverrideApproximateNumberOfWorkItems=None,
                        ExtraArgumentsToI3CLSimModule=dict(),
@@ -414,8 +411,12 @@ def I3CLSimTabulatePhotons(tray, name,
         # get ice model directly if not a string
         mediumProperties = IceModelLocation
     
-    domAcceptance = clsim.GetIceCubeDOMAcceptance()
-    angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(UseHoleIceParameterization)
+    domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius=DOMOversizeFactor*DOMRadius)
+    if UseHoleIceParameterization:
+        angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(UseHoleIceParameterization)
+    else:
+        icetray.logging.log_warn("Applying *no* angular sensitivity at all. None.")
+        angularAcceptance = clsim.I3CLSimFunctionConstant(1.)
 
     # muon&cascade parameterizations
     ppcConverter = clsim.I3CLSimLightSourceToStepConverterPPC(photonsPerStep=200)
@@ -467,7 +468,8 @@ def I3CLSimTabulatePhotons(tray, name,
 @traysegment
 def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=90.*I3Units.degree, Azimuth=0*I3Units.degree, ZCoordinate=0.*I3Units.m,
     Energy=1.*I3Units.GeV, FlasherWidth=127, FlasherBrightness=127, Seed=12345, NEvents=100,
-    IceModel='spice_mie', DisableTilt=False, Filename="", Axes=None):
+    IceModel='spice_mie', DisableTilt=False, Filename="", TabulateImpactAngle=False,
+    PhotonPrescale=1, Axes=None):
     
     """
     Tabulate the distribution of photoelectron yields on IceCube DOMs from various
@@ -512,6 +514,8 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=90.*I3U
         'photonics_wham/Ice_table.wham.i3coords.cos094.11jul2011.txt' Photonics-style WHAM! table
     :param DisableTilt: if true, disable tilt in ice model
     :param Filename: the name of the FITS file to write
+    :param TabulateImpactAngle: if True, tabulate the impact position of the
+           photon on the DOM instead of weighting by the DOM's angular acceptance
     :param Axes: a subclass of :cpp:class:`clsim::tabulator::Axes` that defines the coordinate system.
                  If None, an appropriate default will be chosen based on **PhotonSource**.
     """
@@ -624,19 +628,25 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=90.*I3U
     
     if Axes is None:
         if PhotonSource != "infinite-muon":
-            Axes = clsim.tabulator.SphericalAxes([
+            dims = [
                 clsim.tabulator.PowerAxis(0, 580, 200, 2),
                 clsim.tabulator.LinearAxis(0, 180, 36),
                 clsim.tabulator.LinearAxis(-1, 1, 100),
                 clsim.tabulator.PowerAxis(0, 7e3, 105, 2),
-            ])
+            ]
+            geo = clsim.tabulator.SphericalAxes
         else:
-            Axes = clsim.tabulator.CylindricalAxes([
-                clsim.tabulator.PowerAxis(0, 580, 200, 2),
+            dims = [
+                clsim.tabulator.PowerAxis(0, 580, 100, 2),
                 clsim.tabulator.LinearAxis(0, numpy.pi, 36),
                 clsim.tabulator.LinearAxis(-1e3, 1e3, 100),
                 clsim.tabulator.PowerAxis(0, 7e3, 105, 2),
-            ])
+            ]
+            geo = clsim.tabulator.CylindricalAxes
+        # Add a dimension for the impact angle
+        if TabulateImpactAngle:
+            dims.insert(-1, clsim.tabulator.LinearAxis(-1, 1, 20))
+        Axes = geo(dims)
     
 
     if PhotonSource.upper() == "FLASHER":
@@ -644,7 +654,6 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=90.*I3U
         header['flasherbrightness'] = FlasherBrightness
     
     tray.AddSegment(I3CLSimTabulatePhotons, name+"makeCLSimPhotons",
-        PhotonSeriesName = "PropagatedPhotons",
         MCTreeName = mctree,                        # if source is a cascade this will point to the I3MCTree
         FlasherPulseSeriesName = flasherpulse,      # if source is a flasher this will point to the I3CLSimFlasherPulseSeries
         MMCTrackListName = None,                    # do NOT use MMC
@@ -653,9 +662,8 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=90.*I3U
         # UnWeightedPhotons=True,
         UseGPUs=False,                              # table-making is not a workload particularly suited to GPUs
         UseCPUs=True,                               # it should work fine on CPUs, though
-        UnshadowedFraction=1.0,                     # no cable shadow
-        StopDetectedPhotons=False,                  # do not stop photons on detection (also somewhat pointless without DOMs)
-        PhotonHistoryEntries=10000,                 # record all photon paths
+        DOMOversizeFactor=math.sqrt(PhotonPrescale),
+        UseHoleIceParameterization=True,
         DoNotParallelize=True,                      # no multithreading
         UseGeant4=False,
         OverrideApproximateNumberOfWorkItems=1,     # if you *would* use multi-threading, this would be the maximum number of jobs to run in parallel (OpenCL is free to split them)

@@ -180,6 +180,8 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
 	    "//#define DOM_RADIUS "<<I3CLSimHelper::ToFloatString(0.16510*I3Units::m)<<"\n"\
 	    "//#define PRINTF_ENABLED\n"                                            \
 	;
+	if (axes_->GetNDim() > 4)
+		preamble << "#define TABULATE_IMPACT_ANGLE\n";
 	preamble << "#define TABLE_ENTRIES_PER_STREAM " << entriesPerStream_ << "\n";
 	preamble << "#define VOLUME_MODE_STEP "<<I3CLSimHelper::ToFloatString(stepLength_)<<"\n";
 	minimumRefractiveIndex_ = GetMinimumRefractiveIndex(*mediumProperties);

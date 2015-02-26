@@ -243,7 +243,12 @@ inline bool savePath(
 {
     // NB: the quantum efficiency of the receiver is already taken into
     //     account though the bias in the input photon spectrum
-    floating_t impactWeight = step->weight*getAngularAcceptance(photonDirAndWlen.z);
+    floating_t impactWeight = 
+#ifndef TABULATE_IMPACT_ANGLE
+        step->weight*getAngularAcceptance(photonDirAndWlen.z);
+#else
+        step->weight;
+#endif
     
     dbg_printf("step depth %e + %e impactWeight %e\n", depth, thisStepDepth, impactWeight);
     
@@ -268,7 +273,7 @@ inline bool savePath(
         pos.z += DOM_RADIUS*toCenter.z;
 #endif
         
-        coordinate_t coords = getCoordinates(pos, source);
+        coordinate_t coords = getCoordinates(pos, photonDirAndWlen, source, RNG_ARGS_TO_CALL);
         
         if (isOutOfBounds(coords)) {
             *stop = true;

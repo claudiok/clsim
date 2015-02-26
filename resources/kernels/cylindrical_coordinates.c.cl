@@ -24,7 +24,11 @@
  * @author Jakob van Santen
  */
 
-typedef floating4_t coordinate_t;
+#ifdef TABULATE_IMPACT_ANGLE
+typedef float8 coordinate_t;
+#else
+typedef float4 coordinate_t;
+#endif
 
 inline floating_t magnitude(floating4_t vec)
 {
@@ -34,7 +38,8 @@ inline floating_t magnitude(floating4_t vec)
 // Coordinate transform for infinite muon tracks. Here the source depth is
 // degenerate with time, so we have 1 fewer dimension
 inline coordinate_t
-getCoordinates(const floating4_t absPos, const struct I3CLSimReferenceParticle *source)
+getCoordinates(const floating4_t absPos, floating4_t dirAndWlen,
+    const struct I3CLSimReferenceParticle *source, RNG_ARGS)
 {
     coordinate_t coords;
     
@@ -50,12 +55,28 @@ getCoordinates(const floating4_t absPos, const struct I3CLSimReferenceParticle *
     coords.s1 = (coords.s0 > 0) ?
         acos(-dot(rho,source->perpDir)/coords.s0) : 0;
     // depth of closest approach
-    // FIXME: doing this properly requires sampling different vertex depths in
-    //        the same run, which in turn requires passing the source vertex
-    //        and direction to the kernel rather than compiling it in
     coords.s2 = source->posAndTime.z + l*source->dir.z;
+#ifdef TABULATE_IMPACT_ANGLE
+    // s3 is the cosine of the opening angle between a vector connecting
+    // the DOM's center to the photon impact point and a vector connecting
+    // the center to the nominal Cherenkov emission point. Here we average over possible DOM positions
+    // by randomizing the impact position in the cross-sectional area of the
+    // DOM. Note that because the impact parameter is expressed as a 
+    // rotation across the surface of the DOM, it is independent of the DOM
+    // radius.
+    floating_t sina = my_sqrt(RNG_CALL_UNIFORM_CO);
+    scatterDirectionByAngle(my_sqrt(1-sina*sina), sina, &dirAndWlen, RNG_CALL_UNIFORM_CO);
+    // find the vector connecting the center of the DOM to the nominal Cherenkov
+    // emission point (i.e. perpendicular to the Cherenkov light frontb)
+    floating4_t cpos = absPos - (source->posAndTime + (l-rho*my_recip(tan_thetaC)*source->dir));
+    floating_t cdist = magnitude(cpos);
+    coords.s3 = (cdist > 0) ? my_divide(dot(dirAndWlen, cpos), cdist) : 1;
+    // delay time
+    coords.s4 = pos.w - (l + coords.s0*tan_thetaC)*recip_speedOfLight;
+#else
     // delay time
     coords.s3 = pos.w - (l + coords.s0*tan_thetaC)*recip_speedOfLight;
+#endif
     
     return coords;
 }
