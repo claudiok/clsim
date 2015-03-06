@@ -142,6 +142,43 @@ def makeFlasherPulse(x, y, z, zenith, azimuth, width, brightness):
 
     return pulse
 
+def unpin_threads(delay=60):
+    """
+    When AMD OpenCL fissions the CPU device, it pins each sub-device to a
+    a physical core. Since we always use sub-device 0, this means that multiple
+    instances of the tabulator on a single machine will compete for core 0.
+    Reset thread affinity after *delay* seconds to prevent this from happening.
+    """
+    import os
+    import subprocess
+    import threading
+    import time
+    def taskset(pid,tt=None):
+        # get/set the taskset affinity for pid
+        # uses a binary number string for the core affinity
+        l = ['/bin/taskset','-p']
+        if tt:
+            l.append(hex(int(tt,2))[2:])
+        l.append(str(pid))
+        p = subprocess.Popen(l,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        output = p.communicate()[0].split(':')[-1].strip()
+        if not tt:
+            return bin(int(output,16))[2:]
+    
+    def resetTasksetThreads(main_pid):
+        # reset thread taskset affinity
+        time.sleep(delay)
+        num_cpus = reduce(lambda b,a: b+int('processor' in a),open('/proc/cpuinfo').readlines(),0)
+        tt = '1'*num_cpus
+        #tt = taskset(main_pid)
+        p = subprocess.Popen(['/bin/ps','-Lo','tid','--no-headers','%d'%main_pid],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        for tid in p.communicate()[0].split():
+            tid = tid.strip()
+            if tid:
+                taskset(tid,tt)
+    threading.Thread(target=resetTasksetThreads,args=(os.getpid(),)).start()
+    
+
 from icecube.clsim import GetDefaultParameterizationList
 from icecube.clsim import GetFlasherParameterizationList
 from icecube.clsim import GetHybridParameterizationList
@@ -464,6 +501,8 @@ def I3CLSimTabulatePhotons(tray, name,
                    OpenCLDeviceList=openCLDevices,
                    **ExtraArgumentsToI3CLSimModule
                    )
+    
+    unpin_threads()
 
 @traysegment
 def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=90.*I3Units.degree, Azimuth=0*I3Units.degree, ZCoordinate=0.*I3Units.m,
@@ -639,7 +678,7 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=90.*I3U
             dims = [
                 clsim.tabulator.PowerAxis(0, 580, 100, 2),
                 clsim.tabulator.LinearAxis(0, numpy.pi, 36),
-                clsim.tabulator.LinearAxis(-1e3, 1e3, 100),
+                clsim.tabulator.LinearAxis(-8e2, 8e2, 80),
                 clsim.tabulator.PowerAxis(0, 7e3, 105, 2),
             ]
             geo = clsim.tabulator.CylindricalAxes

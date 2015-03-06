@@ -86,6 +86,51 @@ icetray.logging.set_level_for_unit('I3CLSimTabulatorModule', 'DEBUG')
 icetray.logging.set_level_for_unit('I3CLSimLightSourceToStepConverterGeant4', 'TRACE')
 icetray.logging.set_level_for_unit('I3CLSimLightSourceToStepConverterFlasher', 'TRACE')
 
+import os
+import subprocess
+import threading
+import time
+def taskset(pid,tt=None):
+    # get/set the taskset affinity for pid
+    # uses a binary number string for the core affinity
+    l = ['/bin/taskset','-p']
+    if tt:
+        l.append(hex(int(tt,2))[2:])
+    l.append(str(pid))
+    p = subprocess.Popen(l,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    output = p.communicate()[0].split(':')[-1].strip()
+    if not tt:
+        return bin(int(output,16))[2:]
+
+def tasksetInUse():
+    # check for cpu affinity (taskset)
+    try:
+        num_cpus = reduce(lambda b,a: b+int('processor' in a),open('/proc/cpuinfo').readlines(),0)
+        affinity = taskset(os.getpid())
+        if len(affinity) < num_cpus:
+            return True
+        for x in affinity[:num_cpus]:
+            if x != '1':
+                return True
+        return False
+    except Exception:
+        return False
+
+def resetTasksetThreads(main_pid):
+    # reset thread taskset affinity
+    time.sleep(60)
+    num_cpus = reduce(lambda b,a: b+int('processor' in a),open('/proc/cpuinfo').readlines(),0)
+    tt = '1'*num_cpus
+    #tt = taskset(main_pid)
+    p = subprocess.Popen(['/bin/ps','-Lo','tid','--no-headers','%d'%main_pid],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    for tid in p.communicate()[0].split():
+        tid = tid.strip()
+        if tid:
+            taskset(tid,tt)
+    icetray.logging.log_notice('Unset affinity')
+icetray.logging.log_notice('taskset in use: %s' % tasksetInUse())
+threading.Thread(target=resetTasksetThreads,args=(os.getpid(),)).start()
+
 tray.AddSegment(TabulatePhotonsFromSource, 'generator', Seed=opts.seed, PhotonSource=opts.light_source,
     Zenith=opts.zenith, ZCoordinate=opts.z, Energy=opts.energy, NEvents=opts.nevents, Filename=outfile,
     TabulateImpactAngle=opts.tabulate_impact_angle, PhotonPrescale=opts.prescale)

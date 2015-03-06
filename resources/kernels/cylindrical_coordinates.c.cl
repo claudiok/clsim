@@ -53,7 +53,7 @@ getCoordinates(const floating4_t absPos, floating4_t dirAndWlen,
     coords.s0 = magnitude(rho);
     // azimuth (in radians, because that's how the first implementation worked)
     coords.s1 = (coords.s0 > 0) ?
-        acos(-dot(rho,source->perpDir)/coords.s0) : 0;
+        acos(dot(rho,source->perpDir)/coords.s0) : 0;
     // depth of closest approach
     coords.s2 = source->posAndTime.z + l*source->dir.z;
 #ifdef TABULATE_IMPACT_ANGLE

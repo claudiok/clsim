@@ -250,7 +250,7 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
 		
 		cl::Kernel kernel(program, "propKernel");
 		
-		maxNumWorkitems_ = kernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device);
+		maxNumWorkitems_ = std::min(kernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device), size_t(1));
 		log_debug_stream("max work group size " << maxNumWorkitems_);
 		log_debug_stream(device.getInfo<CL_DEVICE_NAME>() << " max memory "<<device.getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>());
 		

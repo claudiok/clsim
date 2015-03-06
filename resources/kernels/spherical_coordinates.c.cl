@@ -52,7 +52,7 @@ getCoordinates(const floating4_t absPos, floating4_t dirAndWlen,
     coords.s0 = magnitude(pos);
     // azimuth
     coords.s1 = (n_rho > 0) ?
-        acos(-dot(rho,source->perpDir)/n_rho)/(PI/180) : 0;
+        acos(dot(rho,source->perpDir)/n_rho)/(PI/180) : 0;
     // cos(polar angle)
     coords.s2 = (coords.s0 > 0) ? my_divide(l, coords.s0) : 0;
 #ifdef TABULATE_IMPACT_ANGLE
