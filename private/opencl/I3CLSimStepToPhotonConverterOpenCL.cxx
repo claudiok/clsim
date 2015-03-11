@@ -932,7 +932,7 @@ namespace {
             
             const uint32_t numRecordedScatters = static_cast<uint32_t>(std::min(static_cast<std::size_t>(numScatters), photonHistoryEntries));
             // start with the most recent index
-            uint32_t currentScatterIndex = numScatters % photonHistoryEntries;
+            uint32_t currentScatterIndex;
             
             if (numScatters<=photonHistoryEntries) {
                 currentScatterIndex=0; // start with index 0
