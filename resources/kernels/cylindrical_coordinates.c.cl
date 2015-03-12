@@ -69,8 +69,8 @@ getCoordinates(const floating4_t absPos, floating4_t dirAndWlen,
     floating_t sina = my_sqrt(RNG_CALL_UNIFORM_CO);
     scatterDirectionByAngle(my_sqrt(1-sina*sina), sina, &dirAndWlen, RNG_CALL_UNIFORM_CO);
     // find the vector connecting the center of the DOM to the nominal Cherenkov
-    // emission point (i.e. perpendicular to the Cherenkov light frontb)
-    floating4_t cpos = absPos - (source->posAndTime + (l-rho*my_recip(tan_thetaC)*source->dir));
+    // emission point (i.e. perpendicular to the Cherenkov light front)
+    floating4_t cpos = absPos - (source->posAndTime + (l-rho*my_recip(tan_thetaC))*source->dir);
     floating_t cdist = magnitude(cpos);
     coords.s4 = (cdist > 0) ? my_divide(dot(dirAndWlen, cpos), cdist) : 1;
     
