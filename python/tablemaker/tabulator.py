@@ -684,7 +684,7 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=90.*I3U
             geo = clsim.tabulator.CylindricalAxes
         # Add a dimension for the impact angle
         if TabulateImpactAngle:
-            dims.insert(-1, clsim.tabulator.LinearAxis(-1, 1, 20))
+            dims.append(clsim.tabulator.LinearAxis(-1, 1, 20))
         Axes = geo(dims)
     
 

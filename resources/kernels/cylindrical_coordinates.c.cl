@@ -56,8 +56,10 @@ getCoordinates(const floating4_t absPos, floating4_t dirAndWlen,
         acos(dot(rho,source->perpDir)/coords.s0) : 0;
     // depth of closest approach
     coords.s2 = source->posAndTime.z + l*source->dir.z;
+    // delay time
+    coords.s3 = pos.w - (l + coords.s0*tan_thetaC)*recip_speedOfLight;
 #ifdef TABULATE_IMPACT_ANGLE
-    // s3 is the cosine of the opening angle between a vector connecting
+    // s4 is the cosine of the opening angle between a vector connecting
     // the DOM's center to the photon impact point and a vector connecting
     // the center to the nominal Cherenkov emission point. Here we average over possible DOM positions
     // by randomizing the impact position in the cross-sectional area of the
@@ -70,13 +72,7 @@ getCoordinates(const floating4_t absPos, floating4_t dirAndWlen,
     // emission point (i.e. perpendicular to the Cherenkov light frontb)
     floating4_t cpos = absPos - (source->posAndTime + (l-rho*my_recip(tan_thetaC)*source->dir));
     floating_t cdist = magnitude(cpos);
-    coords.s3 = (cdist > 0) ? my_divide(dot(dirAndWlen, cpos), cdist) : 1;
-    // delay time
-    coords.s4 = pos.w - (l + coords.s0*tan_thetaC)*recip_speedOfLight;
-#else
-    // delay time
-    coords.s3 = pos.w - (l + coords.s0*tan_thetaC)*recip_speedOfLight;
-#endif
+    coords.s4 = (cdist > 0) ? my_divide(dot(dirAndWlen, cpos), cdist) : 1;
     
     return coords;
 }

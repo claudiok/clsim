@@ -55,8 +55,10 @@ getCoordinates(const floating4_t absPos, floating4_t dirAndWlen,
         acos(dot(rho,source->perpDir)/n_rho)/(PI/180) : 0;
     // cos(polar angle)
     coords.s2 = (coords.s0 > 0) ? my_divide(l, coords.s0) : 0;
+    // delay time
+    coords.s3 = pos.w - coords.s0*min_invPhaseVel;
 #ifdef TABULATE_IMPACT_ANGLE
-    // s3 is the cosine of the opening angle between a vector connecting
+    // s4 is the cosine of the opening angle between a vector connecting
     // the DOM's center to the photon impact point and a vector connecting
     // the center to the emitter. Here we average over possible DOM positions
     // by randomizing the impact position in the cross-sectional area of the
@@ -65,12 +67,7 @@ getCoordinates(const floating4_t absPos, floating4_t dirAndWlen,
     // radius.
     floating_t sina = my_sqrt(RNG_CALL_UNIFORM_CO);
     scatterDirectionByAngle(my_sqrt(1-sina*sina), sina, &dirAndWlen, RNG_CALL_UNIFORM_CO);
-    coords.s3 = (coords.s0 > 0) ? my_divide(dot(dirAndWlen, pos), coords.s0) : 1;
-    // delay time
-    coords.s4 = pos.w - coords.s0*min_invPhaseVel;
-#else
-    // delay time
-    coords.s3 = pos.w - coords.s0*min_invPhaseVel;
+    coords.s4 = (coords.s0 > 0) ? my_divide(dot(dirAndWlen, pos), coords.s0) : 1;
 #endif
     
     dbg_printf("     %4.1f %4.1f %4.2f %6.2f\n", coords.s0, coords.s1, coords.s2, coords.s3);
