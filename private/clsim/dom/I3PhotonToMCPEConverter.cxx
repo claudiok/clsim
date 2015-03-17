@@ -306,6 +306,9 @@ void I3PhotonToMCPEConverter::DAQ(I3FramePtr frame)
         const I3ModuleGeo &module = module_geo_it->second;
 
         // this module assumes that all DOMs are IceCube-style with a single PMT per DOM
+        if (module.GetModuleType() != I3ModuleGeo::IceCube)
+            continue;
+        
         if ((std::abs(om.position.GetX() - module.GetPos().GetX()) > .01*I3Units::mm) ||
             (std::abs(om.position.GetY() - module.GetPos().GetY()) > .01*I3Units::mm) ||
             (std::abs(om.position.GetZ() - module.GetPos().GetZ()) > .01*I3Units::mm))
