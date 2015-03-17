@@ -72,9 +72,9 @@ I3PhotonToMCHitConverterForMDOMs::I3PhotonToMCHitConverterForMDOMs(const I3Conte
                  "A random number generating service (derived from I3RandomService).",
                  randomService_);
     
-    outputMCHitSeriesMapName_="MCHitSeriesMap";
-    AddParameter("OutputMCHitSeriesMapName",
-                 "Name of the output I3MCHitSeriesMap frame object",
+    outputMCHitSeriesMapName_="MCPEHitSeriesMap";
+    AddParameter("OutputMCPESeriesMapName",
+                 "Name of the output I3MCPESeriesMap frame object",
                  outputMCHitSeriesMapName_);
     
     inputPhotonSeriesMapName_="PropagatedPhotons";
@@ -99,20 +99,38 @@ I3PhotonToMCHitConverterForMDOMs::I3PhotonToMCHitConverterForMDOMs(const I3Conte
                  "Angular acceptance of a PMT as a I3CLSimFunction object.",
                  pmtAngularAcceptance_);
 
-    AddParameter("GlassAbsorptionLength",
-                 "The absorption length of the DOM pressure housing glass.",
-                 glassAbsorptionLength_);
-    
-    glassThickness_=NAN;
+    glassThickness_=1.4*I3Units::cm;
     AddParameter("GlassThickness",
                  "The thickness of the DOM pressure housing glass (the module assumes that "
                  "the rest of the path from the DOM surface to the PMT is in optical gel.",
                  glassThickness_);
 
+    DOMOversizeFactor_=1.;
+    AddParameter("DOMOversizeFactor",
+                 "Specifiy the \"oversize factor\" (i.e. DOM radius scaling factor) you used during the CLSim run.\n"
+                 "The photon arrival times will be corrected. In practice this means your large spherical DOMs will\n"
+                 "become ellipsoids.",
+                 DOMOversizeFactor_);
+
+    DOMPancakeFactor_=1.;
+    AddParameter("DOMPancakeFactor",
+                 "Specifiy the \"pancake factor\" of a DOM. This is the factor a DOM has been *shrunk* again\n"
+                 "(in the direction of the photon) after oversizing. You should set this to whatever\n"
+                 "value you used during running I3CLSimModule. And most of the time this is the same as the\n"
+                 "oversize factor.",
+                 DOMPancakeFactor_);
+
+#if 0
+    AddParameter("GlassAbsorptionLength",
+                 "The absorption length of the DOM pressure housing glass.",
+                 glassAbsorptionLength_);
+    
+
+
     AddParameter("GelAbsorptionLength",
                  "The absorption length of the optical gel between the DOM sphere and the PMT.",
                  gelAbsorptionLength_);
-
+#endif
 }
 
 /**********
@@ -126,7 +144,7 @@ void I3PhotonToMCHitConverterForMDOMs::Configure()
     GetParameter("RandomService", randomService_);
     
     GetParameter("InputPhotonSeriesMapName", inputPhotonSeriesMapName_);
-    GetParameter("OutputMCHitSeriesMapName", outputMCHitSeriesMapName_);
+    GetParameter("OutputMCPESeriesMapName", outputMCHitSeriesMapName_);
     
     GetParameter("MCTreeName", MCTreeName_);
     GetParameter("IgnoreSubdetectors", ignoreSubdetectors_);
@@ -134,15 +152,23 @@ void I3PhotonToMCHitConverterForMDOMs::Configure()
     GetParameter("PMTWavelengthAcceptance", pmtWavelengthAcceptance_);
     GetParameter("PMTAngularAcceptance", pmtAngularAcceptance_);
 
-    GetParameter("GlassAbsorptionLength", glassAbsorptionLength_);
     GetParameter("GlassThickness", glassThickness_);
+
+    GetParameter("DOMOversizeFactor", DOMOversizeFactor_);
+    GetParameter("DOMPancakeFactor", DOMPancakeFactor_);
+    
+#if 0
+    GetParameter("GlassAbsorptionLength", glassAbsorptionLength_);
     GetParameter("GelAbsorptionLength", gelAbsorptionLength_);
+#endif
 
     if (!pmtWavelengthAcceptance_)
         log_fatal("The \"PMTWavelengthAcceptance\" parameter must not be empty.");
     if (!pmtAngularAcceptance_)
         log_fatal("The \"PMTAngularAcceptance\" parameter must not be empty.");
 
+// NB: assume that pmtWavelengthAcceptance_ is a total efficiency calibration
+#if 0
     if (!glassAbsorptionLength_)
         log_fatal("The \"GlassAbsorptionLength\" parameter must not be empty.");
     if (isnan(glassThickness_))
@@ -150,7 +176,7 @@ void I3PhotonToMCHitConverterForMDOMs::Configure()
 
     if (!gelAbsorptionLength_)
         log_fatal("The \"GelAbsorptionLength\" parameter must not be empty.");
-
+#endif
     if (!randomService_) {
         log_info("No random service provided as a parameter, trying to get one from the context..");
         randomService_ = context_.Get<I3RandomServicePtr>();
@@ -162,13 +188,15 @@ void I3PhotonToMCHitConverterForMDOMs::Configure()
 }
 
 namespace {
-    inline int FindHitPMT(const I3Position &photonPos, 
-                          const I3Direction &photonDir, 
+    inline int FindHitPMT(const I3Photon &photon, 
                           const ModuleKey &key,
                           const I3ModuleGeo &moduleGeo,
                           const I3OMGeoMap &omGeoMap,
                           const std::vector<unsigned char> &pmtNumbersToCheck,
                           double glassThickness,
+                          double DOMOversizeFactor,
+                          double DOMPancakeFactor,
+                          double &hitTime,
                           double &pathLengthInOM,
                           double &pathLengthInGlass)
     {
@@ -176,36 +204,58 @@ namespace {
         const double omRadiusSquared = omRadius*omRadius;
         
         // photon position relative to DOM position
-        double px=photonPos.GetX()-moduleGeo.GetPos().GetX();
-        double py=photonPos.GetY()-moduleGeo.GetPos().GetY();
-        double pz=photonPos.GetZ()-moduleGeo.GetPos().GetZ();
-        double pr2 = px*px + py*py + pz*pz;
+        I3Position p(photon.GetPos() - moduleGeo.GetPos());
+        const I3Direction &d = photon.GetDir();
         
-        const double dx = photonDir.GetX();
-        const double dy = photonDir.GetY();
-        const double dz = photonDir.GetZ();
-        
-        {
+        if (DOMOversizeFactor == 1.) {
             // sanity check: are photons on the OM's surface?
-            const double distFromDOMCenter = std::sqrt(pr2);
-            if (std::abs(std::sqrt(pr2) - omRadius) > 3.*I3Units::cm) {
+            const double distFromDOMCenter = p.Magnitude();
+            if (std::abs(p.Magnitude() - omRadius) > 3.*I3Units::cm) {
                 log_warn("distance not %fmm.. it is %fmm (diff=%gmm). correcting to DOM radius.",
                          omRadius/I3Units::mm,
-                         std::sqrt(pr2)/I3Units::mm,
-                         (std::sqrt(pr2)-omRadius)/I3Units::mm);
+                         p.Magnitude()/I3Units::mm,
+                         (p.Magnitude()-omRadius)/I3Units::mm);
             }
             
             // to make sure that photons start *exactly* on the outside of the sphere
-            const double pr_scale = omRadius/distFromDOMCenter;
+            p *= omRadius/distFromDOMCenter;
+            
+        } else {
+            // The photon was recorded on the surface of an oversized, oblate
+            // spheroid. Pull it to the surface of the physical OM sphere.
 
-            px *= pr_scale;
-            py *= pr_scale;
-            pz *= pr_scale;
-            pr2 = omRadiusSquared;
+            // The orientation of the photon w.r.t. the OM. "Direction" points
+            // along the photon direction, and "Right" away from the DOM center.
+            // "Up" is a counterclockwise rotation around the OM.
+            assert(d*p <= 0);
+            const I3Orientation axis(d, I3Direction(-d.Cross(p)));
+            const I3Position op(p);
+
+            // Pull perpendicularly towards the module's center
+            double odir = p*axis.GetDir();
+            p -= (1.-1./DOMOversizeFactor)*(p*axis.GetRight())
+                *axis.GetRight();
+            // ensure that the photon is now in the cross-sectional area of the
+            // physical OM
+            assert(p*axis.GetRight() >= 0);
+            assert(p*axis.GetRight() <= omRadius); 
+            double ndir = p*axis.GetDir();
+            assert(abs(odir-ndir) < I3Units::mm);
+            
+            // Pull parallelly towards the module's center
+            double longStep = (1.-DOMPancakeFactor/DOMOversizeFactor)*(p*axis.GetDir());
+            const I3Position opp(p);
+            p -= longStep*axis.GetDir();
+            // ensure that the photon is now on the surface of the physical OM
+            assert(std::abs(p.Magnitude() - omRadius) < I3Units::mm);
+            
+            // Correct timing
+            hitTime += longStep/photon.GetGroupVelocity();
+
         }
         
         // is photon entering?
-        const double dot = px*dx + py*dy + pz*dz;
+        const double dot = p*d;
         if (dot > 0.) {
             log_warn("photon is leaving, dot=%f", dot);
             return -1;
@@ -222,6 +272,7 @@ namespace {
                   moduleGeo.GetOrientation().GetZ());
         
         int foundIntersection=-1;
+        int intersections = 0;
         BOOST_FOREACH(unsigned char pmtNum, pmtNumbersToCheck)
         {
             const OMKey pmtKey(key.GetString(), key.GetOM(), pmtNum);
@@ -242,38 +293,32 @@ namespace {
             log_trace("pmtRadius=%fmm, pmtArea=%fmm^2", std::sqrt(pmtRadiusSquared)/I3Units::mm, pmtArea/I3Units::mm2);
             
             // this is already in the final coordinate frame
-            double nx = pmtInfo.orientation.GetX();
-            double ny = pmtInfo.orientation.GetY();
-            double nz = pmtInfo.orientation.GetZ();
-            log_trace(" PMT %u dir  = (%f,%f,%f)", pmtNum, nx, ny, nz);
-            
-            const double nl = nx*nx + ny*ny + nz*nz;
-            if (fabs(nl - 1.) > 1e-6) log_fatal("INTERNAL ERROR: rotation does change vector length!");
+            I3Direction n(pmtInfo.orientation.GetDir());
+            log_trace(" PMT %u dir  = (%f,%f,%f)", pmtNum, n.GetX(), n.GetY(), n.GetZ());
             
             // find the intersection of the PMT's surface plane and the photon's path
-            const double denom = dx*nx + dy*ny + dz*nz; // should be < 0., test that:
-            
+            const double denom = d*n; // should be < 0., test that:
             if (denom>=1e-8) continue; // no intersection, photon is moving towards the PMT's back
             
-            const double ax = pmtInfo.position.GetX() - moduleGeo.GetPos().GetX();
-            const double ay = pmtInfo.position.GetY() - moduleGeo.GetPos().GetY();
-            const double az = pmtInfo.position.GetZ() - moduleGeo.GetPos().GetZ();
+            const I3Position a(pmtInfo.position - moduleGeo.GetPos());
+            assert(a.Magnitude() > 4*I3Units::cm);
 
             //double ar2 = ax*ax + ay*ay + az*az;
             //log_trace("n*a/|a|=%f", (nx*ax + ny*ay + nz*az)/std::sqrt(ar2));
 
-            const double mu = ((ax-px)*nx + (ay-py)*ny + (az-pz)*nz)/denom;
+            const double mu = (a-p)*n/denom;
+            assert(std::isfinite(mu));
             
             if (mu < 0.) continue; // no intersection, photon is moving away from PMT
             
             // calculate the distance of the point of intersection
             // from the PMT position:
-            const double distFromPMTCenterSquared = 
-            (ax-px-mu*dx)*(ax-px-mu*dx) + 
-            (ay-py-mu*dy)*(ay-py-mu*dy) + 
-            (az-pz-mu*dz)*(az-pz-mu*dz);
+            const double distFromPMTCenterSquared = (a-p-mu*d).Mag2(); 
+            assert(std::isfinite(distFromPMTCenterSquared));
             
             if (distFromPMTCenterSquared > pmtRadiusSquared) continue; // photon outside the PMT radius
+
+            log_debug_stream("hit PMT#" << int(pmtNum) << " after " << (mu/I3Units::cm) << " cm");
 
             // there is an intersection with a pmt!
             if (foundIntersection >= 0) {
@@ -291,6 +336,7 @@ namespace {
             }
             
             foundIntersection = static_cast<int>(pmtNum);
+            intersections++;
             pathLengthInOM = mu;
             distFromPMTCenterSquaredFound = distFromPMTCenterSquared;
             pmtRadiusSquaredFound = pmtRadiusSquared;
@@ -314,22 +360,17 @@ namespace {
             const double l = std::min(l1,l2);
             if (l < 0.) log_fatal("Photon leaves DOM.");
             
-            const double p2x = px + dx*l;
-            const double p2y = py + dy*l;
-            const double p2z = pz + dz*l;
+            const I3Position p2 = p + l*d;
             
-            if (std::abs(p2x*p2x + p2y*p2y + p2z*p2z - R*R) > 1e-5)
-                log_fatal("Internal error.");
+            // Ensure that p2 is on the inner surface of the housing
+            assert(std::abs(p2.Magnitude() - R) < I3Units::mm);
             
             pathLengthInGlass = l;
             
             if (pathLengthInGlass - glassThickness < -0.1*I3Units::mm) {
-                const double hx = px+pathLengthInOM*dx;
-                const double hy = py+pathLengthInOM*dy;
-                const double hz = pz+pathLengthInOM*dz;
-                const double hr = std::sqrt(hx*hx + hy*hy + hz*hz);
+                const I3Position h = p + pathLengthInOM*d;
                 log_error("hr=%fmm, Rinner=%fmm, Router=%fmm, distFromPMTCenter=%fmm, pmtRadius=%fmm",
-                         hr/I3Units::mm,
+                         h.Magnitude()/I3Units::mm,
                          (omRadius-glassThickness)/I3Units::mm,
                          omRadius/I3Units::mm,
                          std::sqrt(distFromPMTCenterSquaredFound)/I3Units::mm,
@@ -342,8 +383,13 @@ namespace {
             } else if (pathLengthInGlass < glassThickness) {
                 pathLengthInGlass = glassThickness;
             }
+            
+            // Ensure that the PMT window is actually inside the housing
+            assert(pathLengthInOM >= pathLengthInGlass);
         }
         
+        // PMT windows should not shadow each other.
+        assert(intersections <= 1);
         
         return foundIntersection;
     }
@@ -358,6 +404,15 @@ namespace {
         return elem1.time < elem2.time;
     }
     
+    I3ParticleID GetParticleID(const I3Photon &p)
+    {
+        I3ParticleID id;
+        
+        id.majorID = p.GetParticleMajorID();
+        id.minorID = p.GetParticleMinorID();
+        
+        return id;
+    }
 }
 
 /********
@@ -450,16 +505,6 @@ void I3PhotonToMCHitConverterForMDOMs::DAQ(I3FramePtr frame)
     if (!MCTree) log_fatal("Frame does not contain an I3MCTree named \"%s\".",
                            MCTreeName_.c_str());
     
-    // build an index into the I3MCTree
-    std::map<std::pair<uint64_t, int>, const I3Particle *> mcTreeIndex;
-    for (I3MCTree::iterator it = MCTree->begin();
-         it != MCTree->end(); ++it)
-    {
-        const I3Particle &particle = *it;
-        mcTreeIndex.insert(std::make_pair(std::make_pair(particle.GetMajorID(), particle.GetMinorID()), &particle));
-    }
-    
-    
     for (I3PhotonSeriesMap::const_iterator om_it = input_hitmap->begin(); om_it != input_hitmap->end(); ++om_it)
     {
         const ModuleKey &key = om_it->first;
@@ -470,6 +515,9 @@ void I3PhotonToMCHitConverterForMDOMs::DAQ(I3FramePtr frame)
         if (geo_it == moduleGeoMap->end())
             log_fatal("Module (%i/%u) not found in the current geometry map!", key.GetString(), key.GetOM());
         const I3ModuleGeo &moduleGeo = geo_it->second;
+        if (moduleGeo.GetModuleType() != I3ModuleGeo::mDOM)
+            continue;
+        assert(key.GetString() > 86);
         
         std::map<ModuleKey, std::vector<unsigned char> >::const_iterator pmt_index_it = PMTsInModule.find(key);
         if (pmt_index_it == PMTsInModule.end())
@@ -483,14 +531,17 @@ void I3PhotonToMCHitConverterForMDOMs::DAQ(I3FramePtr frame)
             
             double pathLengthInsideOM=NAN;
             double pathLengthInsideGlass=NAN;
+            double hitTime=photon.GetTime();
             I3Direction rotatedPmtDir;
-            int hitPmtNum = FindHitPMT(photon.GetPos(),
-                                       photon.GetDir(), 
+            int hitPmtNum = FindHitPMT(photon, 
                                        key,
                                        moduleGeo,
                                        *omGeoMap,
                                        checkPMTNumbers,
                                        glassThickness_,
+                                       DOMOversizeFactor_,
+                                       DOMPancakeFactor_,
+                                       hitTime,
                                        pathLengthInsideOM,
                                        pathLengthInsideGlass);
             if (hitPmtNum < 0) continue; // no PMT hit
@@ -504,9 +555,7 @@ void I3PhotonToMCHitConverterForMDOMs::DAQ(I3FramePtr frame)
             const I3OMGeo &pmtGeo = pmt_it->second;
             const I3Direction pmtDir = pmtGeo.GetDirection();
 
-            const double hit_cosangle = - (pmtDir.GetX()*photon.GetDir().GetX() +
-                                           pmtDir.GetY()*photon.GetDir().GetY() +
-                                           pmtDir.GetZ()*photon.GetDir().GetZ());
+            const double hit_cosangle = -pmtGeo.GetDirection()*photon.GetDir();
             if (hit_cosangle <= 0.) continue; // the flat disc window cannot be hit from behind
 
             const double wlen = photon.GetWavelength();
@@ -525,9 +574,11 @@ void I3PhotonToMCHitConverterForMDOMs::DAQ(I3FramePtr frame)
             const double gelThickness = pathLengthInsideOM-glassThickness_;
             log_trace("gelThickness=%fmm", gelThickness/I3Units::mm);
             
+#if 0
             const double glassGelSurvival_fac =
                 std::exp(-glassThickness_/glassAbsorptionLength_->GetValue(wlen)
                          -gelThickness/gelAbsorptionLength_->GetValue(wlen));
+#endif
             
             const double qe_fac = pmtWavelengthAcceptance_->GetValue(wlen);
             
@@ -539,13 +590,13 @@ void I3PhotonToMCHitConverterForMDOMs::DAQ(I3FramePtr frame)
             // angular acceptance factor from the geometry. So we have to get rid of that first.
             // This means that after the code knows that a PMT is hit, the geometrical acceptance
             // should be 1 if the acceptance factor from the geometry is cos(theta).
-            const double ang_fac = pmtAngularAcceptance_->GetValue(hit_cosangle)/std::fabs(hit_cosangle);
+            // const double ang_fac = pmtAngularAcceptance_->GetValue(hit_cosangle)/std::fabs(hit_cosangle);
             
             // calculate the measurement probability
             double measurement_prob = photon.GetWeight();
-            measurement_prob *= glassGelSurvival_fac;
+            // measurement_prob *= glassGelSurvival_fac;
             measurement_prob *= qe_fac;
-            measurement_prob *= ang_fac;
+            // measurement_prob *= ang_fac;
             
             if (measurement_prob > 1.)
                 log_fatal("measurement_prob > 1 (it's %f): cannot continue. your hit weights are too high. (weight=%f, wlen=%fnm)",
@@ -555,12 +606,11 @@ void I3PhotonToMCHitConverterForMDOMs::DAQ(I3FramePtr frame)
             if (measurement_prob <= randomService_->Uniform()) continue;
             
             // find the particle
-            std::map<std::pair<uint64_t, int>, const I3Particle *>::const_iterator it = 
-            mcTreeIndex.find(std::make_pair(photon.GetParticleMajorID(), photon.GetParticleMinorID()));
-            if (it==mcTreeIndex.end())
+            I3MCTree::const_iterator it = MCTree->find(GetParticleID(photon));
+	    if (it==MCTree->end())
                 log_fatal("Particle with id maj=%" PRIu64 ", min=%i does not exist in MC tree, but we have a photon that claims it was created by that particle..",
                           photon.GetParticleMajorID(), photon.GetParticleMinorID());
-            const I3Particle &particle = *(it->second);
+            const I3Particle &particle = *(it);
             
             
             // get the hit series into which we are going to insert the hit
@@ -571,7 +621,7 @@ void I3PhotonToMCHitConverterForMDOMs::DAQ(I3FramePtr frame)
             I3MCPE &hit = hitSeries.back();
             
             // fill in all information
-            hit.time=photon.GetTime();
+            hit.time=hitTime;
             hit.npe=1;
         }
         

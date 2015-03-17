@@ -73,6 +73,7 @@ getCoordinates(const floating4_t absPos, floating4_t dirAndWlen,
     floating4_t cpos = absPos - (source->posAndTime + (l-rho*my_recip(tan_thetaC))*source->dir);
     floating_t cdist = magnitude(cpos);
     coords.s4 = (cdist > 0) ? my_divide(dot(dirAndWlen, cpos), cdist) : 1;
+#endif
     
     return coords;
 }

@@ -119,21 +119,25 @@ class I3PhotonToMCHitConverterForMDOMs : public I3ConditionalModule
          */
         I3CLSimFunctionConstPtr pmtAngularAcceptance_;
 
+       /**
+        * Parameter: The thickness of the DOM pressure housing glass.
+        */
+       double glassThickness_;
+       
+       double DOMOversizeFactor_;
+       double DOMPancakeFactor_;
+// NB: we assume that pmtWavelengthAcceptance_ is a total efficiency (IceCube convention)
+#if 0
         /**
          * Parameter: The absorption length of the DOM pressure housing glass.
          */
         I3CLSimFunctionConstPtr glassAbsorptionLength_;
 
         /**
-         * Parameter: The thickness of the DOM pressure housing glass.
-         */
-        double glassThickness_;
-
-        /**
          * Parameter: The absorption length of the optical gel between the DOM sphere and the PMT.
          */
         I3CLSimFunctionConstPtr gelAbsorptionLength_;
-
+#endif
 
         /**
          * @brief The logger can also be used for this module
