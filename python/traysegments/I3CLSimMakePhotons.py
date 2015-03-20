@@ -66,8 +66,10 @@ def I3CLSimMakePhotons(tray, name,
                        PhotonHistoryEntries=0,
                        DoNotParallelize=False,
                        DOMOversizeFactor=5.,
+                       DOMRadius=0.16510*icetray.I3Units.m,
                        UnshadowedFraction=0.9,
                        UseHoleIceParameterization=True,
+                       WavelengthGenerationBias=None,
                        OverrideApproximateNumberOfWorkItems=None,
                        ExtraArgumentsToI3CLSimModule=dict(),
                        If=lambda f: True
@@ -239,7 +241,6 @@ def I3CLSimMakePhotons(tray, name,
         print("********************")
 
     # some constants
-    DOMRadius = 0.16510*icetray.I3Units.m # 13" diameter
     Jitter = 2.*icetray.I3Units.ns
 
     if MMCTrackListName is None or MMCTrackListName=="":
@@ -328,10 +329,13 @@ def I3CLSimMakePhotons(tray, name,
     #    print("***** running unweighted simulation with a photon pre-scaling of", UnWeightedPhotons)
     #    wavelengthGenerationBias = clsim.I3CLSimFunctionConstant(UnWeightedPhotons)
     #else:
-    if not UnWeightedPhotons:
-        wavelengthGenerationBias = domAcceptance
+    if WavelengthGenerationBias is not None:
+        wavelengthGenerationBias = WavelengthGenerationBias
     else:
-        wavelengthGenerationBias = None
+        if not UnWeightedPhotons:
+            wavelengthGenerationBias = domAcceptance
+        else:
+            wavelengthGenerationBias = None
 
     # muon&cascade parameterizations
     ppcConverter = clsim.I3CLSimLightSourceToStepConverterPPC(photonsPerStep=200)

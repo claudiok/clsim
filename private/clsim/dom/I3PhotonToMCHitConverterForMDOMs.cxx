@@ -120,7 +120,6 @@ I3PhotonToMCHitConverterForMDOMs::I3PhotonToMCHitConverterForMDOMs(const I3Conte
                  "oversize factor.",
                  DOMPancakeFactor_);
 
-#if 0
     AddParameter("GlassAbsorptionLength",
                  "The absorption length of the DOM pressure housing glass.",
                  glassAbsorptionLength_);
@@ -130,7 +129,6 @@ I3PhotonToMCHitConverterForMDOMs::I3PhotonToMCHitConverterForMDOMs(const I3Conte
     AddParameter("GelAbsorptionLength",
                  "The absorption length of the optical gel between the DOM sphere and the PMT.",
                  gelAbsorptionLength_);
-#endif
 }
 
 /**********
@@ -157,18 +155,15 @@ void I3PhotonToMCHitConverterForMDOMs::Configure()
     GetParameter("DOMOversizeFactor", DOMOversizeFactor_);
     GetParameter("DOMPancakeFactor", DOMPancakeFactor_);
     
-#if 0
     GetParameter("GlassAbsorptionLength", glassAbsorptionLength_);
     GetParameter("GelAbsorptionLength", gelAbsorptionLength_);
-#endif
 
     if (!pmtWavelengthAcceptance_)
         log_fatal("The \"PMTWavelengthAcceptance\" parameter must not be empty.");
     if (!pmtAngularAcceptance_)
         log_fatal("The \"PMTAngularAcceptance\" parameter must not be empty.");
 
-// NB: assume that pmtWavelengthAcceptance_ is a total efficiency calibration
-#if 0
+
     if (!glassAbsorptionLength_)
         log_fatal("The \"GlassAbsorptionLength\" parameter must not be empty.");
     if (isnan(glassThickness_))
@@ -176,7 +171,6 @@ void I3PhotonToMCHitConverterForMDOMs::Configure()
 
     if (!gelAbsorptionLength_)
         log_fatal("The \"GelAbsorptionLength\" parameter must not be empty.");
-#endif
     if (!randomService_) {
         log_info("No random service provided as a parameter, trying to get one from the context..");
         randomService_ = context_.Get<I3RandomServicePtr>();
@@ -574,11 +568,9 @@ void I3PhotonToMCHitConverterForMDOMs::DAQ(I3FramePtr frame)
             const double gelThickness = pathLengthInsideOM-glassThickness_;
             log_trace("gelThickness=%fmm", gelThickness/I3Units::mm);
             
-#if 0
             const double glassGelSurvival_fac =
                 std::exp(-glassThickness_/glassAbsorptionLength_->GetValue(wlen)
                          -gelThickness/gelAbsorptionLength_->GetValue(wlen));
-#endif
             
             const double qe_fac = pmtWavelengthAcceptance_->GetValue(wlen);
             
@@ -590,13 +582,13 @@ void I3PhotonToMCHitConverterForMDOMs::DAQ(I3FramePtr frame)
             // angular acceptance factor from the geometry. So we have to get rid of that first.
             // This means that after the code knows that a PMT is hit, the geometrical acceptance
             // should be 1 if the acceptance factor from the geometry is cos(theta).
-            // const double ang_fac = pmtAngularAcceptance_->GetValue(hit_cosangle)/std::fabs(hit_cosangle);
+            const double ang_fac = pmtAngularAcceptance_->GetValue(hit_cosangle)/std::fabs(hit_cosangle);
             
             // calculate the measurement probability
             double measurement_prob = photon.GetWeight();
-            // measurement_prob *= glassGelSurvival_fac;
+            measurement_prob *= glassGelSurvival_fac;
             measurement_prob *= qe_fac;
-            // measurement_prob *= ang_fac;
+            measurement_prob *= ang_fac;
             
             if (measurement_prob > 1.)
                 log_fatal("measurement_prob > 1 (it's %f): cannot continue. your hit weights are too high. (weight=%f, wlen=%fnm)",

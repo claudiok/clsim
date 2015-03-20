@@ -15,7 +15,8 @@ parser.add_option("-r", "--runnumber", type="int", default=1,
                   dest="RUNNUMBER", help="The run number for this simulation")
 parser.add_option("-n", "--numevents", type="int", default=100,
                   dest="NUMEVENTS", help="The number of events per run")
-
+parser.add_option("-e", "--energy", type="float", default=1e6,
+                  dest="ENERGY", help="The energy of each event")
 parser.add_option("-x", "--xpos", type="float", default=0.,
                   dest="XPOS", help="The x coordinate in meters")
 parser.add_option("-y", "--ypos", type="float", default=0.,
@@ -120,7 +121,7 @@ tray.AddModule("I3MCEventHeaderGenerator","gen_header",
 tray.AddModule(generateEvent, "generateEvent",
                I3RandomService = randomService,
                NEvents = options.NUMEVENTS,
-               Energy = 1000.*I3Units.TeV,
+               Energy = options.ENERGY,
                XCoord = xCoord,
                YCoord = yCoord,
                ZCoord = zCoord,
