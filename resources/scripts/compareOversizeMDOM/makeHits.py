@@ -27,7 +27,9 @@ kwargs = dict()
 
 if opts.oversize != 1.:
 	kwargs['WavelengthGenerationBias'] = efficiencies.GetAcceptanceEnvelope(oversize=opts.oversize)
+	kwargs['WavelengthGenerationBias'] = efficiencies.GetMDOMAcceptance(oversize=opts.oversize, efficiency=1.8)
 	kwargs['DOMOversizeFactor'] = opts.oversize
+	# kwargs['ExtraArgumentsToI3CLSimModule'] = dict(EnableDoubleBuffering=False)
 
 if opts.unweighted:
 	kwargs['UnweightedPhotons'] = True
@@ -35,8 +37,26 @@ if opts.unweighted:
 	kwargs['DOMRadius'] = 356*I3Units.mm/2.
 	assert(opts.oversize == 1.)
 
-tray.Add("Dump")
-
+import copy
+class SizeModules(icetray.I3ConditionalModule):
+	"""Restore OM sphere sizes to IceCube standard"""
+	def __init__(self, ctx):
+		super(SizeModules,self).__init__(ctx)
+		self.AddParameter("Radius", "", 0.16510*icetray.I3Units.m)
+	def Configure(self):
+		self.radius = self.GetParameter("Radius")
+		pass
+	def Geometry(self, frame):
+		modgeomap = copy.copy(frame['I3ModuleGeoMap'])
+		del frame['I3ModuleGeoMap']
+		for k in modgeomap.keys():
+			modgeo = modgeomap[k]
+			modgeo.radius = self.radius
+			modgeomap[k] = modgeo
+		frame['I3ModuleGeoMap'] = modgeomap
+		self.PushFrame(frame)
+if opts.oversize != 1.:
+	tray.Add(SizeModules, radius=0.16510*icetray.I3Units.m)
 
 icetray.logging.set_level_for_unit('I3CLSimStepToPhotonConverterOpenCL', 'TRACE')
 tray.Add(clsim.I3CLSimMakePhotons,
@@ -44,9 +64,14 @@ tray.Add(clsim.I3CLSimMakePhotons,
 	RandomService=randomService,
 	UseGPUs=True,
 	UseCPUs=False,
+	# UseAllCPUCores=True,
 	**kwargs
 	)
 
+tray.Add("Dump")
+
+if opts.oversize != 1.:
+	tray.Add(SizeModules, radius=0.1778*icetray.I3Units.m)
 
 # tray.Add(clsim.I3CLSimMakeHitsFromPhotons, DOMOversizeFactor=opts.oversize, UnshadowedFraction=0.99)
 
@@ -100,7 +125,9 @@ def I3CLSimMakeMDOMHitsFromPhotons(tray, name,
         DOMRadius = 0.16510*icetray.I3Units.m
         mDOMRadius = DOMRadius
     
-    pmtAcceptance = efficiencies.GetMDOMAcceptance(oversize=DOMOversizeFactor*(DOMRadius/mDOMRadius), efficiency=UnshadowedFraction)
+    # *(DOMRadius/mDOMRadius)
+    print "oversize: %.2f pancacke: %.2f" % (DOMOversizeFactor*(DOMRadius/mDOMRadius), DOMOversizeFactor)
+    pmtAcceptance = efficiencies.GetMDOMAcceptance(oversize=DOMOversizeFactor, efficiency=UnshadowedFraction)
 
     tray.AddModule("I3PhotonToMCHitConverterForMDOMs", name + "_clsim_make_hits",
                    RandomService = RandomService,
@@ -130,7 +157,9 @@ tray.Add(I3CLSimMakeMDOMHitsFromPhotons, DOMOversizeFactor=opts.oversize, Unshad
 
 tray.Add("Delete", keys=["PhotonSeriesMap"])
 
-tray.Add("I3Writer", Streams=[icetray.I3Frame.DAQ, icetray.I3Frame.Physics],
+tray.Add("I3NullSplitter", "nullsplit")
+
+tray.Add("I3Writer", Streams=map(icetray.I3Frame.Stream, 'GCDQP'),
     filename=outfile)
 
 tray.Execute()

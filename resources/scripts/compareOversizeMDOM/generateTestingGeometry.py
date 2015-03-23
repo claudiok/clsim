@@ -152,7 +152,7 @@ for i, pos in enumerate(omPositions):
     
     for k, pmtgeo in enumerate(generate_multipmts(newomgeo)):
         pmtkey = icetray.OMKey(omkey.string, omkey.om, k)
-        omgeomap[pmtkey] = newomgeo
+        omgeomap[pmtkey] = pmtgeo
     
     mkey = dataclasses.ModuleKey(omkey.string, omkey.om)
     modgeo = dataclasses.I3ModuleGeo()
