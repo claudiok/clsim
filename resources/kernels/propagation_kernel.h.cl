@@ -42,7 +42,7 @@
 #pragma OPENCL EXTENSION cl_amd_printf : enable
 #define dbg_printf(format, ...) printf(format, ##__VA_ARGS__)
 #else
-#define dbg_printf(format, ...)
+// #define dbg_printf(format, ...)
 #endif
 
 // ZERO and ONE will be defined as either 0.f/1.f or 0./1. depending on DOUBLE_PRECISION
@@ -95,28 +95,28 @@ struct __attribute__ ((packed)) I3CLSimReferenceParticle
 
 ///////////////// forward declarations
 
-inline int findLayerForGivenZPos(floating_t posZ);
+int findLayerForGivenZPos(floating_t posZ);
 
-inline floating_t mediumLayerBoundary(int layer);
+floating_t mediumLayerBoundary(int layer);
 
 void scatterDirectionByAngle(floating_t cosa,
     floating_t sina,
     floating4_t *direction,
     floating_t randomNumber);
 
-inline void createPhotonFromTrack(struct I3CLSimStep *step,
+void createPhotonFromTrack(struct I3CLSimStep *step,
     const floating4_t stepDir,
     RNG_ARGS,
     floating4_t *photonPosAndTime,
     floating4_t *photonDirAndWlen);
 
 #ifdef DOUBLE_PRECISION
-inline float2 sphDirFromCar(double4 carDir);
+float2 sphDirFromCar(double4 carDir);
 #else
-inline float2 sphDirFromCar(float4 carDir);
+float2 sphDirFromCar(float4 carDir);
 #endif
 
-inline void saveHit(
+void saveHit(
     const floating4_t photonPosAndTime,
     const floating4_t photonDirAndWlen,
     const floating_t thisStepLength,
@@ -153,15 +153,15 @@ __constant float PI = 3.14159265359f;
 ///////////////////////////
 
 
-inline floating_t my_divide(floating_t a, floating_t b);
-inline floating_t my_recip(floating_t a);
-inline floating_t my_powr(floating_t a, floating_t b);
-inline floating_t my_sqrt(floating_t a);
-inline floating_t my_rsqrt(floating_t a);
-inline floating_t my_cos(floating_t a);
-inline floating_t my_sin(floating_t a);
-inline floating_t my_log(floating_t a);
-inline floating_t my_exp(floating_t a);
-inline floating_t my_fabs(floating_t a);
-inline floating_t sqr(floating_t a);
+floating_t my_divide(floating_t a, floating_t b);
+floating_t my_recip(floating_t a);
+floating_t my_powr(floating_t a, floating_t b);
+floating_t my_sqrt(floating_t a);
+floating_t my_rsqrt(floating_t a);
+floating_t my_cos(floating_t a);
+floating_t my_sin(floating_t a);
+floating_t my_log(floating_t a);
+floating_t my_exp(floating_t a);
+floating_t my_fabs(floating_t a);
+floating_t sqr(floating_t a);
 

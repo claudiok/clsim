@@ -100,7 +100,7 @@ namespace I3CLSimHelper
             code << "#define FUNCTION_" << functionName << "_DOES_NOT_DEPEND_ON_LAYER" << std::endl;
         }
         
-        code << "inline float " << functionName << "(unsigned int layer, float wavelength);\n\n";
+        code << "float " << functionName << "(unsigned int layer, float wavelength);\n\n";
         code << "inline float " << functionName << "(unsigned int layer, float wavelength)\n";
         code << "{\n";
         if (functionsToGenerate.size()==1) {
@@ -261,7 +261,7 @@ namespace I3CLSimHelper
             code << "#define FUNCTION_getGroupVelocity_DOES_NOT_DEPEND_ON_LAYER" << std::endl;
             code << "#endif" << std::endl;
             code << "// group velocity from group refractive index\n";
-            code << "inline float getGroupVelocity(unsigned int layer, float wavelength);\n\n";
+            code << "float getGroupVelocity(unsigned int layer, float wavelength);\n\n";
             code << "inline float getGroupVelocity(unsigned int layer, float wavelength)\n";
             code << "{\n";
             code << "    const float c_light = " << ToFloatString(I3Constants::c) << ";\n";
@@ -394,7 +394,7 @@ namespace {
                                                      const std::string &functionArgs,
                                                      const std::string &functionArgsToCall)
     {
-        std::string ret = std::string("inline float ") + functionName + "(uint number, " + functionArgs + ");\n\n";
+        std::string ret = std::string("float ") + functionName + "(uint number, " + functionArgs + ");\n\n";
         ret = ret + std::string("inline float ") + functionName + "(uint number, " + functionArgs + ")\n";
         ret = ret + "{\n";
 

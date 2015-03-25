@@ -127,9 +127,9 @@ std::string I3CLSimRandomValueMixed::GetOpenCLFunction
                                               "rrrr__",
                                               "(1.f-rrrr__)");
         
-        const std::string functionDecl = std::string("inline float ") + functionName + "(" + functionArgs + parametersInDecl + ")";
+        const std::string functionDecl = std::string("float ") + functionName + "(" + functionArgs + parametersInDecl + ")";
         
-        mainFunc = functionDecl + ";\n\n" + functionDecl + "\n"
+        mainFunc = functionDecl + ";\n\n" + "inline " + functionDecl + "\n"
         "{\n"    
         "    const float rr = " + uniformRandomCall_co + ";\n"
         "    if (rr < " + ToFloatString(fractionOfFirstDistribution_) + ")\n"

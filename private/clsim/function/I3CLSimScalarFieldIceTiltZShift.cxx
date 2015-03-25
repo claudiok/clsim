@@ -178,7 +178,7 @@ std::string I3CLSimScalarFieldIceTiltZShift::GetOpenCLFunction(const std::string
 
 
     std::string funcDef = 
-        std::string("inline float ") + functionName + std::string("(float4 vec)");
+        std::string("float ") + functionName + std::string("(float4 vec)");
     
     const double lnx = std::cos(directionOfTiltAzimuth_);
     const double lny = std::sin(directionOfTiltAzimuth_);
@@ -213,7 +213,7 @@ std::string I3CLSimScalarFieldIceTiltZShift::GetOpenCLFunction(const std::string
     "}\n"
     ;
 
-    return dataDef + "\n\n" + funcDef + ";\n\n" + funcDef + "\n" + funcBody;
+    return dataDef + "\n\n" + funcDef + ";\n\n" + "inline " + funcDef + "\n" + funcBody;
 }
 
 bool I3CLSimScalarFieldIceTiltZShift::CompareTo(const I3CLSimScalarField &other) const

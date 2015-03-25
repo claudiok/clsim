@@ -3,8 +3,8 @@
 // http://www.atomic.physics.lu.se/fileadmin/atomfysik/Biophotonics/Software/CUDAMCML.pdf
 
 // prototypes to make some compilers happy
-inline float rand_MWC_co(ulong *x,uint *a);
-inline float rand_MWC_oc(ulong *x,uint *a);
+float rand_MWC_co(ulong *x,uint *a);
+float rand_MWC_oc(ulong *x,uint *a);
 
 //////////////////////////////////////////////////////////////////////////////
 //   Generates a random number between 0 and 1 [0,1) 

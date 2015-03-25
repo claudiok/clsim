@@ -60,7 +60,7 @@ std::string I3CLSimVectorTransformConstant::GetOpenCLFunction(const std::string 
     // the OpenCL interface takes a pointer to a float4, but ignores the fourth component
 
     std::string funcDef = 
-    std::string("inline void ") + functionName + std::string("(float4 *vec)");
+    std::string("void ") + functionName + std::string("(float4 *vec)");
     
     std::string funcBody = std::string() + 
     "{\n"
@@ -68,7 +68,7 @@ std::string I3CLSimVectorTransformConstant::GetOpenCLFunction(const std::string 
     "}\n"
     ;
     
-    return funcDef + ";\n\n" + funcDef + "\n" + funcBody;
+    return funcDef + ";\n\n" + "inline " + funcDef + "\n" + funcBody;
 }
 
 bool I3CLSimVectorTransformConstant::CompareTo(const I3CLSimVectorTransform &other) const

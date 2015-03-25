@@ -24,7 +24,7 @@
  * @author Claudio Kopper
  */
 
-inline void checkForCollision_OnString(
+void checkForCollision_OnString(
     const unsigned short stringNum,
     const floating_t photonDirLenXYSqr,
     const floating4_t photonPosAndTime,
@@ -54,7 +54,7 @@ inline void checkForCollision_OnString(
     __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal
     );
     
-inline void checkForCollision_InCell(
+void checkForCollision_InCell(
     const floating_t photonDirLenXYSqr,
     const floating4_t photonPosAndTime,
     const floating4_t photonDirAndWlen,
@@ -91,7 +91,7 @@ inline void checkForCollision_InCell(
     const int this_geoCellNumY
     );
     
-inline void checkForCollision_InCells(
+void checkForCollision_InCells(
     const floating_t photonDirLenXYSqr,
     const floating4_t photonPosAndTime,
     const floating4_t photonDirAndWlen,
@@ -120,7 +120,7 @@ inline void checkForCollision_InCells(
     __local const unsigned short *geoLayerToOMNumIndexPerStringSetLocal
     );
 
-inline bool checkForCollision(const floating4_t photonPosAndTime,
+bool checkForCollision(const floating4_t photonPosAndTime,
     const floating4_t photonDirAndWlen,
     floating_t inv_groupvel,
     floating_t photonTotalPathLength,

@@ -74,9 +74,9 @@ std::string I3CLSimRandomValueHenyeyGreenstein::GetOpenCLFunction
  const std::string &uniformRandomCall_oc
  ) const
 {
-    const std::string functionDecl = std::string("inline float ") + functionName + "(" + functionArgs + ")";
+    const std::string functionDecl = std::string("float ") + functionName + "(" + functionArgs + ")";
     
-    return functionDecl + ";\n\n" + functionDecl + "\n"
+    return functionDecl + ";\n\n" + "inline " + functionDecl + "\n"
     "{\n"
     "    const float g = " + ToFloatString(meanCosine_) + ";\n"
     "    const float g2 = " + ToFloatString(meanCosine_*meanCosine_) + ";\n"

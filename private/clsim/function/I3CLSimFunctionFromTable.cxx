@@ -238,7 +238,7 @@ std::string I3CLSimFunctionFromTable::GetOpenCLFunction(const std::string &funct
     }
 
     std::string interpHelperDef =
-    std::string("inline void ") + interpHelperName + "(float wavelength, int *bin, float *fraction)";
+    std::string("void ") + interpHelperName + "(float wavelength, int *bin, float *fraction)";
 
     std::string interpHelperBody =
     "{\n"
@@ -260,7 +260,7 @@ std::string I3CLSimFunctionFromTable::GetOpenCLFunction(const std::string &funct
     ;
 
     std::string funcDef = 
-    std::string("inline float ") + functionName + std::string("(float wavelength)\n");
+    std::string("float ") + functionName + std::string("(float wavelength)\n");
 
     std::string funcBody;
     if (storeDataAsHalfPrecision_)
@@ -303,7 +303,7 @@ std::string I3CLSimFunctionFromTable::GetOpenCLFunction(const std::string &funct
         ;
     }
 
-    return funcDef + ";\n" + interpHelperDef + ";\n" + dataDef + interpHelperDef + interpHelperBody + funcDef + funcBody;
+    return funcDef + ";\n" + interpHelperDef + ";\n" + dataDef + "inline " + interpHelperDef + interpHelperBody + "inline " + funcDef + funcBody;
 }
 
 bool I3CLSimFunctionFromTable::CompareTo(const I3CLSimFunction &other) const

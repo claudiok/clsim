@@ -67,7 +67,7 @@ std::string I3CLSimScalarFieldConstant::GetOpenCLFunction(const std::string &fun
     std::string("#define ") + functionName + "_IS_CONSTANT " + ToFloatString(value_) + "\n";
 
     std::string funcDef = 
-    std::string("inline float ") + functionName + std::string("(float4 vec)\n");
+    std::string("float ") + functionName + std::string("(float4 vec)\n");
     
     std::string funcBody = std::string() + 
     "{\n"
@@ -75,7 +75,7 @@ std::string I3CLSimScalarFieldConstant::GetOpenCLFunction(const std::string &fun
     "}\n"
     ;
     
-    return funcDef + ";\n\n" + funcHint + funcDef + funcBody;
+    return funcDef + ";\n\n" + funcHint + "inline " + funcDef + funcBody;
 }
 
 bool I3CLSimScalarFieldConstant::CompareTo(const I3CLSimScalarField &other) const

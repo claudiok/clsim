@@ -106,7 +106,7 @@ std::string I3CLSimScalarFieldAnisotropyAbsLenScaling::GetOpenCLFunction(const s
     const double B2  = 1./l1+1./l2+1./l3;
 
     std::string funcDef = 
-        std::string("inline float ") + functionName + std::string("(float4 vec)");
+        std::string("float ") + functionName + std::string("(float4 vec)");
     
     std::ostringstream output(std::ostringstream::out);
     
@@ -131,7 +131,7 @@ std::string I3CLSimScalarFieldAnisotropyAbsLenScaling::GetOpenCLFunction(const s
     "}\n"
     ;
 
-    return funcDef + ";\n\n" + funcDef + "\n" + funcBody;
+    return funcDef + ";\n\n" + "inline " + funcDef + "\n" + funcBody;
 }
 
 bool I3CLSimScalarFieldAnisotropyAbsLenScaling::CompareTo(const I3CLSimScalarField &other) const

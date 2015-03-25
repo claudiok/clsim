@@ -243,7 +243,7 @@ std::string I3CLSimRandomValueInterpolatedDistribution::GetOpenCLFunction
  const std::string &uniformRandomCall_oc
  ) const
 {
-    const std::string functionDecl = std::string("inline float ") + functionName + "(" + functionArgs + ")";
+    const std::string functionDecl = std::string("float ") + functionName + "(" + functionArgs + ")";
 
     const std::string tableDecl = WriteTableCode(std::string("_") + functionName);
     const std::string distXValuesName = std::string("_") + functionName + "distXValues";
@@ -272,7 +272,7 @@ std::string I3CLSimRandomValueInterpolatedDistribution::GetOpenCLFunction
     }
 
     std::string retString = 
-    tableDecl + "\n\n" + functionDecl + ";\n\n" + functionDecl + "\n"
+    tableDecl + "\n\n" + functionDecl + ";\n\n" + "inline " + functionDecl + "\n"
     "{\n"
     "    const float randomNumber = " + uniformRandomCall_oc + ";\n"
     "    \n"

@@ -128,7 +128,7 @@ double I3CLSimFunctionRefIndexIceCube::GetDerivative(double wlen) const
 std::string I3CLSimFunctionRefIndexIceCube::GetOpenCLFunction(const std::string &functionName) const
 {
     std::string funcDef = 
-    std::string("inline float ") + functionName + std::string("(float wlen)\n");
+    std::string("float ") + functionName + std::string("(float wlen)\n");
 
     std::string funcBody = std::string() + 
     "{\n"
@@ -176,7 +176,7 @@ std::string I3CLSimFunctionRefIndexIceCube::GetOpenCLFunction(const std::string 
     "}\n"
     ;
     
-    return funcDef + ";\n\n" + funcDef + funcBody;
+    return funcDef + ";\n\n" + "inline " + funcDef + funcBody;
 }
 
 std::string I3CLSimFunctionRefIndexIceCube::GetOpenCLFunctionDerivative(const std::string &functionName) const

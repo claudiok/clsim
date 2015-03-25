@@ -161,7 +161,7 @@ namespace I3CLSimHelper
         code << "};\n";
         code << "\n";
 
-        code << "inline float " << functionName << "(unsigned int layer, float wlen);\n\n";
+        code << "float " << functionName << "(unsigned int layer, float wlen);\n\n";
         code << "inline float " << functionName << "(unsigned int layer, float wlen)\n";
         code << "{\n";
         
@@ -225,7 +225,7 @@ namespace I3CLSimHelper
         code << "};\n";
         code << "\n";
         
-        code << "inline float " << functionName << "(unsigned int layer, float wlen);\n\n";
+        code << "float " << functionName << "(unsigned int layer, float wlen);\n\n";
         code << "inline float " << functionName << "(unsigned int layer, float wlen)\n";
         code << "{\n";
         
