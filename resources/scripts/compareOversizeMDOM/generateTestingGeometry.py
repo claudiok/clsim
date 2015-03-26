@@ -33,7 +33,7 @@ import copy
 from icecube import icetray, dataclasses, dataio
 
 
-radius = 120.*I3Units.m
+radius = 40.*I3Units.m
 
 omPos = numpy.array(
     [[ 0.,  1., 0.],

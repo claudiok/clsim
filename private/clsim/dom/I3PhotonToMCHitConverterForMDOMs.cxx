@@ -232,7 +232,7 @@ namespace {
             // ensure that the photon is now in the cross-sectional area of the
             // physical OM
             assert(p*axis.GetRight() >= 0);
-            assert(p*axis.GetRight() <= omRadius); 
+            assert(p*axis.GetRight() - omRadius < I3Units::mm); 
             double ndir = p*axis.GetDir();
             assert(abs(odir-ndir) < I3Units::mm);
             
@@ -511,7 +511,6 @@ void I3PhotonToMCHitConverterForMDOMs::DAQ(I3FramePtr frame)
         const I3ModuleGeo &moduleGeo = geo_it->second;
         if (moduleGeo.GetModuleType() != I3ModuleGeo::mDOM)
             continue;
-        assert(key.GetString() > 86);
         
         std::map<ModuleKey, std::vector<unsigned char> >::const_iterator pmt_index_it = PMTsInModule.find(key);
         if (pmt_index_it == PMTsInModule.end())
@@ -583,7 +582,7 @@ void I3PhotonToMCHitConverterForMDOMs::DAQ(I3FramePtr frame)
             // This means that after the code knows that a PMT is hit, the geometrical acceptance
             // should be 1 if the acceptance factor from the geometry is cos(theta).
             const double ang_fac = pmtAngularAcceptance_->GetValue(hit_cosangle)/std::fabs(hit_cosangle);
-            
+
             // calculate the measurement probability
             double measurement_prob = photon.GetWeight();
             measurement_prob *= glassGelSurvival_fac;
@@ -591,9 +590,11 @@ void I3PhotonToMCHitConverterForMDOMs::DAQ(I3FramePtr frame)
             measurement_prob *= ang_fac;
             
             if (measurement_prob > 1.)
-                log_fatal("measurement_prob > 1 (it's %f): cannot continue. your hit weights are too high. (weight=%f, wlen=%fnm)",
-                          measurement_prob, photon.GetWeight(),
-                          photon.GetWavelength()/I3Units::nanometer);
+                log_fatal("measurement_prob > 1 (it's %f): cannot continue. your hit weights are too high. (weight=%f, ang_fac=%f, wlen=%fnm, glass=%fmm, gel=%fmm)",
+                          measurement_prob, photon.GetWeight(), ang_fac,
+                          photon.GetWavelength()/I3Units::nanometer,
+                          glassThickness_/I3Units::mm,
+                          gelThickness/I3Units::mm);
             
             if (measurement_prob <= randomService_->Uniform()) continue;
             

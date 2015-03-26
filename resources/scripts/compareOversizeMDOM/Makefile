@@ -1,11 +1,12 @@
 
-all: timing_distributions_oversize_nooversize.pdf
+all: timing_distributions_unweighted_mDOMs.pdf
 
-icemodels = lea lea_notilt lea_noanisotropy lea_notilt_noanisotropy
-ppc := $(patsubst %,test_events_ppc_%.i3,$(icemodels))
-clsim := $(patsubst %,test_events_clsim_%.i3,$(icemodels))
-	
-hdf5 := $(addsuffix .hdf5,$(clsim) $(ppc))
+# icemodels = lea lea_notilt lea_noanisotropy lea_notilt_noanisotropy
+# ppc := $(patsubst %,test_events_ppc_%.i3,$(icemodels))
+# clsim := $(patsubst %,test_events_clsim_%.i3,$(icemodels))
+
+i3 := test_events_mcpes_unweighted.i3 test_events_mcpes_oversize_5.i3
+hdf5 := $(addsuffix .hdf5,$(i3))
 
 testingGCD.i3:
 	./generateTestingGeometry.py --xpos=257 --ypos=212 --zpos=-399

@@ -5,6 +5,8 @@ parser = OptionParser()
 parser.add_option("-s", "--seed", type=int, default=1)
 parser.add_option("--oversize", type=float, default=1)
 parser.add_option("--unweighted", default=False, action="store_true")
+parser.add_option("--no-gpu", default=True, dest="gpu", action="store_false")
+
 opts, args = parser.parse_args()
 
 infiles, outfile = args[:-1], args[-1]
@@ -20,15 +22,39 @@ tray.context['I3RandomService'] = randomService
 
 tray.Add("I3Reader", filenamelist=infiles)
 
+icetray.logging.set_level_for_unit('clsim', 'INFO')
+
 from icecube import clsim
 import efficiencies
 
 kwargs = dict()
 
+from icecube.clsim.GetIceCubeDOMAcceptance import GetIceCubeDOMAcceptance
+
 if opts.oversize != 1.:
-	kwargs['WavelengthGenerationBias'] = efficiencies.GetAcceptanceEnvelope(oversize=opts.oversize)
-	kwargs['WavelengthGenerationBias'] = efficiencies.GetMDOMAcceptance(oversize=opts.oversize, efficiency=1.8)
+	# kwargs['WavelengthGenerationBias'] = efficiencies.GetAcceptanceEnvelope(oversize=opts.oversize)
+	kwargs['WavelengthGenerationBias'] = efficiencies.GetMDOMAcceptance(oversize=opts.oversize, efficiency=1.95*0.99)
+	# kwargs['DoNotParallelize'] = True
+	# kwargs['WavelengthGenerationBias'] = clsim.I3CLSimFunctionConstant(1e-2)
+	# kwargs['WavelengthGenerationBias'] = efficiencies.GetIceCubeDOMAcceptance(oversize=opts.oversize, efficiency=5)
+	# kwargs['WavelengthGenerationBias'] = GetIceCubeDOMAcceptance(opts.oversize*0.16510*icetray.I3Units.m, 0.99*1.35*0.75*1.01)
+
+	# import pylab, numpy
+	# wvl = numpy.arange(260, 680, 10)*I3Units.nanometer
+	# pylab.plot(wvl, numpy.vectorize(kwargs['WavelengthGenerationBias'].GetValue)(wvl))
+	#
+	# # kwargs['WavelengthGenerationBias'] = efficiencies.GetIceCubeDOMAcceptance(opts.oversize, 0.99*1.35*0.75*1.01)
+	#
+	#
+	# pylab.plot(wvl, numpy.vectorize(kwargs['WavelengthGenerationBias'].GetValue)(wvl))
+	# pylab.show()
+	# kwargs['UnshadowedFraction'] = 5
 	kwargs['DOMOversizeFactor'] = opts.oversize
+	kwargs['DOMRadius'] = 356*I3Units.mm/2.
+	
+	# kwargs['OverrideApproximateNumberOfWorkItems'] = 1
+	
+	
 	# kwargs['ExtraArgumentsToI3CLSimModule'] = dict(EnableDoubleBuffering=False)
 
 if opts.unweighted:
@@ -47,31 +73,32 @@ class SizeModules(icetray.I3ConditionalModule):
 		self.radius = self.GetParameter("Radius")
 		pass
 	def Geometry(self, frame):
-		modgeomap = copy.copy(frame['I3ModuleGeoMap'])
-		del frame['I3ModuleGeoMap']
+		# modgeomap = copy.copy(frame['I3ModuleGeoMap'])
+		modgeomap = frame['I3ModuleGeoMap']
+		# del frame['I3ModuleGeoMap']
 		for k in modgeomap.keys():
 			modgeo = modgeomap[k]
 			modgeo.radius = self.radius
 			modgeomap[k] = modgeo
-		frame['I3ModuleGeoMap'] = modgeomap
+		# frame['I3ModuleGeoMap'] = modgeomap
 		self.PushFrame(frame)
-if opts.oversize != 1.:
-	tray.Add(SizeModules, radius=0.16510*icetray.I3Units.m)
+# if opts.oversize != 1.:
+# 	tray.Add(SizeModules, radius=0.16510*icetray.I3Units.m)
 
 icetray.logging.set_level_for_unit('I3CLSimStepToPhotonConverterOpenCL', 'TRACE')
 tray.Add(clsim.I3CLSimMakePhotons,
 	ParallelEvents=1,
 	RandomService=randomService,
-	UseGPUs=True,
-	UseCPUs=False,
+	UseGPUs=opts.gpu,
+	UseCPUs=not opts.gpu,
 	# UseAllCPUCores=True,
 	**kwargs
 	)
 
 tray.Add("Dump")
 
-if opts.oversize != 1.:
-	tray.Add(SizeModules, radius=0.1778*icetray.I3Units.m)
+# if opts.oversize != 1.:
+# 	tray.Add(SizeModules, radius=0.1778*icetray.I3Units.m)
 
 # tray.Add(clsim.I3CLSimMakeHitsFromPhotons, DOMOversizeFactor=opts.oversize, UnshadowedFraction=0.99)
 
@@ -116,7 +143,7 @@ def I3CLSimMakeMDOMHitsFromPhotons(tray, name,
 
     from icecube import icetray, dataclasses, clsim
 
-    if DOMOversizeFactor != 1.:
+    if False and DOMOversizeFactor != 1.:
         # photons came from standard IceCube simulation (13" DOM spheres)
         DOMRadius = 0.16510*icetray.I3Units.m
         # but we want to make hits on mDOM spheres (14" diameter)

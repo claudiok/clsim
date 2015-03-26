@@ -170,6 +170,7 @@ for cos_bin in cos_bins:
         angularAcceptance.append(0.)
     else:
         angularAcceptance.append(cos_bin * winstonRatioFunc(-cos_bin))
+# print numpy.nanmax(numpy.array(angularAcceptance)/cos_bins)
 angularAcceptance = clsim.I3CLSimFunctionFromTable(cos_bins[0], cos_bins[1]-cos_bins[0], angularAcceptance)
 
 dom2007a_eff_area = [
@@ -222,15 +223,21 @@ domRadius = 0.16510*I3Units.m
 domArea = numpy.pi*domRadius**2.
 dom2007a_efficiency = (dom2007a_eff_area/domArea)
 
-mdom_efficiency = wavelengthacceptance*numpy.exp(-glassThickness/glassAbslen)*numpy.exp(-1*I3Units.cm/gelAbslen)
+mdom_efficiency = wavelengthacceptance*numpy.exp(-glassThickness/glassAbslen)*numpy.exp(-5*I3Units.mm/gelAbslen)
 envelope_efficiency = numpy.maximum(dom2007a_efficiency, mdom_efficiency)
 
+def pad_efficiencies(acceptance, min_fraction=1e-3):
+	lo = 260.*I3Units.nanometer
+	step = 10.*I3Units.nanometer
+	return clsim.I3CLSimFunctionFromTable(lo, step, acceptance)
+	
 def GetIceCubeDOMAcceptance(oversize=1., efficiency=1.):
-	return clsim.I3CLSimFunctionFromTable(260.*I3Units.nanometer, 10.*I3Units.nanometer, efficiency*dom2007a_efficiency/oversize**2)
+	return pad_efficiencies(efficiency*dom2007a_efficiency/oversize**2)
 def GetMDOMAcceptance(oversize=1., efficiency=1.):
-	return clsim.I3CLSimFunctionFromTable(260.*I3Units.nanometer, 10.*I3Units.nanometer, efficiency*mdom_efficiency/oversize**2)
+    # return pad_efficiencies(efficiency*numpy.where(dom2007a_efficiency > 0, mdom_efficiency, 0)/oversize**2)
+    return pad_efficiencies(efficiency*mdom_efficiency/oversize**2)
 def GetAcceptanceEnvelope(oversize=1., efficiency=1.):
 	"""
 	Get the envelope of the maximal DOM and mDOM acceptances
 	"""
-	return clsim.I3CLSimFunctionFromTable(260.*I3Units.nanometer, 10.*I3Units.nanometer, efficiency*envelope_efficiency/oversize**2)
+	return pad_efficiencies(efficiency*envelope_efficiency/oversize**2)
