@@ -30,46 +30,6 @@
 #endif
 #endif
 
-
-#ifdef DOUBLE_PRECISION
-// can't have native_math with double precision
-#ifdef USE_NATIVE_MATH
-#undef USE_NATIVE_MATH
-#endif
-#endif
-
-#ifdef USE_NATIVE_MATH
-inline floating_t my_divide(floating_t a, floating_t b) {return native_divide(a,b);}
-inline floating_t my_recip(floating_t a) {return native_recip(a);}
-inline floating_t my_powr(floating_t a, floating_t b) {return native_powr(a,b);}
-inline floating_t my_sqrt(floating_t a) {return native_sqrt(a);}
-inline floating_t my_rsqrt(floating_t a) {return native_rsqrt(a);}
-inline floating_t my_cos(floating_t a) {return native_cos(a);}
-inline floating_t my_sin(floating_t a) {return native_sin(a);}
-inline floating_t my_log(floating_t a) {return native_log(a);}
-inline floating_t my_exp(floating_t a) {return native_exp(a);}
-#else
-inline floating_t my_divide(floating_t a, floating_t b) {return a/b;}
-inline floating_t my_recip(floating_t a) {return 1.f/a;}
-inline floating_t my_powr(floating_t a, floating_t b) {return powr(a,b);}
-inline floating_t my_sqrt(floating_t a) {return sqrt(a);}
-inline floating_t my_rsqrt(floating_t a) {return rsqrt(a);}
-inline floating_t my_cos(floating_t a) {return cos(a);}
-inline floating_t my_sin(floating_t a) {return sin(a);}
-inline floating_t my_log(floating_t a) {return log(a);}
-inline floating_t my_exp(floating_t a) {return exp(a);}
-#endif
-
-#ifdef USE_FABS_WORKAROUND
-inline floating_t my_fabs(floating_t a) {return (a<ZERO)?(-a):(a);}
-#else
-inline floating_t my_fabs(floating_t a) {return fabs(a);}
-#endif
-inline floating_t sqr(floating_t a) {return a*a;}
-
-
-
-
 inline int findLayerForGivenZPos(floating_t posZ)
 {
     return convert_int((posZ-(floating_t)MEDIUM_LAYER_BOTTOM_POS)/(floating_t)MEDIUM_LAYER_THICKNESS);

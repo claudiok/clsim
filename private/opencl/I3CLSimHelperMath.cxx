@@ -37,6 +37,42 @@ I3CLSimHelper::GetMathPreamble(const I3CLSimOpenCLDevice &device,
 		            "#define ONE 1.f\n";
 	}
 	preamble += "\n";
+	preamble += "#ifdef DOUBLE_PRECISION\n"
+	            "// can't have native_math with double precision\n"
+	            "#ifdef USE_NATIVE_MATH\n"
+	            "#undef USE_NATIVE_MATH\n"
+	            "#endif\n"
+	            "#endif\n"
+	            "\n"
+	            "#ifdef USE_NATIVE_MATH\n"
+	            "inline floating_t my_divide(floating_t a, floating_t b) {return native_divide(a,b);}\n"
+	            "inline floating_t my_recip(floating_t a) {return native_recip(a);}\n"
+	            "inline floating_t my_powr(floating_t a, floating_t b) {return native_powr(a,b);}\n"
+	            "inline floating_t my_sqrt(floating_t a) {return native_sqrt(a);}\n"
+	            "inline floating_t my_rsqrt(floating_t a) {return native_rsqrt(a);}\n"
+	            "inline floating_t my_cos(floating_t a) {return native_cos(a);}\n"
+	            "inline floating_t my_sin(floating_t a) {return native_sin(a);}\n"
+	            "inline floating_t my_log(floating_t a) {return native_log(a);}\n"
+	            "inline floating_t my_exp(floating_t a) {return native_exp(a);}\n"
+	            "#else\n"
+	            "inline floating_t my_divide(floating_t a, floating_t b) {return a/b;}\n"
+	            "inline floating_t my_recip(floating_t a) {return 1.f/a;}\n"
+	            "inline floating_t my_powr(floating_t a, floating_t b) {return powr(a,b);}\n"
+	            "inline floating_t my_sqrt(floating_t a) {return sqrt(a);}\n"
+	            "inline floating_t my_rsqrt(floating_t a) {return rsqrt(a);}\n"
+	            "inline floating_t my_cos(floating_t a) {return cos(a);}\n"
+	            "inline floating_t my_sin(floating_t a) {return sin(a);}\n"
+	            "inline floating_t my_log(floating_t a) {return log(a);}\n"
+	            "inline floating_t my_exp(floating_t a) {return exp(a);}\n"
+	            "#endif\n"
+	            "\n"
+	            "#ifdef USE_FABS_WORKAROUND\n"
+	            "inline floating_t my_fabs(floating_t a) {return (a<ZERO)?(-a):(a);}\n"
+	            "#else\n"
+	            "inline floating_t my_fabs(floating_t a) {return fabs(a);}\n"
+	            "#endif\n"
+	            "inline floating_t sqr(floating_t a) {return a*a;}\n"
+	;
 	
 	return preamble;
 }
