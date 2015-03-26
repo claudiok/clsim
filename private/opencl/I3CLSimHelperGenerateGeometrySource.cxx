@@ -684,8 +684,6 @@ namespace I3CLSimHelper
         output << "void geometryGetDomPosition(unsigned short stringNum, unsigned short domNum, floating_t *domPosX, floating_t *domPosY, floating_t *domPosZ);" << std::endl;
         output << "inline void geometryGetDomPosition(unsigned short stringNum, unsigned short domNum, floating_t *domPosX, floating_t *domPosY, floating_t *domPosZ)" << std::endl;
         output << "{" << std::endl;
-        output << "    printf(\"geometryGetDomPosition(%hu, %hu)\\n\", stringNum, domNum);\n";
-        // output << "   printf(\"ohai\\n\");\n";
         output << "    const unsigned int index = geoDomPosStringStartIndexInTemplateDomList[stringNum]+convert_uint(domNum);" << std::endl;
         if (useShortsInsteadOfFloats) {
             output << "    *domPosX = convert_floating_t(geoDomPosTemplatePositionsX_flat[index])*GEO_DOM_POS_MAX_ABS_X_MULTIPLIER_IN_TEMPLATE + geoDomPosStringMeanPosX[stringNum];" << std::endl;
