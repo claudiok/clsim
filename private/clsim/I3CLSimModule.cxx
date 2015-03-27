@@ -445,14 +445,18 @@ void I3CLSimModule::Configure()
 
     if (!mediumProperties_) log_fatal("You have to specify the \"MediumProperties\" parameter!");
 
-    if (totalEnergyToProcess_ > 0) log_warn("CLSim is going to figure out the number of frames to process for you! MaxNumParallelEvents is being ignored!");
-    // if ( )
-    if (maxNumParallelEvents_ <= 0) log_fatal("Values <= 0 are invalid for the \"MaxNumParallelEvents\" parameter!");
+    if (totalEnergyToProcess_ > 0) 
+    {
+        log_warn("MaxNumParallelEvents is set to 1! CLSim is going to figure out the number of frames to process for you!");
+        maxNumParallelEvents_=1;
+        maxNumParallelEventsSecondFlush_=1;
+    }
+    if ((maxNumParallelEvents_ <= 0) && (totalEnergyToProcess_ <= 0)) log_fatal("Values <= 0 are invalid for both the \"MaxNumParallelEvents\" and \"TotalEnergyToProcess\" parameter!");
     // maxNumParallelEvents_ is the number of frames buffered by this module.
     // Since we use double-buffering, divide the number by 2.
     maxNumParallelEvents_ /= 2;
     if (maxNumParallelEvents_==0) maxNumParallelEvents_=1;
-    
+    maxNumParallelEventsSecondFlush_ = maxNumParallelEvents_;
     
 
     if (openCLDeviceList_.empty()) log_fatal("You have to provide at least one OpenCL device using the \"OpenCLDeviceList\" parameter.");
@@ -487,7 +491,7 @@ void I3CLSimModule::Configure()
     currentParticleCacheIndex_ = 1;
     geometryIsConfigured_ = false;
     totalSimulatedEnergyForFlush_ = 0.;
-    totalSimulatedEnergyForSecondFlush_ = 0.;
+    totalSimulatedEnergy_ = 0;
     totalNumParticlesForFlush_ = 0;
     
     if (parameterizationList_.size() > 0) {
@@ -1303,85 +1307,63 @@ void I3CLSimModule::Process()
         PushFrame(frame);
         return;
     }
+    
 
-    if (totalEnergyToProcess_ <= 0)
-    {   
-        // it's either Physics or something else..
-        if (frameListPhysicsFrameCounter_ < maxNumParallelEvents_)
+    if (totalEnergyToProcess_ > 0)
+    {
+        double totalLightEnergyInFrame = GetLightSourceEnergy(frame);
+        if (totalSimulatedEnergy_ + totalLightEnergyInFrame < totalEnergyToProcess_ / 2.)
         {
-            // we currently treat physics and other frames/empty Physics
-            // frames the same
-            //const bool isPhysicsFrame =
-            DigestOtherFrame(frame);
-            frameListPhysicsFrameCounter_++;
+            maxNumParallelEvents_++;
+            totalSimulatedEnergy_ += totalLightEnergyInFrame;
         }
-        else if (frameListPhysicsFrameCounter_ < maxNumParallelEvents_*2) 
+        else if (totalSimulatedEnergy_ + totalLightEnergyInFrame < totalEnergyToProcess_)
         {
-            // keep a second buffer so we have it available once 
-            // the first buffer has finished processing
-            frameList2_.push_back(frame);
-            frameListPhysicsFrameCounter_++;
-        }
-
-
-        if (frameListPhysicsFrameCounter_ >= maxNumParallelEvents_*2) 
-        {
-            log_debug("Flushing results for a total energy of %fGeV for %" PRIu64 " particles",
-                     totalSimulatedEnergyForFlush_/I3Units::GeV, totalNumParticlesForFlush_);
-                 
-            totalSimulatedEnergyForFlush_=0.;
-            totalNumParticlesForFlush_=0;
-        
-            // this will finish processing the first buffer and
-            // push all its frames
-            const std::size_t framesPushed =
-                FlushFrameCache();
-            frameListPhysicsFrameCounter_ -= framesPushed;
-
-            // now immediately start processing frames from the second buffer
-            for (std::size_t i=0;i<frameList2_.size();++i) {
-                DigestOtherFrame(frameList2_[i]);
-            }
-            frameList2_.clear();
-        
-            log_debug("============== CACHE FLUSHED ================");
+            maxNumParallelEventsSecondFlush_++;
+            totalSimulatedEnergy_ += totalLightEnergyInFrame;
         }
     }
-    else
+    
+    // it's either Physics or something else..
+    if (frameListPhysicsFrameCounter_ < maxNumParallelEvents_)
     {
-        if (totalSimulatedEnergyForFlush_ <= totalEnergyToProcess_ / 2)
-        {
-            DigestOtherFrame(frame);
-        }
-        else if (totalSimulatedEnergyForFlush_ + totalSimulatedEnergyForSecondFlush_ <= totalEnergyToProcess_)
-        {
-            frameList2_.push_back(frame);
-            totalSimulatedEnergyForSecondFlush_ += GetLightSourceEnergy(frame);
-        }
-        
-        if (totalSimulatedEnergyForFlush_ + totalSimulatedEnergyForSecondFlush_ >= totalEnergyToProcess_) 
-        {
-            log_debug("Flushing results for a total energy of %fGeV for %" PRIu64 " particles",
-                     totalSimulatedEnergyForFlush_/I3Units::GeV, totalNumParticlesForFlush_);
-                 
-            totalSimulatedEnergyForFlush_=0.;
-            totalSimulatedEnergyForSecondFlush_ = 0;
-            totalNumParticlesForFlush_=0;
-        
-            // this will finish processing the first buffer and
-            // push all its frames
-            const std::size_t framesPushed =
-                FlushFrameCache();
-            // frameListPhysicsFrameCounter_ -= framesPushed;
+        // we currently treat physics and other frames/empty Physics
+        // frames the same
+        //const bool isPhysicsFrame =
+        DigestOtherFrame(frame);
+        frameListPhysicsFrameCounter_++;
+    }
+    else if (frameListPhysicsFrameCounter_ < maxNumParallelEvents_ + maxNumParallelEventsSecondFlush_) // maxNumParallelEvents_*2) 
+    {
+        // keep a second buffer so we have it available once 
+        // the first buffer has finished processing
+        frameList2_.push_back(frame);
+        frameListPhysicsFrameCounter_++;
+    }
 
-            // now immediately start processing frames from the second buffer
-            for (std::size_t i=0;i<frameList2_.size();++i) {
-                DigestOtherFrame(frameList2_[i]);
-            }
-            frameList2_.clear();
-        
-            log_debug("============== CACHE FLUSHED ================");
+
+    if (frameListPhysicsFrameCounter_ >= maxNumParallelEvents_ + maxNumParallelEventsSecondFlush_) //maxNumParallelEvents_*2) 
+    {
+        log_debug("Flushing results for a total energy of %fGeV for %" PRIu64 " particles",
+                 totalSimulatedEnergyForFlush_/I3Units::GeV, totalNumParticlesForFlush_);
+             
+        totalSimulatedEnergyForFlush_= 0.;
+        totalNumParticlesForFlush_=0;
+    
+        // this will finish processing the first buffer and
+        // push all its frames
+        const std::size_t framesPushed =
+            FlushFrameCache();
+        frameListPhysicsFrameCounter_ -= framesPushed;
+
+        // now immediately start processing frames from the second buffer
+        for (std::size_t i=0;i<frameList2_.size();++i) {
+            DigestOtherFrame(frameList2_[i]);
         }
+        frameList2_.clear();
+        totalSimulatedEnergy_ = 0.;
+    
+        log_debug("============== CACHE FLUSHED ================");
     }
 }
 

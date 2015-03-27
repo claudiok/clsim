@@ -161,6 +161,7 @@ private:
 
     /// Parameter: Maximum number of events that will be processed by the GPU in parallel.
     unsigned int maxNumParallelEvents_;
+    unsigned int maxNumParallelEventsSecondFlush_;
     
     /// Parameter: Maximum energy to that will be processed by the GPU in parallel.
     double totalEnergyToProcess_;
@@ -324,7 +325,7 @@ private:
     bool geometryIsConfigured_;
     uint32_t currentParticleCacheIndex_;
     double totalSimulatedEnergyForFlush_;
-    double totalSimulatedEnergyForSecondFlush_;
+    double totalSimulatedEnergy_;
     uint64_t totalNumParticlesForFlush_;
     
     // this is calculated using wavelengthGenerationBias:
