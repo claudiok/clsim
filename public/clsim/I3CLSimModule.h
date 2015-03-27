@@ -124,6 +124,12 @@ private:
      * The module needs to process Geometry frames
      */
     void DigestGeometry(I3FramePtr frame);
+    
+    /**
+     * Getting energy from light source to make sure to process
+     * the right number of frames
+     */
+    double GetLightSourceEnergy(I3FramePtr frame);
 
     // parameters
     
@@ -155,6 +161,9 @@ private:
 
     /// Parameter: Maximum number of events that will be processed by the GPU in parallel.
     unsigned int maxNumParallelEvents_;
+    
+    /// Parameter: Maximum energy to that will be processed by the GPU in parallel.
+    double totalEnergyToProcess_;
 
     /// Parameter: A vector of I3CLSimOpenCLDevice objects, describing the devices to be used for simulation.
     I3CLSimOpenCLDeviceSeries openCLDeviceList_;
@@ -315,6 +324,7 @@ private:
     bool geometryIsConfigured_;
     uint32_t currentParticleCacheIndex_;
     double totalSimulatedEnergyForFlush_;
+    double totalSimulatedEnergyForSecondFlush_;
     uint64_t totalNumParticlesForFlush_;
     
     // this is calculated using wavelengthGenerationBias:
