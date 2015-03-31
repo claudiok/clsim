@@ -28,6 +28,7 @@
 #define __STDC_FORMAT_MACROS
 #endif
 #include <inttypes.h>
+#include <cmath>
 
 #include "clsim/I3CLSimStepToPhotonConverterOpenCL.h"
 
@@ -394,7 +395,7 @@ std::string I3CLSimStepToPhotonConverterOpenCL::GetPreambleSource()
     // exponential distribution with mean 1, use a fixed defined number
     // of absorption lengths for table-making. Photonics uses a weight
     // of 1e-20 corresponding to about 46 absorption lengths.
-    if (!isnan(fixedNumberOfAbsorptionLengths_)) {
+    if (!std::isnan(fixedNumberOfAbsorptionLengths_)) {
         if (doublePrecision_) {
             preamble = preamble + "#define PROPAGATE_FOR_FIXED_NUMBER_OF_ABSORPTION_LENGTHS " + ToDoubleString(fixedNumberOfAbsorptionLengths_) + "\n";
         } else {

@@ -27,6 +27,7 @@
 #include <icetray/serialization.h>
 #include <icetray/I3Logging.h>
 #include <clsim/random_value/I3CLSimRandomValueConstant.h>
+#include <cmath>
 
 #include "clsim/I3CLSimHelperToFloatString.h"
 using namespace I3CLSimHelper;
@@ -50,7 +51,7 @@ I3CLSimRandomValueConstant::~I3CLSimRandomValueConstant()
 
 std::size_t I3CLSimRandomValueConstant::NumberOfParameters() const
 {
-    if (isnan(value_)) {
+    if (std::isnan(value_)) {
         return 1;
     } else {
         return 0;
@@ -62,7 +63,7 @@ double I3CLSimRandomValueConstant::SampleFromDistribution(const I3RandomServiceP
 {
     if (!random) log_fatal("random service is NULL!");
     
-    if (isnan(value_)) {
+    if (std::isnan(value_)) {
         if (parameters.size() != 1) log_fatal("This distribution expects 1 parameter. Got %zu.", parameters.size());
         return parameters[0];
     } else {
@@ -80,7 +81,7 @@ std::string I3CLSimRandomValueConstant::GetOpenCLFunction
  const std::string &uniformRandomCall_oc
  ) const
 {
-    if (isnan(value_)) {
+    if (std::isnan(value_)) {
         const std::string functionDecl = std::string("inline float ") + functionName + "(" + functionArgs + ", float value)";
         
         return functionDecl + ";\n\n" + functionDecl + "\n"
@@ -105,7 +106,7 @@ bool I3CLSimRandomValueConstant::CompareTo(const I3CLSimRandomValue &other) cons
     {
         const I3CLSimRandomValueConstant &other_ = dynamic_cast<const I3CLSimRandomValueConstant &>(other);
         
-        if (isnan(other_.value_) && isnan(value_)) return true;
+        if (std::isnan(other_.value_) && std::isnan(value_)) return true;
         if (other_.value_ == value_) return true;
         
         return false;

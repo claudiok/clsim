@@ -30,6 +30,7 @@
 #include <inttypes.h>
 
 #include <algorithm>
+#include <cmath>
 
 #include "clsim/dom/I3PhotonToMCPEConverter.h"
 
@@ -336,7 +337,7 @@ void I3PhotonToMCPEConverter::DAQ(I3FramePtr frame)
         else 
         {
             if (!calibration_) {
-                if (isnan(defaultRelativeDOMEfficiency_)) {
+                if (std::isnan(defaultRelativeDOMEfficiency_)) {
                     log_fatal("There is no valid calibration! (Consider setting \"DefaultRelativeDOMEfficiency\" != NaN)");
                 } else {
                     efficiency_from_calibration = defaultRelativeDOMEfficiency_;
@@ -347,7 +348,7 @@ void I3PhotonToMCPEConverter::DAQ(I3FramePtr frame)
             } else {
                 std::map<OMKey, I3DOMCalibration>::const_iterator cal_it = calibration_->domCal.find(key);
                 if (cal_it == calibration_->domCal.end()) {
-                    if (isnan(defaultRelativeDOMEfficiency_)) {
+                    if (std::isnan(defaultRelativeDOMEfficiency_)) {
                         log_fatal("OM (%i/%u) not found in the current calibration map! (Consider setting \"DefaultRelativeDOMEfficiency\" != NaN)", key.GetString(), key.GetOM());
                     } else {
                         efficiency_from_calibration = defaultRelativeDOMEfficiency_;
@@ -359,8 +360,8 @@ void I3PhotonToMCPEConverter::DAQ(I3FramePtr frame)
                     const I3DOMCalibration &domCalibration = cal_it->second;
                     efficiency_from_calibration=domCalibration.GetRelativeDomEff();
                     
-                    if (isnan(efficiency_from_calibration)) {
-                        if (isnan(defaultRelativeDOMEfficiency_)) {
+                    if (std::isnan(efficiency_from_calibration)) {
+                        if (std::isnan(defaultRelativeDOMEfficiency_)) {
                             log_fatal("OM (%i/%u) found in the current calibration map, but it is NaN! (Consider setting \"DefaultRelativeDOMEfficiency\" != NaN)", key.GetString(), key.GetOM());
                         } else {                
                             efficiency_from_calibration = defaultRelativeDOMEfficiency_;

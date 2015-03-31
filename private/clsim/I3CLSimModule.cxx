@@ -51,6 +51,7 @@
 #include <limits>
 #include <set>
 #include <deque>
+#include <cmath>
 
 
 namespace {
@@ -1201,14 +1202,14 @@ namespace {
             
             const double thisDist = std::sqrt(dx*dx + dy*dy + dz*dz);
             
-            if (isnan(closestDist)) {
+            if (std::isnan(closestDist)) {
                 closestDist=thisDist;
             } else {
                 if (thisDist<closestDist) closestDist=thisDist;
             }
         }
         
-        if (isnan(closestDist)) return 0.;
+        if (std::isnan(closestDist)) return 0.;
         return closestDist;
     }
 
@@ -1250,14 +1251,14 @@ namespace {
             
             const double thisDist = std::sqrt(dx*dx + dy*dy + dz*dz);
             
-            if (isnan(closestDist)) {
+            if (std::isnan(closestDist)) {
                 closestDist=thisDist;
             } else {
                 if (thisDist<closestDist) closestDist=thisDist;
             }
         }
         
-        if (isnan(closestDist)) return 0.;
+        if (std::isnan(closestDist)) return 0.;
         return closestDist;
     }
 
@@ -1607,7 +1608,7 @@ void I3CLSimModule::ConvertMCTreeToLightSources(const I3MCTree &mcTree,
             bool nostop = false;
             double particleLength = particle.GetLength();
             
-            if (isnan(particleLength)) {
+            if (std::isnan(particleLength)) {
                 // assume infinite track (starting at given position)
                 nostop = true;
             } else if (particleLength < 0.) {

@@ -27,6 +27,7 @@
 #include <icetray/serialization.h>
 #include <icetray/I3Logging.h>
 #include <clsim/random_value/I3CLSimRandomValueUniform.h>
+#include <cmath>
 
 #include "clsim/I3CLSimHelperToFloatString.h"
 using namespace I3CLSimHelper;
@@ -52,8 +53,8 @@ I3CLSimRandomValueUniform::~I3CLSimRandomValueUniform()
 
 std::size_t I3CLSimRandomValueUniform::NumberOfParameters() const
 {
-    if (isnan(from_)) {
-        if (isnan(to_))
+    if (std::isnan(from_)) {
+        if (std::isnan(to_))
         {
             return 2;
         }
@@ -62,7 +63,7 @@ std::size_t I3CLSimRandomValueUniform::NumberOfParameters() const
             return 1;
         }
     } else {
-        if (isnan(to_))
+        if (std::isnan(to_))
         {
             return 1;
         }
@@ -86,12 +87,12 @@ double I3CLSimRandomValueUniform::SampleFromDistribution(const I3RandomServicePt
     
     {
         std::size_t vec_index=0;
-        if (isnan(from)) {
+        if (std::isnan(from)) {
             from = parameters[vec_index];
             ++vec_index;
         }
 
-        if (isnan(to)) {
+        if (std::isnan(to)) {
             to = parameters[vec_index];
             ++vec_index;
         }
@@ -115,14 +116,14 @@ std::string I3CLSimRandomValueUniform::GetOpenCLFunction
     std::string fromSubstitution;
     std::string toSubstitution;
     
-    if (isnan(from_)) {
+    if (std::isnan(from_)) {
         parametersInDecl += ", float from";
         fromSubstitution = "from";
     } else {
         fromSubstitution = ToFloatString(from_);
     }
 
-    if (isnan(to_)) {
+    if (std::isnan(to_)) {
         parametersInDecl += ", float to";
         fromSubstitution = "to";
     } else {
@@ -145,11 +146,11 @@ bool I3CLSimRandomValueUniform::CompareTo(const I3CLSimRandomValue &other) const
     try
     {
         const I3CLSimRandomValueUniform &other_ = dynamic_cast<const I3CLSimRandomValueUniform &>(other);
-        if (!(isnan(other_.from_) && isnan(from_))) {
+        if (!(std::isnan(other_.from_) && std::isnan(from_))) {
             if (other_.from_ != from_) return false;
         }
 
-        if (!(isnan(other_.to_) && isnan(to_))) {
+        if (!(std::isnan(other_.to_) && std::isnan(to_))) {
             if (other_.to_ != to_) return false;
         }
 

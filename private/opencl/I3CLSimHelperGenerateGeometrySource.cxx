@@ -31,6 +31,7 @@
 #include <stdexcept>
 
 #include <vector>
+#include <cmath>
 #include <set>
 
 #include "dataclasses/I3Constants.h"
@@ -159,16 +160,16 @@ namespace I3CLSimHelper
             
             ++numberOfStrings;
             
-            if ((currentString.meanX-currentString.maxR < minX) || isnan(minX)) {
+            if ((currentString.meanX-currentString.maxR < minX) || std::isnan(minX)) {
                 minX = currentString.meanX-currentString.maxR;
             }
-            if ((currentString.meanY-currentString.maxR < minY) || isnan(minY)) {
+            if ((currentString.meanY-currentString.maxR < minY) || std::isnan(minY)) {
                 minY = currentString.meanY-currentString.maxR;
             }
-            if ((currentString.meanX+currentString.maxR > maxX) || isnan(maxX)) {
+            if ((currentString.meanX+currentString.maxR > maxX) || std::isnan(maxX)) {
                 maxX = currentString.meanX+currentString.maxR;
             }
-            if ((currentString.meanY+currentString.maxR > maxY) || isnan(maxY)) {
+            if ((currentString.meanY+currentString.maxR > maxY) || std::isnan(maxY)) {
                 maxY = currentString.meanY+currentString.maxR;
             }
         }
@@ -351,20 +352,20 @@ namespace I3CLSimHelper
         if (includeDomRadius) {
             BOOST_FOREACH(const stringStruct& currentString, strings)
             {
-                if ((currentString.minZ-domRadius < minZ) || isnan(minZ)) {
+                if ((currentString.minZ-domRadius < minZ) || std::isnan(minZ)) {
                     minZ = currentString.minZ-domRadius;
                 }
-                if ((currentString.maxZ+domRadius > maxZ) || isnan(maxZ)) {
+                if ((currentString.maxZ+domRadius > maxZ) || std::isnan(maxZ)) {
                     maxZ = currentString.maxZ+domRadius;
                 }
             }
         } else {
             BOOST_FOREACH(const stringStruct& currentString, strings)
             {
-                if ((currentString.minZ < minZ) || isnan(minZ)) {
+                if ((currentString.minZ < minZ) || std::isnan(minZ)) {
                     minZ = currentString.minZ;
                 }
-                if ((currentString.maxZ > maxZ) || isnan(maxZ)) {
+                if ((currentString.maxZ > maxZ) || std::isnan(maxZ)) {
                     maxZ = currentString.maxZ;
                 }
             }
@@ -390,10 +391,10 @@ namespace I3CLSimHelper
         
         // find minimum and maximum z detector coordinates
         double minZ=minZHint, maxZ=maxZHint;
-        if ((currentString.minZ-domRadius < minZ) || isnan(minZ)) {
+        if ((currentString.minZ-domRadius < minZ) || std::isnan(minZ)) {
             minZ = currentString.minZ-domRadius;
         }
-        if ((currentString.maxZ+domRadius > maxZ) || isnan(maxZ)) {
+        if ((currentString.maxZ+domRadius > maxZ) || std::isnan(maxZ)) {
             maxZ = currentString.maxZ+domRadius;
         }
         
@@ -576,8 +577,8 @@ namespace I3CLSimHelper
                 double absX = std::abs(templatePositionsX[i][j]);
                 double absY = std::abs(templatePositionsY[i][j]);
 
-                if ((absX > geoDomPosMaxAbsX_inTemplate) || isnan(geoDomPosMaxAbsX_inTemplate)) geoDomPosMaxAbsX_inTemplate=absX;
-                if ((absY > geoDomPosMaxAbsY_inTemplate) || isnan(geoDomPosMaxAbsY_inTemplate)) geoDomPosMaxAbsY_inTemplate=absY;
+                if ((absX > geoDomPosMaxAbsX_inTemplate) || std::isnan(geoDomPosMaxAbsX_inTemplate)) geoDomPosMaxAbsX_inTemplate=absX;
+                if ((absY > geoDomPosMaxAbsY_inTemplate) || std::isnan(geoDomPosMaxAbsY_inTemplate)) geoDomPosMaxAbsY_inTemplate=absY;
             }
         }
         
@@ -806,17 +807,17 @@ namespace I3CLSimHelper
                 
                 currentStringStruct.meanX += posX[i];
                 currentStringStruct.meanY += posY[i];
-                if ((posZ[i] > currentStringStruct.maxZ) || isnan(currentStringStruct.maxZ))
+                if ((posZ[i] > currentStringStruct.maxZ) || std::isnan(currentStringStruct.maxZ))
                     currentStringStruct.maxZ = posZ[i];
-                if ((posZ[i] < currentStringStruct.minZ) || isnan(currentStringStruct.minZ))
+                if ((posZ[i] < currentStringStruct.minZ) || std::isnan(currentStringStruct.minZ))
                     currentStringStruct.minZ = posZ[i];
                 
-                if (isnan(lastZ)) {
+                if (std::isnan(lastZ)) {
                     lastZ = posZ[i];
                 } else {
                     double dZ = std::abs(lastZ-posZ[i]);
                     lastZ = posZ[i];
-                    if (!isnan(lastdZ)) {
+                    if (!std::isnan(lastdZ)) {
                         if (dZ < 1.75*meandZ/static_cast<double>(numdZ)) {
                             // consider spacings greater than 75% of the current mean as invalid (missing DOM on string)
                             meandZ += dZ;
@@ -863,10 +864,10 @@ namespace I3CLSimHelper
                 const double dY = currentStringStruct.meanY - posY[i];
                 const double thisR = std::sqrt(dX*dX + dY*dY)+omRadius;
                 
-                if ((thisR > currentStringStruct.maxR) || isnan(currentStringStruct.maxR))
+                if ((thisR > currentStringStruct.maxR) || std::isnan(currentStringStruct.maxR))
                     currentStringStruct.maxR = thisR;
                 
-                if ((thisR > stringMaxR) || isnan(stringMaxR))
+                if ((thisR > stringMaxR) || std::isnan(stringMaxR))
                     stringMaxR = thisR;
             }
             
