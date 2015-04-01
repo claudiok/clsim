@@ -38,7 +38,6 @@
 
 #include "dataclasses/physics/I3MCTree.h"
 #include "dataclasses/physics/I3MCTreeUtils.h"
-#include "dataclasses/physics/I3MCTreePhysicsLibrary.hh"
 
 #include "phys-services/I3SummaryService.h"
 
