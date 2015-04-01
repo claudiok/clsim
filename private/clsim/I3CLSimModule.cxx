@@ -51,6 +51,7 @@
 #include <limits>
 #include <set>
 #include <deque>
+#include <cmath>
 
 
 namespace {
@@ -445,7 +446,7 @@ void I3CLSimModule::Configure()
 
     if (!mediumProperties_) log_fatal("You have to specify the \"MediumProperties\" parameter!");
 
-    if ((totalEnergyToProcess_ > 0) && (!isnan(totalEnergyToProcess_)))    
+    if ((totalEnergyToProcess_ > 0) && (!std::isnan(totalEnergyToProcess_)))    
     {
         log_warn("Total Energy to Process mode! MaxNumParallelEvents is set to 1! "
                  "CLSim is going to figure out the number of frames to process "
@@ -1220,14 +1221,14 @@ namespace {
             
             const double thisDist = std::sqrt(dx*dx + dy*dy + dz*dz);
             
-            if (isnan(closestDist)) {
+            if (std::isnan(closestDist)) {
                 closestDist=thisDist;
             } else {
                 if (thisDist<closestDist) closestDist=thisDist;
             }
         }
         
-        if (isnan(closestDist)) return 0.;
+        if (std::isnan(closestDist)) return 0.;
         return closestDist;
     }
 
@@ -1269,14 +1270,14 @@ namespace {
             
             const double thisDist = std::sqrt(dx*dx + dy*dy + dz*dz);
             
-            if (isnan(closestDist)) {
+            if (std::isnan(closestDist)) {
                 closestDist=thisDist;
             } else {
                 if (thisDist<closestDist) closestDist=thisDist;
             }
         }
         
-        if (isnan(closestDist)) return 0.;
+        if (std::isnan(closestDist)) return 0.;
         return closestDist;
     }
 
@@ -1312,7 +1313,7 @@ void I3CLSimModule::Process()
         return;
     }
     
-    if ((totalEnergyToProcess_ > 0) && (!isnan(totalEnergyToProcess_)))
+    if ((totalEnergyToProcess_ > 0) && (!std::isnan(totalEnergyToProcess_)))
     {
         double totalLightEnergyInFrame = GetLightSourceEnergy(frame);
         if (totalSimulatedEnergy_ + totalLightEnergyInFrame < totalEnergyToProcess_ / 2.)
@@ -1365,7 +1366,7 @@ void I3CLSimModule::Process()
             DigestOtherFrame(frameList2_[i]);
         }
         frameList2_.clear();
-        if ((totalEnergyToProcess_ > 0) && (!isnan(totalEnergyToProcess_)))
+        if ((totalEnergyToProcess_ > 0) && (!std::isnan(totalEnergyToProcess_)))
         {
             totalSimulatedEnergy_ = 0.;
             maxNumParallelEvents_ = 1;
@@ -1700,7 +1701,7 @@ void I3CLSimModule::ConvertMCTreeToLightSources(const I3MCTree &mcTree,
             bool nostop = false;
             double particleLength = particle.GetLength();
             
-            if (isnan(particleLength)) {
+            if (std::isnan(particleLength)) {
                 // assume infinite track (starting at given position)
                 nostop = true;
             } else if (particleLength < 0.) {
