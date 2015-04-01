@@ -445,7 +445,7 @@ void I3CLSimModule::Configure()
 
     if (!mediumProperties_) log_fatal("You have to specify the \"MediumProperties\" parameter!");
 
-    if ((totalEnergyToProcess_ > 0) && (!std::isnan(totalEnergyToProcess_)))    
+    if ((totalEnergyToProcess_ > 0) && (!isnan(totalEnergyToProcess_)))    
     {
         log_warn("Total Energy to Process mode! MaxNumParallelEvents is set to 1! "
                  "CLSim is going to figure out the number of frames to process "
@@ -1312,7 +1312,7 @@ void I3CLSimModule::Process()
         return;
     }
     
-    if ((totalEnergyToProcess_ > 0) && (!std::isnan(totalEnergyToProcess_)))
+    if ((totalEnergyToProcess_ > 0) && (!isnan(totalEnergyToProcess_)))
     {
         double totalLightEnergyInFrame = GetLightSourceEnergy(frame);
         if (totalSimulatedEnergy_ + totalLightEnergyInFrame < totalEnergyToProcess_ / 2.)
@@ -1365,7 +1365,7 @@ void I3CLSimModule::Process()
             DigestOtherFrame(frameList2_[i]);
         }
         frameList2_.clear();
-        if ((totalEnergyToProcess_ > 0) && (!std::isnan(totalEnergyToProcess_)))
+        if ((totalEnergyToProcess_ > 0) && (!isnan(totalEnergyToProcess_)))
         {
             totalSimulatedEnergy_ = 0.;
             maxNumParallelEvents_ = 1;
