@@ -56,6 +56,7 @@ def I3CLSimMakeHits(tray, name,
                     MCPESeriesName="MCPESeriesMap",
                     PhotonSeriesName=None,
                     ParallelEvents=1000,
+                    TotalEnergyToProcess=0.,
                     RandomService=None,
                     IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
                     DisableTilt=False,
@@ -133,6 +134,16 @@ def I3CLSimMakeHits(tray, name,
         in excessive memory usage (all your frames have to be cached
         in RAM). Setting it too low may impact simulation performance.
         The optimal value depends on your energy distribution/particle type.
+    :param TotalEnergyToProcess
+       clsim will work on a couple of events in parallel in order
+       not to starve the GPU. With this setting clsim will figure out
+       how many frames to accumulate as to not starve the GPU based on 
+       the energy of the light sources that are producing the photons 
+       in the detector. Setting this too high will result
+       in excessive memory usage (all your frames have to be cached
+       in RAM). Setting it too low may impact simulation performance. 
+       This cannot be used in flasher mode, since we cannot measure
+       the energy of the light sources.
     :param RandomService:
         Set this to an instance of a I3RandomService. Alternatively,
         you can specify the name of a configured I3RandomServiceFactory
@@ -261,6 +272,7 @@ def I3CLSimMakeHits(tray, name,
                                      MMCTrackListName=MMCTrackListName,
                                      PhotonSeriesName=photonsName,
                                      ParallelEvents=ParallelEvents,
+                                     TotalEnergyToProcess=TotalEnergyToProcess,
                                      RandomService=RandomService,
                                      IceModelLocation=IceModelLocation,
                                      DisableTilt=DisableTilt,

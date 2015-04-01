@@ -121,7 +121,12 @@ geometryIsConfigured_(false)
     AddParameter("MaxNumParallelEvents",
                  "Maximum number of events that will be processed by the GPU in parallel.",
                  maxNumParallelEvents_);
-
+    
+    totalEnergyToProcess_=0.;
+    AddParameter("TotalEnergyToProcess",
+                 "Maximum energy that will be processed by the GPU in parallel.",
+                 totalEnergyToProcess_);
+    
     MCTreeName_="I3MCTree";
     AddParameter("MCTreeName",
                  "Name of the I3MCTree frame object. All particles except neutrinos will be read from this tree.",
@@ -381,6 +386,7 @@ void I3CLSimModule::Configure()
     GetParameter("SpectrumTable", spectrumTable_);
 
     GetParameter("MaxNumParallelEvents", maxNumParallelEvents_);
+    GetParameter("TotalEnergyToProcess", totalEnergyToProcess_);
     GetParameter("MCTreeName", MCTreeName_);
     GetParameter("FlasherPulseSeriesName", flasherPulseSeriesName_);
     GetParameter("PhotonSeriesMapName", photonSeriesMapName_);
@@ -440,13 +446,25 @@ void I3CLSimModule::Configure()
 
     if (!mediumProperties_) log_fatal("You have to specify the \"MediumProperties\" parameter!");
 
-    if (maxNumParallelEvents_ <= 0) log_fatal("Values <= 0 are invalid for the \"MaxNumParallelEvents\" parameter!");
+    if ((totalEnergyToProcess_ > 0) && (!std::isnan(totalEnergyToProcess_)))    
+    {
+        log_warn("Total Energy to Process mode! MaxNumParallelEvents is set to 1! "
+                 "CLSim is going to figure out the number of frames to process "
+                 "from the light deposited in each frame!");
+        maxNumParallelEvents_=1;
+        maxNumParallelEventsSecondFlush_=1;
+    }
+    if ((maxNumParallelEvents_ <= 0) && (totalEnergyToProcess_ <= 0)) 
+        log_fatal("Values <= 0 are invalid for both the \"MaxNumParallelEvents\" and \"TotalEnergyToProcess\" parameter!");
     // maxNumParallelEvents_ is the number of frames buffered by this module.
     // Since we use double-buffering, divide the number by 2.
     maxNumParallelEvents_ /= 2;
     if (maxNumParallelEvents_==0) maxNumParallelEvents_=1;
+    maxNumParallelEventsSecondFlush_ = maxNumParallelEvents_;
+    
 
-    if (openCLDeviceList_.empty()) log_fatal("You have to provide at least one OpenCL device using the \"OpenCLDeviceList\" parameter.");
+    if (openCLDeviceList_.empty()) 
+        log_fatal("You have to provide at least one OpenCL device using the \"OpenCLDeviceList\" parameter.");
     
     // fill wavelengthGenerators_[0] (index 0 is the Cherenkov generator)
     wavelengthGenerators_.clear();
@@ -478,6 +496,7 @@ void I3CLSimModule::Configure()
     currentParticleCacheIndex_ = 1;
     geometryIsConfigured_ = false;
     totalSimulatedEnergyForFlush_ = 0.;
+    totalSimulatedEnergy_ = 0;
     totalNumParticlesForFlush_ = 0;
     
     if (parameterizationList_.size() > 0) {
@@ -1293,7 +1312,23 @@ void I3CLSimModule::Process()
         PushFrame(frame);
         return;
     }
-
+    
+    if ((totalEnergyToProcess_ > 0) && (!std::isnan(totalEnergyToProcess_)))
+    {
+        double totalLightEnergyInFrame = GetLightSourceEnergy(frame);
+        if (totalSimulatedEnergy_ + totalLightEnergyInFrame < totalEnergyToProcess_ / 2.)
+        {
+            maxNumParallelEvents_++;
+            totalSimulatedEnergy_ += totalLightEnergyInFrame;
+        }
+        else if (totalSimulatedEnergy_ + totalLightEnergyInFrame < totalEnergyToProcess_)
+        {
+            maxNumParallelEventsSecondFlush_++;
+            totalSimulatedEnergy_ += totalLightEnergyInFrame;
+        }
+        log_debug("Energy in Frame = %f GeV", totalLightEnergyInFrame);
+    }
+    
     // it's either Physics or something else..
     if (frameListPhysicsFrameCounter_ < maxNumParallelEvents_)
     {
@@ -1303,7 +1338,7 @@ void I3CLSimModule::Process()
         DigestOtherFrame(frame);
         frameListPhysicsFrameCounter_++;
     }
-    else if (frameListPhysicsFrameCounter_ < maxNumParallelEvents_*2) 
+    else if (frameListPhysicsFrameCounter_ < maxNumParallelEvents_ + maxNumParallelEventsSecondFlush_) // maxNumParallelEvents_*2) 
     {
         // keep a second buffer so we have it available once 
         // the first buffer has finished processing
@@ -1311,14 +1346,15 @@ void I3CLSimModule::Process()
         frameListPhysicsFrameCounter_++;
     }
 
-    if (frameListPhysicsFrameCounter_ >= maxNumParallelEvents_*2) 
+
+    if (frameListPhysicsFrameCounter_ >= maxNumParallelEvents_ + maxNumParallelEventsSecondFlush_) //maxNumParallelEvents_*2) 
     {
-        log_debug("Flushing results for a total energy of %fGeV for %" PRIu64 " particles",
+        log_debug("Flushing results for a total energy of %f GeV for %" PRIu64 " particles",
                  totalSimulatedEnergyForFlush_/I3Units::GeV, totalNumParticlesForFlush_);
-                 
-        totalSimulatedEnergyForFlush_=0.;
+             
+        totalSimulatedEnergyForFlush_= 0.;
         totalNumParticlesForFlush_=0;
-        
+    
         // this will finish processing the first buffer and
         // push all its frames
         const std::size_t framesPushed =
@@ -1330,11 +1366,68 @@ void I3CLSimModule::Process()
             DigestOtherFrame(frameList2_[i]);
         }
         frameList2_.clear();
-        
+        if ((totalEnergyToProcess_ > 0) && (!std::isnan(totalEnergyToProcess_)))
+        {
+            totalSimulatedEnergy_ = 0.;
+            maxNumParallelEvents_ = 1;
+            maxNumParallelEventsSecondFlush_ = 1;
+        }
+
+            
+    
         log_debug("============== CACHE FLUSHED ================");
     }
 }
 
+double I3CLSimModule::GetLightSourceEnergy(I3FramePtr frame)
+{
+    I3MCTreeConstPtr MCTree;
+    I3CLSimFlasherPulseSeriesConstPtr flasherPulses;
+    double totalLightSourceEnergy = 0;
+    
+    if (MCTreeName_ != "")
+        MCTree = frame->Get<I3MCTreeConstPtr>(MCTreeName_);
+    if (flasherPulseSeriesName_ != "")
+        flasherPulses = frame->Get<I3CLSimFlasherPulseSeriesConstPtr>(flasherPulseSeriesName_);
+    if (!MCTree) 
+    {   
+        log_warn("Frame will not be processed cause MCTree not present.");
+        return totalLightSourceEnergy;
+    }
+    if (flasherPulses) 
+        log_fatal("Flashers! Cannot calculate how much energy is deposited in detector. "
+                  "Set MaxNumParallelEvents > 0 and totalEnergyToProcess_ = 0");
+    
+    std::deque<I3CLSimLightSource> lightSources;
+    std::deque<double> timeOffsets;
+    if (MCTree) ConvertMCTreeToLightSources(*MCTree, lightSources, timeOffsets);
+    
+    for (std::size_t i=0;i<lightSources.size();++i)
+    {
+        const I3CLSimLightSource &lightSource = lightSources[i];
+        if (lightSource.GetType() == I3CLSimLightSource::Particle)
+        {
+            
+            const I3Particle &particle = lightSource.GetParticle();
+            if (particle.GetType() == I3Particle::MuMinus || particle.GetType() == I3Particle::MuPlus)
+            {
+                // This is the upper estimate of the muon energy loss due to ionization
+                // We use the upper estimate to be conservative about how much 
+                // energy ends up in the detetor.
+                // It is taken from I3MuonSlicer Line 306. It originally comes from PPC.
+                totalLightSourceEnergy += (0.21+8.8e-3*log(particle.GetEnergy()/I3Units::GeV)/log(10.))*(I3Units::GeV/I3Units::m) * particle.GetLength();
+            }
+            else
+            {
+                totalLightSourceEnergy += particle.GetEnergy();
+            }
+            // log_info_stream(particle);
+        }
+        
+    }
+    
+    return totalLightSourceEnergy;
+}
 
 bool I3CLSimModule::DigestOtherFrame(I3FramePtr frame, bool startThread)
 {

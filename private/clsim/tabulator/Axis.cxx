@@ -29,6 +29,8 @@
 
 #include <boost/foreach.hpp>
 
+#include <cmath>
+
 namespace clsim {
 
 namespace tabulator {
