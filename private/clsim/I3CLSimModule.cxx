@@ -51,7 +51,6 @@
 #include <limits>
 #include <set>
 #include <deque>
-#include <cmath>
 
 
 namespace {
@@ -446,7 +445,7 @@ void I3CLSimModule::Configure()
 
     if (!mediumProperties_) log_fatal("You have to specify the \"MediumProperties\" parameter!");
 
-    if (totalEnergyToProcess_ > 0) 
+    if ((totalEnergyToProcess_ > 0) && (!std::isnan(totalEnergyToProcess_)))    
     {
         log_warn("Total Energy to Process mode! MaxNumParallelEvents is set to 1! "
                  "CLSim is going to figure out the number of frames to process "
@@ -1221,14 +1220,14 @@ namespace {
             
             const double thisDist = std::sqrt(dx*dx + dy*dy + dz*dz);
             
-            if (std::isnan(closestDist)) {
+            if (isnan(closestDist)) {
                 closestDist=thisDist;
             } else {
                 if (thisDist<closestDist) closestDist=thisDist;
             }
         }
         
-        if (std::isnan(closestDist)) return 0.;
+        if (isnan(closestDist)) return 0.;
         return closestDist;
     }
 
@@ -1270,14 +1269,14 @@ namespace {
             
             const double thisDist = std::sqrt(dx*dx + dy*dy + dz*dz);
             
-            if (std::isnan(closestDist)) {
+            if (isnan(closestDist)) {
                 closestDist=thisDist;
             } else {
                 if (thisDist<closestDist) closestDist=thisDist;
             }
         }
         
-        if (std::isnan(closestDist)) return 0.;
+        if (isnan(closestDist)) return 0.;
         return closestDist;
     }
 
@@ -1701,7 +1700,7 @@ void I3CLSimModule::ConvertMCTreeToLightSources(const I3MCTree &mcTree,
             bool nostop = false;
             double particleLength = particle.GetLength();
             
-            if (std::isnan(particleLength)) {
+            if (isnan(particleLength)) {
                 // assume infinite track (starting at given position)
                 nostop = true;
             } else if (particleLength < 0.) {
