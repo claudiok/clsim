@@ -140,7 +140,7 @@ bool I3CLSimRandomValueFixParameter::CompareTo(const I3CLSimRandomValue &other) 
         const I3CLSimRandomValueFixParameter &other_ = dynamic_cast<const I3CLSimRandomValueFixParameter &>(other);
 
         if (other_.parameterIndex_ != parameterIndex_) return false;
-        if (!(isnan(other_.parameterValue_) && (isnan(parameterValue_)))) {
+        if (!(std::isnan(other_.parameterValue_) && (std::isnan(parameterValue_)))) {
             if (other_.parameterValue_ != parameterValue_) return false;
         }
         if (!(*(other_.randomDistUsed_) == *randomDistUsed_)) return false;

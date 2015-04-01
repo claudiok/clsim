@@ -28,6 +28,7 @@
 #define __STDC_FORMAT_MACROS
 #endif
 #include <inttypes.h>
+#include <cmath>
 
 #include "clsim/util/I3MuonSlicer.h"
 
@@ -112,7 +113,7 @@ namespace {
             const I3Particle &particle = *particle_it;
 
             if (firstIt) {
-                if (isnan(particle.GetTime())) return false; // not sorted..
+                if (std::isnan(particle.GetTime())) return false; // not sorted..
                 previousTime=particle.GetTime();
                 continue;
             }
@@ -198,7 +199,7 @@ namespace {
         GetDaughterIteratorsFromParentIterator(inputTree, particle_it_inputTree);
 
         // special treatment for muons with a length only
-        if (((!isnan(particle.GetLength())) && (particle.GetLength() > 0.)) &&
+        if (((!std::isnan(particle.GetLength())) && (particle.GetLength() > 0.)) &&
             ((particle.GetType()==I3Particle::MuMinus) ||
             (particle.GetType()==I3Particle::MuPlus)))
         {
@@ -214,8 +215,8 @@ namespace {
                 log_fatal("Found a muon that does not travel with the speed of light. v=%gm/ns",
                           particle.GetSpeed()/(I3Units::m/I3Units::ns));
             
-            if (isnan(particle.GetEnergy())) log_fatal("Muon must have an energy");
-            if (isnan(particle.GetTime())) log_fatal("Muon must have a time");
+            if (std::isnan(particle.GetEnergy())) log_fatal("Muon must have an energy");
+            if (std::isnan(particle.GetTime())) log_fatal("Muon must have a time");
             
             // get MMC track times and energies
             double ti=NAN;
@@ -257,21 +258,21 @@ namespace {
             bool hadInvalidEf=false;
             
             // correct values with information from I3Particle
-            if ((Ei<=0.) || (isnan(Ei)))
+            if ((Ei<=0.) || (std::isnan(Ei)))
             {
                 Ei = particle.GetEnergy();
                 ti = particle.GetTime();
                 hadInvalidEi=true;
             }
-            if ((Ef<0.) || (isnan(Ef)))
+            if ((Ef<0.) || (std::isnan(Ef)))
             {
                 Ef = 0.;
                 tf = particle.GetTime() + particle.GetLength()/I3Constants::c;
                 hadInvalidEf=true;
             }
 
-            if (isnan(ti)) log_fatal("t_initial is NaN");
-            if (isnan(tf)) log_fatal("t_final is NaN");
+            if (std::isnan(ti)) log_fatal("t_initial is NaN");
+            if (std::isnan(tf)) log_fatal("t_final is NaN");
 
             if (Ei<=0) 
             {
@@ -335,7 +336,7 @@ namespace {
                         continue;
                     }
                     
-                    if (isnan(daughter.GetTime())) continue;
+                    if (std::isnan(daughter.GetTime())) continue;
                     
                     // calculate an expected time for the cascade (from its position on the track)
                     const double expectedTime = particle.GetTime() + distanceOnTrack/I3Constants::c;

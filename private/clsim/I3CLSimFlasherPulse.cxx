@@ -30,6 +30,7 @@
 
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <cmath>
 
 
 
@@ -85,32 +86,32 @@ bool operator==(const I3CLSimFlasherPulse &a, const I3CLSimFlasherPulse &b)
     if (a.pos_.GetY() != b.pos_.GetY()) return false;
     if (a.pos_.GetZ() != b.pos_.GetZ()) return false;
     
-    if (isnan(a.time_) || isnan(b.time_)) {
-        if ((!isnan(a.time_)) || (!isnan(b.time_))) return false;
+    if (std::isnan(a.time_) || std::isnan(b.time_)) {
+        if ((!std::isnan(a.time_)) || (!std::isnan(b.time_))) return false;
     } else {
         if (a.time_ != b.time_) return false;
     }
     
-    if (isnan(a.numberOfPhotonsNoBias_) || isnan(b.numberOfPhotonsNoBias_)) {
-        if ((!isnan(a.numberOfPhotonsNoBias_)) || (!isnan(b.numberOfPhotonsNoBias_))) return false;
+    if (std::isnan(a.numberOfPhotonsNoBias_) || std::isnan(b.numberOfPhotonsNoBias_)) {
+        if ((!std::isnan(a.numberOfPhotonsNoBias_)) || (!std::isnan(b.numberOfPhotonsNoBias_))) return false;
     } else {
         if (a.numberOfPhotonsNoBias_ != b.numberOfPhotonsNoBias_) return false;
     }
     
-    if (isnan(a.pulseWidth_) || isnan(b.pulseWidth_)) {
-        if ((!isnan(a.pulseWidth_)) || (!isnan(b.pulseWidth_))) return false;
+    if (std::isnan(a.pulseWidth_) || std::isnan(b.pulseWidth_)) {
+        if ((!std::isnan(a.pulseWidth_)) || (!std::isnan(b.pulseWidth_))) return false;
     } else {
         if (a.pulseWidth_ != b.pulseWidth_) return false;
     }
 
-    if (isnan(a.angularEmissionSigmaPolar_) || isnan(b.angularEmissionSigmaPolar_)) {
-        if ((!isnan(a.angularEmissionSigmaPolar_)) || (!isnan(b.angularEmissionSigmaPolar_))) return false;
+    if (std::isnan(a.angularEmissionSigmaPolar_) || std::isnan(b.angularEmissionSigmaPolar_)) {
+        if ((!std::isnan(a.angularEmissionSigmaPolar_)) || (!std::isnan(b.angularEmissionSigmaPolar_))) return false;
     } else {
         if (a.angularEmissionSigmaPolar_ != b.angularEmissionSigmaPolar_) return false;
     }
 
-    if (isnan(a.angularEmissionSigmaAzimuthal_) || isnan(b.angularEmissionSigmaAzimuthal_)) {
-        if ((!isnan(a.angularEmissionSigmaAzimuthal_)) || (!isnan(b.angularEmissionSigmaAzimuthal_))) return false;
+    if (std::isnan(a.angularEmissionSigmaAzimuthal_) || std::isnan(b.angularEmissionSigmaAzimuthal_)) {
+        if ((!std::isnan(a.angularEmissionSigmaAzimuthal_)) || (!std::isnan(b.angularEmissionSigmaAzimuthal_))) return false;
     } else {
         if (a.angularEmissionSigmaAzimuthal_ != b.angularEmissionSigmaAzimuthal_) return false;
     }

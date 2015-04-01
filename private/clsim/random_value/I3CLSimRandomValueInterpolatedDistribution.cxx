@@ -62,8 +62,8 @@ y_(y),
 constantXSpacing_(xSpacing),
 firstX_(xFirst)
 {
-    if (isnan(firstX_)) log_fatal("\"xFirst\" must not be NaN!");
-    if (isnan(constantXSpacing_)) log_fatal("\"xSpacing\" must not be NaN!");
+    if (std::isnan(firstX_)) log_fatal("\"xFirst\" must not be NaN!");
+    if (std::isnan(constantXSpacing_)) log_fatal("\"xSpacing\" must not be NaN!");
     if (constantXSpacing_<=0.) log_fatal("\"xSpacing\" must not be <= 0!");
     
     if (y_.size() <= 1)
@@ -107,7 +107,7 @@ double I3CLSimRandomValueInterpolatedDistribution::SampleFromDistribution(const 
     const double b = data_beta_[k];
     
     double x0, slope;
-    if (isnan(constantXSpacing_)) {
+    if (std::isnan(constantXSpacing_)) {
         x0 = x_[k];
         slope = (data_beta_[k+1]-b)/(x_[k+1]-x0);
     } else {
@@ -141,7 +141,7 @@ void I3CLSimRandomValueInterpolatedDistribution::InitTables()
     typedef std::vector<double>::size_type sizeType;
     
     // sanity checks
-    if (isnan(constantXSpacing_)) {
+    if (std::isnan(constantXSpacing_)) {
         if (x_.size()!=y_.size()) log_fatal("Internal error: angles_.size()!=values_.size()");
     }
     
@@ -154,7 +154,7 @@ void I3CLSimRandomValueInterpolatedDistribution::InitTables()
     
     // simple trapezoidal integration (which is not an approximation in this case)
     data_acu_[0]=0.;
-    if (isnan(constantXSpacing_))
+    if (std::isnan(constantXSpacing_))
     {
         for (std::size_t j=1;j<numEntries;++j)
         {
@@ -184,7 +184,7 @@ std::string I3CLSimRandomValueInterpolatedDistribution::WriteTableCode(const std
     typedef std::vector<double>::size_type sizeType;
     
     // sanity checks
-    if (isnan(constantXSpacing_)) {
+    if (std::isnan(constantXSpacing_)) {
         if (x_.size()!=y_.size()) log_fatal("Internal error: angles_.size()!=values_.size()");
     }
     
@@ -206,7 +206,7 @@ std::string I3CLSimRandomValueInterpolatedDistribution::WriteTableCode(const std
     output.setf(std::ios::scientific,std::ios::floatfield);
     output.precision(std::numeric_limits<float>::digits10+4); // maximum precision for a float
     
-    if (isnan(constantXSpacing_))
+    if (std::isnan(constantXSpacing_))
     {
         output << "__constant float " << prefix << "distXValues[" << prefix << "NUM_DIST_ENTRIES] = {" << std::endl;
         for (sizeType j=0;j<numEntries;++j){     
@@ -253,7 +253,7 @@ std::string I3CLSimRandomValueInterpolatedDistribution::GetOpenCLFunction
     std::string constantXSpacingValueString;
     std::string firstXValueString;
     
-    if (!isnan(constantXSpacing_)) {
+    if (!std::isnan(constantXSpacing_)) {
         std::ostringstream output(std::ostringstream::out);
         output.setf(std::ios::scientific,std::ios::floatfield);
         output.precision(std::numeric_limits<float>::digits10+4); // maximum precision for a float
@@ -262,7 +262,7 @@ std::string I3CLSimRandomValueInterpolatedDistribution::GetOpenCLFunction
         constantXSpacingValueString = output.str();
     }
 
-    if (!isnan(firstX_)) {
+    if (!std::isnan(firstX_)) {
         std::ostringstream output(std::ostringstream::out);
         output.setf(std::ios::scientific,std::ios::floatfield);
         output.precision(std::numeric_limits<float>::digits10+4); // maximum precision for a float
@@ -291,7 +291,7 @@ std::string I3CLSimRandomValueInterpolatedDistribution::GetOpenCLFunction
     "    \n"
     "    const float b = " + distYValuesName + "[k];\n";
     
-    if (isnan(constantXSpacing_)) {
+    if (std::isnan(constantXSpacing_)) {
         retString = retString + 
         "    const float x0 = " + distXValuesName + "[k];\n"
         "    \n"
@@ -343,14 +343,14 @@ bool I3CLSimRandomValueInterpolatedDistribution::CompareTo(const I3CLSimRandomVa
     {
         const I3CLSimRandomValueInterpolatedDistribution &other_ = dynamic_cast<const I3CLSimRandomValueInterpolatedDistribution &>(other);
 
-        if (isnan(other_.constantXSpacing_) && (!isnan(constantXSpacing_))) return false;
-        if ((!isnan(other_.constantXSpacing_)) && isnan(constantXSpacing_)) return false;
+        if (std::isnan(other_.constantXSpacing_) && (!std::isnan(constantXSpacing_))) return false;
+        if ((!std::isnan(other_.constantXSpacing_)) && std::isnan(constantXSpacing_)) return false;
 
-        if (isnan(other_.firstX_) && (!isnan(firstX_))) return false;
-        if ((!isnan(other_.firstX_)) && isnan(firstX_)) return false;
+        if (std::isnan(other_.firstX_) && (!std::isnan(firstX_))) return false;
+        if ((!std::isnan(other_.firstX_)) && std::isnan(firstX_)) return false;
 
-        if ( (!isnan(constantXSpacing_)) && (other_.constantXSpacing_ != constantXSpacing_)) return false;
-        if ( (!isnan(firstX_)) && (other_.firstX_ != firstX_)) return false;
+        if ( (!std::isnan(constantXSpacing_)) && (other_.constantXSpacing_ != constantXSpacing_)) return false;
+        if ( (!std::isnan(firstX_)) && (other_.firstX_ != firstX_)) return false;
 
         if (other_.x_.size() != x_.size()) return false;
         if (other_.y_.size() != y_.size()) return false;

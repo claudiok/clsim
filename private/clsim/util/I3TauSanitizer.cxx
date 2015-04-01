@@ -33,6 +33,7 @@
 #include "icetray/I3ConditionalModule.h"
 
 #include <string>
+#include <cmath>
 
 #include <boost/foreach.hpp>
 
@@ -170,7 +171,7 @@ void I3TauSanitizer::DAQ(I3FramePtr frame)
         if ((it->GetType() != I3Particle::TauPlus) && (it->GetType() != I3Particle::TauMinus))
             continue;
 
-        if (isnan(it->GetLength()))
+        if (std::isnan(it->GetLength()))
         {
             log_warn("Particle (%" PRIu64 ",%i) has NaN length. setting to shape \"Dark\".",
                 it->GetMajorID(),

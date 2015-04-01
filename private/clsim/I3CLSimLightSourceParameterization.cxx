@@ -28,6 +28,7 @@
 #include <clsim/I3CLSimLightSourceParameterization.h>
 
 #include <limits>
+#include <cmath>
 
 const I3CLSimLightSourceParameterization::AllParticles_t I3CLSimLightSourceParameterization::AllParticles = I3CLSimLightSourceParameterization::AllParticles_t();
 
@@ -147,7 +148,7 @@ bool I3CLSimLightSourceParameterization::IsValidForParticle(const I3Particle &pa
 {
     if (flasherMode) return false; // flasher params. cannot be valid for particles
     
-    if (isnan(particle.GetEnergy())) {
+    if (std::isnan(particle.GetEnergy())) {
         log_warn("I3CLSimLightSourceParameterization::IsValid() called with particle with NaN energy. Parameterization is NOT valid.");
         return false;
     }
@@ -159,7 +160,7 @@ bool I3CLSimLightSourceParameterization::IsValid(I3Particle::ParticleType type, 
 {
     if (flasherMode) return false; // flasher params. cannot be valid for particles
 
-    if (isnan(energy)) return false;
+    if (std::isnan(energy)) return false;
     if (!catchAll) {
 #ifdef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
         const int32_t encoding = I3Particle(I3Particle::Null,type).GetPdgEncoding();
@@ -170,7 +171,7 @@ bool I3CLSimLightSourceParameterization::IsValid(I3Particle::ParticleType type, 
 #endif
     }
     if ((energy < fromEnergy) || (energy > toEnergy)) return false;
-    if ((needsLength) && (isnan(length))) return false;
+    if ((needsLength) && (std::isnan(length))) return false;
     
     return true;
 }
@@ -180,12 +181,12 @@ bool I3CLSimLightSourceParameterization::IsValidForPdgEncoding(int32_t encoding,
 {
     if (flasherMode) return false; // flasher params. cannot be valid for particles
 
-    if (isnan(energy)) return false;
+    if (std::isnan(energy)) return false;
     if (!catchAll) {
         if (encoding != forPdgEncoding) return false;
     }
     if ((energy < fromEnergy) || (energy > toEnergy)) return false;
-    if ((needsLength) && (isnan(length))) return false;
+    if ((needsLength) && (std::isnan(length))) return false;
     
     return true;
 }

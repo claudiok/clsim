@@ -45,8 +45,8 @@ I3CLSimRandomValueWlenCherenkovNoDispersion(double fromWlen,
 fromWlen_(fromWlen),
 toWlen_(toWlen)
 {
-    if (isnan(fromWlen_)) log_fatal("The \"fromWlen\" argument must not be NaN!");
-    if (isnan(toWlen_)) log_fatal("The \"toWlen\" argument must not be NaN!");
+    if (std::isnan(fromWlen_)) log_fatal("The \"fromWlen\" argument must not be NaN!");
+    if (std::isnan(toWlen_)) log_fatal("The \"toWlen\" argument must not be NaN!");
               
     if (fromWlen_ > toWlen_) 
         log_fatal("The \"fromWlen\" argument must not be greater than \"toWlen\".");

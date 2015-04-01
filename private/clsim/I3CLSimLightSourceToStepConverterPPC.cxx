@@ -399,9 +399,9 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLight
         // This is compatible to what hit-maker does, but is of course not the right thing
         // to do. (Hit-maker treats all "tracks" the same and uses muon-tables for them.)
         
-        const double length = isnan(particle.GetLength())?(2000.*I3Units::m):(particle.GetLength());
+        const double length = std::isnan(particle.GetLength())?(2000.*I3Units::m):(particle.GetLength());
         
-        if (isnan(particle.GetLength()))
+        if (std::isnan(particle.GetLength()))
             log_warn("Muon without length found! Assigned a length of 2000m.");
 
         log_trace("Parameterizing muon (ID=(%" PRIu64 "/%i)) with E=%fTeV, length=%fm",
