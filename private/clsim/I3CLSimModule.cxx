@@ -121,7 +121,7 @@ geometryIsConfigured_(false)
                  "Maximum number of events that will be processed by the GPU in parallel.",
                  maxNumParallelEvents_);
     
-    totalEnergyToProcess_=5*I3Units::PeV;
+    totalEnergyToProcess_=0.;
     AddParameter("TotalEnergyToProcess",
                  "Maximum energy that will be processed by the GPU in parallel.",
                  totalEnergyToProcess_);
@@ -1312,7 +1312,7 @@ void I3CLSimModule::Process()
         return;
     }
     
-    if (totalEnergyToProcess_ > 0)
+    if ((totalEnergyToProcess_ > 0) && (!std::isnan(totalEnergyToProcess_)))
     {
         double totalLightEnergyInFrame = GetLightSourceEnergy(frame);
         if (totalSimulatedEnergy_ + totalLightEnergyInFrame < totalEnergyToProcess_ / 2.)
@@ -1365,7 +1365,7 @@ void I3CLSimModule::Process()
             DigestOtherFrame(frameList2_[i]);
         }
         frameList2_.clear();
-        if (totalEnergyToProcess_ > 0)
+        if ((totalEnergyToProcess_ > 0) && (!std::isnan(totalEnergyToProcess_)))
         {
             totalSimulatedEnergy_ = 0.;
             maxNumParallelEvents_ = 1;
@@ -1411,11 +1411,9 @@ double I3CLSimModule::GetLightSourceEnergy(I3FramePtr frame)
             if (particle.GetType() == I3Particle::MuMinus || particle.GetType() == I3Particle::MuPlus)
             {
                 // This is the upper estimate of the muon energy loss due to ionization
-                // We use the upper estimate as we want to be conservative with how much 
+                // We use the upper estimate to be conservative about how much 
                 // energy ends up in the detetor.
                 // It is taken from I3MuonSlicer Line 306. It originally comes from PPC.
-                // As always with things that come from PPC
-                // CAUTION DIMA BLACK MAGIC
                 totalLightSourceEnergy += (0.21+8.8e-3*log(particle.GetEnergy()/I3Units::GeV)/log(10.))*(I3Units::GeV/I3Units::m) * particle.GetLength();
             }
             else
