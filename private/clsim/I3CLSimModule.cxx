@@ -38,6 +38,7 @@
 
 #include "dataclasses/physics/I3MCTree.h"
 #include "dataclasses/physics/I3MCTreeUtils.h"
+#include "dataclasses/physics/I3MCTreePhysicsLibrary.hh"
 
 #include "phys-services/I3SummaryService.h"
 
@@ -447,11 +448,14 @@ void I3CLSimModule::Configure()
 
     if (totalEnergyToProcess_ > 0) 
     {
-        log_warn("MaxNumParallelEvents is set to 1! CLSim is going to figure out the number of frames to process for you!");
+        log_warn("Total Energy to Process mode! MaxNumParallelEvents is set to 1! "
+                 "CLSim is going to figure out the number of frames to process "
+                 "from the light deposited in each frame!");
         maxNumParallelEvents_=1;
         maxNumParallelEventsSecondFlush_=1;
     }
-    if ((maxNumParallelEvents_ <= 0) && (totalEnergyToProcess_ <= 0)) log_fatal("Values <= 0 are invalid for both the \"MaxNumParallelEvents\" and \"TotalEnergyToProcess\" parameter!");
+    if ((maxNumParallelEvents_ <= 0) && (totalEnergyToProcess_ <= 0)) 
+        log_fatal("Values <= 0 are invalid for both the \"MaxNumParallelEvents\" and \"TotalEnergyToProcess\" parameter!");
     // maxNumParallelEvents_ is the number of frames buffered by this module.
     // Since we use double-buffering, divide the number by 2.
     maxNumParallelEvents_ /= 2;
@@ -459,7 +463,8 @@ void I3CLSimModule::Configure()
     maxNumParallelEventsSecondFlush_ = maxNumParallelEvents_;
     
 
-    if (openCLDeviceList_.empty()) log_fatal("You have to provide at least one OpenCL device using the \"OpenCLDeviceList\" parameter.");
+    if (openCLDeviceList_.empty()) 
+        log_fatal("You have to provide at least one OpenCL device using the \"OpenCLDeviceList\" parameter.");
     
     // fill wavelengthGenerators_[0] (index 0 is the Cherenkov generator)
     wavelengthGenerators_.clear();
@@ -1308,7 +1313,6 @@ void I3CLSimModule::Process()
         return;
     }
     
-
     if (totalEnergyToProcess_ > 0)
     {
         double totalLightEnergyInFrame = GetLightSourceEnergy(frame);
@@ -1322,6 +1326,7 @@ void I3CLSimModule::Process()
             maxNumParallelEventsSecondFlush_++;
             totalSimulatedEnergy_ += totalLightEnergyInFrame;
         }
+        log_debug("Energy in Frame = %f GeV", totalLightEnergyInFrame);
     }
     
     // it's either Physics or something else..
@@ -1344,7 +1349,7 @@ void I3CLSimModule::Process()
 
     if (frameListPhysicsFrameCounter_ >= maxNumParallelEvents_ + maxNumParallelEventsSecondFlush_) //maxNumParallelEvents_*2) 
     {
-        log_debug("Flushing results for a total energy of %fGeV for %" PRIu64 " particles",
+        log_debug("Flushing results for a total energy of %f GeV for %" PRIu64 " particles",
                  totalSimulatedEnergyForFlush_/I3Units::GeV, totalNumParticlesForFlush_);
              
         totalSimulatedEnergyForFlush_= 0.;
@@ -1361,7 +1366,14 @@ void I3CLSimModule::Process()
             DigestOtherFrame(frameList2_[i]);
         }
         frameList2_.clear();
-        totalSimulatedEnergy_ = 0.;
+        if (totalEnergyToProcess_ > 0)
+        {
+            totalSimulatedEnergy_ = 0.;
+            maxNumParallelEvents_ = 1;
+            maxNumParallelEventsSecondFlush_ = 1;
+        }
+
+            
     
         log_debug("============== CACHE FLUSHED ================");
     }
@@ -1382,22 +1394,36 @@ double I3CLSimModule::GetLightSourceEnergy(I3FramePtr frame)
         log_warn("Frame will not be processed cause MCTree not present.");
         return totalLightSourceEnergy;
     }
-    if (!flasherPulses) 
-        log_fatal("Flashers! Cannot calculate how much energy is deposited in detector."
+    if (flasherPulses) 
+        log_fatal("Flashers! Cannot calculate how much energy is deposited in detector. "
                   "Set MaxNumParallelEvents > 0 and totalEnergyToProcess_ = 0");
     
     std::deque<I3CLSimLightSource> lightSources;
     std::deque<double> timeOffsets;
     if (MCTree) ConvertMCTreeToLightSources(*MCTree, lightSources, timeOffsets);
     
-    for (std::size_t i=0;i<lightSources.size();++i) // Why ++i here?
+    for (std::size_t i=0;i<lightSources.size();++i)
     {
         const I3CLSimLightSource &lightSource = lightSources[i];
         if (lightSource.GetType() == I3CLSimLightSource::Particle)
         {
-            const I3Particle &particle = lightSource.GetParticle();
             
-            totalLightSourceEnergy += particle.GetEnergy();
+            const I3Particle &particle = lightSource.GetParticle();
+            if (particle.GetType() == I3Particle::MuMinus || particle.GetType() == I3Particle::MuPlus)
+            {
+                // This is the upper estimate of the muon energy loss due to ionization
+                // We use the upper estimate as we want to be conservative with how much 
+                // energy ends up in the detetor.
+                // It is taken from I3MuonSlicer Line 306. It originally comes from PPC.
+                // As always with things that come from PPC
+                // CAUTION DIMA BLACK MAGIC
+                totalLightSourceEnergy += (0.21+8.8e-3*log(particle.GetEnergy()/I3Units::GeV)/log(10.))*(I3Units::GeV/I3Units::m) * particle.GetLength();
+            }
+            else
+            {
+                totalLightSourceEnergy += particle.GetEnergy();
+            }
+            // log_info_stream(particle);
         }
         
     }
