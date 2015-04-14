@@ -2,6 +2,19 @@
 # $Author$
 # $Date$
 
+trunk
+-----
+
+* The cutoff distance for sources further away from any DOM than a certain
+  distance is now configurable using the I3CLSimModule option
+  "ClosestDOMDistanceCutoff". It used to be hard-coded to 300m.
+* New "TotalEnergyToProcess" option to keep collecting input events as long
+  as the total energy to be propagated is below a threshold. (Instead of
+  just processing a fixed number of events in parallel.) Using this option
+  should reduce fluctuations in the memory requirements of clsim jobs.
+  This cannot currently be used with flasher simulations. If unset, the
+  previous behavior is used.
+
 November 24, 2014 Alex Olivas  (olivas@icecube.umd.edu)
 --------------------------------------------------------------------
 Release V04-00-04
@@ -72,4 +85,3 @@ or "GTX 680" in their names.
 
 Performance for large I3MCTrees should be significantly
 improved in this release.
-

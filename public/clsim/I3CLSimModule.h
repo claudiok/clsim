@@ -284,6 +284,10 @@ private:
     ///   If set to zero (the default) the largest possible workgroup size will be chosen.
     uint32_t limitWorkgroupSize_;
 
+    /// Parameter: do not even start light from sources that do not have any DOMs closer to
+    ///   to them than this distance. (default is 300m)
+    double closestDOMDistanceCutoff_;
+
 
 private:
     // default, assignment, and copy constructor declared private

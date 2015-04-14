@@ -293,6 +293,12 @@ geometryIsConfigured_(false)
                  "If set to zero (the default) the largest possible workgroup size will be chosen.",
                  limitWorkgroupSize_);
 
+    closestDOMDistanceCutoff_=300.*I3Units::m;
+    AddParameter("ClosestDOMDistanceCutoff",
+                 "Do not even start light from sources that do not have any DOMs closer to\n"
+                 "to them than this distance.",
+                 closestDOMDistanceCutoff_);
+
     // add an outbox
     AddOutBox("OutBox");
 
@@ -428,6 +434,8 @@ void I3CLSimModule::Configure()
     GetParameter("PhotonHistoryEntries", photonHistoryEntries_);
 
     GetParameter("LimitWorkgroupSize", limitWorkgroupSize_);
+
+    GetParameter("ClosestDOMDistanceCutoff", closestDOMDistanceCutoff_);
 
     if (pancakeFactor_ != DOMOversizeFactor_) {
         log_warn("***** You set the \"DOMOversizeFactor\" to a different value than the \"DOMPancakeFactor\". Be sure you know what you are doing!");
@@ -1684,10 +1692,10 @@ void I3CLSimModule::ConvertMCTreeToLightSources(const I3MCTree &mcTree,
         {
             const double distToClosestDOM = DistToClosestDOM(*geometry_, particle_ref.GetPos());
             
-            if (distToClosestDOM >= 300.*I3Units::m)
+            if (distToClosestDOM >= closestDOMDistanceCutoff_)
             {
-                log_debug("Ignored a non-track that is %fm (>300m) away from the closest DOM.",
-                          distToClosestDOM);
+                log_debug("Ignored a non-track that is %fm (>%fm) away from the closest DOM.",
+                          distToClosestDOM, closestDOMDistanceCutoff_);
                 continue;
             }
         }
@@ -1713,10 +1721,10 @@ void I3CLSimModule::ConvertMCTreeToLightSources(const I3MCTree &mcTree,
             }
             
             const double distToClosestDOM = DistToClosestDOM(*geometry_, particle.GetPos(), particle.GetDir(), particleLength, nostart, nostop);
-            if (distToClosestDOM >= 300.*I3Units::m)
+            if (distToClosestDOM >= closestDOMDistanceCutoff_)
             {
-                log_debug("Ignored a track that is always at least %fm (>300m) away from the closest DOM.",
-                          distToClosestDOM);
+                log_debug("Ignored a track that is always at least %fm (>%fm) away from the closest DOM.",
+                          distToClosestDOM, closestDOMDistanceCutoff_);
                 continue;
             }
         }
