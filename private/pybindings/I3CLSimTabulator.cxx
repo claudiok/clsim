@@ -234,15 +234,9 @@ I3CLSimTabulator::RecordPhoton(const I3CLSimTabulator::Source &source, const I3P
 			continue;
 		
 		// A vector connecting the two recording points.
-<<<<<<< .working
-		I3Position pdir = (*p1)-(*p0);
-		double distance = pdir.Magnitude();
-		pdir /= distance;
-=======
 		I3Position displacement(*p1-*p0);
 		double distance = displacement.Magnitude();
 		I3Direction pdir(displacement);
->>>>>>> .merge-right.r131588
 		
 		// XXX HACK: the cosine of the impact angle with the
 		// DOM is the same as the z-component of the photon
@@ -255,7 +249,7 @@ I3CLSimTabulator::RecordPhoton(const I3CLSimTabulator::Source &source, const I3P
 		nsamples += (rng_->Uniform() < distance/stepLength_ - nsamples);
 		for (int i = 0; i < nsamples; i++) {
 			double d = distance*rng_->Uniform();
-			off_t idx = GetBinIndex(source, *p0 + d*pdir, t + d/photon.GetGroupVelocity());
+			off_t idx = GetBinIndex(source, (*p0) + d*pdir, t + d/photon.GetGroupVelocity());
 			// Once the photon has accumulated enough delay time
 			// to run off the end of the table, there's no going back. Bail.
 			if (idx < 0) {
