@@ -42,8 +42,8 @@ I3MCPEConverterWithIDs::FillSingleRow
 {
     row->Set<double>  ("time", hit.time);
     row->Set<double>  ("npe", hit.npe);
-    row->Set<uint64_t>("partmajorid", hit.major_ID);
-    row->Set<int>     ("partminorid", hit.minor_ID);
+    row->Set<uint64_t>("partmajorid", hit.ID.majorID);
+    row->Set<int>     ("partminorid", hit.ID.minorID);
 }
 
 //I3_CONVERTER(I3MCPESeriesMapConverterWithIDs, I3MCPESeriesMapWithIDs); 

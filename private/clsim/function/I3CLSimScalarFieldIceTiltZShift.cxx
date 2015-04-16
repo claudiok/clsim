@@ -146,7 +146,6 @@ std::string I3CLSimScalarFieldIceTiltZShift::GetOpenCLFunction(const std::string
 {
     // some names
     const std::string dataName = functionName + "_data";
-    const std::size_t dataSize = zCorrections_.size1()*zCorrections_.size2();
 
     std::string dataDef;
     

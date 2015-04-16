@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import math
 import numpy
 
@@ -186,14 +188,14 @@ def getGroupRefIndex_IceCube(wavelength):
 def Cherenkov_dN_dXdwlen_IceCube(wlen, beta=1.):
     return (2.*math.pi/(137.*(wlen**2.)))*(1. - 1./((beta*getPhaseRefIndex_IceCube(wlen))**2.))
 
-print Cherenkov_dN_dXdwlen_IceCube(470.)
+print(Cherenkov_dN_dXdwlen_IceCube(470.))
 
 numberOfPhotonsPerNanometer, err = scipy.integrate.quadrature(Cherenkov_dN_dXdwlen, 290., 610.)
 #numberOfPhotonsPerNanometer, err = scipy.integrate.quadrature(Cherenkov_dN_dXdwlen_IceCube, 265., 675.)
-print err
+print(err)
 numberOfPhotonsPerMeter = numberOfPhotonsPerNanometer*1e9
 
-print "photons per meter between [290..610]nm =", numberOfPhotonsPerMeter
+print("photons per meter between [290..610]nm =", numberOfPhotonsPerMeter)
 
 def getScatteringLengthSCOxford(wavelength):
     fixedWlen = 374.5

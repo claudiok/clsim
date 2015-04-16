@@ -41,6 +41,8 @@
 // enable printf for CPU
 #pragma OPENCL EXTENSION cl_amd_printf : enable
 #define dbg_printf(format, ...) printf(format, ##__VA_ARGS__)
+#else
+#define dbg_printf(format, ...)
 #endif
 
 // ZERO and ONE will be defined as either 0.f/1.f or 0./1. depending on DOUBLE_PRECISION
@@ -76,6 +78,19 @@ struct __attribute__ ((packed)) I3CLSimPhoton
     float groupVelocity;                                    //    32bit float
     float distInAbsLens;                                    //    32bit float
                                                             // total: 20x 32bit float = 80 bytes
+};
+
+struct __attribute__ ((packed)) I3CLSimTableEntry
+{
+    uint index;
+    float weight;
+};
+
+struct __attribute__ ((packed)) I3CLSimReferenceParticle
+{
+    float4 posAndTime;   // x,y,z,time
+    float4 dir;          // dx,dy,dz,0
+    float4 perpDir;
 };
 
 ///////////////// forward declarations
@@ -116,9 +131,9 @@ inline void saveHit(
     unsigned short hitOnDom,
     __global uint* hitIndex,
     uint maxHitIndex,
-    __write_only __global struct I3CLSimPhoton *outputPhotons
+    __global struct I3CLSimPhoton *outputPhotons
 #ifdef SAVE_PHOTON_HISTORY
-  , __write_only __global float4 *photonHistory,
+  , __global float4 *photonHistory,
     float4 *currentPhotonHistory
 #endif
     );

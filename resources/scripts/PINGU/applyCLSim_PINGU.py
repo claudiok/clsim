@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 from optparse import OptionParser
 import os
 import string
@@ -42,9 +44,9 @@ if options.INFILE:
         if os.access(filename,os.R_OK) == False:
                 raise RuntimeError("cannot find input file!")
         infile = filename
-        print 'using input file %s' % infile
+        print('using input file %s' % infile)
 else:
-        print "No input file!"
+        print("No input file!")
         parser.print_help()
         exit(-1)
 
@@ -59,10 +61,10 @@ if infileExt != ".i3" and infileExt != ".i3.gz":
         raise RuntimeError("you have to specify either a .i3 or an .i3.gz file!")
 
 if options.GCDFILE is not None:
-    print "using GCD file", options.GCDFILE 
+    print("using GCD file", options.GCDFILE) 
     infiles = [options.GCDFILE, infile]
 else:
-    print "using no extra GCD file"
+    print("using no extra GCD file")
     infiles = [infile]
 
 ########################
@@ -87,24 +89,24 @@ if not outfile:
         infileRootDir, infileRootFile = os.path.split(infileRoot)
         outfile = infileRootFile + "_clsim"
         outfile = outfile + infileExt
-print "output dir is %s" % outdir
-print "output file is %s" % outdir + outfile
+print("output dir is %s" % outdir)
+print("output file is %s" % outdir + outfile)
 
 ########################
 
 if options.REMOVEPHOTONDATA:
-    print "not storing I3Photons"
+    print("not storing I3Photons")
 else:
-    print "storing I3Photons"
+    print("storing I3Photons")
 
 
 # tray to adapt to condor stupidity
 if "_CONDOR_SLOT" in os.environ:
     if "CUDA_VISIBLE_DEVICES" in os.environ:
-        print "running in CONDOR, but CUDA_VISIBLE_DEVICES is already set. no further configuration necessary."
+        print("running in CONDOR, but CUDA_VISIBLE_DEVICES is already set. no further configuration necessary.")
     else:
         condorSlotNumber = int(os.environ["_CONDOR_SLOT"])
-        print "script seems to be running in condor (slot %u). auto-configuring CUDA_VISIBLE_DEVICES!" % condorSlotNumber
+        print("script seems to be running in condor (slot %u). auto-configuring CUDA_VISIBLE_DEVICES!" % condorSlotNumber)
         os.environ["CUDA_VISIBLE_DEVICES"] = str(condorSlotNumber-1)
 
 

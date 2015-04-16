@@ -33,11 +33,7 @@
 
 #include "dataclasses/I3Vector.h"
 #include "dataclasses/I3Map.h"
-#ifdef GRANULAR_GEOMETRY_SUPPORT
 #include "dataclasses/ModuleKey.h"
-#else
-#include "icetray/OMKey.h"
-#endif
 #include "dataclasses/I3Direction.h"
 #include "dataclasses/I3Position.h"
 #include "dataclasses/physics/I3Particle.h"
@@ -156,7 +152,7 @@ public:
      * position is relative to the global coordinate system, where the
      * z-axis is facing upwards. It is NOT relative to the OM axis!!
      */
-    void SetPos(const I3Position& p) { position_.SetPosition(p); }
+    void SetPos(const I3Position& p) { position_=p; }
     
     /**
      * @return The direction vector of the photon on the OM. 
@@ -170,7 +166,7 @@ public:
      * This direction is relative to the global coordinate system, where the
      * z-axis is facing upwards. It is NOT relative to the OM axis!!
      */
-    void SetDir(const I3Direction& d) { direction_.SetDirection(d); }
+    void SetDir(const I3Direction& d) { direction_=d; }
 
     
     /**
@@ -191,7 +187,7 @@ public:
     /**
      * @param p The position of emission of this photon.
      */
-    void SetStartPos(const I3Position& p) { startPosition_.SetPosition(p); }
+    void SetStartPos(const I3Position& p) { startPosition_=p; }
     
     /**
      * @return The direction of emission of this photon.
@@ -201,7 +197,7 @@ public:
     /**
      * @param d The direction of emission of this photon.
      */
-    void SetStartDir(const I3Direction& d) { startDirection_.SetDirection(d); }
+    void SetStartDir(const I3Direction& d) { startDirection_=d; }
 
     
     /** 
@@ -253,25 +249,26 @@ public:
      * The return value may be an invalid shared_ptr if there is no position
      * stored for a certain index.
      */
-    inline I3PositionConstPtr GetPositionListEntry(uint32_t index) const
+    inline boost::optional<I3Position> GetPositionListEntry(uint32_t index) const
     {
+        boost::optional<I3Position> pos;
+        
         if (intermediatePositions_.size() > static_cast<std::size_t>(numScattered_))
             throw std::logic_error("I3Photon has inconsistent internal state.");
         if (index >= numScattered_+2)
             throw std::runtime_error("invalid index");
 
         if (index==0) {
-            return I3PositionConstPtr(new I3Position(startPosition_));
+            pos = startPosition_;
         } else if (index==numScattered_+1) {
-            return I3PositionConstPtr(new I3Position(position_));
+            pos = position_;
         } else {
             const std::size_t num_empty_entries = static_cast<std::size_t>(numScattered_)-intermediatePositions_.size();
-            if (index-1 < num_empty_entries) {
-                return I3PositionConstPtr(); // this entry has not been saved
-            } else {
-                return I3PositionConstPtr(new I3Position(intermediatePositions_[index-1-num_empty_entries].first));
-            }
+            if (index-1 >= num_empty_entries)
+                pos = intermediatePositions_[index-1-num_empty_entries].first;
         }
+        
+        return pos;
     }
 
     /** 
@@ -388,11 +385,7 @@ BOOST_CLASS_VERSION(I3Photon, i3photon_version_);
 
 typedef I3Vector<I3Photon> I3PhotonSeries;
 
-#ifdef GRANULAR_GEOMETRY_SUPPORT
 typedef I3Map<ModuleKey, I3PhotonSeries> I3PhotonSeriesMap; 
-#else
-typedef I3Map<OMKey, I3PhotonSeries> I3PhotonSeriesMap; 
-#endif
 
 I3_POINTER_TYPEDEFS(I3Photon);
 I3_POINTER_TYPEDEFS(I3PhotonSeries);

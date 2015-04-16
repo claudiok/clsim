@@ -1,3 +1,4 @@
+from __future__ import print_function
 from I3Tray import I3Units
 from icecube import icetray, dataclasses, dataio
 from icecube import clsim
@@ -197,8 +198,8 @@ def plotDOMs(ax, fig, frame, radius, minZ, maxZ, pi0Only=False, eplusOnly=False)
     
     
     
-    print "numPhotons={0}".format(numPhotons)
-    print "   numDOMs={0}".format(numDOMs)
+    print("numPhotons={0}".format(numPhotons))
+    print("   numDOMs={0}".format(numDOMs))
 
 
 class eventPlotter(icetray.I3Module):
@@ -270,7 +271,7 @@ class eventPlotter(icetray.I3Module):
             entries += 1
         meanR /= float(entries)
 
-        print "    radius={0}m".format(maxR/I3Units.m)
+        print("    radius={0}m".format(maxR/I3Units.m))
 
         #minZ=-500.
         #maxZ=-100.
@@ -296,7 +297,7 @@ class eventPlotter(icetray.I3Module):
                      r"\end{center}", fontsize=12)
 
         #matplotlib.pyplot.savefig(self.filename, transparent=False)
-        print "saving plot (page %u)." % (self.plotNum)
+        print("saving plot (page %u)." % (self.plotNum))
         fig.savefig(self.pdffile, format='pdf')
         self.plotNum+=1
         
@@ -305,6 +306,6 @@ class eventPlotter(icetray.I3Module):
         
         
     def Finish(self):
-        print "closing pdf file..."
+        print("closing pdf file...")
         self.pdffile.close()
-        print "finished!"
+        print("finished!")

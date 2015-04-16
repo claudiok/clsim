@@ -32,16 +32,9 @@
 #include <clsim/I3CLSimStep.h>
 #include <boost/preprocessor/seq.hpp>
 
-#ifdef NO_PYTHON_DATACLASS_SUITE
-#include "icetray_python_backports/list_indexing_suite.hpp"
-#include "icetray_python_backports/copy_suite.hpp"
-#include "icetray_python_backports/boost_serializable_pickle_suite.hpp"
-#else
 #include <icetray/python/list_indexing_suite.hpp>
 #include <icetray/python/copy_suite.hpp>
 #include <icetray/python/boost_serializable_pickle_suite.hpp>
-#endif
-
 
 namespace bp=boost::python;
 

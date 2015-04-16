@@ -31,13 +31,8 @@
 #include <clsim/shadow/I3ExtraGeometryItemMove.h>
 #include <clsim/shadow/I3ExtraGeometryItemCylinder.h>
 
-#ifdef NO_PYTHON_DATACLASS_SUITE
-#include "icetray_python_backports/list_indexing_suite.hpp"
-#include "icetray_python_backports/dataclass_suite.hpp"
-#else
 #include <icetray/python/list_indexing_suite.hpp>
 #include <icetray/python/dataclass_suite.hpp>
-#endif
 
 #include <boost/preprocessor/seq.hpp>
 #include "const_ptr_helpers.h"

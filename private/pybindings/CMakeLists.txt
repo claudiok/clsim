@@ -28,6 +28,7 @@ if(BUILD_PYBINDINGS)
   # these files will be compiled in any case (with or without OpenCL/Geant4)
   SET(LIB_${PROJECT_NAME}_PYBINDINGS_SOURCEFILES
     I3Photon.cxx
+    I3CompressedPhoton.cxx
     I3CLSimEventStatistics.cxx
     I3CLSimFlasherPulse.cxx
     I3Converters.cxx
@@ -60,6 +61,7 @@ if(BUILD_PYBINDINGS)
       I3CLSimOpenCLDevice.cxx
       I3CLSimLightSource.cxx
       I3CLSimSpectrumTable.cxx
+      tabulator.cxx
     )
   endif(BUILD_CLSIM_DATACLASSES_ONLY)
 
@@ -68,12 +70,6 @@ if(BUILD_PYBINDINGS)
       I3Matrix.cxx
     )    
   endif(USE_BACKPORTED_I3MATRIX)
-
-  if(BUILD_TABULATOR)
-    LIST(APPEND LIB_${PROJECT_NAME}_PYBINDINGS_SOURCEFILES
-      I3CLSimTabulator.cxx
-    )
-  endif(BUILD_TABULATOR)
 
   i3_add_pybindings(clsim
     ${LIB_${PROJECT_NAME}_PYBINDINGS_SOURCEFILES}

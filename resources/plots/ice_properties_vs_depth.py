@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import math
 import numpy
 
@@ -44,22 +46,22 @@ openCLDevice = openCLDevices[0]
 openCLDevice.useNativeMath=False
 workgroupSize = 1
 workItemsPerIteration = 10240
-print "           using platform:", openCLDevice.platform
-print "             using device:", openCLDevice.device
-print "            workgroupSize:", workgroupSize
-print "    workItemsPerIteration:", workItemsPerIteration
+print("           using platform:", openCLDevice.platform)
+print("             using device:", openCLDevice.device)
+print("            workgroupSize:", workgroupSize)
+print("    workItemsPerIteration:", workItemsPerIteration)
 
 
 
 def applyOpenCLWlenDependentFunction(xValues, functionOpenCL, getDerivative=False, useReferenceFunction=False):
-    print "         number of values:", len(xValues)
+    print("         number of values:", len(xValues))
     
     tester = clsim.I3CLSimFunctionTester(device=openCLDevice,
                                                    workgroupSize=workgroupSize,
                                                    workItemsPerIteration=workItemsPerIteration,
                                                    wlenDependentValue=functionOpenCL)
     
-    print "maxWorkgroupSizeForKernel:", tester.maxWorkgroupSize
+    print("maxWorkgroupSizeForKernel:", tester.maxWorkgroupSize)
     
     # the function currently only accepts I3VectorFloat as its input type
     vector = dataclasses.I3VectorFloat(numpy.array(xValues)*I3Units.nanometer)
@@ -164,15 +166,15 @@ meanCos_WHAM = 0.94
 
 
 
-print "numer of layers ({}) is {}, starting at z={}m, height={}m".format(name_SPICE, mediumPropsSPICE.LayersNum, mediumPropsSPICE.LayersZStart/I3Units.m, mediumPropsSPICE.LayersHeight/I3Units.m)
-print "numer of layers ({}) is {}, starting at z={}m, height={}m".format(name_WHAM,  mediumPropsWHAM.LayersNum, mediumPropsWHAM.LayersZStart/I3Units.m, mediumPropsWHAM.LayersHeight/I3Units.m)
+print("numer of layers ({}) is {}, starting at z={}m, height={}m".format(name_SPICE, mediumPropsSPICE.LayersNum, mediumPropsSPICE.LayersZStart/I3Units.m, mediumPropsSPICE.LayersHeight/I3Units.m))
+print("numer of layers ({}) is {}, starting at z={}m, height={}m".format(name_WHAM,  mediumPropsWHAM.LayersNum, mediumPropsWHAM.LayersZStart/I3Units.m, mediumPropsWHAM.LayersHeight/I3Units.m))
 
 currentLayer = 0
 
 
 ####
 
-print "a"
+print("a")
 
 fig = pylab.figure(3)
 fig.subplots_adjust(left=0.06, bottom=0.05, top=0.96, right=0.98)
@@ -206,7 +208,7 @@ if False:
         ngroup_reference_WHAM = applyOpenCLWlenDependentFunction(wlens, mediumPropsWHAM.GetGroupRefractiveIndexOverride(0), useReferenceFunction=True)
 
 
-    print "c"
+    print("c")
 
     ax.plot(wlens, nphase_reference_SPICE, linewidth=2., color=color_SPICE, linestyle='solid', label=r"$n_\mathrm{p}$ " + "({})".format(name_SPICE))
     ax.plot(wlens, nphase_reference_WHAM,  linewidth=2., color=color_WHAM,  linestyle='solid', label=r"$n_\mathrm{p}$ " + "({})".format(name_WHAM))
@@ -345,5 +347,5 @@ cx2.set_xlim(1100.,2800.)
 
 outfileName = "ice_properties_vs_depth___{}_vs_{}.pdf".format(name_SPICE,name_WHAM)
 pylab.savefig(outfileName, transparent=False)
-print "wrote", outfileName
+print("wrote", outfileName)
 

@@ -217,12 +217,7 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLight
     (particle.GetType()==I3Particle::PairProd) ||
     (particle.GetType()==I3Particle::Gamma);
 
-    const bool isHadron =
-#ifdef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
-    // if we don't know it but it has a pdg code,
-    // it is probably a hadron..
-    (particle.GetType()==I3Particle::UnknownWithPdgEncoding) ||
-#endif
+    bool isHadron =
     (particle.GetType()==I3Particle::Hadrons) ||
     (particle.GetType()==I3Particle::Neutron) ||
     (particle.GetType()==I3Particle::Pi0) ||
@@ -271,6 +266,15 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLight
     const bool isTau =
     (particle.GetType()==I3Particle::TauMinus) ||
     (particle.GetType()==I3Particle::TauPlus);
+
+#ifdef I3PARTICLE_SUPPORTS_PDG_ENCODINGS
+    if ((!isHadron) && (!isElectron) && (!isMuon) && (!isTau))
+    {
+        // if we don't know it but it has a pdg code,
+        // it is probably a hadron..
+        isHadron = true;
+    }
+#endif
 
     const double E = particle.GetEnergy()/I3Units::GeV;
     const double logE = std::max(0., std::log(E)); // protect against extremely low energies
@@ -395,9 +399,9 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLight
         // This is compatible to what hit-maker does, but is of course not the right thing
         // to do. (Hit-maker treats all "tracks" the same and uses muon-tables for them.)
         
-        const double length = isnan(particle.GetLength())?(2000.*I3Units::m):(particle.GetLength());
+        const double length = std::isnan(particle.GetLength())?(2000.*I3Units::m):(particle.GetLength());
         
-        if (isnan(particle.GetLength()))
+        if (std::isnan(particle.GetLength()))
             log_warn("Muon without length found! Assigned a length of 2000m.");
 
         log_trace("Parameterizing muon (ID=(%" PRIu64 "/%i)) with E=%fTeV, length=%fm",
@@ -719,7 +723,6 @@ I3CLSimLightSourceToStepConverterPPC::GenerateStepPreCalculator::GenerateStepPre
                                                      double angularDist_b,
                                                      std::size_t numberOfValues)
 :
-angularDist_a_(angularDist_a),
 one_over_angularDist_a_(1./angularDist_a),
 angularDist_b_(angularDist_b),
 angularDist_I_(1.-std::exp(-angularDist_b*std::pow(2., angularDist_a)) ),

@@ -16,7 +16,7 @@ tray = I3Tray()
 
 tray.AddModule("I3InfiniteSource","streams",
                Stream=icetray.I3Frame.DAQ,
-               Prefix=expandvars("$I3_PORTS/test-data/sim/GeoCalibDetectorStatus_IC86.55380_corrected.i3.gz"))
+               Prefix=expandvars("$I3_TESTDATA/sim/GeoCalibDetectorStatus_IC86.55380_corrected.i3.gz"))
 
 tray.AddModule("I3MCEventHeaderGenerator","gen_header",
                Year=2009,

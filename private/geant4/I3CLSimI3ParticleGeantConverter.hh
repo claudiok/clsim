@@ -37,6 +37,7 @@
  */
 
 #include <string>
+#include <cmath>
 
 #include "G4ParticleGun.hh"
 #include "G4Track.hh"
@@ -205,27 +206,27 @@ namespace I3CLSimI3ParticleGeantConverter
     {
         // check the I3Particle
         
-        if (isnan(particle.GetEnergy())) {
+        if (std::isnan(particle.GetEnergy())) {
             log_debug("Particle has no energy. Cannot shoot.");
             return false;
         }
 
-        if (isnan(particle.GetZenith())) {
+        if (std::isnan(particle.GetZenith())) {
             log_debug("Particle has no zenith direction. Cannot shoot.");
             return false;
         }
 
-        if (isnan(particle.GetAzimuth())) {
+        if (std::isnan(particle.GetAzimuth())) {
             log_debug("Particle has no zenith direction. Cannot shoot.");
             return false;
         }
 
-        if (isnan(particle.GetX()) || isnan(particle.GetY()) || isnan(particle.GetZ())) {
+        if (std::isnan(particle.GetX()) || std::isnan(particle.GetY()) || std::isnan(particle.GetZ())) {
             log_debug("Particle has no position. Cannot shoot.");
             return false;
         }
 
-        if (isnan(particle.GetTime())) {
+        if (std::isnan(particle.GetTime())) {
             log_debug("Particle has no time. Cannot shoot.");
             return false;
         }

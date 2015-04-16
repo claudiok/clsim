@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import numpy
 import math
 
@@ -25,10 +26,10 @@ openCLDevice = openCLDevices[0]
 openCLDevice.useNativeMath=False
 workgroupSize = 1
 workItemsPerIteration = 10240
-print "           using platform:", openCLDevice.platform
-print "             using device:", openCLDevice.device
-print "            workgroupSize:", workgroupSize
-print "    workItemsPerIteration:", workItemsPerIteration
+print("           using platform:", openCLDevice.platform)
+print("             using device:", openCLDevice.device)
+print("            workgroupSize:", workgroupSize)
+print("    workItemsPerIteration:", workItemsPerIteration)
 
 
 def evaluateVectorTransformOpenCL(xValues, yValues, zValues, VectorTransform, useReferenceFunction=False):
@@ -52,7 +53,7 @@ def evaluateVectorTransformOpenCL(xValues, yValues, zValues, VectorTransform, us
 
 def calculateDotProducts(matrix, xVals, yVals, zVals, renormalize=False):
     retval = []
-    for i in xrange(len(xVals)):
+    for i in range(len(xVals)):
         thisVec = numpy.dot(matrix, numpy.array([xVals[i], yVals[i], zVals[i]]))
         if renormalize:
             thisVec = thisVec/numpy.sqrt(numpy.sum(thisVec**2))
@@ -88,11 +89,11 @@ minIndexInOcl = numpy.argmin(numpy.abs(deviation_OclFromPython))
 minDeviationInRef = deviation_RefFromPython[minIndexInRef]
 minDeviationInOcl = deviation_OclFromPython[minIndexInOcl]
 
-print "maximum absolute deviation in reference implementation:", maxDeviationInRef, "@", maxIndexInRef, "python:", results_Python[maxIndexInRef], "ref:", results_Ref[maxIndexInRef], "ocl:", results_OpenCL[maxIndexInRef]
-print "maximum absolute deviation in OpenCL implementation:   ", maxDeviationInOcl, "@", maxIndexInOcl, "python:", results_Python[maxIndexInOcl], "ref:", results_Ref[maxIndexInOcl], "ocl:", results_OpenCL[maxIndexInOcl]
+print("maximum absolute deviation in reference implementation:", maxDeviationInRef, "@", maxIndexInRef, "python:", results_Python[maxIndexInRef], "ref:", results_Ref[maxIndexInRef], "ocl:", results_OpenCL[maxIndexInRef])
+print("maximum absolute deviation in OpenCL implementation:   ", maxDeviationInOcl, "@", maxIndexInOcl, "python:", results_Python[maxIndexInOcl], "ref:", results_Ref[maxIndexInOcl], "ocl:", results_OpenCL[maxIndexInOcl])
 
-print "minimum relative deviation in reference implementation:", minDeviationInRef
-print "minimum relative deviation in OpenCL implementation:   ", minDeviationInOcl
+print("minimum relative deviation in reference implementation:", minDeviationInRef)
+print("minimum relative deviation in OpenCL implementation:   ", minDeviationInOcl)
 
 if numpy.abs(maxDeviationInRef) > maximumRelativeDeviation:
     raise RuntimeError("python implementation results differ from C++ reference implementation results!")
@@ -100,6 +101,6 @@ if numpy.abs(maxDeviationInRef) > maximumRelativeDeviation:
 if numpy.abs(maxDeviationInOcl) > maximumRelativeDeviation:
     raise RuntimeError("python implementation results differ from OpenCL implementation results!")
 
-print "test successful!"
+print("test successful!")
 
 

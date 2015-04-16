@@ -1,22 +1,9 @@
-// This code is part of IceTray. It has been taken from
-// GPUMCML. Here is its original copyright notice:
-
-/*   
- *   This file is part of GPUMCML.
- * 
- *   GPUMCML is free software: you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation, either version 3 of the License, or
- *   (at your option) any later version.
- *
- *   GPUMCML is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with GPUMCML.  If not, see <http://www.gnu.org/licenses/>.
- */
+// Initialization of the multiply-with-carry random number generator for OpenCL using an
+// implementation along the lines of the CUDAMCML code described here:
+// http://www.atomic.physics.lu.se/fileadmin/atomfysik/Biophotonics/Software/CUDAMCML.pdf
+//
+// This code can generate a "safeprimes_base32.txt" file compatible with their implementation,
+// but a binary file format with much smaller file sizes is also supported.
 
 #ifndef MWCRNG_INIT_H
 #define MWCRNG_INIT_H
@@ -29,66 +16,104 @@
 #include <cstdio>
 #include <cstring>
 #include <stdint.h>
-
 #include <string>
+#include <boost/filesystem.hpp>
+#include <icetray/open.h>
 
 #include "phys-services/I3RandomService.h"
 
-//   Initialize random number generator 
-//////////////////////////////////////////////////////////////////////////////
+// Initialize random number generator 
 inline int init_MWC_RNG(uint64_t *x, uint32_t *a, 
                  const uint32_t n_rng,
-                 std::string safeprimes_file,
-                 I3RandomServicePtr randomService)
+                 I3RandomServicePtr randomService,
+                 std::string safeprimes_file="")
 {
-    FILE *fp;
-    uint32_t fora,tmp1,tmp2;
-    
+    int64_t multiplier;
+
     if (safeprimes_file == "")
     {
-        // Try to find it in the local directory
-        safeprimes_file = "safeprimes_base32.txt";
+        bool success = 0;
+        namespace fs = boost::filesystem;
+        safeprimes_file = "safeprimes_base32.txt"; 
+        if (getenv("I3_SRC")) {
+            const fs::path I3_SRC(getenv("I3_SRC"));
+            if (fs::exists(I3_SRC/"clsim/resources/safeprimes_base32")) {
+                safeprimes_file = (I3_SRC/"/clsim/resources/safeprimes_base32").string();
+                success = 1;
+            }
+            else if (fs::exists(I3_SRC/"clsim/resources/safeprimes_base32.txt")) {
+              safeprimes_file = (I3_SRC/"/clsim/resources/safeprimes_base32.txt").string();
+              success = 1;
+            }
+          }
+        if (!success && getenv("I3_DATA")) {
+            const fs::path I3_DATA(getenv("I3_DATA"));
+            if (fs::exists(I3_DATA/"safeprimes_base32.gz")) {
+                safeprimes_file = (I3_DATA/"safeprimes_base32.gz").string();
+            }
+            else if (fs::exists(I3_DATA/"safeprimes_base32.txt")) {
+              safeprimes_file = (I3_DATA/"safeprimes_base32.txt").string();
+            }
+          }
     }
     
-    fp = fopen(safeprimes_file.c_str(), "r");
-    
-    if(fp == NULL)
-    {
+    boost::iostreams::filtering_istream ifs;
+    I3::dataio::open(ifs, safeprimes_file);
+    if (!ifs.good()) {
         log_error("Could not find the safeprimes file (%s)! Terminating!", safeprimes_file.c_str());
         return 1;
     }
     
-    // Here we set up a loop, using the first multiplier in the file to generate x's and c's
-    // There are some restictions to these two numbers:
-    // 0<=c<a and 0<=x<b, where a is the multiplier and b is the base (2^32)
-    // also [x,c]=[0,0] and [b-1,a-1] are not allowed.
-    
-    for (uint32_t i=0;i < n_rng;i++)
+    bool plaintext = false;
     {
-        int ret = fscanf(fp,"%u %u %u",&fora,&tmp1,&tmp2);
-        if (ret==EOF) 
-        {
-            log_error("Could not parse data! Terminating!");
-            return 1;
+        // Detect newer binary file format
+        char tag[18];
+        ifs.read(tag, 17);
+        tag[17] = '\0';
+        if (strcmp(tag, "safeprimes_base32") != 0) {
+            plaintext = true;
+            I3::dataio::open(ifs, safeprimes_file);
+        }
+    }
+
+    for (uint32_t i=0;i < n_rng;i++) {
+        if (ifs.eof())
+            log_error("File ended before %u primes could be read!", i+1);
+        if (plaintext) {
+            ifs >> multiplier;
+            if (ifs.fail()) {
+                log_error("Couldn't parse prime at line %u", i+1);
+                return 1;
+            }
+            char c;
+            while (!ifs.eof() && ifs.peek() != '\n')
+                ifs.read(&c, 1);
+        } else {
+            ifs.read(reinterpret_cast<char*>(&multiplier), sizeof(multiplier));
+            if (ifs.fail()) {
+                log_error("Couldn't read prime #%u", i+1);
+                return 1;
+            }
         }
 
-        a[i]=fora; // primes from file go to a[]
+        if ((multiplier < std::numeric_limits<uint32_t>::min()) || (multiplier > std::numeric_limits<uint32_t>::max())) {
+            log_error("Prime #%u (%" PRIi64 ") is out of range!", i+1, multiplier);
+            return 1;
+        }
         
+        a[i]=multiplier; // primes from file go to a[]
+
         // generate x[] from the supplied rng
         x[i]=0;
-        while( (x[i]==0) | (((uint32_t)(x[i]>>32))>=(fora-1)) | (((uint32_t)x[i])>=0xfffffffful))
+        while( (x[i]==0) | (((uint32_t)(x[i]>>32))>=(a[i]-1)) | (((uint32_t)x[i])>=0xfffffffful))
         {
-            // generate a random numbers for x and x (both are stored in the "x" array
-
             x[i] = static_cast<uint32_t>(randomService->Integer(0xffffffff));
             x[i]=x[i]<<32;
             x[i] += static_cast<uint32_t>(randomService->Integer(0xffffffff));
         }
     }
-    fclose(fp);
     
     return 0;
 }
-
 
 #endif

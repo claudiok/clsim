@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 from optparse import OptionParser
 
 usage = "usage: %prog [options] inputfile"
@@ -26,12 +27,12 @@ if len(args) != 0:
         parser.error(crap)
 #
 if not options.OUTFILE:
-    print "No OUTFILE specified!"
+    print("No OUTFILE specified!")
     parser.print_help()
     exit(-1)
 
 if not options.INFILE:
-    print "No INFILE specified!"
+    print("No INFILE specified!")
     parser.print_help()
     exit(-1)
 
@@ -46,17 +47,16 @@ from icecube import icetray, dataclasses, dataio, phys_services
 os.putenv("PPCTABLESDIR", options.ICEMODEL)
 
 
-load("libcudart")
+#load("libcudart")
 load("libxppc")
 load("libppc")
 load("libppc-eff")
 
 tray = I3Tray()
 
-tray.AddService("I3SPRNGRandomServiceFactory", "random",
+tray.AddService("I3GSLRandomServiceFactory", "random",
     Seed = options.SEED,
-    NStreams = 2,
-    StreamNum = 1)
+)
 
 tray.AddModule("I3Reader","reader",
                Filename=options.INFILE)
@@ -66,7 +66,8 @@ tray.AddModule("I3Reader","reader",
 tray.AddModule("i3ppc", "ppc",
     gpu = 0,
     bad = [],
-    JPALpulses=False)
+    #JPALpulses=False,
+)
 
 # WARNING: this will adjust *all* the MCHitSeriesMaps in the frame.
 tray.AddModule("AdjEff", "ppc-eff",

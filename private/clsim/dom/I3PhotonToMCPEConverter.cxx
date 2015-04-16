@@ -30,6 +30,7 @@
 #include <inttypes.h>
 
 #include <algorithm>
+#include <cmath>
 
 #include "clsim/dom/I3PhotonToMCPEConverter.h"
 
@@ -39,12 +40,8 @@
 
 #include "phys-services/I3SummaryService.h"
 
-#ifdef GRANULAR_GEOMETRY_SUPPORT
 #include "dataclasses/geometry/I3OMGeo.h"
 #include "dataclasses/geometry/I3ModuleGeo.h"
-#else
-#include "dataclasses/geometry/I3Geometry.h"
-#endif
 
 #include "simclasses/I3MCPE.h"
 #include "dataclasses/physics/I3MCTree.h"
@@ -230,15 +227,10 @@ namespace {
     }
 }
 
-#ifdef IS_Q_FRAME_ENABLED
 void I3PhotonToMCPEConverter::DAQ(I3FramePtr frame)
-#else
-void I3PhotonToMCPEConverter::Physics(I3FramePtr frame)
-#endif
 {
     log_trace("%s", __PRETTY_FUNCTION__);
     
-#ifdef GRANULAR_GEOMETRY_SUPPORT
     // First we need to get our geometry
     I3OMGeoMapConstPtr omgeo = frame->Get<I3OMGeoMapConstPtr>("I3OMGeoMap");
     I3ModuleGeoMapConstPtr modulegeo = frame->Get<I3ModuleGeoMapConstPtr>("I3ModuleGeoMap");
@@ -247,10 +239,6 @@ void I3PhotonToMCPEConverter::Physics(I3FramePtr frame)
         log_fatal("Missing geometry information! (No \"I3OMGeoMap\")");
     if (!modulegeo)
         log_fatal("Missing geometry information! (No \"I3ModuleGeoMap\")");
-#else
-    // First we need to get our geometry
-    const I3Geometry& geometry = frame->Get<I3Geometry>();
-#endif
     
     if (!replaceRelativeDOMEfficiencyWithDefault_) {
         // no need to check for exitsing calibration frames if the efficiency
@@ -283,7 +271,7 @@ void I3PhotonToMCPEConverter::Physics(I3FramePtr frame)
     std::map<std::pair<uint64_t, int>, const I3Particle *> mcTreeIndex;
     if (MCTree) {
         // build an index into the I3MCTree
-        for (I3MCTree::iterator it = MCTree->begin();
+        for (I3MCTree::const_iterator it = MCTree->begin();
              it != MCTree->end(); ++it)
         {
             const I3Particle &particle = *it;
@@ -291,22 +279,11 @@ void I3PhotonToMCPEConverter::Physics(I3FramePtr frame)
         }
     }    
     
-#if !defined(HAS_MULTIPMT_SUPPORT) && !defined(GRANULAR_GEOMETRY_SUPPORT)
-    // DOM is looking downwards
-    const double DOMDir_x = 0.;
-    const double DOMDir_y = 0.;
-    const double DOMDir_z = -1.;
-#endif
-    
     BOOST_FOREACH(const I3PhotonSeriesMap::value_type &it, *inputPhotonSeriesMap)
     {
-#ifdef GRANULAR_GEOMETRY_SUPPORT
         const ModuleKey &module_key = it.first;
         // assume this is IceCube (i.e. one PMT with index 0 per DOM)
         const OMKey key(module_key.GetString(), module_key.GetOM(), 0);        
-#else
-        const OMKey &key = it.first;
-#endif
         const I3PhotonSeries &photons = it.second;
 
         if (ignoreDOMsWithoutDetectorStatusEntry_) {
@@ -315,7 +292,6 @@ void I3PhotonToMCPEConverter::Physics(I3FramePtr frame)
             if (om_stat->second.pmtHV==0.) continue; // ignore pmtHV==0
         }
         
-#ifdef GRANULAR_GEOMETRY_SUPPORT
         // Find the current OM in the omgeo map
         I3OMGeoMap::const_iterator geo_it = omgeo->find(key);
         if (geo_it == omgeo->end())
@@ -336,16 +312,7 @@ void I3PhotonToMCPEConverter::Physics(I3FramePtr frame)
             (std::abs(om.position.GetZ() - module.GetPos().GetZ()) > .01*I3Units::mm))
             log_fatal("Module(%i/%u) has a PMT that is not in the center of the DOM!",
                       module_key.GetString(), module_key.GetOM());
-            
-#else
-        // Find the current OM in the geometry map
-        I3OMGeoMap::const_iterator geo_it = geometry.omgeo.find(key);
-        if (geo_it == geometry.omgeo.end())
-            log_fatal("OM (%i/%u) not found in the current geometry map!", key.GetString(), key.GetOM());
-        const I3OMGeo &om = geo_it->second;
-#endif
         
-#ifdef GRANULAR_GEOMETRY_SUPPORT
         const I3Direction pmtDir = om.GetDirection();
         const I3Direction domDir = module.GetDir();
         
@@ -357,21 +324,6 @@ void I3PhotonToMCPEConverter::Physics(I3FramePtr frame)
             (std::abs(DOMDir_y - domDir.GetY()) > 1e-5) ||
             (std::abs(DOMDir_z - domDir.GetZ()) > 1e-5))
             log_fatal("PMT and DOM directions are not aligned!");
-#else
-#ifdef HAS_MULTIPMT_SUPPORT    
-        // get DOM (PMT) direction from geometry
-        const I3OMTypeInfo &omTypeInfo = geometry.GetOMTypeInfo(key);
-        if (omTypeInfo.GetNumPMTs() != 1) {
-            log_fatal("This module does only support DOMs with a single PMT. numPMTs=%u",
-                      omTypeInfo.GetNumPMTs());
-        }
-        I3Direction pmtDir = geometry.GetPMTDir(key, 0); // pmtNum==0
-
-        const double DOMDir_x = pmtDir.GetX();
-        const double DOMDir_y = pmtDir.GetY();
-        const double DOMDir_z = pmtDir.GetZ();
-#endif
-#endif
         
         // Find the current OM in the calibration map
         
@@ -385,7 +337,7 @@ void I3PhotonToMCPEConverter::Physics(I3FramePtr frame)
         else 
         {
             if (!calibration_) {
-                if (isnan(defaultRelativeDOMEfficiency_)) {
+                if (std::isnan(defaultRelativeDOMEfficiency_)) {
                     log_fatal("There is no valid calibration! (Consider setting \"DefaultRelativeDOMEfficiency\" != NaN)");
                 } else {
                     efficiency_from_calibration = defaultRelativeDOMEfficiency_;
@@ -396,7 +348,7 @@ void I3PhotonToMCPEConverter::Physics(I3FramePtr frame)
             } else {
                 std::map<OMKey, I3DOMCalibration>::const_iterator cal_it = calibration_->domCal.find(key);
                 if (cal_it == calibration_->domCal.end()) {
-                    if (isnan(defaultRelativeDOMEfficiency_)) {
+                    if (std::isnan(defaultRelativeDOMEfficiency_)) {
                         log_fatal("OM (%i/%u) not found in the current calibration map! (Consider setting \"DefaultRelativeDOMEfficiency\" != NaN)", key.GetString(), key.GetOM());
                     } else {
                         efficiency_from_calibration = defaultRelativeDOMEfficiency_;
@@ -408,8 +360,8 @@ void I3PhotonToMCPEConverter::Physics(I3FramePtr frame)
                     const I3DOMCalibration &domCalibration = cal_it->second;
                     efficiency_from_calibration=domCalibration.GetRelativeDomEff();
                     
-                    if (isnan(efficiency_from_calibration)) {
-                        if (isnan(defaultRelativeDOMEfficiency_)) {
+                    if (std::isnan(efficiency_from_calibration)) {
+                        if (std::isnan(defaultRelativeDOMEfficiency_)) {
                             log_fatal("OM (%i/%u) found in the current calibration map, but it is NaN! (Consider setting \"DefaultRelativeDOMEfficiency\" != NaN)", key.GetString(), key.GetOM());
                         } else {                
                             efficiency_from_calibration = defaultRelativeDOMEfficiency_;

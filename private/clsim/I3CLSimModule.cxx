@@ -51,6 +51,7 @@
 #include <limits>
 #include <set>
 #include <deque>
+#include <cmath>
 
 
 namespace {
@@ -82,11 +83,7 @@ geometryIsConfigured_(false)
 {
     // define parameters
     workOnTheseStops_.clear();
-#ifdef IS_Q_FRAME_ENABLED
     workOnTheseStops_.push_back(I3Frame::DAQ);
-#else
-    workOnTheseStops_.push_back(I3Frame::Physics);
-#endif
     AddParameter("WorkOnTheseStops",
                  "Work on MCTrees found in the stream types (\"stops\") specified in this list",
                  workOnTheseStops_);
@@ -124,7 +121,12 @@ geometryIsConfigured_(false)
     AddParameter("MaxNumParallelEvents",
                  "Maximum number of events that will be processed by the GPU in parallel.",
                  maxNumParallelEvents_);
-
+    
+    totalEnergyToProcess_=0.;
+    AddParameter("TotalEnergyToProcess",
+                 "Maximum energy that will be processed by the GPU in parallel.",
+                 totalEnergyToProcess_);
+    
     MCTreeName_="I3MCTree";
     AddParameter("MCTreeName",
                  "Name of the I3MCTree frame object. All particles except neutrinos will be read from this tree.",
@@ -291,6 +293,12 @@ geometryIsConfigured_(false)
                  "If set to zero (the default) the largest possible workgroup size will be chosen.",
                  limitWorkgroupSize_);
 
+    closestDOMDistanceCutoff_=300.*I3Units::m;
+    AddParameter("ClosestDOMDistanceCutoff",
+                 "Do not even start light from sources that do not have any DOMs closer to\n"
+                 "to them than this distance.",
+                 closestDOMDistanceCutoff_);
+
     // add an outbox
     AddOutBox("OutBox");
 
@@ -384,6 +392,7 @@ void I3CLSimModule::Configure()
     GetParameter("SpectrumTable", spectrumTable_);
 
     GetParameter("MaxNumParallelEvents", maxNumParallelEvents_);
+    GetParameter("TotalEnergyToProcess", totalEnergyToProcess_);
     GetParameter("MCTreeName", MCTreeName_);
     GetParameter("FlasherPulseSeriesName", flasherPulseSeriesName_);
     GetParameter("PhotonSeriesMapName", photonSeriesMapName_);
@@ -426,6 +435,8 @@ void I3CLSimModule::Configure()
 
     GetParameter("LimitWorkgroupSize", limitWorkgroupSize_);
 
+    GetParameter("ClosestDOMDistanceCutoff", closestDOMDistanceCutoff_);
+
     if (pancakeFactor_ != DOMOversizeFactor_) {
         log_warn("***** You set the \"DOMOversizeFactor\" to a different value than the \"DOMPancakeFactor\". Be sure you know what you are doing!");
     }
@@ -443,13 +454,25 @@ void I3CLSimModule::Configure()
 
     if (!mediumProperties_) log_fatal("You have to specify the \"MediumProperties\" parameter!");
 
-    if (maxNumParallelEvents_ <= 0) log_fatal("Values <= 0 are invalid for the \"MaxNumParallelEvents\" parameter!");
+    if ((totalEnergyToProcess_ > 0) && (!std::isnan(totalEnergyToProcess_)))    
+    {
+        log_warn("Total Energy to Process mode! MaxNumParallelEvents is set to 1! "
+                 "CLSim is going to figure out the number of frames to process "
+                 "from the light deposited in each frame!");
+        maxNumParallelEvents_=1;
+        maxNumParallelEventsSecondFlush_=1;
+    }
+    if ((maxNumParallelEvents_ <= 0) && (totalEnergyToProcess_ <= 0)) 
+        log_fatal("Values <= 0 are invalid for both the \"MaxNumParallelEvents\" and \"TotalEnergyToProcess\" parameter!");
     // maxNumParallelEvents_ is the number of frames buffered by this module.
     // Since we use double-buffering, divide the number by 2.
     maxNumParallelEvents_ /= 2;
     if (maxNumParallelEvents_==0) maxNumParallelEvents_=1;
+    maxNumParallelEventsSecondFlush_ = maxNumParallelEvents_;
+    
 
-    if (openCLDeviceList_.empty()) log_fatal("You have to provide at least one OpenCL device using the \"OpenCLDeviceList\" parameter.");
+    if (openCLDeviceList_.empty()) 
+        log_fatal("You have to provide at least one OpenCL device using the \"OpenCLDeviceList\" parameter.");
     
     // fill wavelengthGenerators_[0] (index 0 is the Cherenkov generator)
     wavelengthGenerators_.clear();
@@ -481,6 +504,7 @@ void I3CLSimModule::Configure()
     currentParticleCacheIndex_ = 1;
     geometryIsConfigured_ = false;
     totalSimulatedEnergyForFlush_ = 0.;
+    totalSimulatedEnergy_ = 0;
     totalNumParticlesForFlush_ = 0;
     
     if (parameterizationList_.size() > 0) {
@@ -806,16 +830,9 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
 }
 
 namespace {
-#ifdef GRANULAR_GEOMETRY_SUPPORT
     static inline ModuleKey ModuleKeyFromOpenCLSimIDs(int16_t stringID, uint16_t domID)
     {
         return ModuleKey(stringID, domID);
-    }
-#endif
-
-    static inline OMKey OMKeyFromOpenCLSimIDs(int16_t stringID, uint16_t domID)
-    {
-        return OMKey(stringID, domID);
     }
 }
 
@@ -825,11 +842,7 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
                                        std::vector<int32_t> &currentPhotonIdForFrame_,
                                        const std::vector<I3FramePtr> &frameList_,
                                        const std::map<uint32_t, particleCacheEntry> &particleCache_,
-#ifdef GRANULAR_GEOMETRY_SUPPORT
                                        const std::vector<std::set<ModuleKey> > &maskedOMKeys_,
-#else
-                                       const std::vector<std::set<OMKey> > &maskedOMKeys_,
-#endif
                                        bool collectStatistics_,
                                        std::map<uint32_t, uint64_t> &photonNumAtOMPerParticle,
                                        std::map<uint32_t, double> &photonWeightSumAtOMPerParticle
@@ -869,19 +882,12 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
         // get the current photon id
         int32_t &currentPhotonId = currentPhotonIdForFrame_[cacheEntry.frameListEntry];
         
-#ifdef GRANULAR_GEOMETRY_SUPPORT
         // generate the OMKey
         const ModuleKey key = ModuleKeyFromOpenCLSimIDs(photon.stringID, photon.omID);
-#else
-        const OMKey key = OMKeyFromOpenCLSimIDs(photon.stringID, photon.omID);
-#endif
         
         // get the OMKey mask
-#ifdef GRANULAR_GEOMETRY_SUPPORT
         const std::set<ModuleKey> &keyMask = maskedOMKeys_[cacheEntry.frameListEntry];
-#else
-        const std::set<OMKey> &keyMask = maskedOMKeys_[cacheEntry.frameListEntry];
-#endif
+
         if (keyMask.count(key) > 0) continue; // ignore masked DOMs
         
         // this either inserts a new vector or retrieves an existing one
@@ -992,11 +998,7 @@ std::size_t I3CLSimModule::FlushFrameCache()
     std::vector<int32_t> currentPhotonIdForFrame_old;
     std::vector<I3FramePtr> frameList_old;
     std::map<uint32_t, particleCacheEntry> particleCache_old;
-#ifdef GRANULAR_GEOMETRY_SUPPORT
     std::vector<std::set<ModuleKey> > maskedOMKeys_old;
-#else
-    std::vector<std::set<OMKey> > maskedOMKeys_old;
-#endif
     std::vector<bool> frameIsBeingWorkedOn_old;
 
     photonsForFrameList_old.swap(photonsForFrameList_);
@@ -1198,13 +1200,10 @@ std::size_t I3CLSimModule::FlushFrameCache()
 }
 
 namespace {
-    bool ParticleHasMuonDaughter(const I3MCTree::iterator &particle_it, const I3MCTree &mcTree)
+    bool ParticleHasMuonDaughter(const I3MCTree::const_iterator &particle_it, const I3MCTree &mcTree)
     {
-        I3MCTree::sibling_iterator j(particle_it);
-        for (j=mcTree.begin(particle_it); j!=mcTree.end(particle_it); ++j)
+        BOOST_FOREACH( const I3Particle & daughter, mcTree.children(*particle_it))
         {
-            const I3Particle &daughter = *j;
-
             if ((daughter.GetType()==I3Particle::MuMinus) ||
                 (daughter.GetType()==I3Particle::MuPlus))
                 return true;
@@ -1230,14 +1229,14 @@ namespace {
             
             const double thisDist = std::sqrt(dx*dx + dy*dy + dz*dz);
             
-            if (isnan(closestDist)) {
+            if (std::isnan(closestDist)) {
                 closestDist=thisDist;
             } else {
                 if (thisDist<closestDist) closestDist=thisDist;
             }
         }
         
-        if (isnan(closestDist)) return 0.;
+        if (std::isnan(closestDist)) return 0.;
         return closestDist;
     }
 
@@ -1279,14 +1278,14 @@ namespace {
             
             const double thisDist = std::sqrt(dx*dx + dy*dy + dz*dz);
             
-            if (isnan(closestDist)) {
+            if (std::isnan(closestDist)) {
                 closestDist=thisDist;
             } else {
                 if (thisDist<closestDist) closestDist=thisDist;
             }
         }
         
-        if (isnan(closestDist)) return 0.;
+        if (std::isnan(closestDist)) return 0.;
         return closestDist;
     }
 
@@ -1321,7 +1320,23 @@ void I3CLSimModule::Process()
         PushFrame(frame);
         return;
     }
-
+    
+    if ((totalEnergyToProcess_ > 0) && (!std::isnan(totalEnergyToProcess_)))
+    {
+        double totalLightEnergyInFrame = GetLightSourceEnergy(frame);
+        if (totalSimulatedEnergy_ + totalLightEnergyInFrame < totalEnergyToProcess_ / 2.)
+        {
+            maxNumParallelEvents_++;
+            totalSimulatedEnergy_ += totalLightEnergyInFrame;
+        }
+        else if (totalSimulatedEnergy_ + totalLightEnergyInFrame < totalEnergyToProcess_)
+        {
+            maxNumParallelEventsSecondFlush_++;
+            totalSimulatedEnergy_ += totalLightEnergyInFrame;
+        }
+        log_debug("Energy in Frame = %f GeV", totalLightEnergyInFrame);
+    }
+    
     // it's either Physics or something else..
     if (frameListPhysicsFrameCounter_ < maxNumParallelEvents_)
     {
@@ -1331,7 +1346,7 @@ void I3CLSimModule::Process()
         DigestOtherFrame(frame);
         frameListPhysicsFrameCounter_++;
     }
-    else if (frameListPhysicsFrameCounter_ < maxNumParallelEvents_*2) 
+    else if (frameListPhysicsFrameCounter_ < maxNumParallelEvents_ + maxNumParallelEventsSecondFlush_) // maxNumParallelEvents_*2) 
     {
         // keep a second buffer so we have it available once 
         // the first buffer has finished processing
@@ -1339,14 +1354,15 @@ void I3CLSimModule::Process()
         frameListPhysicsFrameCounter_++;
     }
 
-    if (frameListPhysicsFrameCounter_ >= maxNumParallelEvents_*2) 
+
+    if (frameListPhysicsFrameCounter_ >= maxNumParallelEvents_ + maxNumParallelEventsSecondFlush_) //maxNumParallelEvents_*2) 
     {
-        log_debug("Flushing results for a total energy of %fGeV for %" PRIu64 " particles",
+        log_debug("Flushing results for a total energy of %f GeV for %" PRIu64 " particles",
                  totalSimulatedEnergyForFlush_/I3Units::GeV, totalNumParticlesForFlush_);
-                 
-        totalSimulatedEnergyForFlush_=0.;
+             
+        totalSimulatedEnergyForFlush_= 0.;
         totalNumParticlesForFlush_=0;
-        
+    
         // this will finish processing the first buffer and
         // push all its frames
         const std::size_t framesPushed =
@@ -1358,11 +1374,68 @@ void I3CLSimModule::Process()
             DigestOtherFrame(frameList2_[i]);
         }
         frameList2_.clear();
-        
+        if ((totalEnergyToProcess_ > 0) && (!std::isnan(totalEnergyToProcess_)))
+        {
+            totalSimulatedEnergy_ = 0.;
+            maxNumParallelEvents_ = 1;
+            maxNumParallelEventsSecondFlush_ = 1;
+        }
+
+            
+    
         log_debug("============== CACHE FLUSHED ================");
     }
 }
 
+double I3CLSimModule::GetLightSourceEnergy(I3FramePtr frame)
+{
+    I3MCTreeConstPtr MCTree;
+    I3CLSimFlasherPulseSeriesConstPtr flasherPulses;
+    double totalLightSourceEnergy = 0;
+    
+    if (MCTreeName_ != "")
+        MCTree = frame->Get<I3MCTreeConstPtr>(MCTreeName_);
+    if (flasherPulseSeriesName_ != "")
+        flasherPulses = frame->Get<I3CLSimFlasherPulseSeriesConstPtr>(flasherPulseSeriesName_);
+    if (!MCTree) 
+    {   
+        log_warn("Frame will not be processed cause MCTree not present.");
+        return totalLightSourceEnergy;
+    }
+    if (flasherPulses) 
+        log_fatal("Flashers! Cannot calculate how much energy is deposited in detector. "
+                  "Set MaxNumParallelEvents > 0 and totalEnergyToProcess_ = 0");
+    
+    std::deque<I3CLSimLightSource> lightSources;
+    std::deque<double> timeOffsets;
+    if (MCTree) ConvertMCTreeToLightSources(*MCTree, lightSources, timeOffsets);
+    
+    for (std::size_t i=0;i<lightSources.size();++i)
+    {
+        const I3CLSimLightSource &lightSource = lightSources[i];
+        if (lightSource.GetType() == I3CLSimLightSource::Particle)
+        {
+            
+            const I3Particle &particle = lightSource.GetParticle();
+            if (particle.GetType() == I3Particle::MuMinus || particle.GetType() == I3Particle::MuPlus)
+            {
+                // This is the upper estimate of the muon energy loss due to ionization
+                // We use the upper estimate to be conservative about how much 
+                // energy ends up in the detetor.
+                // It is taken from I3MuonSlicer Line 306. It originally comes from PPC.
+                totalLightSourceEnergy += (0.21+8.8e-3*log(particle.GetEnergy()/I3Units::GeV)/log(10.))*(I3Units::GeV/I3Units::m) * particle.GetLength();
+            }
+            else
+            {
+                totalLightSourceEnergy += particle.GetEnergy();
+            }
+            // log_info_stream(particle);
+        }
+        
+    }
+    
+    return totalLightSourceEnergy;
+}
 
 bool I3CLSimModule::DigestOtherFrame(I3FramePtr frame, bool startThread)
 {
@@ -1372,11 +1445,7 @@ bool I3CLSimModule::DigestOtherFrame(I3FramePtr frame, bool startThread)
     photonsForFrameList_.push_back(I3PhotonSeriesMapPtr(new I3PhotonSeriesMap()));
     currentPhotonIdForFrame_.push_back(0);
     std::size_t currentFrameListIndex = frameList_.size()-1;
-#ifdef GRANULAR_GEOMETRY_SUPPORT
     maskedOMKeys_.push_back(std::set<ModuleKey>()); // insert an empty ModuleKey mask
-#else
-    maskedOMKeys_.push_back(std::set<OMKey>()); // insert an empty OMKey mask
-#endif
     
     // check if we got a geometry before starting to work
     if (!geometryIsConfigured_)
@@ -1425,17 +1494,13 @@ bool I3CLSimModule::DigestOtherFrame(I3FramePtr frame, bool startThread)
     }
 
     I3VectorOMKeyConstPtr omKeyMask;
-#ifdef GRANULAR_GEOMETRY_SUPPORT
     I3VectorModuleKeyConstPtr moduleKeyMask;
-#endif
     if (omKeyMaskName_ != "") {
         omKeyMask = frame->Get<I3VectorOMKeyConstPtr>(omKeyMaskName_);
         
-#ifdef GRANULAR_GEOMETRY_SUPPORT
         if (!omKeyMask) {
             moduleKeyMask = frame->Get<I3VectorModuleKeyConstPtr>(omKeyMaskName_);
         }
-#endif
     }
 
     
@@ -1447,7 +1512,6 @@ bool I3CLSimModule::DigestOtherFrame(I3FramePtr frame, bool startThread)
     if (MCTree) ConvertMCTreeToLightSources(*MCTree, lightSources, timeOffsets);
     if (flasherPulses) ConvertFlasherPulsesToLightSources(*flasherPulses, lightSources, timeOffsets);
     
-#ifdef GRANULAR_GEOMETRY_SUPPORT
     // support both vectors of OMKeys and vectors of ModuleKeys
     
     if (omKeyMask) {
@@ -1464,15 +1528,6 @@ bool I3CLSimModule::DigestOtherFrame(I3FramePtr frame, bool startThread)
         }
     }
    
-#else
-    if (omKeyMask) {
-        // assign the current OMKey mask if there is one
-        BOOST_FOREACH(const OMKey &key, *omKeyMask) {
-            maskedOMKeys_.back().insert(key);
-        }
-    }
-#endif
-    
     for (std::size_t i=0;i<lightSources.size();++i)
     {
         const I3CLSimLightSource &lightSource = lightSources[i];
@@ -1584,7 +1639,7 @@ void I3CLSimModule::ConvertMCTreeToLightSources(const I3MCTree &mcTree,
                                                 std::deque<I3CLSimLightSource> &lightSources,
                                                 std::deque<double> &timeOffsets)
 {
-    for (I3MCTree::iterator particle_it = mcTree.begin();
+    for (I3MCTree::const_iterator particle_it = mcTree.begin();
          particle_it != mcTree.end(); ++particle_it)
     {
         const I3Particle &particle_ref = *particle_it;
@@ -1637,10 +1692,10 @@ void I3CLSimModule::ConvertMCTreeToLightSources(const I3MCTree &mcTree,
         {
             const double distToClosestDOM = DistToClosestDOM(*geometry_, particle_ref.GetPos());
             
-            if (distToClosestDOM >= 300.*I3Units::m)
+            if (distToClosestDOM >= closestDOMDistanceCutoff_)
             {
-                log_debug("Ignored a non-track that is %fm (>300m) away from the closest DOM.",
-                          distToClosestDOM);
+                log_debug("Ignored a non-track that is %fm (>%fm) away from the closest DOM.",
+                          distToClosestDOM, closestDOMDistanceCutoff_);
                 continue;
             }
         }
@@ -1654,7 +1709,7 @@ void I3CLSimModule::ConvertMCTreeToLightSources(const I3MCTree &mcTree,
             bool nostop = false;
             double particleLength = particle.GetLength();
             
-            if (isnan(particleLength)) {
+            if (std::isnan(particleLength)) {
                 // assume infinite track (starting at given position)
                 nostop = true;
             } else if (particleLength < 0.) {
@@ -1666,10 +1721,10 @@ void I3CLSimModule::ConvertMCTreeToLightSources(const I3MCTree &mcTree,
             }
             
             const double distToClosestDOM = DistToClosestDOM(*geometry_, particle.GetPos(), particle.GetDir(), particleLength, nostart, nostop);
-            if (distToClosestDOM >= 300.*I3Units::m)
+            if (distToClosestDOM >= closestDOMDistanceCutoff_)
             {
-                log_debug("Ignored a track that is always at least %fm (>300m) away from the closest DOM.",
-                          distToClosestDOM);
+                log_debug("Ignored a track that is always at least %fm (>%fm) away from the closest DOM.",
+                          distToClosestDOM, closestDOMDistanceCutoff_);
                 continue;
             }
         }

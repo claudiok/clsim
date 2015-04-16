@@ -72,9 +72,11 @@ void I3CLSimFunctionTester::FillSource(std::vector<std::string> &source,
         derivativeSource = "\ninline float evaluateDerivative(float x) {return 888888.f;}\n";
     }
 
-    std::string testKernelSource = I3CLSimHelper::LoadProgramSource(kernelBaseDir+"/wlen_dep_val_test_kernel.cl");
+    std::string testKernelHeader = I3CLSimHelper::LoadProgramSource(kernelBaseDir+"/wlen_dep_val_test_kernel.h.cl");
+    std::string testKernelSource = I3CLSimHelper::LoadProgramSource(kernelBaseDir+"/wlen_dep_val_test_kernel.c.cl");
     
     // collect the program sources
+    source.push_back(testKernelHeader);
     source.push_back(functionSource);
     source.push_back(derivativeSource);
     source.push_back(testKernelSource);

@@ -1,3 +1,4 @@
+from __future__ import print_function
 
 """
 Convenience functions for configuring CLSim components.
@@ -6,6 +7,7 @@ Convenience functions for configuring CLSim components.
 def configureOpenCLDevices(UseGPUs=True, UseCPUs=False, OverrideApproximateNumberOfWorkItems=None, DoNotParallelize=True, UseOnlyDeviceNumber=None):
     # get OpenCL devices
     from icecube.clsim import I3CLSimOpenCLDevice
+    from icecube.icetray import logging
     import string
     
     openCLDevicesRaw = [device for device in I3CLSimOpenCLDevice.GetAllDevices() if (device.gpu and UseGPUs) or (device.cpu and UseCPUs)]
@@ -20,7 +22,7 @@ def configureOpenCLDevices(UseGPUs=True, UseCPUs=False, OverrideApproximateNumbe
         if string.count(device.device, 'Tesla') > 0 or string.count(device.device, 'GTX') > 0:
             # assume these are "fast", all others are "slow"
             device.useNativeMath=True
-            if string.count(device.device, 'Tesla') > 0 or string.count(device.device, '580') > 0 or string.count(device.device, '680') > 0:
+            if string.count(device.device, 'Tesla') > 0 or string.count(device.device, '580') > 0 or string.count(device.device, '680') > 0 or string.count(device.device, '980') > 0:
                 # these cards should have enough ram to support this
                 device.approximateNumberOfWorkItems=1024000
             else:
@@ -52,11 +54,11 @@ def configureOpenCLDevices(UseGPUs=True, UseCPUs=False, OverrideApproximateNumbe
                         subDevices[0].approximateNumberOfWorkItems=10240
                     openCLDevices.append(subDevices[0])
                 else:
-                    print "failed to split CPU device into individual cores", device.platform, device.device, "[using full device with minimal number of work-items to (hopefully) disable parallelization]"
+                    logging.log_warn("failed to split CPU device into individual cores %s %s [using full device with minimal number of work-items to (hopefully) disable parallelization]" % (device.platform, device.device), unit="clsim")
                     device.approximateNumberOfWorkItems=1
                     openCLDevices.append(device)
             except:
-                print "failed to split CPU device into individual cores", device.platform, device.device, "(exception) [using full device with minimal number of work-items to (hopefully) disable parallelization]"
+                logging.log_error("failed to split CPU device into individual cores %s %s [using full device with minimal number of work-items to (hopefully) disable parallelization]" % (device.platform, device.device), unit="clsim")
                 device.approximateNumberOfWorkItems=1
                 openCLDevices.append(device)
             

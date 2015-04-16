@@ -41,8 +41,8 @@ The conventional method of sampling the arrival time distribution of photons
 on photo-detectors in large-volume neutrino detectors is based on large,
 interpolated look-up tables. Generating such tables and finding robust interpolation
 methods has proven to be highly non-trivial. Existing tools such as *ptd*,
-*photonics* (recently combined with improved interpolation methods in
-*photospline*) and *km3* all perform reasonable well. They all do, however,
+Photonics_ (recently combined with improved interpolation methods in
+Photospline_) and *km3* all perform reasonable well. They all do, however,
 have drawbacks, such as binning artifacts, incomplete descriptions of the detector
 medium, large memory requirements and so on. All of those tools have to rely on
 interpolation, requiring careful fine-tuning of parameters during the generation
@@ -59,6 +59,9 @@ hardware instead of CPUs. This has first been proven by tools like *i3mcml*
 and *ppc*. Instead of the vendor-specific CUDA framework used by those
 tools, *clsim* uses OpenCL with the aim of being portable to other architectures,
 such as AMD/ATI or even multi-core CPUs.
+
+.. _Photonics: http://arxiv.org/abs/astro-ph/0702108
+.. _Photospline: http://arxiv.org/abs/1301.2184
 
 Overview
 ^^^^^^^^
@@ -240,3 +243,4 @@ Table of Contents:
    :maxdepth: 3
 
    faq
+   tabulator

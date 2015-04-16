@@ -40,7 +40,11 @@ TrkUISessionToQueue::~TrkUISessionToQueue()
 }
 
 // These two methods will be invoked by G4strstreambuf.
+#if G4VERSION_NUMBER >= 960
+G4int TrkUISessionToQueue::ReceiveG4cout(const G4String& coutString)
+#else
 G4int TrkUISessionToQueue::ReceiveG4cout(G4String coutString)
+#endif
 {
     if (queueFromGeant4Messages_)
     {
@@ -55,7 +59,11 @@ G4int TrkUISessionToQueue::ReceiveG4cout(G4String coutString)
     return 0;   
 }
 
+#if G4VERSION_NUMBER >= 960
+G4int TrkUISessionToQueue::ReceiveG4cerr(const G4String& cerrString)
+#else
 G4int TrkUISessionToQueue::ReceiveG4cerr(G4String cerrString)
+#endif
 {
     if (queueFromGeant4Messages_)
     {

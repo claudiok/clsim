@@ -27,12 +27,7 @@
 #include <icetray/serialization.h>
 #include <clsim/I3CLSimStep.h>
 
-#ifdef HAS_PBA_IN_ICETRAY
 #include <icetray/portable_binary_archive.hpp>
-#else
-#include <boost/archive/portable_binary_iarchive.hpp>
-#include <boost/archive/portable_binary_oarchive.hpp>
-#endif
 
 #include <boost/static_assert.hpp>
 #include <boost/serialization/binary_object.hpp>

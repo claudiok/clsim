@@ -1,3 +1,4 @@
+from __future__ import print_function
 from icecube import icetray, dataclasses
 import math
 
@@ -14,7 +15,7 @@ window.gl.setCameraPivot(pivot_pos.x,pivot_pos.y,pivot_pos.z)
 window.gl.setCameraLoc( camera_x, camera_y, camera_z )
 
 dist = math.sqrt( (pivot_pos.x-camera_x)**2 + (pivot_pos.y-camera_y)**2 + (pivot_pos.z-camera_z)**2 )
-print "dist camera-pivot:", dist
+print("dist camera-pivot:", dist)
 
 window.timeline.setEventTimeWindow(0,2000)
 window.timeline.minTime=0

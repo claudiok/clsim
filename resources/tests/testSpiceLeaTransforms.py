@@ -4,6 +4,7 @@ Test the Spice-Lea vector transformations against
 code directly ported to python from PPC.
 """
 
+from __future__ import print_function
 import numpy
 import math
 
@@ -83,7 +84,7 @@ vectors = numpy.array([xVals, yVals, zVals]).T
 maxDeviationInPre=0.
 maxDeviationInPost=0.
 
-for i in xrange(len(vectors)):
+for i in range(len(vectors)):
     preV_clsim = evaluateVectorTransformationCLSim(vectors[i], preTransform)
     preV_ppc   = evaluateVectorTransformationPPCPre(vectors[i], azx, azy, k1, k2, kz)
 
@@ -103,8 +104,8 @@ for i in xrange(len(vectors)):
     if numpy.amax(numpy.abs(diff_post)) > maxDeviationInPost:
         maxDeviationInPost = numpy.amax(numpy.abs(diff_post))
 
-print "maximum absolute deviation in pre-rotation transformation: ", maxDeviationInPre
-print "maximum absolute deviation in post-rotation transformation:", maxDeviationInPost
+print("maximum absolute deviation in pre-rotation transformation: ", maxDeviationInPre)
+print("maximum absolute deviation in post-rotation transformation:", maxDeviationInPost)
 
 if maxDeviationInPre > maximumDeviation:
     raise RuntimeError("clsim implementation results differ from ppc reference implementation results (in pre-rotation transformation)!")
@@ -112,6 +113,6 @@ if maxDeviationInPre > maximumDeviation:
 if maxDeviationInPost > maximumDeviation:
     raise RuntimeError("clsim implementation results differ from ppc reference implementation results (in post-rotation transformation)!")
 
-print "test successful!"
+print("test successful!")
 
 

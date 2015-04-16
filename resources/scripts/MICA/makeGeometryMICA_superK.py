@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from I3Tray import *
 
 from icecube import icetray, dataclasses, dataio, sim_services, phys_services
@@ -16,7 +17,7 @@ tray = I3Tray()
 
 tray.AddModule("I3InfiniteSource","streams",
                Stream=icetray.I3Frame.DAQ,
-               Prefix=expandvars("$I3_PORTS/test-data/sim/GeoCalibDetectorStatus_IC86.55380_corrected.i3.gz"))
+               Prefix=expandvars("$I3_TESTDATA/sim/GeoCalibDetectorStatus_IC86.55380_corrected.i3.gz"))
 
 tray.AddModule("I3MCEventHeaderGenerator","gen_header",
                Year=2009,
@@ -45,13 +46,13 @@ depthAtZ0 = 1948.07*I3Units.m # depth @ IceCube z==0
 bedrockDepth = 2810.*I3Units.m
 bottomDOMDepth = depthAtZ0+503.*I3Units.m
 
-print "                  radius: {0}m".format(ringRadius/I3Units.m)
-print "         string distance: {0}m".format(stringDistance/I3Units.m)
-print "       number of strings: {0}".format(numberOfStrings)
-print "         DOMs per string: {0}".format(domsPerString)
-print "    DOM vertical spacing: {0}m".format(domSpacing/I3Units.m)
-print "instrumented string len.: {0}m".format(stringLength/I3Units.m)
-print "    total number of DOMs: {0}".format(totalNumDOMs)
+print("                  radius: {0}m".format(ringRadius/I3Units.m))
+print("         string distance: {0}m".format(stringDistance/I3Units.m))
+print("       number of strings: {0}".format(numberOfStrings))
+print("         DOMs per string: {0}".format(domsPerString))
+print("    DOM vertical spacing: {0}m".format(domSpacing/I3Units.m))
+print("instrumented string len.: {0}m".format(stringLength/I3Units.m))
+print("    total number of DOMs: {0}".format(totalNumDOMs))
 
 myPMT = MultiPMT()
 myOM = mDOM(pmtDescription=myPMT)

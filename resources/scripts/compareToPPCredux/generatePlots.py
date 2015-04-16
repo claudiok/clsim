@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import matplotlib
 matplotlib.use("PDF")
 
@@ -164,7 +165,7 @@ show = [
 ]
 
 
-print "loading data.."
+print("loading data..")
 
 DOMpositionsX = numpy.ones(len(OMKeys)) * float('NaN')
 DOMpositionsY = numpy.ones(len(OMKeys)) * float('NaN')
@@ -176,7 +177,7 @@ numEventsForFilename = []
 emitterPos = None
 
 for filename in filenames:
-    print "reading", filename
+    print("reading", filename)
 
     times, xPos, yPos, zPos, numEvents, thisEmitterPos = getTimesAndPositions(filename, OMKeys)
 
@@ -189,41 +190,41 @@ for filename in filenames:
     timesForFilename.append(times)
     numEventsForFilename.append(numEvents)
 
-    for i in xrange(len(OMKeys)):
+    for i in range(len(OMKeys)):
         key = OMKeys[i]
         if (numpy.isnan(DOMpositionsX[i])):
             DOMpositionsX[i] = xPos[i]
         else:
             if DOMpositionsX[i] != xPos[i]:
-                print "got:", xPos
-                print "expected:", DOMpositionsX
+                print("got:", xPos)
+                print("expected:", DOMpositionsX)
 
                 raise RuntimeError("files have inconsistent DOM positions (x)")
         if (numpy.isnan(DOMpositionsY[i])):
             DOMpositionsY[i] = yPos[i]
         else:
             if DOMpositionsY[i] != yPos[i]:
-                print "got:", xPos
-                print "expected:", DOMpositionsX
+                print("got:", xPos)
+                print("expected:", DOMpositionsX)
 
                 raise RuntimeError("files have inconsistent DOM positions (y)")
         if (numpy.isnan(DOMpositionsZ[i])):
             DOMpositionsZ[i] = zPos[i]
         else:
             if DOMpositionsZ[i] != zPos[i]:
-                print "got:", xPos
-                print "expected:", DOMpositionsX
+                print("got:", xPos)
+                print("expected:", DOMpositionsX)
 
                 raise RuntimeError("files have inconsistent DOM positions (z)")
 
 
 
-print "done."
+print("done.")
 
 
 
 ####
-print "plotting.."
+print("plotting..")
 
 
 fig = pylab.figure(3)
@@ -248,7 +249,7 @@ def plotHistogram(plot, times, weights=None, color='k', linestyle='-', label=Non
     hist, bin_edges = numpy.histogram(times, weights=weights, bins=num_bins, range=the_range)
     plot.semilogy( (bin_edges[1:]+bin_edges[:-1])/2., hist, color=color, linestyle=linestyle, label=label)
 
-for i in xrange(len(timesForFilename)):
+for i in range(len(timesForFilename)):
     if not show[i]: continue
 
     timesForDOM = timesForFilename[i]
@@ -374,7 +375,7 @@ ax.set_ylim(centerPlotRangeY[0], centerPlotRangeY[1])
 ax.set_xlabel(r"x [$\mathrm{m}$]")
 ax.set_ylabel(r"y [$\mathrm{m}$]")
 
-print "saving as {0}".format(outfile)
+print("saving as {0}".format(outfile))
 pylab.savefig(outfile, transparent=False)
 
 

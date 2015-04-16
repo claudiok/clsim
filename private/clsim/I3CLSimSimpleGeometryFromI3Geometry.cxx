@@ -35,9 +35,7 @@
 #include "dataclasses/geometry/I3Geometry.h"
 #include "dataclasses/geometry/I3OMGeo.h"
 
-#ifdef GRANULAR_GEOMETRY_SUPPORT
 #include "dataclasses/geometry/I3ModuleGeo.h"
-#endif
 
 #include <stdexcept>
 #include <limits>
@@ -67,12 +65,12 @@ I3CLSimSimpleGeometryFromI3Geometry(double OMRadius,
                                     int32_t ignoreStringIDsLargerThan,
                                     uint32_t ignoreDomIDsSmallerThan,
                                     uint32_t ignoreDomIDsLargerThan,
-                                    bool splitIntoPartsAccordingToPosition,
+                                    // keep here for backwards compatibility - it's unused, so don't warn
+                                    __attribute__((__unused__)) bool splitIntoPartsAccordingToPosition,
                                     bool useHardcodedDeepCoreSubdetector)
 :
 OMRadius_(OMRadius),
 oversizeFactor_(oversizeFactor),
-splitIntoPartsAccordingToPosition_(splitIntoPartsAccordingToPosition),
 ignoreStrings_(ignoreStrings),
 ignoreDomIDs_(ignoreDomIDs),
 ignoreSubdetectors_(ignoreSubdetectors),
@@ -88,91 +86,8 @@ useHardcodedDeepCoreSubdetector_(useHardcodedDeepCoreSubdetector)
               ignoreStringIDsSmallerThan, ignoreStringIDsLargerThan,
               ignoreDomIDsSmallerThan, ignoreDomIDsLargerThan);
     
-#ifdef HAS_MULTIPMT_SUPPORT
-    // split the detector into different parts
-    const double EPSILON=1.*I3Units::m;
-
-    std::map<OMKey, unsigned int> omKeyToDetectorPart;
-    std::map<int64_t, std::vector<std::pair<double, double> > > modifiedStringNumToXYPosList;
-    unsigned int numParts;
-    
-    I3GeometryConstPtr geometry = frame->Get<I3GeometryConstPtr>();
-    if (!geometry) log_fatal("No I3Geometry object in frame");
-    
-    unsigned int maxOMsPerFloor = geometry->layout.GetMaxOMCountPerFloor();
-    if (maxOMsPerFloor <= 1)
-    {
-        // only one OM per floor.
-        BOOST_FOREACH(const I3OMGeoMap::value_type &i, geometry->omgeo)
-        {
-            const OMKey &key = i.first;
-            omKeyToDetectorPart.insert(std::make_pair(key, 0)); // all OMs are in part #0
-            numParts=1;
-        }
-    }
-    else
-    {
-        numParts=0;
-        
-        if (splitIntoPartsAccordingToPosition_)
-        {
-            BOOST_FOREACH(const I3OMGeoMap::value_type &i, geometry->omgeo)
-            {
-                const OMKey &key = i.first;
-                const unsigned int floorIndex = geometry->layout.GetFloorIndex(key);
-
-                const int64_t modifiedStringNum = key.GetString() * static_cast<int64_t>(maxOMsPerFloor) + floorIndex;
-                std::map<int64_t, std::vector<std::pair<double, double> > >::iterator it = modifiedStringNumToXYPosList.find(modifiedStringNum);
-                if (it==modifiedStringNumToXYPosList.end())
-                    it = modifiedStringNumToXYPosList.insert(std::make_pair(modifiedStringNum, std::vector<std::pair<double, double> >())).first;
-                std::vector<std::pair<double, double> > &XYPosList = it->second;
-
-                const I3OMGeo &geo = i.second;
-
-                bool fitFound=false;
-                for (unsigned int i=0;i<XYPosList.size();++i)
-                {
-                    std::pair<double, double> &XYPos = XYPosList[i];
-                    
-                    if ((std::abs(XYPos.first - geo.position.GetX()) < EPSILON) &&
-                        (std::abs(XYPos.second - geo.position.GetY()) < EPSILON))
-                    {
-                        // it fits!
-                        
-                        fitFound=true;
-                        omKeyToDetectorPart.insert(std::make_pair(key, (i*maxOMsPerFloor)+floorIndex));
-                        break;
-                    }
-                }
-                
-                if (!fitFound)
-                {
-                    // make a new entry..
-                    
-                    XYPosList.push_back(std::make_pair(geo.position.GetX(), geo.position.GetY()));
-                    unsigned int new_index = static_cast<unsigned int>(XYPosList.size()-1);
-                    omKeyToDetectorPart.insert(std::make_pair(key, (new_index*maxOMsPerFloor)+floorIndex));
-                    if ((new_index*maxOMsPerFloor)+floorIndex+1 > numParts) numParts=(new_index*maxOMsPerFloor)+floorIndex+1;
-                }
-            }
-        } else {
-            BOOST_FOREACH(const I3OMGeoMap::value_type &i, geometry->omgeo)
-            {
-                const OMKey &key = i.first;
-                const unsigned int floorIndex = geometry->layout.GetFloorIndex(key);
-                omKeyToDetectorPart.insert(std::make_pair(key, floorIndex));
-            }
-            
-            numParts = maxOMsPerFloor;
-        }
-    }
-    
-    log_info("The detector consists of %u parts.", numParts);
-#endif
-    
     numOMs_=0;
     
-#ifdef GRANULAR_GEOMETRY_SUPPORT
     I3ModuleGeoMapConstPtr moduleGeoMap = frame->Get<I3ModuleGeoMapConstPtr>("I3ModuleGeoMap");
     
     if (!moduleGeoMap) {
@@ -202,31 +117,6 @@ useHardcodedDeepCoreSubdetector_(useHardcodedDeepCoreSubdetector)
             subdetectorName = subdetector_it->second;
         }
         
-#else
-    I3GeometryConstPtr geometry = frame->Get<I3GeometryConstPtr>();
-    if (!geometry) log_fatal("No I3Geometry object in frame");
-
-    BOOST_FOREACH(const I3OMGeoMap::value_type &i, geometry->omgeo)
-    {
-        const OMKey &key = i.first;
-        const I3OMGeo &geo = i.second;
-        
-#ifdef HAS_MULTIPMT_SUPPORT
-        std::string subdetectorName = geo.subdetector;
-#else
-        std::string subdetectorName;
-        switch (geo.omtype)
-        {
-            case I3OMGeo::UnknownType: subdetectorName = "UnknownType"; break;
-            case I3OMGeo::AMANDA: subdetectorName = "AMANDA"; break;
-            case I3OMGeo::IceCube: subdetectorName = "IceCube"; break;
-            case I3OMGeo::IceTop: subdetectorName = "IceTop"; break;
-            default: subdetectorName = "(unknown)"; break;
-        }
-#endif
-
-#endif
-      
         int32_t string=key.GetString();
         uint32_t dom=key.GetOM();
 
@@ -236,11 +126,7 @@ useHardcodedDeepCoreSubdetector_(useHardcodedDeepCoreSubdetector)
             {
                 if ((string>=79) && (string<=86)) // these are the DeepCore strings
                 {
-#ifdef GRANULAR_GEOMETRY_SUPPORT
                     if (geo.GetPos().GetZ()>-30.*I3Units::m) // z=30m is about halfway between the upper and lower parts of DeepCore
-#else
-                    if (geo.position.GetZ()>-30.*I3Units::m) // z=30m is about halfway between the upper and lower parts of DeepCore
-#endif
                         subdetectorName="DeepCoreUpper";
                     else
                         subdetectorName="DeepCoreLower";
@@ -262,35 +148,17 @@ useHardcodedDeepCoreSubdetector_(useHardcodedDeepCoreSubdetector)
         if (ignoreDomIDs_.count(dom)!=0) continue;
         if (ignoreSubdetectors_.count(subdetectorName)!=0) continue;
 
-#ifdef HAS_MULTIPMT_SUPPORT
-        // assign different subdetectors for each floor index.
-        // this should make it easier to find a geometry binning later on.
-        // Should be irrelevant for IceCube/KM3NeT string detectors, 
-        // only Antares (3 OMs per floor) and KM3NeT bar detectors (2 OMs per
-        // floor) should be affected. -ck
-        std::map<OMKey, unsigned int>::const_iterator it = omKeyToDetectorPart.find(key);
-        if (it == omKeyToDetectorPart.end()) log_fatal("internal error: OMKey not in detector part list");
-        subdetectorName = subdetectorName + "_" + boost::lexical_cast<std::string>(it->second);
-#endif
         
-#ifdef GRANULAR_GEOMETRY_SUPPORT
         // sanity check
         if (std::abs(geo.GetRadius()-OMRadius_) > 0.001*I3Units::mm)
             log_fatal("This version of clsim does only support DOMs with one single size. Configured size=%fmm, size in geometry=%fmm",
                       OMRadius_/I3Units::mm, geo.GetRadius()/I3Units::mm);
-#endif
         
         stringIDs_.push_back(string);
         domIDs_.push_back(dom);
-#ifdef GRANULAR_GEOMETRY_SUPPORT
         posX_.push_back(geo.GetPos().GetX());
         posY_.push_back(geo.GetPos().GetY());
         posZ_.push_back(geo.GetPos().GetZ());
-#else
-        posX_.push_back(geo.position.GetX());
-        posY_.push_back(geo.position.GetY());
-        posZ_.push_back(geo.position.GetZ());
-#endif
         subdetectors_.push_back(subdetectorName);
 
         ++numOMs_;

@@ -404,4 +404,4 @@ void I3CLSimMediumProperties::save(Archive &ar, unsigned version) const
 }     
 
 
-I3_SERIALIZABLE(I3CLSimMediumProperties);
+I3_SPLIT_SERIALIZABLE(I3CLSimMediumProperties);

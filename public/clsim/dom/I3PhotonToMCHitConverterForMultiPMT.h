@@ -68,11 +68,7 @@ class I3PhotonToMCHitConverterForMultiPMT : public I3ConditionalModule
          *
          * @param frame The frame
          */
-#ifdef IS_Q_FRAME_ENABLED
         void DAQ(I3FramePtr frame);
-#else
-        void Physics(I3FramePtr frame);
-#endif
         
         /**
          * @brief To clean up

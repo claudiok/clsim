@@ -30,7 +30,7 @@ if(NOT COMMAND colormsg)
     if($ARGC EQUAL 1)
       message(STATUS ${ARGV0})
     else($ARGC EQUAL 1)
-      message(STATUS "  "${ARGV1})
+      message(STATUS "  " ${ARGV1})
     endif($ARGC EQUAL 1)
   endfunction()
 endif(NOT COMMAND colormsg)
@@ -74,8 +74,10 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
   # private/clsim
   private/clsim/I3CLSimEventStatistics.cxx
   private/clsim/I3Photon.cxx
+  private/clsim/I3CompressedPhoton.cxx
   private/clsim/I3CLSimFlasherPulse.cxx
   private/clsim/util/I3MuonSlicer.cxx
+  private/clsim/util/I3MuonSliceRemoverAndPulseRelabeler.cxx
   private/clsim/util/I3TauSanitizer.cxx
   private/clsim/dom/I3PhotonToMCPEConverter.cxx
   private/clsim/shadow/I3ShadowedPhotonRemover.cxx
@@ -93,11 +95,12 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
 
 SET(LIB_${PROJECT_NAME}_PROJECTS icetray dataio dataclasses phys-services tableio simclasses)
 SET(LIB_${PROJECT_NAME}_TOOLS python boost gsl)
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse -msse2 -msse3")
 
 LIST(APPEND LIB_${PROJECT_NAME}_PROJECTS photonics-service)
 
 # check for Geant4
-if (GEANT4_FOUND AND OPENCL_FOUND)
+if (GEANT4_FOUND AND OPENCL_FOUND AND NOT DISABLE_GEANT4_IN_CLSIM)
     ADD_DEFINITIONS(-DHAS_GEANT4)
 
     LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
@@ -114,9 +117,11 @@ if (GEANT4_FOUND AND OPENCL_FOUND)
     LIST(APPEND LIB_${PROJECT_NAME}_TOOLS clhep geant4)
 
     colormsg(GREEN "+-- Geant4 support")
-else (GEANT4_FOUND AND OPENCL_FOUND)
-    colormsg(RED   "+-- Geant4 is not installed on your system. clsim will fail if it is not used with parameterizations.")
-endif (GEANT4_FOUND AND OPENCL_FOUND)
+elseif (GEANT4_FOUND AND OPENCL_FOUND AND DISABLE_GEANT4_IN_CLSIM)
+    colormsg(YELLOW "+-- Geant4 is installed on your system but has been explicitly disabled using -DDISABLE_GEANT4_IN_CLSIM. clsim will fail if it is not used with parameterizations.")
+else (GEANT4_FOUND AND OPENCL_FOUND AND NOT DISABLE_GEANT4_IN_CLSIM)
+    colormsg(RED   "+-- Geant4 or OpenCL is not installed on your system. clsim will fail if it is not used with parameterizations.")
+endif (GEANT4_FOUND AND OPENCL_FOUND AND NOT DISABLE_GEANT4_IN_CLSIM)
 
 
 # check for numpy. The C++ part of the tabulator needs it.
@@ -132,84 +137,16 @@ else(NUMPY_FOUND)
   colormsg(GREEN "+-- no numpy support (tabulator will not be built)")
 endif(NUMPY_FOUND)
 
+if(CFITSIO_FOUND)
+  ADD_DEFINITIONS(-DUSE_CFITSIO)
+  LIST(APPEND LIB_${PROJECT_NAME}_TOOLS cfitsio)
+endif(CFITSIO_FOUND)
+
 # The icecube master header file I3.h seems to include inttypes.h without setting
 # __STDC_FORMAT_MACROS. clsim makes use of the PRI* preprocessor definitions,
 # so it needs those macros. Add the definition right here to work around this.
 ADD_DEFINITIONS(-D__STDC_FORMAT_MACROS)
 
-
-# check for granular geometry support
-if(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3ModuleGeo.h)
-  # assume that the existence of this header means that there are
-  # granular geometry objects in the G frame (and not only a single
-  # I3Geomtry)
-  LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
-       private/clsim/dom/I3PhotonToMCHitConverterForMDOMs.cxx
-       )
-
-  ADD_DEFINITIONS(-DGRANULAR_GEOMETRY_SUPPORT)
-  colormsg(GREEN "+-- has support for granular geometry")
-else(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3ModuleGeo.h)
-  colormsg(YELLOW "+-- only supports I3Geometry-only G-frames")
-endif(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3ModuleGeo.h)
-
-
-# check for Q-Frame support
-if(EXISTS ${CMAKE_SOURCE_DIR}/dataio/private/dataio/QConverter.cxx)
-  # we assume that the existence of this module means that we have
-  # to deal with a Q-frame-enabled meta-project
-  ADD_DEFINITIONS(-DIS_Q_FRAME_ENABLED)
-  colormsg(GREEN "+-- Q-frame-enabled")
-else(EXISTS ${CMAKE_SOURCE_DIR}/dataio/private/dataio/QConverter.cxx)
-  colormsg(YELLOW "+-- old-style, non-Q-frame module")
-endif(EXISTS ${CMAKE_SOURCE_DIR}/dataio/private/dataio/QConverter.cxx)
-
-
-# check for portable binary archive in "icetray" (instead of cmake/boost)
-if(EXISTS ${CMAKE_SOURCE_DIR}/icetray/public/icetray/portable_binary_archive.hpp)
-  ADD_DEFINITIONS(-DHAS_PBA_IN_ICETRAY)
-  colormsg(GREEN "+-- portable_binary_archive is in the icetray project")
-else(EXISTS ${CMAKE_SOURCE_DIR}/icetray/public/icetray/portable_binary_archive.hpp)
-  colormsg(YELLOW "+-- portable_binary_archive is *not* in the icetray project")
-endif(EXISTS ${CMAKE_SOURCE_DIR}/icetray/public/icetray/portable_binary_archive.hpp)
-
-
-# Check for the existence of icetray/python/dataclass_suite.hpp
-# If this file does not exist, a local copy of the python
-# binding helper headers is used. TODO: This needs to go away
-# as soon as an offline-software release contains these headers.
-# (They already are in icetray/trunk.)
-if(NOT EXISTS ${CMAKE_SOURCE_DIR}/icetray/public/icetray/python/dataclass_suite.hpp)
-  ADD_DEFINITIONS(-DNO_PYTHON_DATACLASS_SUITE)
-  colormsg(YELLOW "+-- icetray does not have dataclass_suite.hpp. Using local version.")
-endif(NOT EXISTS ${CMAKE_SOURCE_DIR}/icetray/public/icetray/python/dataclass_suite.hpp)
-
-
-# Check for dataclasses/I3Matrix.h. Use backport if it doesn't exist.
-if(NOT EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/I3Matrix.h)
-  LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
-       private/clsim/backports/I3Matrix.cxx
-       )
-  
-  set (USE_BACKPORTED_I3MATRIX YES)
-  ADD_DEFINITIONS(-DUSE_BACKPORTED_I3MATRIX)
-  colormsg(YELLOW "+-- dataclasses does not have I3Matrix.h. Using local backported version.")
-else(NOT EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/I3Matrix.h)
-  set (USE_BACKPORTED_I3MATRIX NO)
-endif(NOT EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/I3Matrix.h)
-
-
-# check if multiPMT support is available and add multiPMT-only 
-# source files (this is still for the KM3NeT multiPMT version of IceTray)
-# support for 3-item OMKeys is coming soon!
-if(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3OMTypeInfo.h)
-  LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
-       private/clsim/dom/I3PhotonToMCHitConverterForMultiPMT.cxx
-       )
-
-  ADD_DEFINITIONS(-DHAS_MULTIPMT_SUPPORT)
-  colormsg(GREEN "+-- KM3NeT old-style multiPMT support")
-endif(EXISTS ${CMAKE_SOURCE_DIR}/dataclasses/public/dataclasses/geometry/I3OMTypeInfo.h)
 
 # This is the core clsim stuff (everything using OpenCL and/or Geant4)
 if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
@@ -263,11 +200,17 @@ if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
     private/clsim/I3CLSimLightSource.cxx
     private/clsim/I3CLSimSpectrumTable.cxx
     private/clsim/I3CLSimLightSourceToStepConverterFlasher.cxx
+    
+    private/clsim/tabulator/I3CLSimTabulatorModule.cxx
+    private/clsim/tabulator/I3CLSimStepToTableConverter.cxx
+    private/clsim/tabulator/Axis.cxx
+    private/clsim/tabulator/Axes.cxx
 
     # private/geant4
     private/geant4/I3CLSimLightSourceToStepConverterGeant4.cxx
 
     # private/opencl/
+    private/opencl/I3CLSimHelperMath.cxx
     private/opencl/I3CLSimHelperGenerateGeometrySource.cxx
     private/opencl/I3CLSimHelperGenerateMediumPropertiesSource.cxx
     private/opencl/I3CLSimHelperGenerateMediumPropertiesSource_Optimizers.cxx
@@ -287,14 +230,16 @@ if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
   #LIST(APPEND LIB_${PROJECT_NAME}_PROJECTS )
   LIST(APPEND LIB_${PROJECT_NAME}_TOOLS opencl)
 
-  if(NOT EXISTS ${CMAKE_SOURCE_DIR}/clsim/resources/safeprimes_base32.txt)
-    colormsg(RED   "+-- Downloading and unpacking the safeprimes_base32.txt data file...")
+  if(EXISTS $ENV{I3_DATA}/safeprimes_base32.gz)
+    colormsg(CYAN   "+-- $ENV{I3_DATA}/safeprimes_base32.gz data file exists, skipping download")
+  elseif(NOT EXISTS ${CMAKE_SOURCE_DIR}/clsim/resources/safeprimes_base32.gz)
+    colormsg(RED   "+-- Downloading and unpacking the safeprimes_base32.gz data file...")
     colormsg(RED   "    (this file will only be downloaded once)")
     EXECUTE_PROCESS(COMMAND ${CMAKE_SOURCE_DIR}/clsim/resources/download_safeprimes.sh ${CMAKE_SOURCE_DIR}/clsim/resources)
     colormsg(GREEN "+-- ...download complete.")
-  else(NOT EXISTS ${CMAKE_SOURCE_DIR}/clsim/resources/safeprimes_base32.txt)
-    colormsg(CYAN  "+-- safeprimes_base32.txt already downloaded")
-  endif(NOT EXISTS ${CMAKE_SOURCE_DIR}/clsim/resources/safeprimes_base32.txt)
+  else(NOT EXISTS ${CMAKE_SOURCE_DIR}/clsim/resources/safeprimes_base32.gz)
+    colormsg(CYAN  "+-- safeprimes_base32.gz already downloaded")
+  endif(EXISTS $ENV{I3_DATA}/safeprimes_base32.gz)
 endif(NOT BUILD_CLSIM_DATACLASSES_ONLY)
 
 # the clsim library definition
@@ -307,8 +252,13 @@ i3_add_library(${PROJECT_NAME}
 # the make-safeprimes tool needs gmp, so only compile it if that tool is available
 if(GMP_FOUND)
   i3_executable(make_safeprimes
-    private/make_safeprimes/main.c
+    private/make_safeprimes/main.cxx
     USE_TOOLS python boost gmp
+    )
+  i3_executable(convert_safeprimes
+    private/make_safeprimes/convert.cxx
+    USE_PROJECTS icetray
+    USE_TOOLS python boost
     )
   colormsg(GREEN "+-- gmp support (make_safeprimes utility)")
 else(GMP_FOUND)

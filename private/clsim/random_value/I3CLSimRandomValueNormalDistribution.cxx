@@ -85,7 +85,8 @@ bool I3CLSimRandomValueNormalDistribution::CompareTo(const I3CLSimRandomValue &o
 {
     try
     {
-        const I3CLSimRandomValueNormalDistribution &other_ = dynamic_cast<const I3CLSimRandomValueNormalDistribution &>(other);
+        // this would be used to compare data members if this class had any:
+        // const I3CLSimRandomValueNormalDistribution &other_ = dynamic_cast<const I3CLSimRandomValueNormalDistribution &>(other);
         return true;
     }
     catch (const std::bad_cast& e)

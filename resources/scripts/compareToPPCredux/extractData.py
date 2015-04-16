@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 from optparse import OptionParser
 
 usage = "usage: %prog [options] inputfile"
@@ -37,18 +38,18 @@ if options.format == 'hdf5':
     try:
         from icecube import hdfwriter
     except ImportError:
-        raise "Couldn't find the HDF writer service"
+        raise ImportError("Couldn't find the HDF writer service")
     tabler = hdfwriter.I3HDFTableService(outfile,options.compression)
 elif options.format == 'root':
     try:
         from icecube import rootwriter
     except ImportError:
-        raise "Couldn't find the ROOT writer service"
+        raise ImportError("Couldn't find the ROOT writer service")
     tabler = rootwriter.I3ROOTTableService(outfile,options.compression)
 elif options.format == 'csv':
     tabler = tableio.I3CSVTableService(outfile[:-4] + '_csv')
 else:
-    raise ValueError, "I don't have a writer service for format '%s'"%options.format
+    raise ValueError("I don't have a writer service for format '%s'"%options.format)
 
 tray = I3Tray()
 
@@ -60,14 +61,14 @@ count = 0
 def counter(frame):
     global count
     if (count%100==0):
-        print "%d frames"%count
+        print("%d frames"%count)
     count +=1
 
 def extractMCTreeParticles(frame):
     mctree = frame["I3MCTree"]
     
     # get tracks in ice/water
-    mctracksinice = mctree.in_ice
+    mctracksinice = mctree.get_filter(lambda p: p.location_type==p.InIce)
     mcmuontrack = None
     highestEnergy=-1.
     for track in mctracksinice:
@@ -77,7 +78,7 @@ def extractMCTreeParticles(frame):
 
     if mcmuontrack is None:
         mcmuontrack = dataclasses.I3Particle()
-    primary = mctree.most_energetic_primary
+    primary = dataclasses.get_most_energetic_primary(mctree)
     
     if primary is None:
         primary = dataclasses.I3Particle()

@@ -66,9 +66,11 @@ void I3CLSimVectorTransformTester::FillSource(
     
     std::string functionSource = theTransform->GetOpenCLFunction("evaluateVectorTransform");
     
-    std::string testKernelSource = I3CLSimHelper::LoadProgramSource(kernelBaseDir+"/vector_transform_test_kernel.cl");
+    std::string testKernelHeader = I3CLSimHelper::LoadProgramSource(kernelBaseDir+"/vector_transform_test_kernel.h.cl");
+    std::string testKernelSource = I3CLSimHelper::LoadProgramSource(kernelBaseDir+"/vector_transform_test_kernel.c.cl");
     
     // collect the program sources
+    source.push_back(testKernelHeader);
     source.push_back(functionSource);
     source.push_back(testKernelSource);
 }

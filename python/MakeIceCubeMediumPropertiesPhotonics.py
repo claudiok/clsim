@@ -24,6 +24,8 @@
 # @author Claudio Kopper
 #
 
+from __future__ import print_function
+
 from icecube import icetray, dataclasses
 from icecube.clsim import I3CLSimMediumProperties
 from icecube.clsim import I3CLSimRandomValueMixed
@@ -74,7 +76,7 @@ def MakeIceCubeMediumPropertiesPhotonics(tableFile,
     # make a list of wavelengths
     wavelengths = numpy.linspace(start=startWavelength, stop=startWavelength+float(nWavelengths)*stepWavelength, num=nWavelengths, endpoint=False)
 
-    print "The table file {0} has {1} layers and {2} wavelengths, starting from {3}ns in {4}ns steps".format(tableFile, nLayers, nWavelengths, startWavelength/I3Units.nanometer, stepWavelength/I3Units.nanometer)
+    print("The table file {0} has {1} layers and {2} wavelengths, starting from {3}ns in {4}ns steps".format(tableFile, nLayers, nWavelengths, startWavelength/I3Units.nanometer, stepWavelength/I3Units.nanometer))
 
 
     # replace parsedtable with a version without NLAYER and NWVL entries
@@ -120,7 +122,7 @@ def MakeIceCubeMediumPropertiesPhotonics(tableFile,
         raise RuntimeError("At least one layers is requried (reading {0})".format(tableFile))
 
     layerHeight = abs(layers[0]['LAYER'][1] - layers[0]['LAYER'][0])
-    print "layer height is {0}m".format(layerHeight/I3Units.m)
+    print("layer height is {0}m".format(layerHeight/I3Units.m))
 
     # sort layers into dict by bottom z coordinate and check some assumptions
     layersByZ = dict()
@@ -129,7 +131,7 @@ def MakeIceCubeMediumPropertiesPhotonics(tableFile,
         layerTop = layer['LAYER'][1]
 
         if layerBottom > layerTop:
-            print "a layer is upside down. compensating. (reading {0})".format(tableFile)
+            print("a layer is upside down. compensating. (reading {0})".format(tableFile))
             dummy = layerBottom
             layerBottom = layerTop
             layerTop = dummy
@@ -143,7 +145,7 @@ def MakeIceCubeMediumPropertiesPhotonics(tableFile,
 
     layers = []
     endZ = None
-    for dummy, layer in sorted(layersByZ.iteritems()):
+    for dummy, layer in sorted(layersByZ.items()):
         startZ = layer['LAYER'][0]
         if (endZ is not None) and (abs(endZ-startZ) > 0.0001):
             raise RuntimeError("Your layers have holes. previous layer ends at {0}m, next one starts at {1}m".format(endZ/I3Units.m, startZ/I3Units.m))

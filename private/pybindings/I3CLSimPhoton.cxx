@@ -31,18 +31,11 @@
 #include <clsim/I3CLSimPhoton.h>
 #include <boost/preprocessor/seq.hpp>
 
-#ifdef NO_PYTHON_DATACLASS_SUITE
-#include "icetray_python_backports/list_indexing_suite.hpp"
-#include "icetray_python_backports/std_map_indexing_suite.hpp"
-#include "icetray_python_backports/copy_suite.hpp"
-#include "icetray_python_backports/boost_serializable_pickle_suite.hpp"
-#else
 #include <icetray/python/list_indexing_suite.hpp>
 #include <icetray/python/std_map_indexing_suite.hpp>
 #include <icetray/python/copy_suite.hpp>
 #include <icetray/python/boost_serializable_pickle_suite.hpp>
-#endif
-     
+
 using namespace boost::python;
 
 static std::string 

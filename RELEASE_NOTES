@@ -2,6 +2,44 @@
 # $Author$
 # $Date$
 
+trunk
+-----
+
+* The cutoff distance for sources further away from any DOM than a certain
+  distance is now configurable using the I3CLSimModule option
+  "ClosestDOMDistanceCutoff". It used to be hard-coded to 300m.
+* New "TotalEnergyToProcess" option to keep collecting input events as long
+  as the total energy to be propagated is below a threshold. (Instead of
+  just processing a fixed number of events in parallel.) Using this option
+  should reduce fluctuations in the memory requirements of clsim jobs.
+  This cannot currently be used with flasher simulations. If unset, the
+  previous behavior is used.
+
+November 24, 2014 Alex Olivas  (olivas@icecube.umd.edu)
+--------------------------------------------------------------------
+Release V04-00-04
+
+* Builds without OpenGL and with Intel i7.
+* Newer, tighter safeprimes.
+* Switch to default value of numberOfPhotonsAtMaxBrightness.
+* Incorporate hybrid mode between GEANT4 and parametrization.
+* Get all devices, even those that are neither CPUs nor GPUs, like the Xeon Phi.
+
+July 11, 2014 Claudio Kopper  (ckopper@icecube.wisc.edu)
+--------------------------------------------------------------------
+trunk (some of these happened in earlier releases but this file has not been updated)
+
+* some code cleanup: removed the dataclasses header backports
+  -> this version will not work with outdated dataclasses
+* minor OpenCL cleanups to make some implementations happy
+* safeprimes file will now be taken from I3_DATA if it exists
+* added a benchmark script which can be used to check the GPU/CPU
+  performance by propagating a couple of photons
+* more cleanups to move from I3MCPulse to I3MCPE
+* fixed a bug where the MCTree chopping would ignore secondary losses
+  leading to light from muon stochastic losses to be ignored
+  when looking at data pre-processed with CMC
+
 January 29, 2013 Claudio Kopper  (ckopper@icecube.wisc.edu)
 --------------------------------------------------------------------
 Release V00-03-00
@@ -47,4 +85,3 @@ or "GTX 680" in their names.
 
 Performance for large I3MCTrees should be significantly
 improved in this release.
-

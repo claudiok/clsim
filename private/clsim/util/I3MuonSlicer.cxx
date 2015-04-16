@@ -28,6 +28,7 @@
 #define __STDC_FORMAT_MACROS
 #endif
 #include <inttypes.h>
+#include <cmath>
 
 #include "clsim/util/I3MuonSlicer.h"
 
@@ -92,31 +93,27 @@ void I3MuonSlicer::Configure()
 
 // helper functions
 namespace {
-    inline bool IsAnyOfType(const std::vector<I3Particle> &particles, I3Particle::ParticleType type)
+    inline bool IsAnyOfType(const std::vector<I3MCTree::const_iterator> &particles, I3Particle::ParticleType type)
     {
-        BOOST_FOREACH(const I3Particle &particle, particles)
+        BOOST_FOREACH(const I3MCTree::const_iterator &particle_it, particles)
         {
+            const I3Particle &particle = *particle_it;
             if (particle.GetType()==type) return true;
         }
         return false;
     }
     
-    inline bool DoesItHaveChildren(const I3MCTree &mcTree, const I3Particle &particle)
-    {
-        const std::vector<I3Particle> daughters =
-        I3MCTreeUtils::GetDaughters(mcTree, particle);
-        return (daughters.size() > 0);
-    }
-    
-    inline bool AreParticlesSortedInTime(const std::vector<I3Particle> &particles)
+    inline bool AreParticlesSortedInTime(const std::vector<I3MCTree::const_iterator> &particles)
     {
         bool firstIt=true;
         double previousTime=NAN;
         
-        BOOST_FOREACH(const I3Particle &particle, particles)
+        BOOST_FOREACH(const I3MCTree::const_iterator &particle_it, particles)
         {
+            const I3Particle &particle = *particle_it;
+
             if (firstIt) {
-                if (isnan(particle.GetTime())) return false; // not sorted..
+                if (std::isnan(particle.GetTime())) return false; // not sorted..
                 previousTime=particle.GetTime();
                 continue;
             }
@@ -128,13 +125,15 @@ namespace {
         return true;
     }
     
-    inline double GetTotalEnergyOfParticles(const std::vector<I3Particle> &particles,
+    inline double GetTotalEnergyOfParticles(const std::vector<I3MCTree::const_iterator> &particles,
                                             double tMin, double tMax)
     {
         double totalEnergy=0.;
         
-        BOOST_FOREACH(const I3Particle &particle, particles)
+        BOOST_FOREACH(const I3MCTree::const_iterator &particle_it, particles)
         {
+            const I3Particle &particle = *particle_it;
+
             if ((particle.GetTime() < tMin) || (particle.GetTime() > tMax))
                 continue;
 
@@ -170,24 +169,12 @@ namespace {
     }
     
     namespace {
-        inline
-        I3MCTree::iterator
-        GetMCTreeIterator(const I3MCTree &t, const I3Particle& p){
-            I3MCTree::iterator i;
-            for(i=t.begin() ; i!= t.end(); i++)
-                if((i->GetMinorID() == p.GetMinorID()) &&
-                   (i->GetMajorID() == p.GetMajorID()))
-                    return i;
-            return t.end();
-        }
-
         inline 
-        const std::vector<I3MCTree::iterator> 
-        GetDaughterIteratorsFromParentIterator(const I3MCTree& t, I3MCTree::iterator parent_it)
+        const std::vector<I3MCTree::const_iterator> 
+        GetDaughterIteratorsFromParentIterator(const I3MCTree& t, I3MCTree::const_iterator parent_it)
         {
-            std::vector<I3MCTree::iterator> daughterList;
-            I3MCTree::sibling_iterator j(parent_it);
-            for (j=t.begin(parent_it); j!=t.end(parent_it); ++j)
+            std::vector<I3MCTree::const_iterator> daughterList;
+            for (I3MCTree::sibling_const_iterator j=t.children(parent_it); j!=t.end(parent_it); ++j)
                 daughterList.push_back(j);
             return daughterList;
         }
@@ -195,9 +182,10 @@ namespace {
     
     void SliceMuonOrCopySubtree(const I3MCTree &inputTree,
                                 const I3MMCTrackList &mmcTrackList,
-                                const std::map<std::pair<uint64_t, int>, const I3MMCTrack *> &mmcTrackListIndex,
+                                const std::map<std::pair<uint64_t, int>,
+                                const I3MMCTrack *> &mmcTrackListIndex,
                                 I3MCTree &outputTree,
-                                const I3MCTree::iterator &particle_it_inputTree,
+                                const I3MCTree::const_iterator &particle_it_inputTree,
                                 I3MCTree::iterator particle_it_outputTree
                                 )
     {
@@ -207,24 +195,18 @@ namespace {
         if (particle_it_inputTree == inputTree.end()) log_fatal("internal error. output particle not in output tree.");
         if (particle_it_outputTree == outputTree.end()) log_fatal("internal error. output particle not in output tree.");
 
-        const std::vector<I3MCTree::iterator> daughterIterators =
+        const std::vector<I3MCTree::const_iterator> daughterIterators =
         GetDaughterIteratorsFromParentIterator(inputTree, particle_it_inputTree);
 
-        std::vector<I3Particle> daughters;
-        BOOST_FOREACH(const I3MCTree::iterator &it, daughterIterators)
-        {
-            daughters.push_back(*it);
-        }
-
         // special treatment for muons with a length only
-        if (((!isnan(particle.GetLength())) && (particle.GetLength() > 0.)) &&
+        if (((!std::isnan(particle.GetLength())) && (particle.GetLength() > 0.)) &&
             ((particle.GetType()==I3Particle::MuMinus) ||
             (particle.GetType()==I3Particle::MuPlus)))
         {
             // is any of the daughters a muon?
-            if (IsAnyOfType(daughters, I3Particle::MuMinus) ||
-                IsAnyOfType(daughters, I3Particle::MuPlus) ||
-                IsAnyOfType(daughters, I3Particle::unknown))
+            if (IsAnyOfType(daughterIterators, I3Particle::MuMinus) ||
+                IsAnyOfType(daughterIterators, I3Particle::MuPlus) ||
+                IsAnyOfType(daughterIterators, I3Particle::unknown))
             {
                 log_fatal("It seems you either ran MMC with the \"-recc\" option or I3MuonSlicer has already been applied.");
             }
@@ -233,8 +215,8 @@ namespace {
                 log_fatal("Found a muon that does not travel with the speed of light. v=%gm/ns",
                           particle.GetSpeed()/(I3Units::m/I3Units::ns));
             
-            if (isnan(particle.GetEnergy())) log_fatal("Muon must have an energy");
-            if (isnan(particle.GetTime())) log_fatal("Muon must have a time");
+            if (std::isnan(particle.GetEnergy())) log_fatal("Muon must have an energy");
+            if (std::isnan(particle.GetTime())) log_fatal("Muon must have a time");
             
             // get MMC track times and energies
             double ti=NAN;
@@ -267,7 +249,7 @@ namespace {
             }
             
             // daughters need to be sorted in time (ascending)
-            if (!AreParticlesSortedInTime(daughters))
+            if (!AreParticlesSortedInTime(daughterIterators))
             {
                 log_fatal("Muon daughters are not sorted in time (ascending).");
             }
@@ -276,25 +258,25 @@ namespace {
             bool hadInvalidEf=false;
             
             // correct values with information from I3Particle
-            if ((Ei<=0.) || (isnan(Ei)))
+            if ((Ei<=0.) || (std::isnan(Ei)))
             {
                 Ei = particle.GetEnergy();
                 ti = particle.GetTime();
                 hadInvalidEi=true;
             }
-            if ((Ef<0.) || (isnan(Ef)))
+            if ((Ef<0.) || (std::isnan(Ef)))
             {
                 Ef = 0.;
                 tf = particle.GetTime() + particle.GetLength()/I3Constants::c;
                 hadInvalidEf=true;
             }
 
-            if (isnan(ti)) log_fatal("t_initial is NaN");
-            if (isnan(tf)) log_fatal("t_final is NaN");
+            if (std::isnan(ti)) log_fatal("t_initial is NaN");
+            if (std::isnan(tf)) log_fatal("t_final is NaN");
 
             if (Ei<=0) 
             {
-                if (daughters.size() > 0)
+                if (daughterIterators.size() > 0)
                     log_fatal("Muon with Energy==0 has children.");
             }
             else if (tf<ti)
@@ -320,7 +302,7 @@ namespace {
                 particle_it_outputTree->SetShape(I3Particle::Dark);
                 
                 const double totalEnergyInCascades = 
-                GetTotalEnergyOfParticles(daughters, ti, tf);
+                GetTotalEnergyOfParticles(daughterIterators, ti, tf);
                 const double dEdt_calc = ((Ef-Ei+totalEnergyInCascades)/(ti-tf));
                 const double dEdt_max = (0.21+8.8e-3*log(Ei/I3Units::GeV)/log(10.))*(I3Units::GeV/I3Units::m)*I3Constants::c;  // for ice only at Ecut=500 MeV (stolen from PPC)
                 const double dEdt = std::min(dEdt_calc,dEdt_max);
@@ -333,8 +315,11 @@ namespace {
                 
                 unsigned int iterationNum=0;
                 
-                BOOST_FOREACH(I3Particle daughter, daughters) // make a copy of the particle here (we might need to change it later)
+                BOOST_FOREACH(const I3MCTree::const_iterator daughter_it, daughterIterators)
                 {
+                    // make a copy of the particle here (we might need to change it later)
+                    I3Particle daughter = *daughter_it;
+
                     if (currentEnergy<0.) {
                         log_error("Muon loses more energy than it has. Ecurrent=%gGeV, Ei=%fGeV, now reset to E=0", currentEnergy/I3Units::GeV, Ei/I3Units::GeV);
                         currentEnergy=0.;
@@ -351,7 +336,7 @@ namespace {
                         continue;
                     }
                     
-                    if (isnan(daughter.GetTime())) continue;
+                    if (std::isnan(daughter.GetTime())) continue;
                     
                     // calculate an expected time for the cascade (from its position on the track)
                     const double expectedTime = particle.GetTime() + distanceOnTrack/I3Constants::c;
@@ -420,8 +405,17 @@ namespace {
                     if (sliceLength>=0.1*I3Units::mm) {
                         outputTree.append_child(particle_it_outputTree, muonSlice);
                     }
+
+                    I3MCTree::iterator daughter_it_outputTree =
                     outputTree.append_child(particle_it_outputTree, daughter);
                     
+                    SliceMuonOrCopySubtree(inputTree,
+                       mmcTrackList,
+                       mmcTrackListIndex,
+                       outputTree,
+                       daughter_it,
+                       daughter_it_outputTree);
+
                     currentTime+=sliceDuration;
                     currentEnergy-=daughter.GetEnergy()+dEdt*sliceDuration;
                     
@@ -486,7 +480,7 @@ namespace {
 
         // It's either something else or a muon without a length.
         // Add all the daughters and recurse.
-        BOOST_FOREACH(const I3MCTree::iterator &daughter_it_inputTree, daughterIterators)
+        BOOST_FOREACH(const I3MCTree::const_iterator &daughter_it_inputTree, daughterIterators)
         {
             // add the particle to the output tree and get an iterator
             I3MCTree::iterator daughter_it_outputTree =
@@ -505,11 +499,7 @@ namespace {
     
 }
 
-#ifdef IS_Q_FRAME_ENABLED
 void I3MuonSlicer::DAQ(I3FramePtr frame)
-#else
-void I3MuonSlicer::Physics(I3FramePtr frame)
-#endif
 {
     log_trace("%s", __PRETTY_FUNCTION__);
     
@@ -546,21 +536,21 @@ void I3MuonSlicer::Physics(I3FramePtr frame)
     I3MCTreePtr outputMCTree(new I3MCTree());
     
     // get a list of primaries
-    const std::vector<I3Particle> primaries = I3MCTreeUtils::GetPrimaries(inputMCTree);
+    const std::vector<const I3Particle*> primaries = I3MCTreeUtils::GetPrimariesPtr(inputMCTree);
     
     // add each one to the output tree and check their children
-    BOOST_FOREACH(const I3Particle &primary, primaries)
+    BOOST_FOREACH(const I3Particle* primary, primaries)
     {
-        if ((primary.GetShape() != I3Particle::Primary) && (primary.GetShape() != I3Particle::Null) && (primary.GetShape() != I3Particle::Dark))
+        if ((primary->GetShape() != I3Particle::Primary) && (primary->GetShape() != I3Particle::Null) && (primary->GetShape() != I3Particle::Dark))
             log_warn("Input tree contains a particle with shape!=(Primary or Null or Dark) at its root. (shape=%s, type=%s)",
-                      primary.GetShapeString().c_str(), primary.GetTypeString().c_str());
+                      primary->GetShapeString().c_str(), primary->GetTypeString().c_str());
         
         // have to use I3TreeUtils here, I3MCTreeUtils::AddPrimary expects a non-const I3Particle..
-        //I3MCTreeUtils::AddPrimary(outputMCTree, primary);
-        I3TreeUtils::AddTopLevel<I3Particle>(*outputMCTree, primary); 
+        //I3MCTreeUtils::AddPrimary(outputMCTree, *primary);
+        outputMCTree->insert(*primary);
 
-        I3MCTree::iterator primary_in_input_tree  = GetMCTreeIterator(*inputMCTree,  primary);
-        I3MCTree::iterator primary_in_output_tree = GetMCTreeIterator(*outputMCTree, primary);
+        I3MCTree::const_iterator primary_in_input_tree(*inputMCTree,  *primary);
+        I3MCTree::iterator primary_in_output_tree(*outputMCTree, *primary);
 
         SliceMuonOrCopySubtree(*inputMCTree,
                                *MMCTrackList,

@@ -31,11 +31,7 @@
 #include <clsim/I3Photon.h>
 #include <boost/preprocessor/seq.hpp>
 
-#ifdef NO_PYTHON_DATACLASS_SUITE
-#include "icetray_python_backports/dataclass_suite.hpp"
-#else
 #include <icetray/python/dataclass_suite.hpp>
-#endif
 
 using namespace boost::python;
 
@@ -69,7 +65,7 @@ i3photon_prettyprint(const I3Photon& s)
 
     for (uint32_t i=0;i<s.GetNumPositionListEntries();++i)
     {
-        I3PositionConstPtr pos = s.GetPositionListEntry(i);
+        boost::optional<I3Position> pos = s.GetPositionListEntry(i);
         double distInAbsLensAtPos = s.GetDistanceInAbsorptionLengthsAtPositionListEntry(i);
         if (i==0) {
             oss << "         (initial) : ";
@@ -100,7 +96,7 @@ namespace I3Photon_python_helper
         
         for (uint32_t i=0;i<photon.GetNumPositionListEntries();++i)
         {
-            I3PositionConstPtr posListPhoton = photon.GetPositionListEntry(i);
+            boost::optional<I3Position> posListPhoton = photon.GetPositionListEntry(i);
             if (posListPhoton) {
                 pylist.append( I3PositionPtr(new I3Position(*posListPhoton)) );
             } else {

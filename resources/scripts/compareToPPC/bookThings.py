@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 from optparse import OptionParser
 
 usage = "usage: %prog [options] inputfile"
@@ -25,18 +26,18 @@ if options.format == 'hdf5':
     try:
         from icecube import hdfwriter
     except ImportError:
-        raise "Couldn't find the HDF writer service"
+        raise ImportError("Couldn't find the HDF writer service")
     tabler = hdfwriter.I3HDFTableService(outfile,options.compression)
 elif options.format == 'root':
     try:
         from icecube import rootwriter
     except ImportError:
-        raise "Couldn't find the ROOT writer service"
+        raise ImportError("Couldn't find the ROOT writer service")
     tabler = rootwriter.I3ROOTTableService(outfile,options.compression)
 elif options.format == 'csv':
     tabler = tableio.I3CSVTableService(outfile[:-4] + '_csv')
 else:
-    raise ValueError, "I don't have a writer service for format '%s'"%options.format
+    raise ValueError("I don't have a writer service for format '%s'"%options.format)
 
 tray = I3Tray()
 
@@ -48,7 +49,7 @@ count = 0
 def counter(frame):
     global count
     if (count%100==0):
-        print "%d frames"%count
+        print("%d frames"%count)
     count +=1
 
 # tray.AddModule(tableio.I3TableWriter,'writer1',

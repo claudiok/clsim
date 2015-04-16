@@ -35,9 +35,7 @@
 
 #include "icetray/OMKey.h"
 
-#ifdef GRANULAR_GEOMETRY_SUPPORT
 #include "dataclasses/ModuleKey.h"
-#endif
 
 #include "phys-services/I3RandomService.h"
 
@@ -126,6 +124,12 @@ private:
      * The module needs to process Geometry frames
      */
     void DigestGeometry(I3FramePtr frame);
+    
+    /**
+     * Getting energy from light source to make sure to process
+     * the right number of frames
+     */
+    double GetLightSourceEnergy(I3FramePtr frame);
 
     // parameters
     
@@ -157,6 +161,10 @@ private:
 
     /// Parameter: Maximum number of events that will be processed by the GPU in parallel.
     unsigned int maxNumParallelEvents_;
+    unsigned int maxNumParallelEventsSecondFlush_;
+    
+    /// Parameter: Maximum energy to that will be processed by the GPU in parallel.
+    double totalEnergyToProcess_;
 
     /// Parameter: A vector of I3CLSimOpenCLDevice objects, describing the devices to be used for simulation.
     I3CLSimOpenCLDeviceSeries openCLDeviceList_;
@@ -276,6 +284,10 @@ private:
     ///   If set to zero (the default) the largest possible workgroup size will be chosen.
     uint32_t limitWorkgroupSize_;
 
+    /// Parameter: do not even start light from sources that do not have any DOMs closer to
+    ///   to them than this distance. (default is 300m)
+    double closestDOMDistanceCutoff_;
+
 
 private:
     // default, assignment, and copy constructor declared private
@@ -317,6 +329,7 @@ private:
     bool geometryIsConfigured_;
     uint32_t currentParticleCacheIndex_;
     double totalSimulatedEnergyForFlush_;
+    double totalSimulatedEnergy_;
     uint64_t totalNumParticlesForFlush_;
     
     // this is calculated using wavelengthGenerationBias:
@@ -333,11 +346,7 @@ private:
     std::vector<I3PhotonSeriesMapPtr> photonsForFrameList_;
     std::vector<int32_t> currentPhotonIdForFrame_;
     std::vector<bool> frameIsBeingWorkedOn_;
-#ifdef GRANULAR_GEOMETRY_SUPPORT
     std::vector<std::set<ModuleKey> > maskedOMKeys_;
-#else
-    std::vector<std::set<OMKey> > maskedOMKeys_;
-#endif
     
     struct particleCacheEntry
     {
@@ -357,11 +366,7 @@ private:
                                    std::vector<int32_t> &currentPhotonIdForFrame_,
                                    const std::vector<I3FramePtr> &frameList_,
                                    const std::map<uint32_t, particleCacheEntry> &particleCache_,
-#ifdef GRANULAR_GEOMETRY_SUPPORT
                                    const std::vector<std::set<ModuleKey> > &maskedOMKeys_,
-#else
-                                   const std::vector<std::set<OMKey> > &maskedOMKeys_,
-#endif
                                    bool collectStatistics_,
                                    std::map<uint32_t, uint64_t> &photonNumAtOMPerParticle,
                                    std::map<uint32_t, double> &photonWeightSumAtOMPerParticle

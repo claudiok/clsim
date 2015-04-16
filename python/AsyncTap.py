@@ -24,6 +24,8 @@
 # @author Claudio Kopper
 #
 
+from __future__ import print_function
+
 # ZMQ is not functional yet
 #try:
 #    import zmq
@@ -67,24 +69,24 @@ def RunAsyncTray(queue,segment,segmentArgs,childIsReady,debug):
             if has_zmq:
                 socketString = self.queue
                 if self.debug:
-                    print "setting up zmq to receive on", socketString
+                    print("setting up zmq to receive on", socketString)
                     sys.stdout.flush()
                 self.queue = self.zmq_context.socket(zmq.PULL)
                 if self.debug:
-                    print "waiting for zmq socket connection"
+                    print("waiting for zmq socket connection")
                     sys.stdout.flush()
                 self.queue.connect(socketString)
                 if self.debug:
-                    print "zmq ready"
+                    print("zmq ready")
                     sys.stdout.flush()
             
             # signal eneryone that we are ready to receive data
             if self.debug:
-                print "setting child process state to 1 (ready)"
+                print("setting child process state to 1 (ready)")
                 sys.stdout.flush()
             self.childIsReady.value = 1
             if self.debug:
-                print "child process is ready to receive data."
+                print("child process is ready to receive data.")
                 sys.stdout.flush()
             
         def Process(self):
@@ -100,7 +102,7 @@ def RunAsyncTray(queue,segment,segmentArgs,childIsReady,debug):
         
             if frame is None:
                 if self.debug: 
-                    print "requesting suspension"
+                    print("requesting suspension")
                     sys.stdout.flush()
                 self.RequestSuspension()
             else:
@@ -108,7 +110,7 @@ def RunAsyncTray(queue,segment,segmentArgs,childIsReady,debug):
                 self.PushFrame(frame)
         def Finish(self):
             if self.debug:
-                print "received", self.nframes, "frames"
+                print("received", self.nframes, "frames")
                 sys.stdout.flush()
     
     class RerouteSigIntToDefault(icetray.I3Module):
@@ -136,12 +138,12 @@ def RunAsyncTray(queue,segment,segmentArgs,childIsReady,debug):
     writeTray.AddModule("TrashCan", "theCan")
 
     if debug:
-        print "worker starting.."
+        print("worker starting..")
         sys.stdout.flush()
     writeTray.Execute()
     writeTray.Finish()
     if debug:
-        print "worker finished."
+        print("worker finished.")
         sys.stdout.flush()
 
 
@@ -170,7 +172,7 @@ class AsyncTap(icetray.I3ConditionalModule):
         
         # check to see if child process is still alive
         if not self.process.is_alive():
-            print "ERROR: ****** child tray died unexpectedly. Terminating master tray. ******"
+            print("ERROR: ****** child tray died unexpectedly. Terminating master tray. ******")
             self.RequestSuspension()
             self.suspensionRequested=True
             return False
@@ -184,7 +186,7 @@ class AsyncTap(icetray.I3ConditionalModule):
         self.args = self.GetParameter("Args")
 
         if self.debug:
-            print "starting child process.."
+            print("starting child process..")
             sys.stdout.flush()
         self.childIsReady = multiprocessing.Value('i', 0)
         
@@ -199,18 +201,18 @@ class AsyncTap(icetray.I3ConditionalModule):
 
         if has_zmq:
             if self.debug:
-                print "binding to zmq PUSH socket", socketString
+                print("binding to zmq PUSH socket", socketString)
                 sys.stdout.flush()
             self.zmq_context = zmq.Context()
             self.queueToProcess = self.zmq_context.socket(zmq.PUSH)
             self.queueToProcess.bind(socketString)
             if self.debug:
-                print "zmq socket is bound."
+                print("zmq socket is bound.")
                 sys.stdout.flush()
 
         self.process.start()
         if self.debug:
-            print "child process running."
+            print("child process running.")
             sys.stdout.flush()
 
         self.CheckOnChildProcess()
@@ -218,23 +220,23 @@ class AsyncTap(icetray.I3ConditionalModule):
         if self.childIsReady.value == 0:
             while True:
                 if not self.process.is_alive():
-                    print "*** child process died unexpectedly"
+                    print("*** child process died unexpectedly")
                     raise RuntimeError("Child process died unexpectedly")
                     
                 if self.debug:
-                    print "child process not ready yet, waiting.."
+                    print("child process not ready yet, waiting..")
                     sys.stdout.flush()
                 time.sleep(1) # sleep 1 second
                 if self.childIsReady.value != 0:
                     break
         if self.debug:
-            print "child process ready to receive data."
+            print("child process ready to receive data.")
             sys.stdout.flush()
 
     def Process(self):
         frame = self.PopFrame()
         if self.debug: 
-            print "sending frame..", self.nframes , frame.Stop
+            print("sending frame..", self.nframes , frame.Stop)
             sys.stdout.flush()
         if self.CheckOnChildProcess():
             if has_zmq:
@@ -242,14 +244,14 @@ class AsyncTap(icetray.I3ConditionalModule):
             else:
                 self.queueToProcess.put(frame)
         if self.debug: 
-            print "frame sent", self.nframes , frame.Stop
+            print("frame sent", self.nframes , frame.Stop)
             sys.stdout.flush()
         self.nframes += 1
         self.PushFrame(frame)
 
     def Finish(self):
         if self.debug:
-            print "sent", self.nframes, "frames"
+            print("sent", self.nframes, "frames")
             sys.stdout.flush()
         if self.CheckOnChildProcess():
             if has_zmq:
@@ -258,10 +260,10 @@ class AsyncTap(icetray.I3ConditionalModule):
                 self.queueToProcess.put(None) # signal receiver to quit
         
         if self.debug:
-            print "async module finished. waiting for child tray.."
+            print("async module finished. waiting for child tray..")
             sys.stdout.flush()
         self.process.join()
         if self.debug:
-            print "child tray finished."
+            print("child tray finished.")
             sys.stdout.flush()
 

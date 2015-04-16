@@ -24,6 +24,6 @@
 # @author Claudio Kopper
 #
 
-from I3CLSimMakePhotons import I3CLSimMakePhotons
-from I3CLSimMakeHitsFromPhotons import I3CLSimMakeHitsFromPhotons
-from I3CLSimMakeHits import I3CLSimMakeHits
+from .I3CLSimMakePhotons import I3CLSimMakePhotons
+from .I3CLSimMakeHitsFromPhotons import I3CLSimMakeHitsFromPhotons
+from .I3CLSimMakeHits import I3CLSimMakeHits

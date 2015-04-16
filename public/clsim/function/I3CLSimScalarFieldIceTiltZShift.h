@@ -31,11 +31,7 @@
 
 #include <vector>
 
-#ifdef USE_BACKPORTED_I3MATRIX
-#include "clsim/backports/I3Matrix.h"
-#else
 #include "dataclasses/I3Matrix.h"
-#endif
 
 /**
  * @brief Returns a local z-correction for the ice layer positions

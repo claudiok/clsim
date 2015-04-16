@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import math
 import numpy
 import random
@@ -63,10 +65,10 @@ def genMCHistogramsOpenCL(distribution, rng, iterations=100, numBins=1000):
     openCLDevice.useNativeMath=False
     workgroupSize = 1
     workItemsPerIteration = 10240
-    print "           using platform:", openCLDevice.platform
-    print "             using device:", openCLDevice.device
-    print "            workgroupSize:", workgroupSize
-    print "    workItemsPerIteration:", workItemsPerIteration
+    print("           using platform:", openCLDevice.platform)
+    print("             using device:", openCLDevice.device)
+    print("            workgroupSize:", workgroupSize)
+    print("    workItemsPerIteration:", workItemsPerIteration)
     
     tester = clsim.I3CLSimRandomDistributionTester(device=openCLDevice,
                                                    workgroupSize=workgroupSize,
@@ -74,24 +76,24 @@ def genMCHistogramsOpenCL(distribution, rng, iterations=100, numBins=1000):
                                                    randomService=rng,
                                                    randomDistribution=distribution)
     
-    print "maxWorkgroupSizeForKernel:", tester.maxWorkgroupSize
+    print("maxWorkgroupSizeForKernel:", tester.maxWorkgroupSize)
     
     angles = tester.GenerateRandomNumbers(iterations)
     samples = len(angles)
     
-    print "generated"
+    print("generated")
     
     angles = numpy.array(angles) # convert to numpy array
-    print "converted"
+    print("converted")
     
     numAng_orig, binsAng = scipy.histogram(numpy.arccos(angles)*(180./math.pi), range=(0.,180.), bins=numBins)
-    print "hist1 complete"
+    print("hist1 complete")
 
     numCos_orig, binsCos = scipy.histogram(angles, range=(-1.,1.), bins=numBins)
-    print "hist2 complete"
+    print("hist2 complete")
     
     del angles # not needed anymore
-    print "deleted"
+    print("deleted")
     
     numAng=[]
     for i, number in enumerate(numAng_orig):
@@ -110,26 +112,26 @@ def genMCHistogramsOpenCL(distribution, rng, iterations=100, numBins=1000):
     return dict(cos=dict(num=numCos, bins=binsCos), ang=dict(num=numAng, bins=binsAng))
 
 def genMCHistogramsHost(distribution, rng, iterations=10000000, numBins=1000):
-    print "generating (host)"
+    print("generating (host)")
 
     angles = []
     for i in range(iterations):
         angles.append(distribution.SampleFromDistribution(rng, []))
     samples = len(angles)
 
-    print "generated (host)"
+    print("generated (host)")
     
     angles = numpy.array(angles) # convert to numpy array
-    print "converted (host)"
+    print("converted (host)")
     
     numAng_orig, binsAng = scipy.histogram(numpy.arccos(angles)*(180./math.pi), range=(0.,180.), bins=numBins)
-    print "hist1 complete (host)"
+    print("hist1 complete (host)")
 
     numCos_orig, binsCos = scipy.histogram(angles, range=(-1.,1.), bins=numBins)
-    print "hist2 complete (host)"
+    print("hist2 complete (host)")
     
     del angles # not needed anymore
-    print "deleted (host)"
+    print("deleted (host)")
     
     numAng=[]
     for i, number in enumerate(numAng_orig):

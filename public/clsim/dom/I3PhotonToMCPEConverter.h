@@ -68,11 +68,7 @@ public:
     /**
      * The module needs to process Physics frames
      */
-#ifdef IS_Q_FRAME_ENABLED
     void DAQ(I3FramePtr frame);
-#else
-    void Physics(I3FramePtr frame);
-#endif
 
     /**
      * The module needs to process DetectorStatus frames

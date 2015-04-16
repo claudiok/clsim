@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import math
 import numpy
 
@@ -54,21 +56,21 @@ rng = phys_services.I3SPRNGRandomService(seed=3244, nstreams=2, streamnum=0)
 
 
 def genMCHistogramsHost(distribution, hist_range, distribution_params=[], iterations=100000, numBins=1000):
-    print "generating (host)"
+    print("generating (host)")
 
     values = []
     for i in range(iterations):
         values.append(distribution.SampleFromDistribution(rng, distribution_params))
     samples = len(values)
-    print "generated (host)"
+    print("generated (host)")
     
     range_width=hist_range[1]-hist_range[0]
     
     num_orig, bins = scipy.histogram(values, range=hist_range, bins=numBins)
-    print "hist1 complete (host)"
+    print("hist1 complete (host)")
     
     del values # not needed anymore
-    print "deleted (host)"
+    print("deleted (host)")
     
     num=[]
     for number in num_orig:

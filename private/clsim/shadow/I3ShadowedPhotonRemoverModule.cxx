@@ -82,11 +82,7 @@ void I3ShadowedPhotonRemoverModule::Configure()
 }
 
 
-#ifdef IS_Q_FRAME_ENABLED
 void I3ShadowedPhotonRemoverModule::DAQ(I3FramePtr frame)
-#else
-void I3ShadowedPhotonRemoverModule::Physics(I3FramePtr frame)
-#endif
 {
     log_trace("%s", __PRETTY_FUNCTION__);
     
@@ -101,11 +97,7 @@ void I3ShadowedPhotonRemoverModule::Physics(I3FramePtr frame)
     
     BOOST_FOREACH(const I3PhotonSeriesMap::value_type &it, *inputPhotonSeriesMap)
     {
-#ifdef GRANULAR_GEOMETRY_SUPPORT
         const ModuleKey &key = it.first;
-#else
-        const OMKey &key = it.first;
-#endif
         const I3PhotonSeries &photons = it.second;
 
         //// Find the current OM in the geometry map
