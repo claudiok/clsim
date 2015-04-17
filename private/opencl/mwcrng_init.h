@@ -37,8 +37,8 @@ inline int init_MWC_RNG(uint64_t *x, uint32_t *a,
         safeprimes_file = "safeprimes_base32.txt"; 
         if (getenv("I3_SRC")) {
             const fs::path I3_SRC(getenv("I3_SRC"));
-            if (fs::exists(I3_SRC/"clsim/resources/safeprimes_base32")) {
-                safeprimes_file = (I3_SRC/"/clsim/resources/safeprimes_base32").string();
+            if (fs::exists(I3_SRC/"clsim/resources/safeprimes_base32.gz")) {
+                safeprimes_file = (I3_SRC/"/clsim/resources/safeprimes_base32.gz").string();
                 success = 1;
             }
             else if (fs::exists(I3_SRC/"clsim/resources/safeprimes_base32.txt")) {
