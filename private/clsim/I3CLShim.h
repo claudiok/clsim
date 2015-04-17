@@ -7,32 +7,14 @@
 #include "clsim/I3CLSimStepToPhotonConverterOpenCL.h"
 #include "clsim/I3CLSimLightSourceToStepConverterGeant4.h"
 
-class I3CLShim : public I3PhotonicsService, public I3ServiceBase {
+class I3CLShim : public I3BlockPhotonicsService, public I3ServiceBase {
 public:
 	I3CLShim(const I3Context &);
 	virtual ~I3CLShim();
 	void Configure();
 	
 	/// This is the only interface we support. All others will throw.
-	virtual void GetMeanAmplitudes(const std::vector<std::pair<PhotonicsSource, double> > &, std::vector<I3PhotonicsService::Receiver> &);
-
-	virtual void SelectSource(double &meanPEs,
-	    double &emissionPointDistance, double &geoTime,
-	    PhotonicsSource const &source) { log_fatal("Unimplemented!"); }
-	virtual void GetTimeDelay(double random, double &timeDelay) { log_fatal("Unimplemented!"); }
-	virtual void GetProbabilityDensity(double &density, double timeDelay) { log_fatal("Unimplemented!"); }
-	virtual bool GetProbabilityQuantiles(double *time_edges, double t_0,
-	    double *amplitudes, size_t n_bins) { log_fatal("Unimplemented!"); return false; }
-	virtual bool GetMeanAmplitudeGradient(double gradient[6]) { log_fatal("Unimplemented!"); return false; }
-	virtual bool GetMeanAmplitudeHessian(double gradient[6], double
-	    hessian[6][6]) { log_fatal("Unimplemented!"); return false; }
-	virtual bool GetProbabilityQuantileGradients(double *time_edges,
-	    double t_0, double gradients[][6], size_t n_bins) { log_fatal("Unimplemented!"); return false; };
-	virtual bool GetProbabilityQuantileHessians(double *time_edges,
-	    double t_0, double values[], double gradients[][6],
-	    double hessians[][6][6], size_t n_bins) { log_fatal("Unimplemented!"); return false; };
-	
-	virtual const double* const GetTimeRange() const { log_fatal("Unimplemented!"); return NULL; };
+	virtual void GetMeanAmplitudes(std::vector<LightSource> &sources, const std::vector<Receiver> &receivers);
 	
 	// I3ServiceBase should have exposed things like this in the first place
 	void SetParameter(const std::string &key, const boost::python::object &value)

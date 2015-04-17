@@ -31,7 +31,7 @@ I3CLShim::Configure()
 }
 
 void
-I3CLShim::GetMeanAmplitudes(const std::vector<std::pair<PhotonicsSource, double> > &sources, std::vector<I3PhotonicsService::Receiver> &receivers)
+I3CLShim::GetMeanAmplitudes(std::vector<LightSource> &sources, const std::vector<Receiver> &receivers)
 {
 	// Create a potemkin geometry from the provided vector of positions, and compile
 	// it into an OpenCL kernel.
@@ -55,6 +55,7 @@ I3CLShim::GetMeanAmplitudes(const std::vector<std::pair<PhotonicsSource, double>
 		stepConverter_->Initialize();
 	}
 	
+#if 0
 	for (std::list<CacheEntry>::iterator entry = resultCache_.begin(); entry != resultCache_.end(); entry++) {
 		bool equal = (entry->first.size() == sources.size());
 		for (unsigned i=0; i < sources.size(); i++)
@@ -67,15 +68,16 @@ I3CLShim::GetMeanAmplitudes(const std::vector<std::pair<PhotonicsSource, double>
 			return;
 		}
 	}
-	
+#endif
+
 	double energyScale = 1e4;
 	// Enqueue N copies of each light source
 	typedef std::pair<PhotonicsSource, double> source_pair;
 	uint32_t index = 0;
 	
-	BOOST_FOREACH(const source_pair &spair, sources) {
-		I3Particle particle(*spair.first.particle);
-		particle.SetEnergy(spair.first.E*energyScale);
+	BOOST_FOREACH(const LightSource &lsource, sources) {
+		I3Particle particle(*lsource.source.particle);
+		particle.SetEnergy(lsource.source.E*energyScale);
 		I3CLSimLightSource source(particle);
 		for (int i=0; i < oversampleFactor_; i++, index++)
 			stepConverter_->EnqueueLightSource(source, index);
@@ -102,30 +104,44 @@ I3CLShim::GetMeanAmplitudes(const std::vector<std::pair<PhotonicsSource, double>
 			break;
 	}
 	
+	// Compute the offset of each receiver 
+	std::vector<uint32_t> receiver_offsets;
+	{
+		uint32_t offset = 0;
+		BOOST_FOREACH(const Receiver &receiver, receivers) {
+			receiver_offsets.push_back(offset);
+			offset += std::distance(receiver.time_bin_edges.first, receiver.time_bin_edges.second);
+		}
+	}
+	
 	// Harvest photons, adding their hit probability weight to the appropriate bin
 	// in each receiver.
 	for (uint32_t j=0; j < pindex; j++) {
 		I3CLSimStepToPhotonConverter::ConversionResult_t result = photonConverter_->GetConversionResult();
 		log_info("Got %zu photons", result.photons->size());
 		BOOST_FOREACH(const I3CLSimPhoton &p, *result.photons) {
-			I3PhotonicsService::Receiver &receiver = receivers[receiverMap_[std::make_pair(p.GetStringID(), p.GetOMID())]];
-			if (p.GetTime() < receiver.time_edges.front() || p.GetTime() >= receiver.time_edges.back())
+			size_t receiver_index = receiverMap_[std::make_pair(p.GetStringID(), p.GetOMID())];
+			const I3PhotonicsService::Receiver &receiver = receivers[receiver_index];
+			if (p.GetTime() < *receiver.time_bin_edges.first || p.GetTime() >= *(receiver.time_bin_edges.second-1))
 				continue;
-			int binidx = std::distance(receiver.time_edges.begin(), std::lower_bound(receiver.time_edges.begin(), receiver.time_edges.end(), p.GetTime()));
+			int binidx = std::distance(receiver.time_bin_edges.first, std::lower_bound(receiver.time_bin_edges.first, receiver.time_bin_edges.second, p.GetTime()));
 			int sourceidx = p.GetID() / oversampleFactor_;
 			double weight = p.GetWeight()*wavelengthAcceptance_->GetValue(p.GetWavelength())*angularAcceptance_->GetValue(std::cos(p.GetDirTheta()));
-			receiver.amplitudes(sourceidx, binidx == 0 ? 0 : binidx-1) += weight/(oversampleFactor_*energyScale);
+			sources[sourceidx].amplitudes(receiver_offsets[receiver_index] + (binidx == 0 ? 0 : binidx-1))
+			    += weight/(oversampleFactor_*energyScale);
 		}
 	}
-	
+
+#if 0
 	// Cache the result if we have room.
 	if (cacheDepth_ > 0) {
 		if (resultCache_.size() < cacheDepth_)
 			resultCache_.push_back(CacheEntry());
 		resultCache_.back() = CacheEntry(sources, receivers);
 	}
+#endif
 }
 
-typedef I3SingleServiceFactory<I3CLShim, I3PhotonicsService>
+typedef I3SingleServiceFactory<I3CLShim, I3BlockPhotonicsService>
     I3CLShimFactory;
 I3_SERVICE_FACTORY(I3CLShimFactory);
