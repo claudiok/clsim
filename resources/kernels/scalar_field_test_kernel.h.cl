@@ -37,7 +37,7 @@ __kernel void testKernel(
 
 
 // disable dbg_printf for GPU
-#define dbg_printf(format, ...)
+//#define dbg_printf(format, ...)
 
 // enable printf for CPU
 //#pragma OPENCL EXTENSION cl_amd_printf : enable

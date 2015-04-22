@@ -37,13 +37,13 @@
 // disable dbg_printf for GPU
 //#define dbg_printf(format, ...)
 
-#ifdef PRINTF_ENABLED
-// enable printf for CPU
-#pragma OPENCL EXTENSION cl_amd_printf : enable
-#define dbg_printf(format, ...) printf(format, ##__VA_ARGS__)
-#else
-#define dbg_printf(format, ...)
-#endif
+//#ifdef PRINTF_ENABLED
+//// enable printf for CPU
+//#pragma OPENCL EXTENSION cl_amd_printf : enable
+//#define dbg_printf(format, ...) printf(format, ##__VA_ARGS__)
+//#else
+//#define dbg_printf(format, ...)
+//#endif
 
 // ZERO and ONE will be defined as either 0.f/1.f or 0./1. depending on DOUBLE_PRECISION
 

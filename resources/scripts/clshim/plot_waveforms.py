@@ -9,6 +9,13 @@ tray = I3Tray()
 
 tray.AddModule('I3Reader', 'reader', filenamelist=infiles)
 
+def ignore_scan(frame):
+	if frame['HealpixPixel'].value == 4141:
+		return True
+	else:
+		return False
+tray.AddModule(ignore_scan, "ignore_scan")
+
 from icecube import photonics_service, millipede
 
 def CLShim(tray, name):
@@ -48,8 +55,8 @@ def CLShim(tray, name):
 	    return mediumProperties, wavelengthGenerationBias, wavelengthGenerators, domAcceptance, domAngularSensitivity, DOMOversizeFactor
 
 	def makeStepConverter(UseGeant4=False):
-		if UseGeant4:
-			clsim.AutoSetGeant4Environment()
+		#if UseGeant4:
+		clsim.AutoSetGeant4Environment()
 		converter = clsim.I3CLSimLightSourceToStepConverterGeant4()
 		ppcConverter = clsim.I3CLSimLightSourceToStepConverterPPC(photonsPerStep=200)
 		parameterizationList = clsim.GetDefaultParameterizationList(ppcConverter, muonOnly=False)
@@ -108,6 +115,7 @@ def CLShim(tray, name):
 		propagator.SetWlenBias(wavelengthGenerationBias)
 		propagator.SetWlenGenerators(wavelengthGenerators)
 		propagator.SetDOMPancakeFactor(DOMOversizeFactor)
+		propagator.SetMaxNumWorkitems(768*1400)
 		
 		stepGenerator = makeStepConverter()
 		stepGenerator.SetMediumProperties(mediumProperties)
@@ -204,7 +212,8 @@ class MilliPlot(icetray.I3ConditionalModule):
 			if source.type == source.unknown:
 				source.type = source.EMinus
 			sources = dataclasses.I3VectorI3Particle([source])
-			response = numpy.asarray(self.millipede.GetResponseMatrix(sources).to_I3Matrix())
+			response = self.millipede.GetResponseMatrix(sources)
+			response = numpy.asarray(response.to_I3Matrix())
 			expectations = numpy.inner(response, [p.energy for p in sources])
 			hypotheses[name] = (source, expectations)
 		
@@ -258,19 +267,23 @@ class MilliPlot(icetray.I3ConditionalModule):
 		self.PushFrame(frame)
 
 if False:
-	base = "/data/sim/sim-new/downloads/spline-tables/ems_mie_z20_a10.%s.fits"
+	base = "/cvmfs/icecube.opensciencegrid.org/data/photon-tables/splines/ems_mie_z20_a10.%s.fits"
 	pxs = photonics_service.I3PhotoSplineService(base % "abs", base % "prob", 0)
 	from os.path import basename
-	pxs = photonics_service.I3LoggingPhotonicsService(pxs, basename(base % "abs")+".log", basename(base % "prob")+".log")
+	# pxs = photonics_service.I3LoggingPhotonicsService(pxs, basename(base % "abs")+".log", basename(base % "prob")+".log")
 else:
 	pxs = "CLShim"
 	tray.AddSegment(CLShim, pxs)
 icetray.logging.I3Logger.global_logger.set_level_for_unit('I3PhotoSplineService', icetray.logging.I3LogLevel.LOG_TRACE);
 Pulses='SplitInIcePulses'
 tray.AddModule('Delete', keys=['SaturatedDOMs'])
+
+def cleanup(frame):
+	del frame["DeepCoreDOMs"]
+tray.AddModule(cleanup, "cleanup", streams=[icetray.I3Frame.DAQ, icetray.I3Frame.Physics, icetray.I3Frame.Geometry])
 ExcludedDOMs = tray.AddSegment(millipede.HighEnergyExclusions, 'Excludey', Pulses=Pulses, ExcludeBrightDOMs=False)
 
-Seeds = ['AtmCscdEnergyReco_L2'] #['MonopodFit']#, 'MonopodWithoutBrights', 'HESE_Cscd_Credo20']
+Seeds = ['MillipedeStarting2ndPass'] #['MonopodFit']#, 'MonopodWithoutBrights', 'HESE_Cscd_Credo20']
 tray.AddModule(MilliPlot, Pulses=Pulses, Seeds=Seeds, Differential=True,
     CascadePhotonicsService=pxs, ExcludedDOMs=ExcludedDOMs, PhotonsPerBin=25, NDOMs=300,
 )

@@ -250,10 +250,10 @@ inline bool savePath(
         step->weight;
 #endif
     
-    dbg_printf("step depth %e + %e impactWeight %e\n", depth, thisStepDepth, impactWeight);
+//    dbg_printf("step depth %e + %e impactWeight %e\n", depth, thisStepDepth, impactWeight);
     
     floating_t d = *prevStepLength;
-    dbg_printf("first step is %f\n", d);
+//    dbg_printf("first step is %f\n", d);
     uint offset = *entry_counter;
     for (; d < thisStepLength && offset < TABLE_ENTRIES_PER_STREAM;
         d += VOLUME_MODE_STEP, offset++) {
@@ -294,7 +294,7 @@ inline bool savePath(
         // we ran out of space. erase.
         return false;
     } else {
-        dbg_printf("Recorded %u subsamples (%u total), %f m remaining\n", offset - *entry_counter, offset, d - thisStepLength);
+//        dbg_printf("Recorded %u subsamples (%u total), %f m remaining\n", offset - *entry_counter, offset, d - thisStepLength);
         *entry_counter = offset;
         *prevStepLength = d - thisStepLength;
         return true;
@@ -330,8 +330,8 @@ inline void saveHit(
     if (myIndex < maxHitIndex)
     {
 #ifdef PRINTF_ENABLED
-        dbg_printf("     -> photon record added at position %u.\n",
-            myIndex);
+//        dbg_printf("     -> photon record added at position %u.\n",
+//            myIndex);
 #endif
 
         outputPhotons[myIndex].posAndTime = (float4)
@@ -372,10 +372,10 @@ inline void saveHit(
 #endif
 
 #ifdef PRINTF_ENABLED
-        dbg_printf("     -> stored photon: p=(%f,%f,%f), d=(%f,%f), t=%f, wlen=%fnm\n",
-            outputPhotons[myIndex].posAndTime.x, outputPhotons[myIndex].posAndTime.y, outputPhotons[myIndex].posAndTime.z,
-            outputPhotons[myIndex].dir.x, outputPhotons[myIndex].dir.y,
-            outputPhotons[myIndex].posAndTime.w, outputPhotons[myIndex].wavelength/1e-9f);
+//        dbg_printf("     -> stored photon: p=(%f,%f,%f), d=(%f,%f), t=%f, wlen=%fnm\n",
+//            outputPhotons[myIndex].posAndTime.x, outputPhotons[myIndex].posAndTime.y, outputPhotons[myIndex].posAndTime.z,
+//            outputPhotons[myIndex].dir.x, outputPhotons[myIndex].dir.y,
+//            outputPhotons[myIndex].posAndTime.w, outputPhotons[myIndex].wavelength/1e-9f);
 #endif
 
     }
@@ -413,7 +413,7 @@ __kernel void propKernel(
 
 #ifdef PRINTF_ENABLED
     unsigned int global_size = get_global_size(0);
-    dbg_printf("Start kernel... (work item %u of %u)\n", i, global_size);
+//    dbg_printf("Start kernel... (work item %u of %u)\n", i, global_size);
 #endif
 
 #ifndef SAVE_ALL_PHOTONS
@@ -469,14 +469,14 @@ __kernel void propKernel(
     }
 
 #ifdef PRINTF_ENABLED
-    dbg_printf("Step at: p=(%f,%f,%f), d=(%f,%f,%f), t=%f, l=%f, N=%u\n",
-        step.posAndTime.x,
-        step.posAndTime.y,
-        step.posAndTime.z,
-        stepDir.x, stepDir.y, stepDir.z,
-        step.posAndTime.w,
-        step.dirAndLengthAndBeta.z,
-        step.numPhotons);
+//    dbg_printf("Step at: p=(%f,%f,%f), d=(%f,%f,%f), t=%f, l=%f, N=%u\n",
+//        step.posAndTime.x,
+//        step.posAndTime.y,
+//        step.posAndTime.z,
+//        stepDir.x, stepDir.y, stepDir.z,
+//        step.posAndTime.w,
+//        step.dirAndLengthAndBeta.z,
+//        step.numPhotons);
 #endif
 
 #ifdef DOUBLE_PRECISION
@@ -540,15 +540,15 @@ __kernel void propKernel(
 #ifdef TABULATE
             // randomize the first sub-step
             prevStepRemainder = VOLUME_MODE_STEP * RNG_CALL_UNIFORM_OC;
-            dbg_printf("   first step is %f\n", prevStepRemainder);
+//            dbg_printf("   first step is %f\n", prevStepRemainder);
 #endif // TABULATE
 
 #ifdef PRINTF_ENABLED
-            dbg_printf("   created photon %u at: p=(%f,%f,%f), d=(%f,%f,%f), t=%f, wlen=%fnm\n",
-                step.numPhotons-photonsLeftToPropagate,
-                photonPosAndTime.x, photonPosAndTime.y, photonPosAndTime.z,
-                photonDirAndWlen.x, photonDirAndWlen.y, photonDirAndWlen.z,
-                photonPosAndTime.w, photonDirAndWlen.w/1e-9f);
+//            dbg_printf("   created photon %u at: p=(%f,%f,%f), d=(%f,%f,%f), t=%f, wlen=%fnm\n",
+//                step.numPhotons-photonsLeftToPropagate,
+//                photonPosAndTime.x, photonPosAndTime.y, photonPosAndTime.z,
+//                photonDirAndWlen.x, photonDirAndWlen.y, photonDirAndWlen.z,
+//                photonPosAndTime.w, photonDirAndWlen.w/1e-9f);
 #endif
             
 #ifdef getTiltZShift_IS_CONSTANT
@@ -571,7 +571,7 @@ __kernel void propKernel(
             depthPropagated = ZERO;
 #endif // TABULATE
 #ifdef PRINTF_ENABLED
-            dbg_printf("   - total track length will be %f absorption lengths\n", abs_lens_left);
+//            dbg_printf("   - total track length will be %f absorption lengths\n", abs_lens_left);
 #endif
         }
 
@@ -602,7 +602,7 @@ __kernel void propKernel(
             // track this thing to the next scattering point
             floating_t sca_step_left = -my_log(RNG_CALL_UNIFORM_OC);
 #ifdef PRINTF_ENABLED
-            dbg_printf("   - next scatter in %f scattering lengths\n", sca_step_left);
+//            dbg_printf("   - next scatter in %f scattering lengths\n", sca_step_left);
 #endif
             
             floating_t currentScaLen = getScatteringLength(currentPhotonLayer, photonDirAndWlen.w);
@@ -612,7 +612,7 @@ __kernel void propKernel(
             floating_t aia=( photon_dz*abs_lens_left - my_divide((mediumBoundary-effective_z),currentAbsLen) )*(ONE/(floating_t)MEDIUM_LAYER_THICKNESS);
 
 #ifdef PRINTF_ENABLED
-            dbg_printf("   - ais=%f, aia=%f, j_initial=%i\n", ais, aia, currentPhotonLayer);
+//            dbg_printf("   - ais=%f, aia=%f, j_initial=%i\n", ais, aia, currentPhotonLayer);
 #endif
         
             // propagate through layers
@@ -634,7 +634,7 @@ __kernel void propKernel(
             }
         
 #ifdef PRINTF_ENABLED
-            dbg_printf("   - j_final=%i\n", j);
+//            dbg_printf("   - j_final=%i\n", j);
 #endif
         
             floating_t distanceToAbsorption;
@@ -651,7 +651,7 @@ __kernel void propKernel(
 #endif
             
 #ifdef PRINTF_ENABLED
-            dbg_printf("   - distancePropagated=%f\n", distancePropagated);
+//            dbg_printf("   - distancePropagated=%f\n", distancePropagated);
 #endif
         
             // get overburden for distance
@@ -715,8 +715,8 @@ __kernel void propKernel(
             abs_lens_left = ZERO;
 
 #ifdef PRINTF_ENABLED
-            dbg_printf("    . colission detected, step limited to thisStepLength=%f!\n", 
-                distancePropagated);
+//            dbg_printf("    . colission detected, step limited to thisStepLength=%f!\n", 
+//                distancePropagated);
 #endif //PRINTF_ENABLED
         }
 #endif //STOP_PHOTONS_ON_DETECTION
@@ -744,13 +744,13 @@ __kernel void propKernel(
             // We ran out of space in the output buffer. Mark this step as
             // unfinished, and restore the RNG state from when this photon
             // was spawned.
-            dbg_printf("Ran out of space after %u photons\n", inputSteps[i].numPhotons-photonsLeftToPropagate);
+//            dbg_printf("Ran out of space after %u photons\n", inputSteps[i].numPhotons-photonsLeftToPropagate);
             inputSteps[i].numPhotons = photonsLeftToPropagate;
             MWC_RNG_x[i] = prev_rnd_x;
             MWC_RNG_a[i] = prev_rnd_a;
             return;
         } else if (stop) {
-            dbg_printf("Photon ran off the end of the table\n");
+//            dbg_printf("Photon ran off the end of the table\n");
             abs_lens_left = ZERO;
         }
         depthPropagated = abs_lens_initial-abs_lens_left;
@@ -811,13 +811,13 @@ __kernel void propKernel(
             
             // calculate a new direction
 #ifdef PRINTF_ENABLED
-            dbg_printf("   - photon is not yet absorbed (abs_len_left=%f)! Scattering!\n", abs_lens_left);
+//            dbg_printf("   - photon is not yet absorbed (abs_len_left=%f)! Scattering!\n", abs_lens_left);
 #endif
 
 #ifdef PRINTF_ENABLED
-            dbg_printf("    . photon direction before: d=(%f,%f,%f), wlen=%f\n",
-                photonDirAndWlen.x, photonDirAndWlen.y, photonDirAndWlen.z,
-                photonDirAndWlen.w/1e-9f);
+//            dbg_printf("    . photon direction before: d=(%f,%f,%f), wlen=%f\n",
+//                photonDirAndWlen.x, photonDirAndWlen.y, photonDirAndWlen.z,
+//                photonDirAndWlen.w/1e-9f);
 #endif
 
             // optional direction transformation (for ice anisotropy)
@@ -834,20 +834,20 @@ __kernel void propKernel(
             transformDirectionPostScatter(&photonDirAndWlen);
 
 #ifdef PRINTF_ENABLED
-            dbg_printf("    . cos(scat_angle)=%f sin(scat_angle)=%f\n",
-                cosScatAngle, sinScatAngle);
+//            dbg_printf("    . cos(scat_angle)=%f sin(scat_angle)=%f\n",
+//                cosScatAngle, sinScatAngle);
 #endif
 
 #ifdef PRINTF_ENABLED
-            dbg_printf("    . photon direction after:  d=(%f,%f,%f), wlen=%f\n",
-                photonDirAndWlen.x, photonDirAndWlen.y, photonDirAndWlen.z,
-                photonDirAndWlen.w/1e-9f);
+//            dbg_printf("    . photon direction after:  d=(%f,%f,%f), wlen=%f\n",
+//                photonDirAndWlen.x, photonDirAndWlen.y, photonDirAndWlen.z,
+//                photonDirAndWlen.w/1e-9f);
 #endif
 
             ++photonNumScatters;
 
 #ifdef PRINTF_ENABLED
-            dbg_printf("    . the photon has now been scattered %u time(s).\n", photonNumScatters);
+//            dbg_printf("    . the photon has now been scattered %u time(s).\n", photonNumScatters);
 #endif
         }
 
@@ -855,8 +855,8 @@ __kernel void propKernel(
     }
 
 #ifdef PRINTF_ENABLED
-    dbg_printf("Stop kernel... (work item %u of %u)\n", i, global_size);
-    dbg_printf("Kernel finished.\n");
+//    dbg_printf("Stop kernel... (work item %u of %u)\n", i, global_size);
+//    dbg_printf("Kernel finished.\n");
 #endif
 
 #ifdef TABULATE

@@ -8,7 +8,7 @@ __kernel void testKernel(__global float* randomNumbers,
 //#pragma OPENCL EXTENSION cl_khr_fp16 : enable
 
 // disable dbg_printf for GPU
-#define dbg_printf(format, ...)
+//#define dbg_printf(format, ...)
 
 // enable printf for CPU
 //#pragma OPENCL EXTENSION cl_amd_printf : enable
