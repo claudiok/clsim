@@ -70,7 +70,7 @@ getCoordinates(const floating4_t absPos, floating4_t dirAndWlen,
     coords.s4 = (coords.s0 > 0) ? my_divide(dot(dirAndWlen, pos), coords.s0) : 1;
 #endif
     
-    dbg_printf("     %4.1f %4.1f %4.2f %6.2f\n", coords.s0, coords.s1, coords.s2, coords.s3);
+    //dbg_printf("     %4.1f %4.1f %4.2f %6.2f\n", coords.s0, coords.s1, coords.s2, coords.s3);
     
     return coords;
 }

@@ -7,12 +7,12 @@ __kernel void testKernel(__global float* randomNumbers,
 #pragma OPENCL EXTENSION cl_khr_byte_addressable_store : enable
 //#pragma OPENCL EXTENSION cl_khr_fp16 : enable
 
-// disable dbg_printf for GPU
-#define dbg_printf(format, ...)
-
-// enable printf for CPU
-//#pragma OPENCL EXTENSION cl_amd_printf : enable
-//#define dbg_printf(format, ...) printf(format, ##__VA_ARGS__)
+// // disable dbg_printf for GPU
+// #define dbg_printf(format, ...)
+// 
+// // enable printf for CPU
+// //#pragma OPENCL EXTENSION cl_amd_printf : enable
+// //#define dbg_printf(format, ...) printf(format, ##__VA_ARGS__)
 
 
 inline float my_divide(float a, float b);

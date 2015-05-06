@@ -36,9 +36,9 @@ __kernel void testKernel(
     __global float* outputValues);
 
 
-// disable dbg_printf for GPU
-#define dbg_printf(format, ...)
-
-// enable printf for CPU
-//#pragma OPENCL EXTENSION cl_amd_printf : enable
-//#define dbg_printf(format, ...) printf(format, ##__VA_ARGS__)
+// // disable dbg_printf for GPU
+// #define dbg_printf(format, ...)
+// 
+// // enable printf for CPU
+// //#pragma OPENCL EXTENSION cl_amd_printf : enable
+// //#define dbg_printf(format, ...) printf(format, ##__VA_ARGS__)

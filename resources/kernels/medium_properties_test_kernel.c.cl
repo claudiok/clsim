@@ -32,7 +32,7 @@ __kernel void testKernel(__global ulong* MWC_RNG_x,
                          uint layer,
                          uint mode)
 {
-    dbg_printf("Start kernel... (work item %u of %u)\n", get_global_id(0), get_global_size(0));
+    //dbg_printf("Start kernel... (work item %u of %u)\n", get_global_id(0), get_global_size(0));
 
     unsigned int i = get_global_id(0);
     unsigned int global_size = get_global_size(0);
@@ -63,8 +63,8 @@ __kernel void testKernel(__global ulong* MWC_RNG_x,
         yValues[i] = 9999999.f;
     }
 
-    dbg_printf("Stop kernel... (work item %u of %u)\n", i, global_size);
-    dbg_printf("Kernel finished.\n");
+    //dbg_printf("Stop kernel... (work item %u of %u)\n", i, global_size);
+    //dbg_printf("Kernel finished.\n");
 
     //upload MWC RNG state
     MWC_RNG_x[i] = real_rnd_x;

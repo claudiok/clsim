@@ -32,7 +32,7 @@ __kernel void testKernel(
     __global float* outputValuesY,
     __global float* outputValuesZ)
 {
-    dbg_printf("Start kernel... (work item %u of %u)\n", get_global_id(0), get_global_size(0));
+    //dbg_printf("Start kernel... (work item %u of %u)\n", get_global_id(0), get_global_size(0));
 
     unsigned int i = get_global_id(0);
     //unsigned int global_size = get_global_size(0);
@@ -52,6 +52,6 @@ __kernel void testKernel(
         outputValuesZ[i] = theVector.z;
     }
 
-    dbg_printf("Stop kernel... (work item %u of %u)\n", i, global_size);
-    dbg_printf("Kernel finished.\n");
+    //dbg_printf("Stop kernel... (work item %u of %u)\n", i, global_size);
+    //dbg_printf("Kernel finished.\n");
 }
