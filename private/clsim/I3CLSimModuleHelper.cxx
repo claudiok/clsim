@@ -357,9 +357,9 @@ namespace I3CLSimModuleHelper {
         log_info("maximum workgroup size is %zu", maxWorkgroupSize);
         log_info("configured workgroup size is %zu", workgroupSize);
         if (maxNumWorkitems != device.GetApproximateNumberOfWorkItems()) {
-            log_warn("maximum number of work items is %zu (user configured was %" PRIu32 ")", maxNumWorkitems, device.GetApproximateNumberOfWorkItems());
-        } else {
             log_info("maximum number of work items is %zu (user configured was %" PRIu32 ")", maxNumWorkitems, device.GetApproximateNumberOfWorkItems());
+        } else {
+            log_debug("maximum number of work items is %zu (user configured was %" PRIu32 ")", maxNumWorkitems, device.GetApproximateNumberOfWorkItems());
         }
 
         conv->Initialize();
