@@ -77,6 +77,8 @@ public:
 
     virtual void SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties);
     
+    virtual void SetGeometry(I3CLSimSimpleGeometryConstPtr geometry);
+    
     virtual void Initialize();
 
     virtual bool IsInitialized() const;
@@ -101,6 +103,7 @@ private:
         uint64_t photonsPerStep;
         uint64_t numSteps;
         uint64_t numPhotonsInLastStep;
+        double undersizeFactor;
         
         double pa,pb;
     };
@@ -110,7 +113,8 @@ private:
         uint64_t photonsPerStep;
         uint64_t numSteps;
         uint64_t numPhotonsInLastStep;
-
+        double undersizeFactor;
+        
         bool stepIsCascadeLike;
         double length;
     };
@@ -168,6 +172,7 @@ private:
     
     I3CLSimFunctionConstPtr wlenBias_;
     I3CLSimMediumPropertiesConstPtr mediumProperties_;
+    I3CLSimSimpleGeometryConstPtr geometry_;
     
     std::vector<double> meanPhotonsPerMeterInLayer_;
     

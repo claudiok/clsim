@@ -55,6 +55,7 @@ struct __attribute__ ((packed)) I3CLSimStep
     float4 dirAndLengthAndBeta; // theta,phi,length,beta    // 4x 32bit float
     uint numPhotons;                                        //    32bit unsigned
     float weight;                                           //    32bit float
+    float undersizeFactor;                                  //    32bit float
     uint identifier;                                        //    32bit unsigned
     uchar sourceType;                                       //     8bit unsigned
     uchar dummy1;                                           //     8bit unsigned

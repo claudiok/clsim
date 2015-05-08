@@ -28,6 +28,7 @@
 
 #include "clsim/function/I3CLSimFunction.h"
 #include "clsim/function/I3CLSimFunctionDeltaPeak.h"
+#include "clsim/I3CLSimSimpleGeometry.h"
 #include "icetray/I3Units.h"
 #include "dataclasses/I3Constants.h"
 
@@ -206,5 +207,29 @@ namespace I3CLSimLightSourceToStepConverterUtils {
         return integralWithBias/integralUnbiased;
     }
 
+    std::pair<size_t, double>
+    FindNearestPosition(I3CLSimSimpleGeometryConstPtr geometry, const I3Position &pos)
+    {
+        std::pair<size_t, double> closest(0, std::numeric_limits<double>::infinity());
+        if (!geometry)
+            return closest;
+        
+        const std::vector<double> &x = geometry->GetPosXVector();
+        const std::vector<double> &y = geometry->GetPosYVector();
+        const std::vector<double> &z = geometry->GetPosZVector();
+        size_t size = geometry->size();
+        for (size_t i = 0; i < size; i++) {
+            double d2 = (pos.GetX()-x[i])*(pos.GetX()-x[i])
+                + (pos.GetY()-y[i])*(pos.GetY()-y[i])
+                + (pos.GetZ()-z[i])*(pos.GetZ()-z[i]);
+            if (d2 < closest.second) {
+                closest.second = d2;
+                closest.first = i;
+            }
+        }
+        
+        closest.second = std::sqrt(closest.second);
+        return closest;
+    }
 
 }

@@ -30,10 +30,12 @@
 #include <inttypes.h>
 
 #include <cmath>
+#include <boost/algorithm/clamp.hpp>
 
 #include "clsim/I3CLSimLightSourceToStepConverterPPC.h"
 
 #include "clsim/function/I3CLSimFunction.h"
+#include "clsim/I3CLSimSimpleGeometry.h"
 
 #include "clsim/I3CLSimLightSourceToStepConverterUtils.h"
 using namespace I3CLSimLightSourceToStepConverterUtils;
@@ -185,6 +187,14 @@ void I3CLSimLightSourceToStepConverterPPC::SetMediumProperties(I3CLSimMediumProp
     mediumProperties_=mediumProperties;
 }
 
+void I3CLSimLightSourceToStepConverterPPC::SetGeometry(I3CLSimSimpleGeometryConstPtr geometry)
+{
+    if (initialized_)
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterPPC already initialized!");
+
+    geometry_=geometry;
+}
+
 void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLightSource &lightSource, uint32_t identifier)
 {
     if (!initialized_)
@@ -280,20 +290,53 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLight
     const double logE = std::max(0., std::log(E)); // protect against extremely low energies
     const double Lrad=0.358*(I3Units::g/I3Units::cm3)/density;
 
-    if (isElectron) {
-        const double pa=2.03+0.604*logE;
-        double pb=Lrad/0.633;
+    if (isElectron || isHadron) {
         
+        // Meters of charged particle track per GeV of EM energy deposition
+        double nph=5.21*(0.924*I3Units::g/I3Units::cm3)/density;
+        
+        double pa, pb;
+        if (isElectron) {
+            pa = 2.03+0.604*logE;
+            pb = Lrad/0.633;
+        } else {
+            pa = 1.49+0.359*logE;
+            pb = Lrad/0.772;
+            
+            double f=1.0;
+            const double E0=0.399;
+            const double m=0.130;
+            const double f0=0.467;
+            const double rms0=0.379;
+            const double gamma=1.160;
+        
+            double e=std::max(10.0, E);
+            double F=1.-pow(e/E0, -m)*(1.-f0);
+            double dF=F*rms0*pow(log10(e), -gamma);
+            do {f=F+dF*randomService_->Gaus(0.,1.);} while((f<0.) || (1.<f));
+            
+            nph *= f;
+        }
         if (E < 1.*I3Units::GeV) pb=0.; // this sets the cascade length to 0.
         
-        const double nph=5.21*(0.924*I3Units::g/I3Units::cm3)/density;
-        
-        const double meanNumPhotons = meanPhotonsPerMeter*nph*E;
+        double meanNumPhotons = meanPhotonsPerMeter*nph*E;
+        double undersizeFactor = 1.;
+        if (geometry_) {
+            // position of shower max
+            double minDistance = I3CLSimLightSourceToStepConverterUtils::FindNearestPosition(geometry_,
+                particle.GetPos() + ((pa-1.)/pb)*particle.GetDir()).second;
+            // if the light source is too close, propagate the full number of photons 
+            // FIXME: make the "safe" oversizing factor configurable
+            undersizeFactor = geometry_->GetOversizeFactor() /
+                boost::algorithm::clamp(minDistance/3., 1., geometry_->GetOversizeFactor());
+                        
+            meanNumPhotons *= undersizeFactor*undersizeFactor;
+        }
         
         uint64_t numPhotons;
         if (meanNumPhotons > 1e7)
         {
-            log_debug("HUGE EVENT: (e-m) meanNumPhotons=%f, nph=%f, E=%f (approximating possion by gaussian)", meanNumPhotons, nph, E);
+            log_debug("HUGE EVENT: (cascade) meanNumPhotons=%f, nph=%f, E=%f (approximating possion by gaussian)", meanNumPhotons, nph, E);
             double numPhotonsDouble=0;
             do {
                 numPhotonsDouble = randomService_->Gaus(meanNumPhotons, std::sqrt(meanNumPhotons));
@@ -315,7 +358,7 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLight
         const uint64_t numSteps = numPhotons/usePhotonsPerStep;
         const uint64_t numPhotonsInLastStep = numPhotons%usePhotonsPerStep;
 
-        log_trace("Generating %" PRIu64 " steps for electromagetic", numSteps);
+        log_trace("Generating %" PRIu64 " steps for cascade", numSteps);
         
         CascadeStepData_t cascadeStepGenInfo;
         cascadeStepGenInfo.particle=particle;
@@ -324,76 +367,14 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLight
         cascadeStepGenInfo.photonsPerStep=usePhotonsPerStep;
         cascadeStepGenInfo.numSteps=numSteps;
         cascadeStepGenInfo.numPhotonsInLastStep=numPhotonsInLastStep;
+        cascadeStepGenInfo.undersizeFactor=undersizeFactor;
         cascadeStepGenInfo.pa=pa;
         cascadeStepGenInfo.pb=pb;
         
-        log_trace("== enqueue cascade (e-m)");
+        log_trace("== enqueue cascade");
         stepGenerationQueue_.push_back(cascadeStepGenInfo);
         
         log_trace("Generate %u steps for E=%fGeV. (electron)", static_cast<unsigned int>(numSteps+1), E);
-    } else if (isHadron) {
-        double pa=1.49+0.359*logE;
-        double pb=Lrad/0.772;
-        
-        if (E < 1.*I3Units::GeV) pb=0.; // this sets the cascade length to 0.
-        
-        const double em=5.21*(0.924*I3Units::g/I3Units::cm3)/density;
-        
-        double f=1.0;
-        const double E0=0.399;
-        const double m=0.130;
-        const double f0=0.467;
-        const double rms0=0.379;
-        const double gamma=1.160;
-        
-        double e=std::max(10.0, E);
-        double F=1.-pow(e/E0, -m)*(1.-f0);
-        double dF=F*rms0*pow(log10(e), -gamma);
-        do {f=F+dF*randomService_->Gaus(0.,1.);} while((f<0.) || (1.<f));
-        
-        const double nph=f*em;
-        
-        const double meanNumPhotons = meanPhotonsPerMeter*nph*E;
-        
-        uint64_t numPhotons;
-        if (meanNumPhotons > 1e7)
-        {
-            log_debug("HUGE EVENT: (hadron) meanNumPhotons=%f, nph=%f, E=%f (approximating possion by gaussian)", meanNumPhotons, nph, E);
-            double numPhotonsDouble=0;
-            do {
-                numPhotonsDouble = randomService_->Gaus(meanNumPhotons, std::sqrt(meanNumPhotons));
-            } while (numPhotonsDouble<0.);
-            
-            if (numPhotonsDouble > static_cast<double>(std::numeric_limits<uint64_t>::max()))
-                log_fatal("Too many photons for counter. internal limitation.");
-            numPhotons = static_cast<uint64_t>(numPhotonsDouble);
-        }
-        else
-        {
-            numPhotons = static_cast<uint64_t>(randomService_->Poisson(meanNumPhotons));
-        }
-        
-        uint64_t usePhotonsPerStep = static_cast<uint64_t>(photonsPerStep_);
-        if (static_cast<double>(numPhotons) > useHighPhotonsPerStepStartingFromNumPhotons_)
-            usePhotonsPerStep = static_cast<uint64_t>(highPhotonsPerStep_);
-        
-        const uint64_t numSteps = numPhotons/usePhotonsPerStep;
-        const uint64_t numPhotonsInLastStep = numPhotons%usePhotonsPerStep;
-        
-        log_trace("Generating %" PRIu64 " steps for hadron", numSteps);
-        
-        CascadeStepData_t cascadeStepGenInfo;
-        cascadeStepGenInfo.particle=particle;
-        cascadeStepGenInfo.particleIdentifier=identifier;
-        cascadeStepGenInfo.photonsPerStep=usePhotonsPerStep;
-        cascadeStepGenInfo.numSteps=numSteps;
-        cascadeStepGenInfo.numPhotonsInLastStep=numPhotonsInLastStep;
-        cascadeStepGenInfo.pa=pa;
-        cascadeStepGenInfo.pb=pb;
-        log_trace("== enqueue cascade (hadron)");
-        stepGenerationQueue_.push_back(cascadeStepGenInfo);
-
-        log_trace("Generate %lu steps for E=%fGeV. (hadron)", static_cast<unsigned long>(numSteps+1), E);
     } else if (isMuon || isTau) {
         // TODO: for now, treat muons and taus (with lengths after MMC) the same.
         // This is compatible to what hit-maker does, but is of course not the right thing
@@ -413,6 +394,9 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLight
         const double muonFraction = 1./extr;
         
         const double meanNumPhotonsTotal = meanPhotonsPerMeter*(length/I3Units::m)*extr;
+        if (geometry_) {
+            log_fatal("FIXME: implement dynamic oversizing for muons");
+        }
         
         log_trace("meanNumPhotonsTotal=%f", meanNumPhotonsTotal);
         
@@ -568,6 +552,7 @@ void I3CLSimLightSourceToStepConverterPPC::MakeSteps_visitor::FillStep
  double particleDir_x, double particleDir_y, double particleDir_z) const
 {
     const double longitudinalPos = data.pb*I3CLSimLightSourceToStepConverterUtils::gammaDistributedNumber(data.pa, rngState_, rngA_)*I3Units::m;
+    newStep.undersizeFactor = data.undersizeFactor;
     GenerateStep(newStep,
                  data.particle,
                  particleDir_x, particleDir_y, particleDir_z,
@@ -583,6 +568,7 @@ void I3CLSimLightSourceToStepConverterPPC::MakeSteps_visitor::FillStep
  uint64_t photonsPerStep,
  double particleDir_x, double particleDir_y, double particleDir_z) const
 {
+    newStep.undersizeFactor = data.undersizeFactor;
     if (data.stepIsCascadeLike) {
         const double longitudinalPos = mwcRngRandomNumber_co(rngState_, rngA_)*data.length;
         GenerateStep(newStep,

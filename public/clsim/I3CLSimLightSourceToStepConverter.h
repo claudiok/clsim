@@ -43,6 +43,8 @@
 #include <string>
 #include <stdexcept>
 
+I3_FORWARD_DECLARATION(I3CLSimSimpleGeometry);
+
 /**
  * @brief Base class for objects that get a I3CLSimLightSource
  * (i.e. either a I3Particle or a I3CLSimFlasherPulse)
@@ -100,6 +102,13 @@ public:
      * Will throw if used after the call to Initialize().
      */
     virtual void SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties) = 0;
+    
+    /**
+     * Sets the detector geometry.
+     * This can be used to dynamically change the oversize factor for light
+     * sources close to detector elements.
+     */
+    virtual void SetGeometry(I3CLSimSimpleGeometryConstPtr) {};
 
     /**
      * Sets the available parameterizations.

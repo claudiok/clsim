@@ -99,6 +99,8 @@ public:
      */
     virtual void SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties);
     
+    virtual void SetGeometry(I3CLSimSimpleGeometryConstPtr geometry);
+    
     /**
      * Initializes the simulation.
      * Will throw if already initialized.
@@ -200,6 +202,7 @@ private:
     
     I3CLSimFunctionConstPtr wlenBias_;
     I3CLSimMediumPropertiesConstPtr mediumProperties_;
+    I3CLSimSimpleGeometryConstPtr geometry_;
     
     SET_LOGGER("I3CLSimLightSourceToStepConverterGeant4");
 };

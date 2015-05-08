@@ -69,6 +69,7 @@ public:
 
     /// This is the radius *with* oversizing applied!
     virtual double GetOMRadius() const {return OMRadius_*oversizeFactor_;}
+    virtual double GetOversizeFactor() const {return oversizeFactor_;}
     
     virtual const std::vector<int32_t> &GetStringIDVector() const {return stringIDs_;}
     virtual const std::vector<uint32_t> &GetDomIDVector() const {return domIDs_;}

@@ -221,6 +221,7 @@ void I3CLSimLightSourceToStepConverterGeant4::Initialize()
         
         parameterization.converter->SetRandomService(randomService_);
         parameterization.converter->SetMediumProperties(mediumProperties_);
+        parameterization.converter->SetGeometry(geometry_);
         parameterization.converter->SetWlenBias(wlenBias_);
         parameterization.converter->SetBunchSizeGranularity(1); // we do not send the bunches directly, the steps are integrated in the step store first, so granularity does not matter
         parameterization.converter->SetMaxBunchSize(maxBunchSize_); // use the same bunch size for the parameterizations
@@ -804,6 +805,16 @@ void I3CLSimLightSourceToStepConverterGeant4::SetMediumProperties(I3CLSimMediumP
         throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterGeant4 already initialized!");
 
     mediumProperties_=mediumProperties;
+}
+
+void I3CLSimLightSourceToStepConverterGeant4::SetGeometry(I3CLSimSimpleGeometryConstPtr geometry)
+{
+    LogGeant4Messages();
+
+    if (initialized_)
+        throw I3CLSimLightSourceToStepConverter_exception("I3CLSimLightSourceToStepConverterGeant4 already initialized!");
+
+    geometry_=geometry;
 }
 
 void I3CLSimLightSourceToStepConverterGeant4::EnqueueLightSource(const I3CLSimLightSource &lightSource, uint32_t identifier)

@@ -54,6 +54,7 @@ i3clsimstep_prettyprint(const I3CLSimStep& s)
         << "          length : " << s.GetLength()/I3Units::mm << "mm" << std::endl
         << "             num : " << s.GetNumPhotons() << std::endl
         << "          weight : " << s.GetWeight() << std::endl
+        << "       undersize : " << s.GetUndersizeFactor() << std::endl
         << "            beta : " << s.GetBeta() << std::endl
         << "      sourceType : " << s.GetSourceType() << std::endl
         << "          dummy1 : " << s.GetDummy1() << std::endl
@@ -93,6 +94,7 @@ void register_I3CLSimStep()
 
         .add_property("num", &I3CLSimStep::GetNumPhotons, &I3CLSimStep::SetNumPhotons)
         .add_property("weight", &I3CLSimStep::GetWeight, &I3CLSimStep::SetWeight)
+        .add_property("undersizeFactor", &I3CLSimStep::GetUndersizeFactor, &I3CLSimStep::SetUndersizeFactor)
         .add_property("id", &I3CLSimStep::GetID, &I3CLSimStep::SetID)
         .add_property("sourceType", &I3CLSimStep::GetSourceType, &I3CLSimStep::SetSourceType)
 
@@ -107,14 +109,14 @@ void register_I3CLSimStep()
         .def("__str__", i3clsimstep_prettyprint)
 
         .def(bp::copy_suite<I3CLSimStep>())
-        .def_pickle(bp::boost_serializable_pickle_suite<I3CLSimStep>())
+        // .def_pickle(bp::boost_serializable_pickle_suite<I3CLSimStep>())
         ;
     }
 
 
     bp::class_<I3CLSimStepSeries, bp::bases<I3FrameObject>, I3CLSimStepSeriesPtr>("I3CLSimStepSeries")
     .def(bp::list_indexing_suite<I3CLSimStepSeries>())
-    .def_pickle(bp::boost_serializable_pickle_suite<I3CLSimStepSeries>())
+    // .def_pickle(bp::boost_serializable_pickle_suite<I3CLSimStepSeries>())
     ;
 
     // does not base on I3FrameObject, so register only the shared_ptr<T>-to-shared_ptr<const T> conversion

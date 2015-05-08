@@ -55,6 +55,9 @@ void I3CLSimStep::save(Archive &ar, unsigned version) const
     
     ar << make_nvp("num", numPhotons);
     ar << make_nvp("weight", weight);
+    if (version > 0) {
+        ar << make_nvp("undersize", undersizeFactor);
+    }
     ar << make_nvp("id", identifier);
 
     ar << make_nvp("sourceType", sourceType);
@@ -83,6 +86,9 @@ void I3CLSimStep::load(Archive &ar, unsigned version)
 
     ar >> make_nvp("num", temp_uint); numPhotons=temp_uint;
     ar >> make_nvp("weight", temp); weight=temp;
+    if (version > 0) {
+        ar >> make_nvp("undersize", temp); undersizeFactor=temp;
+    }
     ar >> make_nvp("id", temp_uint); identifier=temp_uint;
     ar >> make_nvp("sourceType", temp_uint8); sourceType=temp_uint8;
     ar >> make_nvp("dummy1", temp_uint8); dummy1=temp_uint8;
@@ -90,7 +96,7 @@ void I3CLSimStep::load(Archive &ar, unsigned version)
 
 }
 
-
+#if 0
 
 // just save the binary blob for binary archives (internal storage is little-endian)
 
@@ -144,7 +150,7 @@ void I3Vector<I3CLSimStep>::serialize(portable_binary_oarchive &ar, unsigned ver
     ar << make_nvp("blob", boost::serialization::make_binary_object( &((*this)[0]), blobSizeV0*size ));
 }
 
-
+#endif
 
 I3_SERIALIZABLE(I3CLSimStep);
 I3_SERIALIZABLE(I3CLSimStepSeries);

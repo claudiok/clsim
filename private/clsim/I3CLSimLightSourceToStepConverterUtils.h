@@ -36,6 +36,8 @@
 
 #include <cmath>
 
+I3_FORWARD_DECLARATION(I3CLSimSimpleGeometry);
+
 namespace I3CLSimLightSourceToStepConverterUtils 
 {
     
@@ -46,6 +48,12 @@ namespace I3CLSimLightSourceToStepConverterUtils
     double PhotonNumberCorrectionFactorAfterBias(const I3CLSimFunction &unbiasedSpectrum,
                                                  const I3CLSimFunction &wavelengthGenerationBias,
                                                  double fromWlen, double toWlen);
+    
+    /**
+     * Find the nearest detector element from the given position
+     * @returns the index of the detector element and its distance
+     */
+    std::pair<size_t, double> FindNearestPosition(I3CLSimSimpleGeometryConstPtr geometry, const I3Position &pos);
     
     inline uint64_t mwcRngInitState(I3RandomServicePtr randomService, uint32_t a)
     {

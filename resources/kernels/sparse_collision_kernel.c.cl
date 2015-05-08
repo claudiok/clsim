@@ -115,13 +115,14 @@ inline void checkForCollision_OnString(
             const floating_t dr2 = dot(drvec,drvec);
 
             urdot = dot(drvec, photonDirAndWlen); // this assumes drvec.w==0
-            discr   = sqr(urdot) - dr2 + OM_RADIUS*OM_RADIUS;   // (discr)^2
+            const float_t r = my_divide(OM_RADIUS, step->undersizeFactor);
+            discr   = sqr(urdot) - dr2 + r*r;   // (discr)^2
         }
         
         if (discr < ZERO) continue; // no intersection with this DOM
         
 #ifdef PANCAKE_FACTOR        
-        discr = my_sqrt(discr)/PANCAKE_FACTOR;
+        discr = my_sqrt(discr)/my_divide(PANCAKE_FACTOR, step->undersizeFactor);
 #else
         discr = my_sqrt(discr);
 #endif        

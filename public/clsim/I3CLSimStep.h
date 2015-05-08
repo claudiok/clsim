@@ -63,7 +63,7 @@
  * typically produced by a full particle tracker
  * like Geant4.
  */
-static const unsigned i3clsimstep_version_ = 0;
+static const unsigned i3clsimstep_version_ = 1;
 
 struct I3CLSimStep 
 {
@@ -85,6 +85,7 @@ public:
     inline float GetBeta() const {return ((const cl_float *)&dirAndLengthAndBeta)[3];}
     inline uint32_t GetNumPhotons() const {return numPhotons;}
     inline float GetWeight() const {return weight;}
+    inline float GetUndersizeFactor() const {return undersizeFactor;}
     inline uint32_t GetID() const {return identifier;}
     inline uint8_t GetSourceType() const {return sourceType;}
     inline uint8_t GetDummy1() const {return dummy1;}
@@ -111,6 +112,8 @@ public:
     inline void SetBeta(const float &val) {((cl_float *)&dirAndLengthAndBeta)[3]=val;}
     inline void SetNumPhotons(const uint32_t &val) {numPhotons=val;}
     inline void SetWeight(const float &val) {weight=val;}
+    inline void SetUndersizeFactor(const float &val) {undersizeFactor=val;}
+    
     inline void SetID(const uint32_t &val) {identifier=val;}
     inline void SetSourceType(const uint8_t &val) {sourceType=val;}
     inline void SetDummy1(const uint8_t &val) {dummy1=val;}
@@ -139,6 +142,7 @@ public:
     cl_float4 dirAndLengthAndBeta; // theta,phi,length,beta
     cl_uint numPhotons;
     cl_float weight;
+    cl_float undersizeFactor;
     cl_uint identifier;
     cl_uchar sourceType;
     cl_uchar dummy1;
@@ -151,8 +155,10 @@ private:
     BOOST_SERIALIZATION_SPLIT_MEMBER();
 } __attribute__ ((packed)) ;
 
+#if 0
 template<> void I3CLSimStep::save(boost::archive::portable_binary_oarchive &ar, unsigned version) const;
 template<> void I3CLSimStep::load(boost::archive::portable_binary_iarchive &ar, unsigned version);
+#endif
 
 inline bool operator==(const I3CLSimStep &a, const I3CLSimStep &b)
 {
@@ -167,7 +173,9 @@ typedef I3Vector<I3CLSimStep> I3CLSimStepSeries;
 I3_POINTER_TYPEDEFS(I3CLSimStep);
 I3_POINTER_TYPEDEFS(I3CLSimStepSeries);
 
+#if 0
 template<> template<> void I3Vector<I3CLSimStep>::serialize(boost::archive::portable_binary_iarchive &ar, unsigned version);
 template<> template<> void I3Vector<I3CLSimStep>::serialize(boost::archive::portable_binary_oarchive &ar, unsigned version);
+#endif
 
 #endif //I3CLSIMSTEP_H_INCLUDED
