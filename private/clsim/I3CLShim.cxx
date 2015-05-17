@@ -110,7 +110,8 @@ I3CLShim::GetMeanAmplitudes(std::vector<LightSource> &sources, const std::vector
 		uint32_t offset = 0;
 		BOOST_FOREACH(const Receiver &receiver, receivers) {
 			receiver_offsets.push_back(offset);
-			offset += std::distance(receiver.time_bin_edges.first, receiver.time_bin_edges.second);
+			offset += std::max(std::distance(receiver.time_bin_edges.first, receiver.time_bin_edges.second)-1, ptrdiff_t(0));
+			assert(std::distance(receiver.time_bin_edges.first, receiver.time_bin_edges.second) >= 2);
 		}
 	}
 	
@@ -120,14 +121,33 @@ I3CLShim::GetMeanAmplitudes(std::vector<LightSource> &sources, const std::vector
 		I3CLSimStepToPhotonConverter::ConversionResult_t result = photonConverter_->GetConversionResult();
 		log_info("Got %zu photons", result.photons->size());
 		BOOST_FOREACH(const I3CLSimPhoton &p, *result.photons) {
-			size_t receiver_index = receiverMap_[std::make_pair(p.GetStringID(), p.GetOMID())];
-			const I3PhotonicsService::Receiver &receiver = receivers[receiver_index];
+			// look up the index in the simple geometry from the [potemkin] string/om ids
+			std::map<std::pair<int16_t, uint16_t>, size_t>::const_iterator
+			    receiver_index = receiverMap_.find(std::make_pair(p.GetStringID(), p.GetOMID()));
+			if (receiver_index == receiverMap_.end())
+				continue;
+			const I3PhotonicsService::Receiver &receiver = receivers[receiver_index->second];
+			// ensure that we actually have bins
+			assert(receiver.time_bin_edges.second >= receiver.time_bin_edges.first+1);
+			// bail if the photon arrives before or after readout
 			if (p.GetTime() < *receiver.time_bin_edges.first || p.GetTime() >= *(receiver.time_bin_edges.second-1))
 				continue;
-			int binidx = std::distance(receiver.time_bin_edges.first, std::lower_bound(receiver.time_bin_edges.first, receiver.time_bin_edges.second, p.GetTime()));
+			// find the time bin this photon belongs in
+			int binidx = std::max(std::distance(receiver.time_bin_edges.first,
+			    std::lower_bound(receiver.time_bin_edges.first, receiver.time_bin_edges.second-1, p.GetTime()))-1, ptrdiff_t(0));
+			
+			// each real source is repeated oversampleFactor_ times
 			int sourceidx = p.GetID() / oversampleFactor_;
+			// ensure that we haven't stepped out of bounds
+			if (std::map<std::pair<int16_t, uint16_t>, size_t>::const_reverse_iterator(receiver_index) == receiverMap_.rbegin())
+				assert(receiver_offsets[receiver_index->second] + binidx < sources[sourceidx].amplitudes.size());
+			else {
+				assert(receiver_offsets[receiver_index->second] + binidx < receiver_offsets[receiver_index->second+1]);
+			}
+			// compute detection weight for wavelength and impact angle
 			double weight = p.GetWeight()*wavelengthAcceptance_->GetValue(p.GetWavelength())*angularAcceptance_->GetValue(std::cos(p.GetDirTheta()));
-			sources[sourceidx].amplitudes(receiver_offsets[receiver_index] + (binidx == 0 ? 0 : binidx-1))
+			// add to the bin
+			sources[sourceidx].amplitudes(receiver_offsets[receiver_index->second] + binidx)
 			    += weight/(oversampleFactor_*energyScale);
 		}
 	}
