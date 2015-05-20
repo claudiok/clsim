@@ -30,7 +30,8 @@
 #include <inttypes.h>
 
 #include <cmath>
-#include <boost/algorithm/clamp.hpp>
+// The hobo_clamp.hpp include Boost's clamp.hpp if it has it, otherwise a JvS-hacked replacement
+#include "clsim/hobo_clamp.hpp"
 
 #include "clsim/I3CLSimLightSourceToStepConverterPPC.h"
 
