@@ -28,11 +28,9 @@ from __future__ import print_function
 from icecube.icetray import I3Units, I3Module, traysegment
 from icecube.dataclasses import I3Position, I3Particle, I3MCTree, I3Direction, I3Constants
 from icecube.phys_services import I3Calculator, I3GSLRandomService
-# from icecube.clsim import I3Photon, I3CLSimTabulator
-from icecube.clsim import GetIceCubeDOMAcceptance, GetIceCubeDOMAngularSensitivity
+from icecube.clsim import I3CLSimFunctionConstant
+from icecube.clsim import GetIceCubeDOMAcceptance, GetIceCubeDOMAngularSensitivity, NumberOfPhotonsPerMeter
 from icecube.clsim import FlasherInfoVectToFlasherPulseSeriesConverter, I3CLSimFlasherPulse, I3CLSimFlasherPulseSeries
-from icecube.clsim.traysegments.common import parseIceModel
-from icecube.clsim.util import GetRefractiveIndexRange
 import numpy, math
 from icecube.photospline import numpy_extensions # meshgrid_nd
 from icecube.photospline.photonics import FITSTable, Efficiency, Geometry, Parity
@@ -42,85 +40,6 @@ def generate_seed():
     with open('/dev/random') as rand:
         return struct.unpack('I', rand.read(4))[0]
 
-class MakeParticle(I3Module):
-    def __init__(self, context):
-        I3Module.__init__(self, context)
-        self.AddParameter("I3RandomService", "the service", None)
-        self.AddParameter("PhotonSource", "", "CASCADE")
-        self.AddParameter("ParticleType", "", I3Particle.ParticleType.EMinus)
-        self.AddParameter("Energy", "", 1.*I3Units.GeV)
-        self.AddParameter("Zenith", "", 90.*I3Units.degree)
-        self.AddParameter("Azimuth", "", 0.*I3Units.degree)
-        self.AddParameter("ZCoordinate", "", 0.*I3Units.m)
-        self.AddParameter("FlasherWidth", "", 127)
-        self.AddParameter("FlasherBrightness", "", 127)
-        self.AddParameter("NEvents", "", 100)
-
-        self.AddOutBox("OutBox")        
-
-    def Configure(self):
-        self.rs = self.GetParameter("I3RandomService")
-        self.photonSource = self.GetParameter("PhotonSource")
-        self.particleType = self.GetParameter("ParticleType")
-        self.energy = self.GetParameter("Energy")
-        self.zenith = self.GetParameter("Zenith")
-        self.azimuth = self.GetParameter("Azimuth")
-        self.zCoordinate = self.GetParameter("ZCoordinate")
-        self.flasherWidth = self.GetParameter("FlasherWidth")
-        self.flasherBrightness = self.GetParameter("FlasherBrightness")
-        self.nEvents = self.GetParameter("NEvents")
-        
-        self.emittedEvents=0
-
-    def DAQ(self, frame):
-
-        # create source particle
-        source = I3Particle()
-        source.type = self.particleType
-        source.energy = self.energy
-        source.pos = I3Position(0., 0., self.zCoordinate)
-        source.dir = I3Direction(self.zenith, self.azimuth)
-        source.time = 0.
-        source.length = 0.
-        source.location_type = I3Particle.LocationType.InIce
-
-        # the table-making module prefers plain I3Particles
-        frame["Source"] = source
-
-        if self.photonSource.upper() == "CASCADE":
-
-            primary = I3Particle()
-            primary.type = I3Particle.ParticleType.NuE
-            primary.energy = self.energy
-            primary.pos = I3Position(0., 0., self.zCoordinate)
-            primary.dir = I3Direction(self.zenith, self.azimuth)
-            primary.time = 0.
-            primary.location_type = I3Particle.LocationType.Anywhere
-
-            mctree = I3MCTree()
-            mctree.add_primary(primary)
-            mctree.append_child(primary, source)
-    
-            # clsim likes I3MCTrees
-            frame["I3MCTree"] = mctree
-            
-        elif self.photonSource.upper() == "FLASHER":
-
-            outputSeries = I3CLSimFlasherPulseSeries()
-            flasherPulse = self.getFlasherPulse(0., 0., self.zCoordinate, self.zenith, self.azimuth)
-            outputSeries.append(flasherPulse)
-
-            # clsim likes I3CLSimFlasherPulseSeries
-            frame["I3FlasherPulseSeriesMap"] =  outputSeries
-
-        self.emittedEvents += 1
-        
-        self.PushFrame(frame)
-        
-        print(self.emittedEvents)
-        if self.emittedEvents >= self.nEvents:
-            self.RequestSuspension()
-    
 def makeFlasherPulse(x, y, z, zenith, azimuth, width, brightness):
 
     pulse = I3CLSimFlasherPulse()
@@ -191,8 +110,8 @@ from os.path import expandvars
 
 @icetray.traysegment
 def I3CLSimTabulatePhotons(tray, name,
-                       UseCPUs=False,
-                       UseGPUs=True,
+                       UseCPUs=True,
+                       UseGPUs=False,
                        UseOnlyDeviceNumber=None,
                        MCTreeName="I3MCTree",
                        OutputMCTreeName=None,
@@ -201,8 +120,7 @@ def I3CLSimTabulatePhotons(tray, name,
                        MMCTrackListName="MMCTrackList",
                        ParallelEvents=1000,
                        RandomService=None,
-                       IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
-                       DisableTilt=False,
+                       MediumProperties=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
                        UseGeant4=False,
                        CrossoverEnergyEM=None,
                        CrossoverEnergyHadron=None,
@@ -279,7 +197,7 @@ def I3CLSimTabulatePhotons(tray, name,
         you can specify the name of a configured I3RandomServiceFactory
         added to I3Tray using tray.AddService(). If you don't configure
         this, the default I3RandomServiceFactory will be used.
-    :param IceModelLocation:
+    :param MediumProperties:
         Set this either to a directory containing a PPC-compatible
         ice description (icemodel.dat, icemodel.par and cfg.txt) or
         to a photonics ice table file. PPC-compatible ice files should
@@ -441,13 +359,6 @@ def I3CLSimTabulatePhotons(tray, name,
         else:
             clSimMCTreeName = clSimMCTreeName
 
-    # ice properties
-    if isinstance(IceModelLocation, str):
-        mediumProperties = parseIceModel(IceModelLocation, disableTilt=DisableTilt)
-    else:
-        # get ice model directly if not a string
-        mediumProperties = IceModelLocation
-    
     domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius=DOMOversizeFactor*DOMRadius)
     if UseHoleIceParameterization:
         angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(UseHoleIceParameterization)
@@ -491,7 +402,7 @@ def I3CLSimTabulatePhotons(tray, name,
     tray.AddModule("I3CLSimTabulatorModule", name + "_clsim",
                    MCTreeName=clSimMCTreeName,
                    RandomService=RandomService,
-                   MediumProperties=mediumProperties,
+                   MediumProperties=MediumProperties,
                    SpectrumTable=spectrumTable,
                    FlasherPulseSeriesName=clSimFlasherPulseSeriesName,
                    WavelengthAcceptance=domAcceptance,
@@ -660,6 +571,7 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=90.*I3U
     
     header = dict(FITSTable.empty_header)
     header['zenith'] = Zenith/I3Units.degree
+    header['azimuth'] = Azimuth/I3Units.degree
     header['z'] = ZCoordinate
     header['energy'] = Energy
     header['type'] = int(ptype)
@@ -686,11 +598,18 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=90.*I3U
         if TabulateImpactAngle:
             dims.append(clsim.tabulator.LinearAxis(-1, 1, 20))
         Axes = geo(dims)
-    
 
-    if PhotonSource.upper() == "FLASHER":
+    # ice properties
+    mediumProperties = parseIceModel(expandvars("$I3_SRC/clsim/resources/ice/" + IceModel), disableTilt=DisableTilt)
+    numberOfPhotonsPerMeter = NumberOfPhotonsPerMeter(mediumProperties.GetPhaseRefractiveIndex(0), I3CLSimFunctionConstant(1.),
+                                                      mediumProperties.GetMinWavelength(), mediumProperties.GetMaxWavelength())
+
+    if PhotonSource == "flasher":
         header['flasherwidth'] = FlasherWidth
         header['flasherbrightness'] = FlasherBrightness
+    else:
+        # save light yield scale to photonics expectation (number of cherenkov photons per meter in 300-600nm range)
+        header['lightscale'] = numberOfPhotonsPerMeter/32582.
     
     tray.AddSegment(I3CLSimTabulatePhotons, name+"makeCLSimPhotons",
         MCTreeName = mctree,                        # if source is a cascade this will point to the I3MCTree
@@ -708,6 +627,5 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=90.*I3U
         OverrideApproximateNumberOfWorkItems=1,     # if you *would* use multi-threading, this would be the maximum number of jobs to run in parallel (OpenCL is free to split them)
         ExtraArgumentsToI3CLSimModule=dict(Filename=Filename, TableHeader=header,
             Axes=Axes, PhotonsPerBunch=200, EntriesPerPhoton=5000),
-        IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/" + IceModel),
-        DisableTilt=DisableTilt,
+        MediumProperties=mediumProperties,
     )
