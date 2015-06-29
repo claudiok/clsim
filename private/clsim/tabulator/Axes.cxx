@@ -96,7 +96,11 @@ Axes::GenerateBinningCode() const
 std::string
 SphericalAxes::GetCoordinateFunction() const
 {
-	return loadKernel("spherical_coordinates");
+	std::ostringstream ss;
+	if (at(1)->GetMax() > 180.)
+		ss << "#define HAS_FULL_AZIMUTH_EXTENSION\n";
+	ss << loadKernel("spherical_coordinates");
+	return ss.str();
 }
 
 std::string

@@ -51,8 +51,15 @@ getCoordinates(const floating4_t absPos, floating4_t dirAndWlen,
     // radius
     coords.s0 = magnitude(pos);
     // azimuth
-    coords.s1 = (n_rho > 0) ?
-        acos(dot(rho,source->perpDir)/n_rho)/(PI/180) : 0;
+    floating_t azimuth = (n_rho > 0) ? acos(dot(rho, source->perpDir)/n_rho)/(PI/180) : 0;
+#ifdef HAS_FULL_AZIMUTH_EXTENSION
+        // need to determine direction of rho in case table has an azimuth extension up to 360 deg
+        floating4_t azisignvec = cross(rho, source->perpDir);
+        floating_t azisign = dot(azisignvec, source->dir);
+        coords.s1 = (azisign > 0) ? 360.-azimuth : azimuth;
+#else
+        coords.s1 = azimuth;
+#endif
     // cos(polar angle)
     coords.s2 = (coords.s0 > 0) ? my_divide(l, coords.s0) : 0;
     // delay time
