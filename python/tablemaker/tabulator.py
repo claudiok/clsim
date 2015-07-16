@@ -40,7 +40,7 @@ def generate_seed():
     with open('/dev/random') as rand:
         return struct.unpack('I', rand.read(4))[0]
 
-def makeFlasherPulse(x, y, z, zenith, azimuth, width, brightness):
+def makeFlasherPulse(x, y, z, zenith, azimuth, width, brightness, scale):
 
     pulse = I3CLSimFlasherPulse()
     pulse.type = I3CLSimFlasherPulse.FlasherPulseType.LED405nm
@@ -48,8 +48,8 @@ def makeFlasherPulse(x, y, z, zenith, azimuth, width, brightness):
     pulse.dir = I3Direction(zenith, azimuth)
     pulse.time = 0.
     pulse.pulseWidth = (float(width)/2.)*I3Units.ns
-    scale = 32582*5.21 # scale down to match 1 GeV equivalent electromagnetic cascade energy
-    pulse.numberOfPhotonsNoBias = 1.17e10/scale*(0.0006753+0.00005593*float(brightness))*(float(width)+13.9-(57.5/(1.+float(brightness)/34.4)))
+    lightscale = 1./(32582*5.21) # scale down to match 1 GeV equivalent electromagnetic cascade energy
+    pulse.numberOfPhotonsNoBias = 1.17e10*lightscale*scale*(0.0006753+0.00005593*float(brightness))*(float(width)+13.9-(57.5/(1.+float(brightness)/34.4)))
 
     if numpy.abs(zenith - 90.*I3Units.degree) > 22.5*I3Units.degree:
         tiltedFlasher = True # this is only a rough approximation to describe a tilted flasher
@@ -413,13 +413,13 @@ def I3CLSimTabulatePhotons(tray, name,
                    **ExtraArgumentsToI3CLSimModule
                    )
     
-    unpin_threads()
+    #unpin_threads()
 
 @traysegment
-def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=90.*I3Units.degree, Azimuth=0*I3Units.degree, ZCoordinate=0.*I3Units.m,
+def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Units.degree, Azimuth=0.*I3Units.degree, ZCoordinate=0.*I3Units.m,
     Energy=1.*I3Units.GeV, FlasherWidth=127, FlasherBrightness=127, Seed=12345, NEvents=100,
     IceModel='spice_mie', DisableTilt=False, Filename="", TabulateImpactAngle=False,
-    PhotonPrescale=1, Axes=None):
+    PhotonPrescale=1, Axes=None, Directions=None):
     
     """
     Tabulate the distribution of photoelectron yields on IceCube DOMs from various
@@ -468,7 +468,9 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=90.*I3U
            photon on the DOM instead of weighting by the DOM's angular acceptance
     :param Axes: a subclass of :cpp:class:`clsim::tabulator::Axes` that defines the coordinate system.
                  If None, an appropriate default will be chosen based on **PhotonSource**.
-    """
+    :param Directions: a set of directions to allow table generation for multiple sources.
+                 If None, only one direction given by **Zenith** and **Azimuth** is used.
+       """
 
     # check sanity of args
     PhotonSource = PhotonSource.lower()
@@ -491,16 +493,19 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=90.*I3U
                    EventID=1,
                    IncrementEventID=True)
 
+    if Directions is None:
+        Directions = numpy.asarray([(Zenith, Azimuth)])
+
     if PhotonSource == 'cascade' or PhotonSource == 'flasher':
 
         ptype = I3Particle.ParticleType.EMinus
 
-        def reference_source():
+        def reference_source(zenith, azimuth, scale):
             source = I3Particle()
             source.type = ptype
-            source.energy = Energy
+            source.energy = Energy*scale
             source.pos = I3Position(0., 0., ZCoordinate)
-            source.dir = I3Direction(Zenith, Azimuth)
+            source.dir = I3Direction(zenith, azimuth)
             source.time = 0.
             source.length = 0.
             source.location_type = I3Particle.LocationType.InIce
@@ -514,11 +519,11 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=90.*I3U
         
         ptype = I3Particle.ParticleType.MuMinus
         
-        def reference_source():
+        def reference_source(zenith, azimuth, scale):
             source = I3Particle()
             source.type = ptype
-            source.energy = Energy
-            source.dir = I3Direction(Zenith, Azimuth)
+            source.energy = Energy*scale
+            source.dir = I3Direction(zenith, azimuth)
             source.pos = surface.sample_impact_position(source.dir, randomService)
             crossings = surface.intersection(source.pos, source.dir)
             source.length = crossings.second-crossings.first
@@ -539,20 +544,24 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=90.*I3U
             self.reference_source = self.GetParameter("SourceFunction")
             self.nevents = self.GetParameter("NEvents")
             self.emittedEvents = 0
-        
         def DAQ(self, frame):
-            source = self.reference_source()
-            primary = I3Particle()
-            mctree = I3MCTree()
-            mctree.add_primary(primary)
-            mctree.append_child(primary, source)
-    
             if PhotonSource != "flasher":
+                primary = I3Particle()
+                mctree = I3MCTree()
+                mctree.add_primary(primary)
+                for zenith, azimuth in Directions:
+                    source = self.reference_source(zenith, azimuth, 1./len(Directions))
+                    mctree.append_child(primary, source)
                 frame["I3MCTree"] = mctree
             else:
-                frame["I3FlasherPulseSeriesMap"] = I3CLSimFlasherPulseSeries([makeFlasherPulse(0, 0, ZCoordinate, Zenith, Azimuth, FlasherWidth, FlasherBrightness)])
+                pulseseries = I3CLSimFlasherPulseSeries()
+                for zenith, azimuth in Directions:
+                    pulse = makeFlasherPulse(0, 0, ZCoordinate, zenith, azimuth, FlasherWidth, FlasherBrightness, 1./len(Directions))
+                    pulseseries.append(pulse)
+                frame["I3FlasherPulseSeriesMap"] = pulseseries
+
             # use the primary particle as a geometrical reference
-            frame["ReferenceParticle"] = source
+            frame["ReferenceParticle"] = self.reference_source(Zenith, Azimuth, 1.)
             
             self.PushFrame(frame)
             
