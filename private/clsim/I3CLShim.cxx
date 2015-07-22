@@ -139,7 +139,7 @@ I3CLShim::GetMeanAmplitudes(std::vector<LightSource> &sources, const std::vector
 			// each real source is repeated oversampleFactor_ times
 			int sourceidx = p.GetID() / oversampleFactor_;
 			// ensure that we haven't stepped out of bounds
-			if (std::map<std::pair<int16_t, uint16_t>, size_t>::const_reverse_iterator(receiver_index) == receiverMap_.rbegin())
+			if (receiver_index == boost::prior(receiverMap_.end()))
 				assert(receiver_offsets[receiver_index->second] + binidx < sources[sourceidx].amplitudes.size());
 			else {
 				assert(receiver_offsets[receiver_index->second] + binidx < receiver_offsets[receiver_index->second+1]);
