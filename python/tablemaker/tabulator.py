@@ -413,7 +413,7 @@ def I3CLSimTabulatePhotons(tray, name,
                    **ExtraArgumentsToI3CLSimModule
                    )
     
-    #unpin_threads()
+    unpin_threads()
 
 @traysegment
 def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Units.degree, Azimuth=0.*I3Units.degree, ZCoordinate=0.*I3Units.m,
