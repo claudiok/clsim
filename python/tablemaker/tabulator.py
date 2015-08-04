@@ -29,7 +29,7 @@ from icecube.icetray import I3Units, I3Module, traysegment
 from icecube.dataclasses import I3Position, I3Particle, I3MCTree, I3Direction, I3Constants
 from icecube.phys_services import I3Calculator, I3GSLRandomService
 from icecube.clsim import I3CLSimFunctionConstant
-from icecube.clsim import GetIceCubeDOMAcceptance, GetIceCubeDOMAngularSensitivity, NumberOfPhotonsPerMeter
+from icecube.clsim import GetIceCubeDOMAcceptance, GetIceCubeDOMAngularSensitivity
 from icecube.clsim import FlasherInfoVectToFlasherPulseSeriesConverter, I3CLSimFlasherPulse, I3CLSimFlasherPulseSeries
 import numpy, math
 from icecube.photospline import numpy_extensions # meshgrid_nd
@@ -608,18 +608,10 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
             dims.append(clsim.tabulator.LinearAxis(-1, 1, 20))
         Axes = geo(dims)
 
-    # ice properties
-    mediumProperties = parseIceModel(expandvars("$I3_SRC/clsim/resources/ice/" + IceModel), disableTilt=DisableTilt)
-    numberOfPhotonsPerMeter = NumberOfPhotonsPerMeter(mediumProperties.GetPhaseRefractiveIndex(0), I3CLSimFunctionConstant(1.),
-                                                      mediumProperties.GetMinWavelength(), mediumProperties.GetMaxWavelength())
-
     if PhotonSource == "flasher":
         header['flasherwidth'] = FlasherWidth
         header['flasherbrightness'] = FlasherBrightness
-    else:
-        # save light yield scale to photonics expectation (number of cherenkov photons per meter in 300-600nm range)
-        header['lightscale'] = numberOfPhotonsPerMeter/32582.
-    
+
     tray.AddSegment(I3CLSimTabulatePhotons, name+"makeCLSimPhotons",
         MCTreeName = mctree,                        # if source is a cascade this will point to the I3MCTree
         FlasherPulseSeriesName = flasherpulse,      # if source is a flasher this will point to the I3CLSimFlasherPulseSeries
@@ -636,5 +628,5 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
         OverrideApproximateNumberOfWorkItems=1,     # if you *would* use multi-threading, this would be the maximum number of jobs to run in parallel (OpenCL is free to split them)
         ExtraArgumentsToI3CLSimModule=dict(Filename=Filename, TableHeader=header,
             Axes=Axes, PhotonsPerBunch=200, EntriesPerPhoton=5000),
-        MediumProperties=mediumProperties,
+        MediumProperties=parseIceModel(expandvars("$I3_SRC/clsim/resources/ice/" + IceModel), disableTilt=DisableTilt),
     )
