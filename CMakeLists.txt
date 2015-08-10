@@ -55,6 +55,7 @@ endif (APPLE AND (CMAKE_SYSTEM_VERSION VERSION_LESS "11.0.0"))
 if (BUILD_CLSIM_DATACLASSES_ONLY)
   i3_project(clsim
     DOCS_DIR resources/docs
+    NOT_INSPECTABLE
   )
 
   if (OPENCL_FOUND)
