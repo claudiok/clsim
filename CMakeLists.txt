@@ -67,6 +67,7 @@ else (BUILD_CLSIM_DATACLASSES_ONLY)
   i3_project(clsim
     PYTHON_DIR python
     DOCS_DIR resources/docs
+    NOT_INSPECTABLE
   )
 endif (BUILD_CLSIM_DATACLASSES_ONLY)
 
