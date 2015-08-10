@@ -306,8 +306,7 @@ def I3CLSimMakeHits(tray, name,
                                                  DOMOversizeFactor=DOMOversizeFactor,
                                                  UnshadowedFraction=UnshadowedFraction,
                                                  UseHoleIceParameterization=UseHoleIceParameterization,
-                                                 UseMartinDOMAngularSens=UseMartinDOMAngularSens,
-                                                 UseMartinDOMAngularSens=UseMartinDOMAngularSens,
+                                                 UseMartinDOMAngularSens=UseMartinDOMAngularSens,                                               
                                                  If=If)
         
         if hasattr(icetray, "traysegment"):
