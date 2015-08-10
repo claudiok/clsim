@@ -67,3 +67,29 @@ def GetIceCubeDOMAngularSensitivity(holeIce=True):
                        ]
     
     return I3CLSimFunctionPolynomial(coefficients)
+    
+
+def GetMartinDOMAngularSensitivity(holeIce=True):
+    """
+    The relative collection efficiency of the DOM as a polynomial in the
+    cosine of the photon's impact angle with respect to the DOM orientation
+    (for IceCube, straight down).
+    """
+    if holeIce:
+       raise RuntimeError("HoleIce not implemented for Martins DOM Sens")
+    else:
+        coefficients = [ 0.34180682822130659,
+                         0.49757278430007335,
+                        -0.055234861469318206,
+                         0.29162371508273816,
+                         0.5559282600355534,
+                        -0.54153228727086877,
+                        -0.5633734480528092,
+                         0.27515051241865168,
+                         0.27930872296823001,
+                        -0.024860017684141401,
+                        -0.05881547031940261 ,
+                       ]
+    
+    return I3CLSimFunctionPolynomial(coefficients)
+

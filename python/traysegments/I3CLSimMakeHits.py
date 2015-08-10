@@ -71,6 +71,7 @@ def I3CLSimMakeHits(tray, name,
                     UnshadowedFraction=0.9,
                     UseHoleIceParameterization=True,
                     ExtraArgumentsToI3CLSimModule=dict(),
+                    UseMartinDOMAngularSens=False,
                     If=lambda f: True
                     ):
     """Do standard clsim processing, compatible to hit-maker/PPC.
@@ -305,6 +306,8 @@ def I3CLSimMakeHits(tray, name,
                                                  DOMOversizeFactor=DOMOversizeFactor,
                                                  UnshadowedFraction=UnshadowedFraction,
                                                  UseHoleIceParameterization=UseHoleIceParameterization,
+                                                 UseMartinDOMAngularSens=UseMartinDOMAngularSens,
+                                                 UseMartinDOMAngularSens=UseMartinDOMAngularSens,
                                                  If=If)
         
         if hasattr(icetray, "traysegment"):

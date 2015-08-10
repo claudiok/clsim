@@ -42,6 +42,7 @@ def I3CLSimMakeHitsFromPhotons(tray, name,
                                DOMOversizeFactor=5.,
                                UnshadowedFraction=0.9,
                                UseHoleIceParameterization=True,
+                               UseMartinDOMAngularSens=False,
                                If=lambda f: True
                                ):
     """
@@ -80,7 +81,11 @@ def I3CLSimMakeHitsFromPhotons(tray, name,
 
     # detector properties
     domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius = DOMRadius*DOMOversizeFactor, efficiency=UnshadowedFraction)
-    domAngularSensitivity = clsim.GetIceCubeDOMAngularSensitivity(holeIce=UseHoleIceParameterization)
+    if UseMartinDOMAngularSens:
+        print "Using Martin Angular DOM Sens"
+        domAngularSensitivity = clsim.GetMartinDOMAngularSensitivity(holeIce=UseHoleIceParameterization)
+    else:
+        domAngularSensitivity = clsim.GetIceCubeDOMAngularSensitivity(holeIce=UseHoleIceParameterization)
 
     tray.AddModule("I3PhotonToMCPEConverter", name + "_clsim_make_hits",
                    RandomService = RandomService,
