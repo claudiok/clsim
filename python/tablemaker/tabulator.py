@@ -95,6 +95,11 @@ def unpin_threads(delay=60):
             tid = tid.strip()
             if tid:
                 taskset(tid,tt)
+    # only do this on linux
+    try:
+        open('/proc/cpuinfo')
+    except IOError:
+        return
     threading.Thread(target=resetTasksetThreads,args=(os.getpid(),)).start()
     
 
