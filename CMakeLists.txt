@@ -55,7 +55,6 @@ endif (APPLE AND (CMAKE_SYSTEM_VERSION VERSION_LESS "11.0.0"))
 if (BUILD_CLSIM_DATACLASSES_ONLY)
   i3_project(clsim
     DOCS_DIR resources/docs
-    NOT_INSPECTABLE
   )
 
   if (OPENCL_FOUND)
@@ -67,7 +66,6 @@ else (BUILD_CLSIM_DATACLASSES_ONLY)
   i3_project(clsim
     PYTHON_DIR python
     DOCS_DIR resources/docs
-    NOT_INSPECTABLE
   )
 endif (BUILD_CLSIM_DATACLASSES_ONLY)
 
@@ -286,6 +284,7 @@ i3_add_library(${PROJECT_NAME}
   ${LIB_${PROJECT_NAME}_SOURCEFILES}
   USE_TOOLS ${LIB_${PROJECT_NAME}_TOOLS} scipy
   USE_PROJECTS ${LIB_${PROJECT_NAME}_PROJECTS}
+  NOT_INSPECTABLE
   )
 
 # the make-safeprimes tool needs gmp, so only compile it if that tool is available
