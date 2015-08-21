@@ -100,7 +100,7 @@ void I3CLSimLightSourceToStepConverterPPC::Initialize()
     rngState_ = mwcRngInitState(randomService_, rngA_);
     
     // initialize the pre-calculator threads
-    preCalc_ = shared_ptr<GenerateStepPreCalculator>(new GenerateStepPreCalculator(randomService_, /*a=*/0.39, /*b=*/2.61));
+    preCalc_ = boost::shared_ptr<GenerateStepPreCalculator>(new GenerateStepPreCalculator(randomService_, /*a=*/0.39, /*b=*/2.61));
 
     // make a copy of the medium properties
     {
@@ -746,7 +746,7 @@ queueFromFeederThreads_(10)  // size 10 for 5 threads
     for (unsigned int i=0;i<numFeederThreads;++i)
     {
         const uint64_t rngState = mwcRngInitState(randomService, rngAs[i]);
-        shared_ptr<boost::thread> newThread(new boost::thread(boost::bind(&I3CLSimLightSourceToStepConverterPPC::GenerateStepPreCalculator::FeederThread, this, i, rngState, rngAs[i])));
+        boost::shared_ptr<boost::thread> newThread(new boost::thread(boost::bind(&I3CLSimLightSourceToStepConverterPPC::GenerateStepPreCalculator::FeederThread, this, i, rngState, rngAs[i])));
         feederThreads_.push_back(newThread);
     }
 
@@ -787,7 +787,7 @@ void I3CLSimLightSourceToStepConverterPPC::GenerateStepPreCalculator::FeederThre
     for (;;)
     {
         // make a bunch of steps
-        shared_ptr<queueVector_t> outputVector(new queueVector_t());
+        boost::shared_ptr<queueVector_t> outputVector(new queueVector_t());
         outputVector->reserve(numberOfValues_);
         
         // calculate values

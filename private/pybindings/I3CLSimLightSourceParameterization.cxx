@@ -113,8 +113,8 @@ void register_I3CLSimLightSourceParameterization()
     .def(list_indexing_suite<I3CLSimLightSourceParameterizationSeries>())
     ;
     
-    bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceParameterization>, shared_ptr<const I3CLSimLightSourceParameterization> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceParameterizationSeries>, shared_ptr<const I3CLSimLightSourceParameterizationSeries> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSourceParameterization>, boost::shared_ptr<const I3CLSimLightSourceParameterization> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSourceParameterizationSeries>, boost::shared_ptr<const I3CLSimLightSourceParameterizationSeries> >();
 
     from_python_sequence<I3CLSimLightSourceParameterizationSeries, variable_capacity_policy>();
     

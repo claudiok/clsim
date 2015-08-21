@@ -58,8 +58,8 @@ private:
 
     void InitBuffers();
 
-    shared_ptr<cl::Buffer> deviceBuffer_results;
-    shared_ptr<cl::Buffer> deviceBuffer_inputs;
+    boost::shared_ptr<cl::Buffer> deviceBuffer_results;
+    boost::shared_ptr<cl::Buffer> deviceBuffer_inputs;
 
     I3CLSimFunctionConstPtr wlenDependentValue_;
     

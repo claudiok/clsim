@@ -246,7 +246,7 @@ public:
      * @return this returns the position of the photon at a certain index,
      * with index < GetNumPositionListEntries().
      *
-     * The return value may be an invalid shared_ptr if there is no position
+     * The return value may be an invalid boost::shared_ptr if there is no position
      * stored for a certain index.
      */
     inline boost::optional<I3Position> GetPositionListEntry(uint32_t index) const

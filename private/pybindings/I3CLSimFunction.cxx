@@ -93,9 +93,9 @@ void register_I3CLSimFunction()
         ;
     }
     
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionWrapper>, shared_ptr<const I3CLSimFunction> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionWrapper>, shared_ptr<I3CLSimFunction> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionWrapper>, shared_ptr<const I3CLSimFunctionWrapper> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionWrapper>, boost::shared_ptr<const I3CLSimFunction> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionWrapper>, boost::shared_ptr<I3CLSimFunction> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionWrapper>, boost::shared_ptr<const I3CLSimFunctionWrapper> >();
     utils::register_const_ptr<I3CLSimFunction>();
 
     // constant value
@@ -118,9 +118,9 @@ void register_I3CLSimFunction()
          )
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionConstant>, shared_ptr<const I3CLSimFunctionConstant> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionConstant>, shared_ptr<I3CLSimFunction> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionConstant>, shared_ptr<const I3CLSimFunction> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionConstant>, boost::shared_ptr<const I3CLSimFunctionConstant> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionConstant>, boost::shared_ptr<I3CLSimFunction> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionConstant>, boost::shared_ptr<const I3CLSimFunction> >();
     utils::register_const_ptr<I3CLSimFunctionConstant>();
 
 
@@ -145,9 +145,9 @@ void register_I3CLSimFunction()
         .def("GetPeakPosition", &I3CLSimFunctionDeltaPeak::GetPeakPosition)
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionDeltaPeak>, shared_ptr<const I3CLSimFunctionDeltaPeak> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionDeltaPeak>, shared_ptr<I3CLSimFunction> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionConstant>, shared_ptr<const I3CLSimFunction> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionDeltaPeak>, boost::shared_ptr<const I3CLSimFunctionDeltaPeak> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionDeltaPeak>, boost::shared_ptr<I3CLSimFunction> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionConstant>, boost::shared_ptr<const I3CLSimFunction> >();
     utils::register_const_ptr<I3CLSimFunctionDeltaPeak>();
 
     
@@ -195,9 +195,9 @@ void register_I3CLSimFunction()
         .def("GetInEqualSpacingMode", &I3CLSimFunctionFromTable::GetInEqualSpacingMode)
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionFromTable>, shared_ptr<const I3CLSimFunctionFromTable> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionFromTable>, shared_ptr<I3CLSimFunction> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionFromTable>, shared_ptr<const I3CLSimFunction> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionFromTable>, boost::shared_ptr<const I3CLSimFunctionFromTable> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionFromTable>, boost::shared_ptr<I3CLSimFunction> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionFromTable>, boost::shared_ptr<const I3CLSimFunction> >();
     utils::register_const_ptr<I3CLSimFunctionFromTable>();
 
     
@@ -223,9 +223,9 @@ void register_I3CLSimFunction()
          )
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionScatLenPartic>, shared_ptr<const I3CLSimFunctionScatLenPartic> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionScatLenPartic>, shared_ptr<I3CLSimFunction> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionScatLenPartic>, shared_ptr<const I3CLSimFunction> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionScatLenPartic>, boost::shared_ptr<const I3CLSimFunctionScatLenPartic> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionScatLenPartic>, boost::shared_ptr<I3CLSimFunction> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionScatLenPartic>, boost::shared_ptr<const I3CLSimFunction> >();
     utils::register_const_ptr<I3CLSimFunctionScatLenPartic>();
 
 
@@ -275,9 +275,9 @@ void register_I3CLSimFunction()
          )
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionRefIndexQuanFry>, shared_ptr<const I3CLSimFunctionRefIndexQuanFry> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionRefIndexQuanFry>, shared_ptr<I3CLSimFunction> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionRefIndexQuanFry>, shared_ptr<const I3CLSimFunction> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionRefIndexQuanFry>, boost::shared_ptr<const I3CLSimFunctionRefIndexQuanFry> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionRefIndexQuanFry>, boost::shared_ptr<I3CLSimFunction> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionRefIndexQuanFry>, boost::shared_ptr<const I3CLSimFunction> >();
     utils::register_const_ptr<I3CLSimFunctionRefIndexQuanFry>();
 
     
@@ -322,9 +322,9 @@ void register_I3CLSimFunction()
          )
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionRefIndexIceCube>, shared_ptr<const I3CLSimFunctionRefIndexIceCube> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionRefIndexIceCube>, shared_ptr<I3CLSimFunction> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionRefIndexIceCube>, shared_ptr<const I3CLSimFunction> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionRefIndexIceCube>, boost::shared_ptr<const I3CLSimFunctionRefIndexIceCube> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionRefIndexIceCube>, boost::shared_ptr<I3CLSimFunction> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionRefIndexIceCube>, boost::shared_ptr<const I3CLSimFunction> >();
     utils::register_const_ptr<I3CLSimFunctionRefIndexIceCube>();
 
     
@@ -375,9 +375,9 @@ void register_I3CLSimFunction()
         .add_property("deltaTau", &I3CLSimFunctionAbsLenIceCube::GetDeltaTau)
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionAbsLenIceCube>, shared_ptr<const I3CLSimFunctionAbsLenIceCube> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionAbsLenIceCube>, shared_ptr<I3CLSimFunction> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionAbsLenIceCube>, shared_ptr<const I3CLSimFunction> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionAbsLenIceCube>, boost::shared_ptr<const I3CLSimFunctionAbsLenIceCube> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionAbsLenIceCube>, boost::shared_ptr<I3CLSimFunction> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionAbsLenIceCube>, boost::shared_ptr<const I3CLSimFunction> >();
     utils::register_const_ptr<I3CLSimFunctionAbsLenIceCube>();
 
 
@@ -407,9 +407,9 @@ void register_I3CLSimFunction()
         .add_property("b400", &I3CLSimFunctionScatLenIceCube::GetB400)
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionScatLenIceCube>, shared_ptr<const I3CLSimFunctionScatLenIceCube> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionScatLenIceCube>, shared_ptr<I3CLSimFunction> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionScatLenIceCube>, shared_ptr<const I3CLSimFunction> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionScatLenIceCube>, boost::shared_ptr<const I3CLSimFunctionScatLenIceCube> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionScatLenIceCube>, boost::shared_ptr<I3CLSimFunction> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionScatLenIceCube>, boost::shared_ptr<const I3CLSimFunction> >();
     utils::register_const_ptr<I3CLSimFunctionScatLenIceCube>();
 
     
@@ -454,9 +454,9 @@ void register_I3CLSimFunction()
         .def("GetCoefficients", &I3CLSimFunctionPolynomial::GetCoefficients, bp::return_value_policy<bp::copy_const_reference>())
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionPolynomial>, shared_ptr<const I3CLSimFunctionPolynomial> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionPolynomial>, shared_ptr<I3CLSimFunction> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionPolynomial>, shared_ptr<const I3CLSimFunction> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionPolynomial>, boost::shared_ptr<const I3CLSimFunctionPolynomial> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionPolynomial>, boost::shared_ptr<I3CLSimFunction> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionPolynomial>, boost::shared_ptr<const I3CLSimFunction> >();
     utils::register_const_ptr<I3CLSimFunctionPolynomial>();
 
 }

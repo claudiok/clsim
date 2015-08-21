@@ -47,24 +47,24 @@ namespace I3CLSimHelper
     
     
     
-    // takes a vector of shared_ptrs-to-const and dynamic_casts all
+    // takes a vector of boost::shared_ptrs-to-const and dynamic_casts all
     // contents to a new type. only returns a filled vector if the
     // cast succeeds for all elements. "worked" is set to true
     // if the cast worked and "false" if it did not.
     template<class T, class U>
-    std::vector<shared_ptr<const T> > dynamic_vector_contents_cast(const std::vector<shared_ptr<const U> > &inVec, bool &worked)
+    std::vector<boost::shared_ptr<const T> > dynamic_vector_contents_cast(const std::vector<boost::shared_ptr<const U> > &inVec, bool &worked)
     {
-        std::vector<shared_ptr<const T> > retVec;
+        std::vector<boost::shared_ptr<const T> > retVec;
         
-        BOOST_FOREACH(const shared_ptr<const U> &inputValue, inVec)
+        BOOST_FOREACH(const boost::shared_ptr<const U> &inputValue, inVec)
         {
             if (!inputValue) {
-                retVec.push_back(shared_ptr<const T>());
+                retVec.push_back(boost::shared_ptr<const T>());
                 continue;
             }
             
-            shared_ptr<const T> convertedPtr = boost::dynamic_pointer_cast<const T>(inputValue);
-            if (!convertedPtr) {worked=false; return std::vector<shared_ptr<const T> >();}
+            boost::shared_ptr<const T> convertedPtr = boost::dynamic_pointer_cast<const T>(inputValue);
+            if (!convertedPtr) {worked=false; return std::vector<boost::shared_ptr<const T> >();}
             
             retVec.push_back(convertedPtr);
         }
@@ -98,14 +98,14 @@ namespace I3CLSimHelper
         struct BOOST_PP_CAT(visit_,a)                                   \
         {                                                               \
             template<typename T>                                        \
-            double operator()(const shared_ptr<T> &ptr) const           \
+            double operator()(const boost::shared_ptr<T> &ptr) const           \
             {                                                           \
                 if (!ptr) return NAN;                                   \
                 return BOOST_PP_CAT(ptr->Get,a)();                      \
             }                                                           \
                                                                         \
             template<typename T>                                        \
-            double operator()(const shared_ptr<const T> &ptr) const     \
+            double operator()(const boost::shared_ptr<const T> &ptr) const     \
             {                                                           \
                 if (!ptr) return NAN;                                   \
                 return BOOST_PP_CAT(ptr->Get,a)();                      \

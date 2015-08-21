@@ -322,7 +322,7 @@ namespace {
     template <typename T, class Archive>
     void LoadFromArchiveIntoVectorConstPtr(Archive &ar, const std::string &name, std::vector<boost::shared_ptr<const T> > &arg)
     {
-        std::vector<shared_ptr<T> > tmp;
+        std::vector<boost::shared_ptr<T> > tmp;
         ar >> make_nvp(name.c_str(), tmp);
         arg.assign(tmp.begin(), tmp.end());
     }
@@ -330,7 +330,7 @@ namespace {
     template <typename T, class Archive>
     void LoadFromArchiveIntoConstPtr(Archive &ar, const std::string &name, boost::shared_ptr<const T> &arg)
     {
-        shared_ptr<T> tmp;
+        boost::shared_ptr<T> tmp;
         ar >> make_nvp(name.c_str(), tmp);
         arg = tmp;
     }

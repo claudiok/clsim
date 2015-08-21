@@ -57,14 +57,14 @@ protected:
     
     std::vector<std::string> sourceStrings_;
     
-    shared_ptr<cl::Context> context;
-    shared_ptr<cl::Program> program;
+    boost::shared_ptr<cl::Context> context;
+    boost::shared_ptr<cl::Program> program;
     
-    shared_ptr<cl::Kernel> kernel;
+    boost::shared_ptr<cl::Kernel> kernel;
     uint64_t workgroupSize;
     uint64_t workItemsPerIteration;
     
-    shared_ptr<cl::CommandQueue> queue;
+    boost::shared_ptr<cl::CommandQueue> queue;
 
 private:
     uint64_t maxWorkgroupSize;
