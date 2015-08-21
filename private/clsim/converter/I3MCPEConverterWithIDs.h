@@ -1,3 +1,5 @@
+#ifndef I3MCPECONVERTERWITHIDS_H_INCLUDED
+#define I3MCPECONVERTERWITHIDS_H_INCLUDED
 /**
  * Copyright (c) 2013
  * Claudio Kopper <claudio.kopper@icecube.wisc.edu>
@@ -39,3 +41,5 @@ struct I3MCPEConverterWithIDs
 };
 
 typedef I3MapOMKeyVectorConverter<I3MCPEConverterWithIDs> I3MCPESeriesMapConverterWithIDs;
+
+#endif  // I3MCPECONVERTERWITHIDS_H_INCLUDED

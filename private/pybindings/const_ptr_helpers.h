@@ -1,3 +1,5 @@
+#ifndef CONST_PTR_HELPERS_H_INCLUDED
+#define CONST_PTR_HELPERS_H_INCLUDED
 /**
  * const_ptr_helpers.h
  *
@@ -49,3 +51,5 @@ namespace utils{
 
 }
 
+
+#endif  // CONST_PTR_HELPERS_H_INCLUDED
