@@ -54,7 +54,7 @@ class TrkUserEventInformation : public G4VUserEventInformation
 public:
     TrkUserEventInformation(uint64_t maxBunchSize_,
                             I3CLSimStepStorePtr stepStore_,
-                            shared_ptr<std::deque<boost::tuple<I3CLSimLightSourceConstPtr, uint32_t, const I3CLSimLightSourceParameterization> > > sendToParameterizationQueue_,
+                            boost::shared_ptr<std::deque<boost::tuple<I3CLSimLightSourceConstPtr, uint32_t, const I3CLSimLightSourceParameterization> > > sendToParameterizationQueue_,
                             const I3CLSimLightSourceParameterizationSeries &parameterizationAvailable_,
                             boost::shared_ptr<I3CLSimQueue<I3CLSimLightSourceToStepConverterGeant4::FromGeant4Pair_t> > queueFromGeant4_,
                             boost::this_thread::disable_interruption &threadDisabledInterruptionState_,
@@ -67,7 +67,7 @@ public:
     
     const uint64_t maxBunchSize;
     I3CLSimStepStorePtr stepStore;
-    shared_ptr<std::deque<boost::tuple<I3CLSimLightSourceConstPtr, uint32_t, const I3CLSimLightSourceParameterization> > > sendToParameterizationQueue;
+    boost::shared_ptr<std::deque<boost::tuple<I3CLSimLightSourceConstPtr, uint32_t, const I3CLSimLightSourceParameterization> > > sendToParameterizationQueue;
 
     const I3CLSimLightSourceParameterizationSeries &parameterizationAvailable;
     
