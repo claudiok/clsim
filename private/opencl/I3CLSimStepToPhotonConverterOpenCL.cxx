@@ -30,6 +30,7 @@
 #include <inttypes.h>
 #include <cmath>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include "clsim/I3CLSimStepToPhotonConverterOpenCL.h"
 
 // debugging: show GPUtime/photon
@@ -44,7 +45,6 @@
 #include <stdlib.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <icetray/I3Units.h>
 
