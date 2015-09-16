@@ -1,3 +1,5 @@
+# FIXME: The functionality of this script is now integrated into env-shell.sh,
+#        therefore this script should be removed at some point to avoid confusion.
 #
 # Copyright (c) 2011, 2012
 # Claudio Kopper <claudio.kopper@icecube.wisc.edu>
