@@ -449,8 +449,8 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
       Since the muon's position is degenerate with time, the usual parallel
       distance is replaced by the z coordinate of the closest approach to the
       detection position, and the starting positions of the simulated muons are
-      sampled randomly (**ZCoordinate** is ignored). There are 200 quadratic
-      bins in perpendicular distance to the source axis, 36 linear bin in
+      sampled randomly (**ZCoordinate** is ignored). There are 100 quadratic
+      bins in perpendicular distance to the source axis, 36 linear bins in
       azimuthal angle (0 to :math:`\pi` radians), 100 linear bins in z
       coordinate of closest approach, and 105 quadratic bins in time residual
       w.r.t. the earliest possible Cherenkov photon.
