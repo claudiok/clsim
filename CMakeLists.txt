@@ -167,6 +167,7 @@ endif(USE_BACKPORTED_I3MATRIX)
 
 # Check for a new enough version of OpenCL
 if(OPENCL_VERSION_STRING VERSION_GREATER 1.1)
+  ADD_DEFINITIONS(-DBUILD_CLSIM_TABULATOR)
   LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
     private/clsim/tabulator/I3CLSimTabulatorModule.cxx
     private/clsim/tabulator/I3CLSimStepToTableConverter.cxx

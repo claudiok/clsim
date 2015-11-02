@@ -54,9 +54,9 @@ namespace bp = boost::python;
     (I3CLSimLightSourceToStepConverterUtils)        \
     (I3CLSimOpenCLDevice)(I3CLSimLightSource)       \
     (I3CLSimSpectrumTable)(I3CLSimScalarField)      \
-    (I3CLSimVectorTransform)                        \
-    (tabulator)
+    (I3CLSimVectorTransform)                        
 #endif
+
 
 #define I3_REGISTRATION_FN_DECL(r, data, t) void BOOST_PP_CAT(register_,t)();
 #define I3_REGISTER(r, data, t) BOOST_PP_CAT(register_,t)();
@@ -64,6 +64,11 @@ namespace bp = boost::python;
 BOOST_PP_SEQ_FOR_EACH(I3_REGISTRATION_FN_DECL, ~, REGISTER_THESE_THINGS)
 #ifndef BUILD_CLSIM_DATACLASSES_ONLY
 BOOST_PP_SEQ_FOR_EACH(I3_REGISTRATION_FN_DECL, ~, REGISTER_THESE_THINGS_TOO)
+#endif
+
+#ifdef BUILD_CLSIM_TABULATOR
+#define REGISTER_CLSIM_TABULATOR (tabulator)
+BOOST_PP_SEQ_FOR_EACH(I3_REGISTRATION_FN_DECL, ~, REGISTER_CLSIM_TABULATOR)
 #endif
 
 BOOST_PYTHON_MODULE(clsim)
@@ -79,6 +84,11 @@ BOOST_PYTHON_MODULE(clsim)
     BOOST_PP_SEQ_FOR_EACH(I3_REGISTER, ~, REGISTER_THESE_THINGS);
 #ifndef BUILD_CLSIM_DATACLASSES_ONLY
     BOOST_PP_SEQ_FOR_EACH(I3_REGISTER, ~, REGISTER_THESE_THINGS_TOO);
+#endif
+
+
+#ifdef BUILD_CLSIM_TABULATOR
+BOOST_PP_SEQ_FOR_EACH(I3_REGISTER, ~, REGISTER_CLSIM_TABULATOR)
 #endif
     
 }
