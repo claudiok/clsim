@@ -288,6 +288,11 @@ i3_add_library(${PROJECT_NAME}
   NOT_INSPECTABLE
   )
 
+if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
+  # run python tests if in full-build mode
+  i3_test_scripts(resources/tests/*.py)
+endif(NOT BUILD_CLSIM_DATACLASSES_ONLY)
+
 # the make-safeprimes tool needs gmp, so only compile it if that tool is available
 if(GMP_FOUND)
   i3_executable(make_safeprimes
