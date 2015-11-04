@@ -625,17 +625,22 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
     cl::Program program;
     try {
         // build the program
-        cl::Program::Sources source;
-        
-        source.push_back(std::make_pair(prependSource_.c_str(),prependSource_.size()));
-        source.push_back(std::make_pair(mwcrngKernelSource_.c_str(),mwcrngKernelSource_.size()));
-        source.push_back(std::make_pair(wlenGeneratorSource_.c_str(),wlenGeneratorSource_.size()));
-        source.push_back(std::make_pair(wlenBiasSource_.c_str(),wlenBiasSource_.size()));
-        source.push_back(std::make_pair(mediumPropertiesSource_.c_str(),mediumPropertiesSource_.size()));
+
+        // combine into a single string first to work around Intel OpenCL
+        // compiler issues (as found on OSX 10.11 for example)
+        std::string combined_source;
+        combined_source += prependSource_ + "\n";
+        combined_source += mwcrngKernelSource_ + "\n";
+        combined_source += wlenGeneratorSource_ + "\n";
+        combined_source += wlenBiasSource_ + "\n";
+        combined_source += mediumPropertiesSource_ + "\n";
         if (!saveAllPhotons_) {
-            source.push_back(std::make_pair(geometrySource_.c_str(),geometrySource_.size()));
+            combined_source += geometrySource_ + "\n";
         }
-        source.push_back(std::make_pair(propagationKernelSource_.c_str(),propagationKernelSource_.size()));
+        combined_source += propagationKernelSource_ + "\n";
+        
+        cl::Program::Sources source;
+        source.push_back(std::make_pair(combined_source.c_str(),combined_source.size()));
         
         program = cl::Program(*context_, source);
         log_debug("building...");
