@@ -1580,24 +1580,27 @@ void I3CLSimModule::Finish()
     totalSimulatedEnergyForFlush_=0.;
     totalNumParticlesForFlush_=0;
 
-    std::size_t framesPushed = FlushFrameCache();
-    frameListPhysicsFrameCounter_ -= framesPushed;
-
-    log_info("Flushing I3Tray..");
-    Flush();
-
-    // finish frames in 2nd buffer if there are any
-    if (frameList2_.size()>0) {
-        for (std::size_t i=0;i<frameList2_.size();++i) {
-            DigestOtherFrame(frameList2_[i]);
-        }
-        frameList2_.clear();
-
-        std::size_t framesPushed = FlushFrameCache();
+    std::size_t framesPushed = 0;
+    while (frameListPhysicsFrameCounter_ > 0) {
+        framesPushed = FlushFrameCache();
         frameListPhysicsFrameCounter_ -= framesPushed;
 
-        log_info("Flushing I3Tray (again)..");
+        log_info("Flushing I3Tray..");
         Flush();
+
+        // finish frames in 2nd buffer if there are any
+        if (frameList2_.size()>0) {
+            for (std::size_t i=0;i<frameList2_.size();++i) {
+                DigestOtherFrame(frameList2_[i]);
+            }
+            frameList2_.clear();
+
+            framesPushed = FlushFrameCache();
+            frameListPhysicsFrameCounter_ -= framesPushed;
+
+            log_info("Flushing I3Tray (again)..");
+            Flush();
+        }
     }
 
     log_info("I3CLSimModule is done.");
