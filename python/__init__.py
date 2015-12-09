@@ -53,6 +53,9 @@ from .AutoSetGeant4Environment import AutoSetGeant4Environment
 
 from .I3CLSimRandomValueIceCubeFlasherTimeProfile import I3CLSimRandomValueIceCubeFlasherTimeProfile
 
+from .I3FrameSplitterMerger import I3FrameStreamChanger, I3FrameEnergySplitter, I3FrameMCPEMerger
+
+
 from . import util
 
 # import tray segments (if available)

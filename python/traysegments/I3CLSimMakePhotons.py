@@ -375,8 +375,14 @@ def I3CLSimMakePhotons(tray, name,
         OverrideApproximateNumberOfWorkItems=OverrideApproximateNumberOfWorkItems,
         DoNotParallelize=DoNotParallelize,
         UseOnlyDeviceNumber=UseOnlyDeviceNumber
-	)
-
+    )
+    
+    # tray.AddModule(clsim.I3FrameSplitterMerger.I3FrameStreamChanger, "ChangeStream",
+    #                NewStream = icetray.I3Frame.Stream('q'),
+    #                OldStream = icetray.I3Frame.Stream('Q'))
+    #
+    # tray.AddModule(clsim.I3FrameSplitterMerger.I3FrameEnergySplitter, "Splitter")
+    
     tray.AddModule("I3CLSimModule", name + "_clsim",
                    MCTreeName=clSimMCTreeName,
                    PhotonSeriesMapName=PhotonSeriesName,
