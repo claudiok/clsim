@@ -8,6 +8,8 @@ Release Notes
 trunk
 -----
 
+* Fixed a bug where in rare cases the last few frames would not be processed
+  by clsim. (Thanks dschultz!)
 * The cutoff distance for sources further away from any DOM than a certain
   distance is now configurable using the I3CLSimModule option
   "ClosestDOMDistanceCutoff". It used to be hard-coded to 300m.
