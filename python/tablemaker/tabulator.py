@@ -129,6 +129,7 @@ def I3CLSimTabulatePhotons(tray, name,
                        UseGeant4=False,
                        CrossoverEnergyEM=None,
                        CrossoverEnergyHadron=None,
+                       UseCascadeExtension=False,
                        DoNotParallelize=False,
                        DOMOversizeFactor=1,
                        UseHoleIceParameterization=True,
@@ -260,6 +261,9 @@ def I3CLSimTabulatePhotons(tray, name,
         If CrossoverEnergyHadron is set to 0 (GeV) while CrossoverEnergyHadron is
         set so hybrid mode is working, hadronic cascades will use parameterizations
         for the whole energy range.
+    :param UseCascadeExtension:
+        If True, simulate the longitudinal development of cascades. Otherwise,
+        simulate cascades as pointlike objects.
     :param DoNotParallelize:
         Try only using a single work item in parallel when running the
         OpenCL simulation. This might be useful if you want to run jobs
@@ -373,6 +377,7 @@ def I3CLSimTabulatePhotons(tray, name,
 
     # muon&cascade parameterizations
     ppcConverter = clsim.I3CLSimLightSourceToStepConverterPPC(photonsPerStep=200)
+    ppcConverter.SetUseCascadeExtension(UseCascadeExtension)
     if not UseGeant4:
         particleParameterizations = GetDefaultParameterizationList(ppcConverter, muonOnly=False)
     else:

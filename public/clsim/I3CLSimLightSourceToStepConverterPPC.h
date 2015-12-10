@@ -65,6 +65,8 @@ public:
                                       double useHighPhotonsPerStepStartingFromNumPhotons=default_useHighPhotonsPerStepStartingFromNumPhotons);
     virtual ~I3CLSimLightSourceToStepConverterPPC();
 
+    void SetUseCascadeExtension(bool v) { useCascadeExtension_ = v; };
+
     // inherited:
     
     virtual void SetBunchSizeGranularity(uint64_t num);
@@ -165,6 +167,7 @@ private:
     uint32_t photonsPerStep_;
     uint32_t highPhotonsPerStep_;
     double useHighPhotonsPerStepStartingFromNumPhotons_;
+    bool useCascadeExtension_;
     
     I3CLSimFunctionConstPtr wlenBias_;
     I3CLSimMediumPropertiesConstPtr mediumProperties_;
