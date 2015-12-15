@@ -306,7 +306,7 @@ private:
     bool threadStarted_;
     bool threadFinishedOK_;
     std::vector<uint64_t> numBunchesSentToOpenCL_;
-
+    
     
     // helper functions
     std::size_t FlushFrameCache();

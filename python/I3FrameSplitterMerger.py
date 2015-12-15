@@ -68,26 +68,27 @@ class I3FrameMCPEMerger(icetray.I3PacketModule):
     
     def Configure(self):
         icetray.I3PacketModule.Configure(self)
-        original_stream = self.GetParameter("OriginalFrameStream")
-        split_stream = self.GetParameter("SplitFrameStream")
+        self.original_stream = self.GetParameter("OriginalFrameStream")
+        self.split_stream = self.GetParameter("SplitFrameStream")
         self.input_mcpeseries_name = self.GetParameter("InputMCPESeriesMapName")
-        self.packet_types = [original_stream, split_stream]
-        self.original_frame = None
-        self.mcpe_series_map = None
+        self.packet_types = [self.original_stream, self.split_stream]
 
     def FramePacket(self, frames):
-        print len(frames)
+        original_frame = None
+        mcpe_series_map = None
         for frame in frames:
-            if frame.Stop == icetray.I3Frame.Stream('q'):
-                self.original_frame = I3FrameStreamChanger.ChangeFrame(frame, self.split_stream)
-            if frame.Has("self.input_mcpeseries_name"):
-                if not self.mcpe_series_map:
-                    self.mcpe_series_map = frame[self.input_mcpeseries_name]
+            if frame.Stop == self.original_stream:
+                original_frame = I3FrameStreamChanger.ChangeFrame(frame, self.split_stream)
+            if frame.Has(self.input_mcpeseries_name):
+                if not mcpe_series_map:
+                    mcpe_series_map = frame[self.input_mcpeseries_name]
                 else:
-                    self.mcpe_series_map.merge_nosort(frame[self.input_mcpeseries_name])
-        self.mcpe_series_map.sort()
-        self.original_frame[self.input_mcpeseries_name] = self.mcpe_series_map
-        self.PushFrame(self.original_frame)
+                    mcpe_series_map.merge_nosort(frame[self.input_mcpeseries_name])
+            # if frame.Stop == self.split_stream:
+            #     self.PushFrame(I3FrameStreamChanger.ChangeFrame(frame, self.original_stream))
+        mcpe_series_map.sort()
+        original_frame[self.input_mcpeseries_name] = mcpe_series_map
+        self.PushFrame(original_frame)
 
 # class I3FrameSplitterClean(icetray.I3Co):
     
@@ -118,14 +119,15 @@ class I3FrameEnergySplitter(icetray.I3ConditionalModule):
         
         self.input_mctree_name = self.GetParameter("InputMCTreeName")
         self.energy_per_frame = self.GetParameter("EnergyPerFrame")
-        self.dummy_stream = self.GetParameter("DummyStream")
-        
+        self.dummy_stream = self.GetParameter("DummyStream")        
         # self.Register(self.stream, self.Splitter)
         
     def DAQ(self, frame):
-        
+        i = 0
+        frame_list = []
         mctree = frame[self.input_mctree_name]
-        self.PushFrame(I3FrameStreamChanger.ChangeFrame(frame, self.dummy_stream))
+        # self.PushFrame()
+        frame_list.append(I3FrameStreamChanger.ChangeFrame(frame, self.dummy_stream))
         energy_counter = 0.
         new_frame = icetray.I3Frame(icetray.I3Frame.DAQ)
         new_mctree = dataclasses.I3MCTree()
@@ -142,15 +144,25 @@ class I3FrameEnergySplitter(icetray.I3ConditionalModule):
             else:
                 energy_counter += p.energy
             if energy_counter >= self.energy_per_frame:
-                print energy_counter
+                print (energy_counter / (1.*icetray.I3Units.PeV))
                 new_frame[self.input_mctree_name] = new_mctree
-                self.PushFrame(new_frame)
+                i += 1
+                # self.PushFrame(new_frame)
+                frame_list.append(new_frame)
                 new_frame = icetray.I3Frame(icetray.I3Frame.DAQ)
                 new_mctree = dataclasses.I3MCTree()
                 new_mctree.add_primary(dummy_primary)
                 energy_counter = 0.
+        print (energy_counter / (1.*icetray.I3Units.PeV))
         new_frame[self.input_mctree_name] = new_mctree
-        self.PushFrame(new_frame)
+        # self.PushFrame(new_frame)
+        frame_list.append(new_frame)
+        i += 1
+        for f in frame_list:
+            if f.Stop == self.dummy_stream:
+                f["SubFrameCount"] = icetray.I3Int(i)
+            self.PushFrame(f)
+        
         # self.PushFrame(icetray.I3Frame(icetray.I3Frame.Stream(",")))
 
 

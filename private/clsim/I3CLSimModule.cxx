@@ -1296,11 +1296,31 @@ bool I3CLSimModule::ShouldDoProcess(I3FramePtr frame)
     return true;
 }
 
+void PrintFrameStops(std::vector<I3FramePtr> frame_vector)
+{
+    log_info("Frame List");
+    std::vector<I3FramePtr>::const_iterator it;
+    for (it = frame_vector.begin(); it != frame_vector.end(); it++)
+    {
+        log_warn("Frame Stop %s", (*it)->GetStop().str().c_str());
+    }
+}
+
+void PrintFrameStops(std::deque<I3FramePtr> frame_vector)
+{
+    log_info("Frame List 2");
+    std::deque<I3FramePtr>::const_iterator it;
+    for (it = frame_vector.begin(); it != frame_vector.end(); it++)
+    {
+        log_warn("Frame Stop %s", (*it)->GetStop().str().c_str());
+    }
+}
+
 void I3CLSimModule::Process()
 {
     I3FramePtr frame = PopFrame();
     if (!frame) return;
-    
+        
     if (frame->GetStop() == I3Frame::Geometry)
     {
         // special handling for Geometry frames
@@ -1309,9 +1329,13 @@ void I3CLSimModule::Process()
         // in DigestGeometry()..)
 
         DigestGeometry(frame);
+        // log_warn("Frame Stop %s", frame->GetStop().str().c_str());
         PushFrame(frame);
         return;
     }
+    // log_warn("Frame Stop %s", frame->GetStop().str().c_str());
+    // PrintFrameStops(frameList_);
+    // PrintFrameStops(frameList2_);
     
     // if the cache is empty and the frame stop is not Physics/DAQ, we can immediately push it
     // (and not add it to the cache)

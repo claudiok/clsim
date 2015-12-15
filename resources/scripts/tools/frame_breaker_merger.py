@@ -22,7 +22,7 @@ parser.add_option("-g", "--gcd",
 parser.add_option("-r", "--runnumber", type="int", 
                   default=1, dest="RUNNUMBER", help="The run number for this simulation")
 parser.add_option("-n", "--numevents", type="int", 
-                  default=1, dest="NUMEVENTS", help="The number of events per run")
+                  default=2, dest="NUMEVENTS", help="The number of events per run")
 parser.add_option("--gamma", type="float", 
                   default=2., dest="GAMMA", help="Power law index to use for generation")
 parser.add_option("-o","--output", 
@@ -44,7 +44,7 @@ parser.add_option("--icemodel",default="SpiceLea",
 outfile = options.OUTPUT
 # input_files = sys.argv[1:-1]
 # output_file = sys.argv[-1]
-
+icetray.set_log_level(icetray.I3LogLevel.LOG_WARN)
 @icetray.traysegment
 def CLSim(tray, name, InputMCTree='I3MCTree', DropMCTree=100, OutputPESeriesMapName='I3MCPESeriesMap',
     IceModel='SpiceLea', UseGPUs=False, MaxParallelEvents=100, UnshadowedFractions=(0.9,0.99,1.08),
@@ -58,7 +58,41 @@ def CLSim(tray, name, InputMCTree='I3MCTree', DropMCTree=100, OutputPESeriesMapN
     """
     from icecube import icetray, clsim
     from os.path import expandvars
+    
+    tray.AddModule("I3MuonSlicer", name + "_chopMuons",
+                   InputMCTreeName=InputMCTree,
+                   MMCTrackListName="MMCTrackList",
+                   OutputMCTreeName=InputMCTree + "_sliced")
 
+    tray.AddModule(clsim.I3FrameSplitterMerger.I3FrameEnergySplitter, "Splitter",
+                   InputMCTreeName = InputMCTree + "_sliced")
+                   
+    tray.AddModule("I3Writer", "writer2",
+        Filename = outfile[:-3] + "_after_split.i3",
+        Streams = [icetray.I3Frame.Physics, icetray.I3Frame.DAQ,
+                   icetray.I3Frame.Stream("q"),
+                   icetray.I3Frame.Stream("S")])
+                   
+    def GetEnergyLost(frame, mctreename = "I3MCTree"):
+        energy_counter = 0
+        mctree = frame[mctreename]
+        for p in mctree:
+            if p.shape == dataclasses.I3Particle.Dark or \
+               p.location_type != dataclasses.I3Particle.InIce:
+               continue
+            if p.type == dataclasses.I3Particle.MuMinus or \
+               p.type == dataclasses.I3Particle.MuPlus:
+                   energy_counter += 45.*icetray.I3Units.GeV
+            else:
+                energy_counter += p.energy
+        print (energy_counter / (1.*icetray.I3Units.PeV))
+            
+    tray.AddModule(GetEnergyLost, "check",
+                   mctreename = InputMCTree + "_sliced", 
+                   Streams = [icetray.I3Frame.Stream("q")])
+    
+    # tray.Add("Dump")
+    
     RandomService = tray.context['I3RandomService']
 
     table_base = expandvars('$I3_DATA/photon-tables/splines/')
@@ -73,11 +107,11 @@ def CLSim(tray, name, InputMCTree='I3MCTree', DropMCTree=100, OutputPESeriesMapN
         table_base += "ems_lea_z20_a10.%s.fits"
     else:
         raise RuntimeError("Unknown ice model: %s", IceModel)
-    
-    
+
+
     # Intermediate objects to be deleted at the end of the segment
     temporaries = []
-    
+
     if HybridMode:
         tray.AddModule("I3MCTreeHybridSimulationSplitter", name+"_splitMCTree",
             InputMCTreeName=InputMCTree,
@@ -87,7 +121,7 @@ def CLSim(tray, name, InputMCTree='I3MCTree', DropMCTree=100, OutputPESeriesMapN
         CLSimMCTree = InputMCTree+"Tracks"
     else:
         CLSimMCTree = InputMCTree
-    
+
     # AMD's OpenCL implemenation starts one thread for each core. If taskset is
     # being used to pin the parent process to a specific CPU, then the Linux
     # scheduler may in some circumstances schedule all threads on the same core,
@@ -99,16 +133,17 @@ def CLSim(tray, name, InputMCTree='I3MCTree', DropMCTree=100, OutputPESeriesMapN
         from threading import Thread
         if tasksetInUse():
             Thread(target=resetTasksetThreads,args=(os.getpid(),)).start()
-    
+
     # tray.AddModule("Dump")
-    
+
     # simulate tracks (with clsim)
     tray.AddSegment(clsim.I3CLSimMakePhotons, name+"_makeCLSimHits",
         PhotonSeriesName=name+"_intermediatePhotons",
-        MCTreeName = CLSimMCTree,
-        OutputMCTreeName=CLSimMCTree+"_sliced",
+        MCTreeName = CLSimMCTree + "_sliced",
+        # OutputMCTreeName = CLSimMCTree + "_sliced",
         # MCPESeriesName = OutputPESeriesMapName,
-        MMCTrackListName = "MMCTrackList",
+        # MMCTrackListName = "MMCTrackList",
+        MMCTrackListName = "",
         ParallelEvents = MaxParallelEvents,
         RandomService = RandomService,
         UnshadowedFraction=max(UnshadowedFractions),
@@ -121,11 +156,11 @@ def CLSim(tray, name, InputMCTree='I3MCTree', DropMCTree=100, OutputPESeriesMapN
         DOMOversizeFactor=DOMOversizeFactor
         )
     temporaries.append(name+"_intermediatePhotons")
-    temporaries.append(CLSimMCTree+"_sliced")
-    
-    
+    # temporaries.append(CLSimMCTree+"_sliced")
+
+
     # tray.AddModule("Dump")
-    
+
     # now, prescale photons to make MCPEs for each DOM efficiency
     outputs = []
     for eff in UnshadowedFractions:
@@ -134,7 +169,7 @@ def CLSim(tray, name, InputMCTree='I3MCTree', DropMCTree=100, OutputPESeriesMapN
         tray.AddSegment(clsim.I3CLSimMakeHitsFromPhotons, name+"_makePhotons_%.3f" % (eff),
             MCTreeName=CLSimMCTree+"_sliced", PhotonSeriesName=name+"_intermediatePhotons",
             MCPESeriesName=label, RandomService=RandomService, UnshadowedFraction=eff)
-    
+
     # draw cascade photons from spline tables
     if HybridMode:
         from icecube import photonics_service
@@ -154,17 +189,17 @@ def CLSim(tray, name, InputMCTree='I3MCTree', DropMCTree=100, OutputPESeriesMapN
             tray.AddModule("I3CombineMCPE", name+"_combine_pes_%f" % eff,
                 InputResponses = [hitlabel+"Tracks", hitlabel+"Cascades"],
                 OutputResponse = hitlabel)
-    
+
     tray.AddModule("Delete", name+"_cleanup",
         Keys = temporaries)
-    
+
     if DropMCTree:
         if isinstance(DropMCTree, int):
             prescale = lambda frame: frame.Stop == frame.DAQ and RandomService.uniform(0, DropMCTree) > 1
         else:
             prescale = None
         tray.AddModule("Delete", name+"_mctree_cleanup", Keys=[InputMCTree, "MMCTrackList"], If=prescale)
-    
+
     return outputs
 
 tray = I3Tray()
@@ -212,20 +247,27 @@ tray.AddSegment(PropagateMuons, RandomService=prandomService)
               
 # tray.Add("Dump")
 
-tray.AddModule(clsim.I3FrameSplitterMerger.I3FrameEnergySplitter, "Splitter")
+# tray.AddModule(clsim.I3FrameSplitterMerger.I3FrameEnergySplitter, "Splitter")
 
-# tray.AddSegment(CLSim, InputMCTree='I3MCTree',
-#     IceModel ='SpiceLea', UseGPUs=True, MaxParallelEvents=200,
-#        # IceModel =options.ICEMODEL, UseGPUs=False, MaxParallelEvents=1,
-#        OutputPESeriesMapName='I3MCPESeriesMap',
-#        # UnshadowedFractions=(0.9,0.99,1.08),
-#        UnshadowedFractions=(0.792,0.8415,0.9,0.9405,0.99,1.0395,1.089,1.1385, 1.188,1.2375,1.287),
-#     HybridMode=False, DropMCTree=False)
+tray.AddSegment(CLSim, InputMCTree='I3MCTree',
+    IceModel ='SpiceLea', UseGPUs=True, MaxParallelEvents=1,
+       # IceModel =options.ICEMODEL, UseGPUs=False, MaxParallelEvents=1,
+       OutputPESeriesMapName='I3MCPESeriesMap',
+       # UnshadowedFractions=(0.9,0.99,1.08),
+       UnshadowedFractions=(0.792,0.8415,0.9,0.9405,0.99,1.0395,1.089,1.1385, 1.188,1.2375,1.287),
+    HybridMode=False, DropMCTree=False)
 
 tray.Add("Dump")
 
 
-# tray.AddModule(clsim.I3FrameSplitterMerger.I3FrameMCPEMerger, "Merger")
+tray.AddModule("I3Writer", "writer1",
+    Filename = outfile[:-3] + "_before_merge.i3",
+    Streams = [icetray.I3Frame.Physics, icetray.I3Frame.DAQ,
+               icetray.I3Frame.Stream("q"),
+               icetray.I3Frame.Stream("S")])
+
+tray.AddModule(clsim.I3FrameSplitterMerger.I3FrameMCPEMerger, "Merger",
+               InputMCPESeriesMapName = "I3MCPESeriesMap_0.990")
 
 
 # tray.AddModule(clsim.I3FrameSplitterMerger.I3FrameStreamChanger, "ChangeStreamend1",
@@ -242,7 +284,7 @@ tray.Add("Dump")
 tray.AddModule("I3Writer", "writer",
     Filename = outfile,
     Streams = [icetray.I3Frame.Physics, icetray.I3Frame.DAQ,
-               icetray.I3Frame.Stream("q"), icetray.I3Frame.Stream(","),
+               icetray.I3Frame.Stream("q"),
                icetray.I3Frame.Stream("S")])
  
 tray.AddModule("TrashCan", "the can")
