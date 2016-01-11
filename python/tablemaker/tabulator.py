@@ -16,11 +16,11 @@
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 #
-# $Id$
+# $Id: tabulator.py 140305 2015-12-10 10:54:09Z jvansanten $
 #
 # @file tabulator.py
-# @version $Revision$
-# @date $Date$
+# @version $Revision: 140305 $
+# @date $Date: 2015-12-10 05:54:09 -0500 (Thu, 10 Dec 2015) $
 # @author Jakob van Santen
 
 from __future__ import print_function

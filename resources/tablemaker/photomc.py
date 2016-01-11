@@ -17,11 +17,11 @@
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 # 
 # 
-# $Id$
+# $Id: photomc.py 136148 2015-08-12 17:46:32Z jvansanten $
 # 
 # @file photomc.py
-# @version $LastChangedRevision$
-# @date $Date$
+# @version $LastChangedRevision: 136148 $
+# @date $Date: 2015-08-12 13:46:32 -0400 (Wed, 12 Aug 2015) $
 # @author Jakob van Santen
 
 """

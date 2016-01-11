@@ -17,11 +17,11 @@
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 # 
 # 
-# $Id$
+# $Id: GetHybridParameterizationList.py 123705 2014-09-23 13:50:57Z vehring $
 # 
 # @file GetHybridParameterizationList.py
-# @version $Revision$
-# @date $Date$
+# @version $Revision: 123705 $
+# @date $Date: 2014-09-23 09:50:57 -0400 (Tue, 23 Sep 2014) $
 # @author Claudio Kopper
 #
 

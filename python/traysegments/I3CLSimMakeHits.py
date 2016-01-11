@@ -16,11 +16,11 @@
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 # 
 # 
-# $Id$
+# $Id: I3CLSimMakeHits.py 130869 2015-04-01 21:37:59Z benedikt.riedel $
 # 
 # @file I3CLSimMakeHits.py
-# @version $Revision$
-# @date $Date$
+# @version $Revision: 130869 $
+# @date $Date: 2015-04-01 17:37:59 -0400 (Wed, 01 Apr 2015) $
 # @author Claudio Kopper
 #
 

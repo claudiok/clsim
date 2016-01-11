@@ -16,11 +16,11 @@
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 # 
 # 
-# $Id$
+# $Id: GetIceTiltZShift.py 108199 2013-07-12 21:33:08Z nwhitehorn $
 # 
 # @file GetIceTiltZShift.py
-# @version $Revision$
-# @date $Date$
+# @version $Revision: 108199 $
+# @date $Date: 2013-07-12 17:33:08 -0400 (Fri, 12 Jul 2013) $
 # @author Claudio Kopper
 #
 

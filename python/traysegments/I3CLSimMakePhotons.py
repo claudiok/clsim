@@ -16,11 +16,11 @@
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 # 
 # 
-# $Id$
+# $Id: I3CLSimMakePhotons.py 140605 2015-12-18 20:19:05Z claudio.kopper $
 # 
 # @file I3CLSimMakePhotons.py
-# @version $Revision$
-# @date $Date$
+# @version $Revision: 140605 $
+# @date $Date: 2015-12-18 15:19:05 -0500 (Fri, 18 Dec 2015) $
 # @author Claudio Kopper
 #
 
