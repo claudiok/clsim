@@ -35,6 +35,13 @@ void I3Photon::SetParticleID(const I3Particle& p) {
     particleMajorID_ = p.GetMajorID();
 }
 
+I3ParticleID I3Photon::GetParticleID() const {
+    I3ParticleID partID;
+    partID.majorID = particleMajorID_;
+    partID.minorID = particleID_;
+    return partID;
+}
+
 template <class Archive>
 void I3Photon::serialize (Archive &ar, unsigned version)
 {

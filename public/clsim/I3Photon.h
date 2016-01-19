@@ -37,6 +37,8 @@
 #include "dataclasses/I3Direction.h"
 #include "dataclasses/I3Position.h"
 #include "dataclasses/physics/I3Particle.h"
+#include "dataclasses/physics/I3ParticleID.h"
+
 
 /**
  * @brief This class contains a photon with
@@ -106,6 +108,8 @@ public:
     int32_t GetParticleMinorID() const { return particleID_; }
     
     uint64_t GetParticleMajorID() const { return particleMajorID_; }
+    
+    I3ParticleID GetParticleID() const;
 
     void SetParticleMinorID(int32_t minorID) { particleID_ = minorID; }
     
