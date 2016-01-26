@@ -104,14 +104,14 @@ struct I3CLSimLightSourceToStepConverterWrapper : I3CLSimLightSourceToStepConver
 struct vc : boost::static_visitor<bp::object>
 {
     template <typename T>
-    bp::object operator()(const shared_ptr<const T>& v) const
+    bp::object operator()(const boost::shared_ptr<const T>& v) const
     {
         return bp::object(boost::const_pointer_cast<T>(v));
     }
 
     // this is done for non-const shared pointers
     template <typename T>
-    bp::object operator()(const shared_ptr<T>& v) const
+    bp::object operator()(const boost::shared_ptr<T>& v) const
     {
         return bp::object(v);
     }
@@ -175,9 +175,9 @@ void register_I3CLSimLightSourceToStepConverter()
         ;
     }
     
-    bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterWrapper>, shared_ptr<const I3CLSimLightSourceToStepConverter> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterWrapper>, shared_ptr<I3CLSimLightSourceToStepConverter> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterWrapper>, shared_ptr<const I3CLSimLightSourceToStepConverterWrapper> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSourceToStepConverterWrapper>, boost::shared_ptr<const I3CLSimLightSourceToStepConverter> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSourceToStepConverterWrapper>, boost::shared_ptr<I3CLSimLightSourceToStepConverter> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSourceToStepConverterWrapper>, boost::shared_ptr<const I3CLSimLightSourceToStepConverterWrapper> >();
     
     //bp::to_python_converter<I3CLSimLightSourceToStepConverter::ConversionResult_t, I3CLSimLightSourceToStepConverter_ConversionResult_t_to_python>();
     
@@ -209,9 +209,9 @@ void register_I3CLSimLightSourceToStepConverter()
         ;
     }
     
-    bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterGeant4>, shared_ptr<const I3CLSimLightSourceToStepConverterGeant4> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterGeant4>, shared_ptr<I3CLSimLightSourceToStepConverter> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterGeant4>, shared_ptr<const I3CLSimLightSourceToStepConverter> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSourceToStepConverterGeant4>, boost::shared_ptr<const I3CLSimLightSourceToStepConverterGeant4> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSourceToStepConverterGeant4>, boost::shared_ptr<I3CLSimLightSourceToStepConverter> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSourceToStepConverterGeant4>, boost::shared_ptr<const I3CLSimLightSourceToStepConverter> >();
     
     
     // I3CLSimLightSourceToStepConverterPPC
@@ -237,9 +237,9 @@ void register_I3CLSimLightSourceToStepConverter()
         ;
     }
     
-    bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterPPC>, shared_ptr<const I3CLSimLightSourceToStepConverterPPC> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterPPC>, shared_ptr<I3CLSimLightSourceToStepConverter> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterPPC>, shared_ptr<const I3CLSimLightSourceToStepConverter> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSourceToStepConverterPPC>, boost::shared_ptr<const I3CLSimLightSourceToStepConverterPPC> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSourceToStepConverterPPC>, boost::shared_ptr<I3CLSimLightSourceToStepConverter> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSourceToStepConverterPPC>, boost::shared_ptr<const I3CLSimLightSourceToStepConverter> >();
 
     
     // I3CLSimLightSourceToStepConverterFlasher
@@ -275,8 +275,8 @@ void register_I3CLSimLightSourceToStepConverter()
         ;
     }
     
-    bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterFlasher>, shared_ptr<const I3CLSimLightSourceToStepConverterFlasher> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterFlasher>, shared_ptr<I3CLSimLightSourceToStepConverter> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimLightSourceToStepConverterFlasher>, shared_ptr<const I3CLSimLightSourceToStepConverter> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSourceToStepConverterFlasher>, boost::shared_ptr<const I3CLSimLightSourceToStepConverterFlasher> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSourceToStepConverterFlasher>, boost::shared_ptr<I3CLSimLightSourceToStepConverter> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSourceToStepConverterFlasher>, boost::shared_ptr<const I3CLSimLightSourceToStepConverter> >();
 
 }

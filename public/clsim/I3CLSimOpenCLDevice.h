@@ -56,11 +56,11 @@ public:
                         bool useNativeMath,
                         uint32_t approximateNumberOfWorkItems);
 
-    static shared_ptr<std::vector<I3CLSimOpenCLDevice> > GetAllDevices();
+    static boost::shared_ptr<std::vector<I3CLSimOpenCLDevice> > GetAllDevices();
     
     // split a device using "OpenCL device fission"
     // (might be useful to get a single core of a CPU)
-    shared_ptr<std::vector<I3CLSimOpenCLDevice> > SplitDevice() const;
+    boost::shared_ptr<std::vector<I3CLSimOpenCLDevice> > SplitDevice() const;
     
     inline const std::string &GetPlatformName() const {return platformName_;}
     inline const std::string &GetDeviceName() const {return deviceName_;}
@@ -90,16 +90,16 @@ public:
     std::string GetExtensions() const;
     
     // get platform and device handles
-    inline shared_ptr<cl::Platform> GetPlatformHandle() const {return platform_;}
-    inline shared_ptr<cl::Device> GetDeviceHandle() const {return device_;}
+    inline boost::shared_ptr<cl::Platform> GetPlatformHandle() const {return platform_;}
+    inline boost::shared_ptr<cl::Device> GetDeviceHandle() const {return device_;}
     
 private:
     I3CLSimOpenCLDevice(); // no default construction
     void DoInit(const std::string &platformName,
                 const std::string &deviceName);
     
-    shared_ptr<cl::Platform> platform_;
-    shared_ptr<cl::Device> device_;
+    boost::shared_ptr<cl::Platform> platform_;
+    boost::shared_ptr<cl::Device> device_;
 
     std::string platformName_;
     std::string deviceName_;

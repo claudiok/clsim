@@ -53,10 +53,10 @@ private:
     
     void InitBuffers(I3RandomServicePtr randomService);
     
-    shared_ptr<cl::Buffer> deviceBuffer_MWC_RNG_x;
-    shared_ptr<cl::Buffer> deviceBuffer_MWC_RNG_a;
+    boost::shared_ptr<cl::Buffer> deviceBuffer_MWC_RNG_x;
+    boost::shared_ptr<cl::Buffer> deviceBuffer_MWC_RNG_a;
 
-    shared_ptr<cl::Buffer> deviceBuffer_results;
+    boost::shared_ptr<cl::Buffer> deviceBuffer_results;
 
 };
 

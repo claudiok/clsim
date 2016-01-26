@@ -82,7 +82,7 @@ void register_I3CLSimPhotonHistory()
 
     // does not base on I3FrameObject, so register only the shared_ptr<T>-to-shared_ptr<const T> conversion
     //register_pointer_conversions<I3CLSimPhoton>();
-    boost::python::implicitly_convertible<shared_ptr<I3CLSimPhotonHistory>, shared_ptr<const I3CLSimPhotonHistory> >();
+    boost::python::implicitly_convertible<boost::shared_ptr<I3CLSimPhotonHistory>, boost::shared_ptr<const I3CLSimPhotonHistory> >();
     
     register_pointer_conversions<I3CLSimPhotonHistorySeries>();
 }

@@ -71,9 +71,9 @@ void register_I3CLSimScalarField()
         ;
     }
     
-    bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldWrapper>, shared_ptr<const I3CLSimScalarField> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldWrapper>, shared_ptr<I3CLSimScalarField> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldWrapper>, shared_ptr<const I3CLSimScalarFieldWrapper> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimScalarFieldWrapper>, boost::shared_ptr<const I3CLSimScalarField> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimScalarFieldWrapper>, boost::shared_ptr<I3CLSimScalarField> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimScalarFieldWrapper>, boost::shared_ptr<const I3CLSimScalarFieldWrapper> >();
     utils::register_const_ptr<I3CLSimScalarField>();
 
     // constant value
@@ -96,9 +96,9 @@ void register_I3CLSimScalarField()
          )
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldConstant>, shared_ptr<const I3CLSimScalarFieldConstant> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldConstant>, shared_ptr<I3CLSimScalarField> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldConstant>, shared_ptr<const I3CLSimScalarField> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimScalarFieldConstant>, boost::shared_ptr<const I3CLSimScalarFieldConstant> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimScalarFieldConstant>, boost::shared_ptr<I3CLSimScalarField> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimScalarFieldConstant>, boost::shared_ptr<const I3CLSimScalarField> >();
     utils::register_const_ptr<I3CLSimScalarFieldConstant>();
 
 
@@ -124,9 +124,9 @@ void register_I3CLSimScalarField()
          )
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldAnisotropyAbsLenScaling>, shared_ptr<const I3CLSimScalarFieldAnisotropyAbsLenScaling> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldAnisotropyAbsLenScaling>, shared_ptr<I3CLSimScalarField> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldConstant>, shared_ptr<const I3CLSimScalarField> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimScalarFieldAnisotropyAbsLenScaling>, boost::shared_ptr<const I3CLSimScalarFieldAnisotropyAbsLenScaling> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimScalarFieldAnisotropyAbsLenScaling>, boost::shared_ptr<I3CLSimScalarField> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimScalarFieldConstant>, boost::shared_ptr<const I3CLSimScalarField> >();
     utils::register_const_ptr<I3CLSimScalarFieldAnisotropyAbsLenScaling>();
 
 
@@ -153,9 +153,9 @@ void register_I3CLSimScalarField()
          )
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldIceTiltZShift>, shared_ptr<const I3CLSimScalarFieldIceTiltZShift> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldIceTiltZShift>, shared_ptr<I3CLSimScalarField> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldConstant>, shared_ptr<const I3CLSimScalarField> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimScalarFieldIceTiltZShift>, boost::shared_ptr<const I3CLSimScalarFieldIceTiltZShift> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimScalarFieldIceTiltZShift>, boost::shared_ptr<I3CLSimScalarField> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimScalarFieldConstant>, boost::shared_ptr<const I3CLSimScalarField> >();
     utils::register_const_ptr<I3CLSimScalarFieldIceTiltZShift>();
 
 }

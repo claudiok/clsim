@@ -469,9 +469,9 @@ private:
     std::vector<std::vector<unsigned int> > domIndexToDomIDBuffer_perStringIndex_;
     
     // OpenCL command queue and kernel
-    std::vector<shared_ptr<cl::CommandQueue> > queue_;
-    std::vector<shared_ptr<cl::Kernel> > kernel_;
-    shared_ptr<cl::Context> context_;
+    std::vector<boost::shared_ptr<cl::CommandQueue> > queue_;
+    std::vector<boost::shared_ptr<cl::Kernel> > kernel_;
+    boost::shared_ptr<cl::Context> context_;
     
     // maximum workgroup size for current kernel
     uint64_t maxWorkgroupSize_;
@@ -483,17 +483,17 @@ private:
     // rng state per workitem
     std::vector<uint64_t> MWC_RNG_x;
     std::vector<uint32_t> MWC_RNG_a;
-    shared_ptr<cl::Buffer> deviceBuffer_MWC_RNG_x;
-    shared_ptr<cl::Buffer> deviceBuffer_MWC_RNG_a;
+    boost::shared_ptr<cl::Buffer> deviceBuffer_MWC_RNG_x;
+    boost::shared_ptr<cl::Buffer> deviceBuffer_MWC_RNG_a;
     
     // Memory buffers on the device
-    std::vector<shared_ptr<cl::Buffer> > deviceBuffer_InputSteps;
-    std::vector<shared_ptr<cl::Buffer> > deviceBuffer_OutputPhotons;
-    std::vector<shared_ptr<cl::Buffer> > deviceBuffer_CurrentNumOutputPhotons;
-    std::vector<shared_ptr<cl::Buffer> > deviceBuffer_PhotonHistory;
+    std::vector<boost::shared_ptr<cl::Buffer> > deviceBuffer_InputSteps;
+    std::vector<boost::shared_ptr<cl::Buffer> > deviceBuffer_OutputPhotons;
+    std::vector<boost::shared_ptr<cl::Buffer> > deviceBuffer_CurrentNumOutputPhotons;
+    std::vector<boost::shared_ptr<cl::Buffer> > deviceBuffer_PhotonHistory;
     
     // this one is constant, so we only need one
-    shared_ptr<cl::Buffer> deviceBuffer_GeoLayerToOMNumIndexPerStringSet;
+    boost::shared_ptr<cl::Buffer> deviceBuffer_GeoLayerToOMNumIndexPerStringSet;
     
     // Size of output photon storage (maximum amount of photons per step bunch)
     uint32_t maxNumOutputPhotons_;

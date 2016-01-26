@@ -61,12 +61,12 @@ private:
 
     void InitBuffers();
 
-    shared_ptr<cl::Buffer> deviceBuffer_results_x;
-    shared_ptr<cl::Buffer> deviceBuffer_results_y;
-    shared_ptr<cl::Buffer> deviceBuffer_results_z;
-    shared_ptr<cl::Buffer> deviceBuffer_inputs_x;
-    shared_ptr<cl::Buffer> deviceBuffer_inputs_y;
-    shared_ptr<cl::Buffer> deviceBuffer_inputs_z;
+    boost::shared_ptr<cl::Buffer> deviceBuffer_results_x;
+    boost::shared_ptr<cl::Buffer> deviceBuffer_results_y;
+    boost::shared_ptr<cl::Buffer> deviceBuffer_results_z;
+    boost::shared_ptr<cl::Buffer> deviceBuffer_inputs_x;
+    boost::shared_ptr<cl::Buffer> deviceBuffer_inputs_y;
+    boost::shared_ptr<cl::Buffer> deviceBuffer_inputs_z;
 
     I3CLSimVectorTransformConstPtr theTransform_;
     

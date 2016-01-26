@@ -57,5 +57,5 @@ void register_I3ShadowedPhotonRemover()
         ;
     }
     
-    bp::implicitly_convertible<shared_ptr<I3ShadowedPhotonRemover>, shared_ptr<const I3ShadowedPhotonRemover> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3ShadowedPhotonRemover>, boost::shared_ptr<const I3ShadowedPhotonRemover> >();
 }

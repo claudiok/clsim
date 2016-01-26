@@ -123,9 +123,9 @@ void register_I3CLSimSimpleGeometry()
         ;
     }
     
-    bp::implicitly_convertible<shared_ptr<I3CLSimSimpleGeometryWrapper>, shared_ptr<const I3CLSimSimpleGeometry> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimSimpleGeometryWrapper>, shared_ptr<I3CLSimSimpleGeometry> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimSimpleGeometryWrapper>, shared_ptr<const I3CLSimSimpleGeometryWrapper> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimSimpleGeometryWrapper>, boost::shared_ptr<const I3CLSimSimpleGeometry> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimSimpleGeometryWrapper>, boost::shared_ptr<I3CLSimSimpleGeometry> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimSimpleGeometryWrapper>, boost::shared_ptr<const I3CLSimSimpleGeometryWrapper> >();
     
     // I3CLSimSimpleGeometryUserConfigurable
     {
@@ -154,9 +154,9 @@ void register_I3CLSimSimpleGeometry()
         .def("SetSubdetector", &I3CLSimSimpleGeometryUserConfigurable::SetSubdetector)
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimSimpleGeometryUserConfigurable>, shared_ptr<const I3CLSimSimpleGeometryUserConfigurable> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimSimpleGeometryUserConfigurable>, shared_ptr<I3CLSimSimpleGeometry> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimSimpleGeometryUserConfigurable>, shared_ptr<const I3CLSimSimpleGeometry> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimSimpleGeometryUserConfigurable>, boost::shared_ptr<const I3CLSimSimpleGeometryUserConfigurable> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimSimpleGeometryUserConfigurable>, boost::shared_ptr<I3CLSimSimpleGeometry> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimSimpleGeometryUserConfigurable>, boost::shared_ptr<const I3CLSimSimpleGeometry> >();
 
     
     // I3CLSimSimpleGeometryTextFile
@@ -186,9 +186,9 @@ void register_I3CLSimSimpleGeometry()
          )
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimSimpleGeometryTextFile>, shared_ptr<const I3CLSimSimpleGeometryTextFile> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimSimpleGeometryTextFile>, shared_ptr<I3CLSimSimpleGeometry> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimSimpleGeometryTextFile>, shared_ptr<const I3CLSimSimpleGeometry> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimSimpleGeometryTextFile>, boost::shared_ptr<const I3CLSimSimpleGeometryTextFile> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimSimpleGeometryTextFile>, boost::shared_ptr<I3CLSimSimpleGeometry> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimSimpleGeometryTextFile>, boost::shared_ptr<const I3CLSimSimpleGeometry> >();
 
     
     // I3CLSimSimpleGeometryFromI3Geometry
@@ -222,8 +222,8 @@ void register_I3CLSimSimpleGeometry()
          )
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimSimpleGeometryFromI3Geometry>, shared_ptr<const I3CLSimSimpleGeometryFromI3Geometry> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimSimpleGeometryFromI3Geometry>, shared_ptr<I3CLSimSimpleGeometry> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimSimpleGeometryFromI3Geometry>, shared_ptr<const I3CLSimSimpleGeometry> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimSimpleGeometryFromI3Geometry>, boost::shared_ptr<const I3CLSimSimpleGeometryFromI3Geometry> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimSimpleGeometryFromI3Geometry>, boost::shared_ptr<I3CLSimSimpleGeometry> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimSimpleGeometryFromI3Geometry>, boost::shared_ptr<const I3CLSimSimpleGeometry> >();
 
 }

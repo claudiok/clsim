@@ -171,7 +171,7 @@ private:
     
     std::vector<double> meanPhotonsPerMeterInLayer_;
     
-    shared_ptr<GenerateStepPreCalculator> preCalc_;
+    boost::shared_ptr<GenerateStepPreCalculator> preCalc_;
     
     
     
@@ -210,10 +210,10 @@ private:
         std::size_t index_;
 
         typedef std::vector<std::pair<std::pair<double, double>, double> > queueVector_t;
-        shared_ptr<queueVector_t> currentVector_;
+        boost::shared_ptr<queueVector_t> currentVector_;
         
-        I3CLSimQueue<shared_ptr<queueVector_t> > queueFromFeederThreads_;
-        std::vector<shared_ptr<boost::thread> > feederThreads_;
+        I3CLSimQueue<boost::shared_ptr<queueVector_t> > queueFromFeederThreads_;
+        std::vector<boost::shared_ptr<boost::thread> > feederThreads_;
         
         void FeederThread(unsigned int threadId, uint64_t initialRngState, uint32_t rngA);
         void RegenerateValues();

@@ -105,7 +105,7 @@ void register_I3CLSimRandomValue()
 {
     {
         bp::scope I3CLSimRandomValue_scope =
-        bp::class_<I3CLSimRandomValueWrapper, shared_ptr<I3CLSimRandomValueWrapper>, boost::noncopyable>("I3CLSimRandomValue")
+        bp::class_<I3CLSimRandomValueWrapper, boost::shared_ptr<I3CLSimRandomValueWrapper>, boost::noncopyable>("I3CLSimRandomValue")
         .def("NumberOfParameters", bp::pure_virtual(&I3CLSimRandomValue::NumberOfParameters))
         .def("SampleFromDistribution", bp::pure_virtual(&I3CLSimRandomValue::SampleFromDistribution))
         .def("OpenCLFunctionWillOnlyUseASingleRandomNumber", bp::pure_virtual(&I3CLSimRandomValue::OpenCLFunctionWillOnlyUseASingleRandomNumber))
@@ -115,10 +115,10 @@ void register_I3CLSimRandomValue()
         ;
     }
 
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueWrapper>, shared_ptr<const I3CLSimRandomValue> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueWrapper>, shared_ptr<I3CLSimRandomValue> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValue>, shared_ptr<const I3CLSimRandomValue> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueWrapper>, shared_ptr<const I3CLSimRandomValueWrapper> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueWrapper>, boost::shared_ptr<const I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueWrapper>, boost::shared_ptr<I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValue>, boost::shared_ptr<const I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueWrapper>, boost::shared_ptr<const I3CLSimRandomValueWrapper> >();
     utils::register_const_ptr<I3CLSimRandomValue>();
 
     // Henyey-Greenstein
@@ -141,9 +141,9 @@ void register_I3CLSimRandomValue()
         )
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueHenyeyGreenstein>, shared_ptr<const I3CLSimRandomValueHenyeyGreenstein> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueHenyeyGreenstein>, shared_ptr<I3CLSimRandomValue> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueHenyeyGreenstein>, shared_ptr<const I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueHenyeyGreenstein>, boost::shared_ptr<const I3CLSimRandomValueHenyeyGreenstein> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueHenyeyGreenstein>, boost::shared_ptr<I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueHenyeyGreenstein>, boost::shared_ptr<const I3CLSimRandomValue> >();
     utils::register_const_ptr<I3CLSimRandomValueHenyeyGreenstein>();
 
     
@@ -161,9 +161,9 @@ void register_I3CLSimRandomValue()
         )
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueRayleighScatteringCosAngle>, shared_ptr<const I3CLSimRandomValueRayleighScatteringCosAngle> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueRayleighScatteringCosAngle>, shared_ptr<I3CLSimRandomValue> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueRayleighScatteringCosAngle>, shared_ptr<const I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueRayleighScatteringCosAngle>, boost::shared_ptr<const I3CLSimRandomValueRayleighScatteringCosAngle> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueRayleighScatteringCosAngle>, boost::shared_ptr<I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueRayleighScatteringCosAngle>, boost::shared_ptr<const I3CLSimRandomValue> >();
     utils::register_const_ptr<I3CLSimRandomValueRayleighScatteringCosAngle>();
 
 
@@ -187,9 +187,9 @@ void register_I3CLSimRandomValue()
          )
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueSimplifiedLiu>, shared_ptr<const I3CLSimRandomValueSimplifiedLiu> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueSimplifiedLiu>, shared_ptr<I3CLSimRandomValue> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueSimplifiedLiu>, shared_ptr<const I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueSimplifiedLiu>, boost::shared_ptr<const I3CLSimRandomValueSimplifiedLiu> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueSimplifiedLiu>, boost::shared_ptr<I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueSimplifiedLiu>, boost::shared_ptr<const I3CLSimRandomValue> >();
     utils::register_const_ptr<I3CLSimRandomValueSimplifiedLiu>();
 
 
@@ -225,9 +225,9 @@ void register_I3CLSimRandomValue()
 
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueInterpolatedDistribution>, shared_ptr<const I3CLSimRandomValueInterpolatedDistribution> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueInterpolatedDistribution>, shared_ptr<I3CLSimRandomValue> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueInterpolatedDistribution>, shared_ptr<const I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueInterpolatedDistribution>, boost::shared_ptr<const I3CLSimRandomValueInterpolatedDistribution> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueInterpolatedDistribution>, boost::shared_ptr<I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueInterpolatedDistribution>, boost::shared_ptr<const I3CLSimRandomValue> >();
     utils::register_const_ptr<I3CLSimRandomValueInterpolatedDistribution>();
 
 
@@ -255,9 +255,9 @@ void register_I3CLSimRandomValue()
          )
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueMixed>, shared_ptr<const I3CLSimRandomValueMixed> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueMixed>, shared_ptr<I3CLSimRandomValue> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueMixed>, shared_ptr<const I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueMixed>, boost::shared_ptr<const I3CLSimRandomValueMixed> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueMixed>, boost::shared_ptr<I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueMixed>, boost::shared_ptr<const I3CLSimRandomValue> >();
     utils::register_const_ptr<I3CLSimRandomValueMixed>();
 
 
@@ -283,9 +283,9 @@ void register_I3CLSimRandomValue()
          )
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueApplyFunction>, shared_ptr<const I3CLSimRandomValueApplyFunction> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueApplyFunction>, shared_ptr<I3CLSimRandomValue> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueApplyFunction>, shared_ptr<const I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueApplyFunction>, boost::shared_ptr<const I3CLSimRandomValueApplyFunction> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueApplyFunction>, boost::shared_ptr<I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueApplyFunction>, boost::shared_ptr<const I3CLSimRandomValue> >();
     utils::register_const_ptr<I3CLSimRandomValueApplyFunction>();
 
 
@@ -311,9 +311,9 @@ void register_I3CLSimRandomValue()
          )
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueWlenCherenkovNoDispersion>, shared_ptr<const I3CLSimRandomValueWlenCherenkovNoDispersion> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueWlenCherenkovNoDispersion>, shared_ptr<I3CLSimRandomValue> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueWlenCherenkovNoDispersion>, shared_ptr<const I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueWlenCherenkovNoDispersion>, boost::shared_ptr<const I3CLSimRandomValueWlenCherenkovNoDispersion> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueWlenCherenkovNoDispersion>, boost::shared_ptr<I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueWlenCherenkovNoDispersion>, boost::shared_ptr<const I3CLSimRandomValue> >();
     utils::register_const_ptr<I3CLSimRandomValueWlenCherenkovNoDispersion>();
 
 
@@ -335,9 +335,9 @@ void register_I3CLSimRandomValue()
          )
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueNormalDistribution>, shared_ptr<const I3CLSimRandomValueNormalDistribution> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueNormalDistribution>, shared_ptr<I3CLSimRandomValue> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueNormalDistribution>, shared_ptr<const I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueNormalDistribution>, boost::shared_ptr<const I3CLSimRandomValueNormalDistribution> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueNormalDistribution>, boost::shared_ptr<I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueNormalDistribution>, boost::shared_ptr<const I3CLSimRandomValue> >();
     utils::register_const_ptr<I3CLSimRandomValueNormalDistribution>();
 
     
@@ -365,9 +365,9 @@ void register_I3CLSimRandomValue()
          )
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueFixParameter>, shared_ptr<const I3CLSimRandomValueFixParameter> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueFixParameter>, shared_ptr<I3CLSimRandomValue> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueFixParameter>, shared_ptr<const I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueFixParameter>, boost::shared_ptr<const I3CLSimRandomValueFixParameter> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueFixParameter>, boost::shared_ptr<I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueFixParameter>, boost::shared_ptr<const I3CLSimRandomValue> >();
     utils::register_const_ptr<I3CLSimRandomValueFixParameter>();
 
     
@@ -392,9 +392,9 @@ void register_I3CLSimRandomValue()
         .def(init<>()) // this one also has a default constructor
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueConstant>, shared_ptr<const I3CLSimRandomValueConstant> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueConstant>, shared_ptr<I3CLSimRandomValue> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueConstant>, shared_ptr<const I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueConstant>, boost::shared_ptr<const I3CLSimRandomValueConstant> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueConstant>, boost::shared_ptr<I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueConstant>, boost::shared_ptr<const I3CLSimRandomValue> >();
     utils::register_const_ptr<I3CLSimRandomValueConstant>();
 
     
@@ -420,16 +420,16 @@ void register_I3CLSimRandomValue()
         .def(init<>()) // this one also has a default constructor
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueUniform>, shared_ptr<const I3CLSimRandomValueUniform> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueUniform>, shared_ptr<I3CLSimRandomValue> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomValueUniform>, shared_ptr<const I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueUniform>, boost::shared_ptr<const I3CLSimRandomValueUniform> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueUniform>, boost::shared_ptr<I3CLSimRandomValue> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomValueUniform>, boost::shared_ptr<const I3CLSimRandomValue> >();
     utils::register_const_ptr<I3CLSimRandomValueUniform>();
 
 
     // a vector of distributions
     {
         typedef std::vector<I3CLSimRandomValueConstPtr> Series;
-        bp::class_<Series, shared_ptr<Series> >("I3CLSimRandomValuePtrSeries")
+        bp::class_<Series, boost::shared_ptr<Series> >("I3CLSimRandomValuePtrSeries")
             .def(bp::list_indexing_suite<Series>())
         ;
     }

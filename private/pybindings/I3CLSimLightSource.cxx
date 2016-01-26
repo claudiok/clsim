@@ -78,5 +78,5 @@ void register_I3CLSimLightSource()
 
     }
     
-    bp::implicitly_convertible<shared_ptr<I3CLSimLightSource>, shared_ptr<const I3CLSimLightSource> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSource>, boost::shared_ptr<const I3CLSimLightSource> >();
 }

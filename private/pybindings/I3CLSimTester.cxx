@@ -88,9 +88,9 @@ void register_I3CLSimTester()
         .add_property("maxWorkgroupSize", &I3CLSimTesterBase::GetMaxWorkgroupSize)
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimTesterBaseWrapper>, shared_ptr<const I3CLSimTesterBase> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimTesterBaseWrapper>, shared_ptr<I3CLSimTesterBase> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimTesterBaseWrapper>, shared_ptr<const I3CLSimTesterBaseWrapper> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimTesterBaseWrapper>, boost::shared_ptr<const I3CLSimTesterBase> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimTesterBaseWrapper>, boost::shared_ptr<I3CLSimTesterBase> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimTesterBaseWrapper>, boost::shared_ptr<const I3CLSimTesterBaseWrapper> >();
 
     // I3CLSimRandomDistributionTester
     {
@@ -115,9 +115,9 @@ void register_I3CLSimTester()
         .def("GenerateRandomNumbers", &I3CLSimRandomDistributionTester::GenerateRandomNumbers, bp::arg("iterations"))
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomDistributionTester>, shared_ptr<const I3CLSimRandomDistributionTester> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomDistributionTester>, shared_ptr<I3CLSimTesterBase> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimRandomDistributionTester>, shared_ptr<const I3CLSimTesterBase> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomDistributionTester>, boost::shared_ptr<const I3CLSimRandomDistributionTester> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomDistributionTester>, boost::shared_ptr<I3CLSimTesterBase> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimRandomDistributionTester>, boost::shared_ptr<const I3CLSimTesterBase> >();
 
     
     // I3CLSimFunctionTester
@@ -145,9 +145,9 @@ void register_I3CLSimTester()
         .def("EvaluateReferenceDerivative", &I3CLSimFunctionTester::EvaluateReferenceDerivative, bp::arg("xValues"))
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionTester>, shared_ptr<const I3CLSimFunctionTester> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionTester>, shared_ptr<I3CLSimTesterBase> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimFunctionTester>, shared_ptr<const I3CLSimTesterBase> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionTester>, boost::shared_ptr<const I3CLSimFunctionTester> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionTester>, boost::shared_ptr<I3CLSimTesterBase> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionTester>, boost::shared_ptr<const I3CLSimTesterBase> >();
 
 
     // I3CLSimScalarFieldTester
@@ -172,9 +172,9 @@ void register_I3CLSimTester()
         .def("EvaluateReferenceFunction", &I3CLSimScalarFieldTester::EvaluateReferenceFunction, bp::arg("xValues"), bp::arg("yValues"), bp::arg("zValues"))
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldTester>, shared_ptr<const I3CLSimScalarFieldTester> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldTester>, shared_ptr<I3CLSimTesterBase> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimScalarFieldTester>, shared_ptr<const I3CLSimTesterBase> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimScalarFieldTester>, boost::shared_ptr<const I3CLSimScalarFieldTester> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimScalarFieldTester>, boost::shared_ptr<I3CLSimTesterBase> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimScalarFieldTester>, boost::shared_ptr<const I3CLSimTesterBase> >();
 
 
     // I3CLSimVectorTransformTester
@@ -199,9 +199,9 @@ void register_I3CLSimTester()
         .def("EvaluateReferenceFunction", &I3CLSimVectorTransformTester_EvaluateReferenceFunction, bp::arg("xValues"), bp::arg("yValues"), bp::arg("zValues"))
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimVectorTransformTester>, shared_ptr<const I3CLSimVectorTransformTester> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimVectorTransformTester>, shared_ptr<I3CLSimTesterBase> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimVectorTransformTester>, shared_ptr<const I3CLSimTesterBase> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimVectorTransformTester>, boost::shared_ptr<const I3CLSimVectorTransformTester> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimVectorTransformTester>, boost::shared_ptr<I3CLSimTesterBase> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimVectorTransformTester>, boost::shared_ptr<const I3CLSimTesterBase> >();
 
     
     // I3CLSimMediumPropertiesTester
@@ -230,8 +230,8 @@ void register_I3CLSimTester()
         .def("EvaluateScatteringLength", &I3CLSimMediumPropertiesTester::EvaluateScatteringLength, bp::arg("xValues"), bp::arg("layer"))
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimMediumPropertiesTester>, shared_ptr<const I3CLSimMediumPropertiesTester> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimMediumPropertiesTester>, shared_ptr<I3CLSimTesterBase> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimMediumPropertiesTester>, shared_ptr<const I3CLSimTesterBase> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimMediumPropertiesTester>, boost::shared_ptr<const I3CLSimMediumPropertiesTester> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimMediumPropertiesTester>, boost::shared_ptr<I3CLSimTesterBase> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimMediumPropertiesTester>, boost::shared_ptr<const I3CLSimTesterBase> >();
 
 }

@@ -117,9 +117,9 @@ void register_I3CLSimStepToPhotonConverter()
         
     }
     
-    bp::implicitly_convertible<shared_ptr<I3CLSimStepToPhotonConverterWrapper>, shared_ptr<const I3CLSimStepToPhotonConverter> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimStepToPhotonConverterWrapper>, shared_ptr<I3CLSimStepToPhotonConverter> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimStepToPhotonConverterWrapper>, shared_ptr<const I3CLSimStepToPhotonConverterWrapper> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimStepToPhotonConverterWrapper>, boost::shared_ptr<const I3CLSimStepToPhotonConverter> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimStepToPhotonConverterWrapper>, boost::shared_ptr<I3CLSimStepToPhotonConverter> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimStepToPhotonConverterWrapper>, boost::shared_ptr<const I3CLSimStepToPhotonConverterWrapper> >();
     
 
     
@@ -197,8 +197,8 @@ void register_I3CLSimStepToPhotonConverter()
         ;
     }
     
-    bp::implicitly_convertible<shared_ptr<I3CLSimStepToPhotonConverterOpenCLWrapper>, shared_ptr<const I3CLSimStepToPhotonConverterOpenCLWrapper> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimStepToPhotonConverterOpenCLWrapper>, shared_ptr<I3CLSimStepToPhotonConverter> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimStepToPhotonConverterOpenCLWrapper>, shared_ptr<const I3CLSimStepToPhotonConverter> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimStepToPhotonConverterOpenCLWrapper>, boost::shared_ptr<const I3CLSimStepToPhotonConverterOpenCLWrapper> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimStepToPhotonConverterOpenCLWrapper>, boost::shared_ptr<I3CLSimStepToPhotonConverter> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimStepToPhotonConverterOpenCLWrapper>, boost::shared_ptr<const I3CLSimStepToPhotonConverter> >();
     
 }

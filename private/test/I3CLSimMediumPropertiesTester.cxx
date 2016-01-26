@@ -102,20 +102,20 @@ void I3CLSimMediumPropertiesTester::InitBuffers(I3RandomServicePtr randomService
         log_debug("RNG is set up..");
 
         // set up device buffers from existing host buffers
-        deviceBuffer_MWC_RNG_x = shared_ptr<cl::Buffer>(new cl::Buffer(*context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, MWC_RNG_x.size() * sizeof(uint64_t), &(MWC_RNG_x[0])));
-        deviceBuffer_MWC_RNG_a = shared_ptr<cl::Buffer>(new cl::Buffer(*context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, MWC_RNG_a.size() * sizeof(uint32_t), &(MWC_RNG_a[0])));
+        deviceBuffer_MWC_RNG_x = boost::shared_ptr<cl::Buffer>(new cl::Buffer(*context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, MWC_RNG_x.size() * sizeof(uint64_t), &(MWC_RNG_x[0])));
+        deviceBuffer_MWC_RNG_a = boost::shared_ptr<cl::Buffer>(new cl::Buffer(*context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, MWC_RNG_a.size() * sizeof(uint32_t), &(MWC_RNG_a[0])));
     }
     else
     {
         // set up dummy buffers
-        deviceBuffer_MWC_RNG_x = shared_ptr<cl::Buffer>(new cl::Buffer(*context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, workItemsPerIteration * sizeof(uint64_t), NULL ));
-        deviceBuffer_MWC_RNG_a = shared_ptr<cl::Buffer>(new cl::Buffer(*context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, workItemsPerIteration * sizeof(uint32_t), NULL ));
+        deviceBuffer_MWC_RNG_x = boost::shared_ptr<cl::Buffer>(new cl::Buffer(*context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, workItemsPerIteration * sizeof(uint64_t), NULL ));
+        deviceBuffer_MWC_RNG_a = boost::shared_ptr<cl::Buffer>(new cl::Buffer(*context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, workItemsPerIteration * sizeof(uint32_t), NULL ));
     }
     
     log_debug("Setting up device buffers.");
     // allocate empty buffers on the device
-    deviceBuffer_results = shared_ptr<cl::Buffer>(new cl::Buffer(*context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, workItemsPerIteration*sizeof(float), NULL));
-    deviceBuffer_inputs = shared_ptr<cl::Buffer>(new cl::Buffer(*context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, workItemsPerIteration*sizeof(float), NULL));
+    deviceBuffer_results = boost::shared_ptr<cl::Buffer>(new cl::Buffer(*context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, workItemsPerIteration*sizeof(float), NULL));
+    deviceBuffer_inputs = boost::shared_ptr<cl::Buffer>(new cl::Buffer(*context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, workItemsPerIteration*sizeof(float), NULL));
     log_debug("Device buffers are set up.");
     
     log_debug("Configuring kernel.");

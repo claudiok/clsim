@@ -67,7 +67,7 @@ i3clsimstep_prettyprint(const I3CLSimStep& s)
 template <typename T>
 struct ConstPtr_to_python
 {
-    static PyObject *convert(const shared_ptr<const T>& val)
+    static PyObject *convert(const boost::shared_ptr<const T>& val)
     {
         return boost::python::incref( bp::object(boost::const_pointer_cast<T>(val)) .ptr()); 
     }
@@ -119,7 +119,7 @@ void register_I3CLSimStep()
 
     // does not base on I3FrameObject, so register only the shared_ptr<T>-to-shared_ptr<const T> conversion
     //register_pointer_conversions<I3CLSimStep>();
-    bp::implicitly_convertible<shared_ptr<I3CLSimStep>, shared_ptr<const I3CLSimStep> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimStep>, boost::shared_ptr<const I3CLSimStep> >();
 
     register_pointer_conversions<I3CLSimStepSeries>();
     
