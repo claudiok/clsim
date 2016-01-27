@@ -97,7 +97,7 @@ G4ClassificationOfNewTrack TrkStackingAction::ClassifyNewTrack(const G4Track * a
         if (parameterization.IsValidForPdgEncoding(aTrack->GetDefinition()->GetPDGEncoding(), trackEnergy*I3Units::GeV/GeV))
 #endif
         {
-            shared_ptr<std::deque<boost::tuple<I3CLSimLightSourceConstPtr, uint32_t, const I3CLSimLightSourceParameterization> > > sendToParameterizationQueue = eventInformation->sendToParameterizationQueue;
+            boost::shared_ptr<std::deque<boost::tuple<I3CLSimLightSourceConstPtr, uint32_t, const I3CLSimLightSourceParameterization> > > sendToParameterizationQueue = eventInformation->sendToParameterizationQueue;
 
             if (!sendToParameterizationQueue) 
                 log_fatal("internal error: sendToParameterizationQueue==NULL");
