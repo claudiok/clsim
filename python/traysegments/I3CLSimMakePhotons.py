@@ -135,7 +135,7 @@ def I3CLSimMakePhotons(tray, name,
         in excessive memory usage (all your frames have to be cached
         in RAM). Setting it too low may impact simulation performance.
         The optimal value depends on your energy distribution/particle type.
-    :param TotalEnergyToProcess
+    :param TotalEnergyToProcess:
        clsim will work on a couple of events in parallel in order
        not to starve the GPU. With this setting clsim will figure out
        how many frames to accumulate as to not starve the GPU based on 
