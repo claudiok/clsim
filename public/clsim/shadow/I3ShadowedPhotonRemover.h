@@ -27,7 +27,7 @@
 #ifndef I3SHADOWEDPHOTONREMOVER_H_INCLUDED
 #define I3SHADOWEDPHOTONREMOVER_H_INCLUDED
 
-#include "clsim/I3Photon.h"
+#include "simclasses/I3Photon.h"
 
 #include <string>
 

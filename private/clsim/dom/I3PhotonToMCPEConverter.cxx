@@ -36,7 +36,7 @@
 
 #include <boost/foreach.hpp>
 
-#include "clsim/I3Photon.h"
+#include "simclasses/I3Photon.h"
 
 #include "phys-services/I3SummaryService.h"
 
