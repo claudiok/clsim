@@ -61,4 +61,4 @@ from .traysegments import I3CLSimMakeHits, I3CLSimMakePhotons, I3CLSimMakeHitsFr
 # clean up the clsim namespace
 del icetray
 del dataclasses
-
+del simclasses

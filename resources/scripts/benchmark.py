@@ -55,7 +55,7 @@ import sys
 import math
 import numpy
 
-from icecube import icetray, dataclasses, dataio, phys_services, sim_services, clsim
+from icecube import icetray, dataclasses, dataio, phys_services, sim_services, simclasses, clsim
 
 # icetray.I3Logger.global_logger.set_level(icetray.I3LogLevel.LOG_INFO)
 icetray.I3Logger.global_logger.set_level(icetray.I3LogLevel.LOG_WARN)
@@ -285,7 +285,7 @@ tray.AddModule("I3MCEventHeaderGenerator","gen_header",
 tray.AddModule(generateEvent, "generateEvent",
     I3RandomService = randomService,
     NEvents = options.NUMEVENTS,
-    Energy = 40.*I3Units.TeV,
+    Energy = 1000.*I3Units.TeV,
     # Energy = 1000.*I3Units.TeV,
     # XCoord = xCoord,
     # YCoord = yCoord,
