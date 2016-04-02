@@ -1,0 +1,9 @@
+*.pyc
+*.pdf
+*.i3
+/resources/scripts/compareToPPCredux/applyCLSim.xml
+*.hdf5
+resources/scripts/photonPaths/*.gif
+/resources/safeprimes_base32.txt
+
+benchmark.xml

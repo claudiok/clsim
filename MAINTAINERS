@@ -1,0 +1,19 @@
+# I have no idea what format this file will have once the automatic
+# maintainer commit authorization check will be in place. I am going
+# with
+#
+# "svn username" "email1" "email2" ...
+#
+# for now. (with the email addresses being optional) This will probably need to be changed.
+#
+# If you want to be added to this list, just let any maintainer know.
+#
+# -ck
+
+claudio.kopper ckopper@icecube.wisc.edu claudio.kopper@icecube.wisc.edu
+nwhitehorn
+jvansanten
+juancarlos
+benedikt.riedel
+reagan
+cweaver

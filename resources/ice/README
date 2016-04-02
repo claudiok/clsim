@@ -1,0 +1,9 @@
+This direcotry contains a colelction of various IceCube ice models,
+such as WHAM!, Spice-MIE some others. They are straight copies from
+ppc, photonics or the IceCube wiki. If in doubt, download the ice model
+files yourself and point clsim to them.
+
+Clsim is fully compatible with photonics and ppc ice model files
+(although ppc model files should yield a slightly higher performance
+on GPUs since they use a parameterized ice model instead of a
+interpolated table of values).
