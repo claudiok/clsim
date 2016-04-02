@@ -13,9 +13,9 @@ numberOfTrials = 100000
 maximumDeviation = 10.*I3Units.cm
 
 # get OpenCL CPU devices
-openCLDevices = [device for device in clsim.I3CLSimOpenCLDevice.GetAllDevices() if device.cpu]
+openCLDevices = [device for device in clsim.I3CLSimOpenCLDevice.GetAllDevices()]
 if len(openCLDevices)==0:
-    raise RuntimeError("No CPU OpenCL devices available!")
+    raise RuntimeError("No OpenCL devices available!")
 openCLDevice = openCLDevices[0]
 
 openCLDevice.useNativeMath=False
