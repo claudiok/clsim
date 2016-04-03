@@ -563,15 +563,15 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
                     source = self.reference_source(zenith, azimuth, 1./len(Directions))
                     mctree.append_child(primary, source)
                 frame["I3MCTree"] = mctree
+                # use the emitting particle as a geometrical reference
+                frame["ReferenceParticle"] = source
             else:
                 pulseseries = I3CLSimFlasherPulseSeries()
                 for zenith, azimuth in Directions:
                     pulse = makeFlasherPulse(0, 0, ZCoordinate, zenith, azimuth, FlasherWidth, FlasherBrightness, 1./len(Directions))
                     pulseseries.append(pulse)
                 frame["I3FlasherPulseSeriesMap"] = pulseseries
-
-            # use the primary particle as a geometrical reference
-            frame["ReferenceParticle"] = self.reference_source(Zenith, Azimuth, 1.)
+                frame["ReferenceParticle"] = self.reference_source(Zenith, Azimuth, 1.)
             
             self.PushFrame(frame)
             
