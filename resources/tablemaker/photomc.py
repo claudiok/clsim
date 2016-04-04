@@ -53,6 +53,9 @@ parser.add_option("--prescale", dest="prescale", type="float", default=100,
     help="Only propagate 1/PRESCALE of photons. This is useful for controlling \
     how many photons are simulated per source, e.g. for infinite muons where \
     multiple trajectories need to be sampled [%default]")
+parser.add_option("--sensor", default="dom", choices=("dom", "degg", "wom", "mdom"),
+    help="Type of sensor to simulate")
+parser.add_option("--ice-model", default="spice_mie", help="Ice model to simulate [%default]")
 parser.add_option("--step", dest="steplength", type="float", default=1,
     help="Sampling step length in meters [%default]")
 parser.add_option("--overwrite", dest="overwrite", action="store_true", default=False,
@@ -86,9 +89,14 @@ icetray.logging.set_level_for_unit('I3CLSimTabulatorModule', 'DEBUG')
 icetray.logging.set_level_for_unit('I3CLSimLightSourceToStepConverterGeant4', 'TRACE')
 icetray.logging.set_level_for_unit('I3CLSimLightSourceToStepConverterFlasher', 'TRACE')
 
+# TODO: add configurations for alternate sensors
+if opts.sensor != 'dom':
+	raise NotImplementedError("Don't know how to simulate %ds yet" % (opts.sensor))
+
 tray.AddSegment(TabulatePhotonsFromSource, 'generator', Seed=opts.seed, PhotonSource=opts.light_source,
     Zenith=opts.zenith, ZCoordinate=opts.z, Energy=opts.energy, NEvents=opts.nevents, Filename=outfile,
-    TabulateImpactAngle=opts.tabulate_impact_angle, PhotonPrescale=opts.prescale)
+    TabulateImpactAngle=opts.tabulate_impact_angle, PhotonPrescale=opts.prescale,
+    DisableTilt=True, IceModel=opts.ice_model)
     
 tray.AddModule('TrashCan', 'MemoryHole')
 tray.Execute()

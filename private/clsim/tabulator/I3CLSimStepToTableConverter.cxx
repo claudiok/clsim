@@ -120,9 +120,10 @@ GetMinimumRefractiveIndex(const I3CLSimMediumProperties &med)
 I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice device,
     clsim::tabulator::AxesConstPtr axes, size_t entriesPerStream,
     I3CLSimMediumPropertiesConstPtr mediumProperties, I3CLSimSpectrumTableConstPtr spectrumTable,
+    double referenceArea,
     I3CLSimFunctionConstPtr wavelengthAcceptance, I3CLSimFunctionConstPtr angularAcceptance,
     I3RandomServicePtr rng) : entriesPerStream_(entriesPerStream), stepQueue_(1), run_(true),
-    domArea_(M_PI*std::pow(0.16510*I3Units::m, 2)), stepLength_(1.), axes_(axes),
+    domArea_(referenceArea), stepLength_(1.), axes_(axes),
     numPhotons_(0), sumOfPhotonWeights_(0.)
 {
 	std::vector<I3CLSimRandomValueConstPtr> wavelengthGenerators;

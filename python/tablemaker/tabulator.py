@@ -131,7 +131,9 @@ def I3CLSimTabulatePhotons(tray, name,
                        CrossoverEnergyHadron=None,
                        UseCascadeExtension=False,
                        DoNotParallelize=False,
-                       DOMOversizeFactor=1,
+                       Area=None,
+                       WavelengthAcceptance=None,
+                       AngularAcceptance=None,
                        UseHoleIceParameterization=True,
                        OverrideApproximateNumberOfWorkItems=None,
                        ExtraArgumentsToI3CLSimModule=dict(),
@@ -189,9 +191,6 @@ def I3CLSimTabulatePhotons(tray, name,
         Only used if *ChopMuons* is active. Set it to the name
         of the I3MMCTrackList object that contains additional
         muon energy loss information.
-    :param PhotonSeriesName:
-        Configure this to enable writing an I3PhotonSeriesMap containing
-        all photons that reached the DOM surface.
     :param ParallelEvents:
         clsim will work on a couple of events in parallel in order
         not to starve the GPU. Setting this too high will result
@@ -211,28 +210,14 @@ def I3CLSimTabulatePhotons(tray, name,
         less interpolation between table entries (the PPC ice-specification
         is parametric w.r.t. wavelength, whereas the photonics specification
         is not).
-    :param DisableTilt:
-        Do not simulate ice tilt, even if the ice model directory
-        provides tilt information. (Photonics-based models will never
-        have tilt.)
-    :param UnWeightedPhotons:
-        Enabling this setting will disable all optimizations. These
-        are currently a DOM oversize factor of 5 (with the appropriate
-        timing correction) and a biased initial photon spectrum that
-        includes the DOM spectral acceptance. Enabling this setting
-        essentially means that all photons that would be generated
-        in the real detector *will* actually be generated. This will siginificatly
-        slow down the simulation, but the optional ``PhotonSeries``
-        will contain an unweighted sample of photons that arrive
-        at your DOMs. This can be useful for DOM acceptance studies.
-    :param StopDetectedPhotons:
-        Configures behaviour for photons that hit a DOM. If this is true (the default)
-        photons will be stopped once they hit a DOM. If this is false, they continue to
-        propagate.
-    :param PhotonHistoryEntries:
-        The maximum number of scatterings points to be saved for every photon hitting a DOM.
-        Only the most recent positions are saved, older positions are overwritten if
-        the maximum size is reached.
+    :param Area:
+        Geometric area of the sensor. If None, use the area of an IceCube DOM
+    :param WavelengthAcceptance:
+        Quantum efficiency of the sensor, relative to the geometric area. If
+        None, use the IceCube DOM (standard QE)
+    :param AngularAcceptance:
+        Efficiency as a function of polar angle, relative to the geometric area.
+        If None, use the IceCube angular efficiency, assuming hole ice.
     :param UseGeant4:
         Enabling this setting will disable all cascade and muon light yield
         parameterizations. All particles will sent to Geant4 for a full
@@ -269,12 +254,6 @@ def I3CLSimTabulatePhotons(tray, name,
         OpenCL simulation. This might be useful if you want to run jobs
         in parallel on a batch system. This will only affect CPUs and
         will be a no-op for GPUs.
-    :param DOMOversizeFactor:
-        Set the DOM oversize factor. To disable oversizing, set this to 1.
-    :param UnshadowedFraction:
-        Fraction of photocathode available to receive light (e.g. unshadowed by the cable)
-    :param UseHoleIceParameterization:
-        Use an angular acceptance correction for hole ice scattering.
     :param OverrideApproximateNumberOfWorkItems:
         Allows to override the auto-detection for the maximum number of parallel work items.
         You should only change this if you know what you are doing.
@@ -297,10 +276,6 @@ def I3CLSimTabulatePhotons(tray, name,
     # TODO: fix this
     if clsim.I3CLSimLightSourceToStepConverterGeant4.can_use_geant4:
         AutoSetGeant4Environment()
-
-    # some constants
-    DOMRadius = 0.16510*icetray.I3Units.m # 13" diameter
-    Jitter = 2.*icetray.I3Units.ns
 
     if MMCTrackListName is None or MMCTrackListName=="":
         # the input does not seem to have been processed by MMC
@@ -368,12 +343,21 @@ def I3CLSimTabulatePhotons(tray, name,
         else:
             clSimMCTreeName = clSimMCTreeName
 
-    domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius=DOMOversizeFactor*DOMRadius)
-    if UseHoleIceParameterization:
-        angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(UseHoleIceParameterization)
+    # some constants
+    DOMRadius = 0.16510*icetray.I3Units.m # 13" diameter
+
+    if Area is None:
+        referenceArea = dataclasses.I3Constants.pi*DOMRadius**2
     else:
-        icetray.logging.log_warn("Applying *no* angular sensitivity at all. None.")
-        angularAcceptance = clsim.I3CLSimFunctionConstant(1.)
+        referenceArea = Area
+    if WavelengthAcceptance is None:
+        domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius=DOMRadius)
+    else:
+        domAcceptance = WavelengthAcceptance
+    if AngularAcceptance is None:
+        angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=True)
+    else:
+        angularAcceptance = AngularAcceptance
 
     # muon&cascade parameterizations
     ppcConverter = clsim.I3CLSimLightSourceToStepConverterPPC(photonsPerStep=200)
@@ -415,6 +399,7 @@ def I3CLSimTabulatePhotons(tray, name,
                    MediumProperties=MediumProperties,
                    SpectrumTable=spectrumTable,
                    FlasherPulseSeriesName=clSimFlasherPulseSeriesName,
+                   Area=referenceArea,
                    WavelengthAcceptance=domAcceptance,
                    AngularAcceptance=angularAcceptance,
                    ParameterizationList=particleParameterizations,
@@ -595,6 +580,7 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
     header['energy'] = Energy
     header['type'] = int(ptype)
     header['efficiency'] = Efficiency.RECEIVER | Efficiency.WAVELENGTH
+    header['n_events'] = NEvents/float(PhotonPrescale)
     
     if Axes is None:
         if PhotonSource != "infinite-muon":
@@ -621,6 +607,22 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
     if PhotonSource == "flasher":
         header['flasherwidth'] = FlasherWidth
         header['flasherbrightness'] = FlasherBrightness
+    
+    # some constants
+    DOMRadius = 0.16510*icetray.I3Units.m # 13" diameter
+    referenceArea = dataclasses.I3Constants.pi*DOMRadius**2
+    
+    # NB: GetIceCubeDOMAcceptance() calculates the quantum efficiency by
+    #     dividing the geometric area (a circle of radius domRadius) by the
+    #     tabulated effective area. Scaling that radius by *sqrt(prescale)*
+    #     _reduces_ the effective quantum efficiency by a factor *prescale*. 
+    #     Since we draw photons directly from the QE-weighted Cherenkov
+    #     spectrum, this causes *prescale* fewer photons to be progagated per
+    #     light source. We compensate by dividing the number of events by
+    #     *prescale* in the header above.
+    #     to be propagated per light source.
+    domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius=math.sqrt(PhotonPrescale)*DOMRadius)
+    angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=True)
 
     tray.AddSegment(I3CLSimTabulatePhotons, name+"makeCLSimPhotons",
         MCTreeName = mctree,                        # if source is a cascade this will point to the I3MCTree
@@ -631,8 +633,9 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
         # UnWeightedPhotons=True,
         UseGPUs=False,                              # table-making is not a workload particularly suited to GPUs
         UseCPUs=True,                               # it should work fine on CPUs, though
-        DOMOversizeFactor=math.sqrt(PhotonPrescale),
-        UseHoleIceParameterization=True,
+        Area=referenceArea,
+        WavelengthAcceptance=domAcceptance,
+        AngularAcceptance=angularAcceptance,
         DoNotParallelize=True,                      # no multithreading
         UseGeant4=False,
         OverrideApproximateNumberOfWorkItems=1,     # if you *would* use multi-threading, this would be the maximum number of jobs to run in parallel (OpenCL is free to split them)
