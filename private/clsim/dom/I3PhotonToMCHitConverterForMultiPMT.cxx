@@ -30,7 +30,7 @@
 // Things from this module:
 #include "clsim/dom/I3PhotonToMCHitConverterForMultiPMT.h"
 
-#include "clsim/I3Photon.h"
+#include "simclasses/I3Photon.h"
 #include "dataclasses/physics/I3MCHit.h"
 #include "dataclasses/physics/I3MCTree.h"
 

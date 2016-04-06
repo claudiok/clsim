@@ -32,7 +32,7 @@
 // Things from this module:
 #include "clsim/dom/I3PhotonToMCHitConverterForMDOMs.h"
 
-#include "clsim/I3Photon.h"
+#include "simclasses/I3Photon.h"
 #include "simclasses/I3MCPE.h"
 #include "dataclasses/physics/I3MCTree.h"
 
@@ -452,7 +452,7 @@ void I3PhotonToMCHitConverterForMDOMs::DAQ(I3FramePtr frame)
     
     // build an index into the I3MCTree
     std::map<std::pair<uint64_t, int>, const I3Particle *> mcTreeIndex;
-    for (I3MCTree::iterator it = MCTree->begin();
+    for (I3MCTree::const_iterator it = MCTree->begin();
          it != MCTree->end(); ++it)
     {
         const I3Particle &particle = *it;
