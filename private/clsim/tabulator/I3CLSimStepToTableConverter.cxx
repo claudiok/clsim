@@ -501,14 +501,17 @@ I3CLSimStepToTableConverter::Normalize()
 	const unsigned ndim = axes_->GetNDim();
 	const std::vector<size_t> shape = axes_->GetShape();
 	const std::vector<size_t> strides = axes_->GetStrides();
-	std::vector<size_t> idxs(ndim);
+	std::vector<size_t> idxs(ndim, 0);
 
 	// NB: assume that the first 3 dimensions are spatial
 	const size_t spatial_stride = strides[2];
 	for (size_t offset = 0; offset < binContent_.size(); offset += spatial_stride) {
 		// unravel index
-		for (unsigned j=0; j < ndim; j++)
-			idxs[j] = offset/strides[j] % shape[j];
+		for (unsigned j=0; j < ndim; j++) {
+			// each dimension has an under- and an overflow bin.
+			idxs[j] = std::min(std::max(int(offset/strides[j] % shape[j])-1, 0), int(shape[j]-3));
+			assert(idxs[j] < shape[j]-2);
+		}
 		assert(idxs[ndim-1] == 0);
 		
 		// apply volume normalization to each spatial cell

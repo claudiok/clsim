@@ -50,10 +50,10 @@ Axis::GetIndexCode(const std::string &var) const {
 	double offset = scale*InverseTransform(min_);
 
 	using I3CLSimHelper::ToFloatString;
-	ss << "clamp(convert_int_sat_rtz("
+	ss << "(clamp(convert_int_sat_rtn("
 	    <<ToFloatString(scale)<<"*"<<GetInverseTransformCode(var)
 	    <<" - "<<ToFloatString(offset)
-	    <<"), 0, "<<(n_bins_-1)<<")";
+	    <<"), -1, "<<(n_bins_)<<")+1)";
 	
 	return ss.str();
 }
