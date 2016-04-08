@@ -414,7 +414,7 @@ def I3CLSimTabulatePhotons(tray, name,
 def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Units.degree, Azimuth=0.*I3Units.degree, ZCoordinate=0.*I3Units.m,
     Energy=1.*I3Units.GeV, FlasherWidth=127, FlasherBrightness=127, Seed=12345, NEvents=100,
     IceModel='spice_mie', DisableTilt=False, Filename="", TabulateImpactAngle=False,
-    PhotonPrescale=1, Axes=None, Directions=None):
+    PhotonPrescale=1, Axes=None, Directions=None, Sensor='DOM'):
     
     """
     Tabulate the distribution of photoelectron yields on IceCube DOMs from various
@@ -510,7 +510,10 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
     elif PhotonSource == 'infinite-muon':
         
         from icecube import MuonGun
-        surface = MuonGun.Cylinder(1600, 800)
+        # pad depth to ensure that the track appears effectively infinite
+        surface = MuonGun.Cylinder(1800, 800)
+        # account for zenith-dependent distribution of track lengths
+        length_scale = surface.area(dataclasses.I3Direction(0, 0))/surface.area(dataclasses.I3Direction(Zenith, 0))
         
         ptype = I3Particle.ParticleType.MuMinus
         
@@ -580,7 +583,8 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
     header['energy'] = Energy
     header['type'] = int(ptype)
     header['efficiency'] = Efficiency.RECEIVER | Efficiency.WAVELENGTH
-    header['n_events'] = NEvents/float(PhotonPrescale)
+    if PhotonSource == 'infinite-muon':
+        header['n_events'] = length_scale*NEvents/float(PhotonPrescale)
     
     if Axes is None:
         if PhotonSource != "infinite-muon":
@@ -622,7 +626,24 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
     #     *prescale* in the header above.
     #     to be propagated per light source.
     domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius=math.sqrt(PhotonPrescale)*DOMRadius)
-    angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=True)
+    
+    if Sensor.lower() == 'dom':
+        angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=True)
+    elif Sensor.lower() == 'degg':
+        angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=False)
+        coeffs = numpy.array(angularAcceptance.GetCoefficients())
+        coeffs[numpy.arange(coeffs.size) % 2 == 1] *= -1
+        angularAcceptance = clsim.I3CLSimFunctionPolynomial(numpy.array(angularAcceptance.GetCoefficients()) + coeffs)
+    elif Sensor.lower() == 'wom':
+       from icecube.clsim import Gen2Sensors
+
+       # outer diameter of the pressure vessel is 11.4 cm, walls are 9 mm thick
+       referenceArea = (11-2*0.9)*90*icetray.I3Units.cm2
+       angularAcceptance = Gen2Sensors.GetWOMAngularSensitivity()
+       domAcceptance = Gen2Sensors.GetWOMAcceptance(active_fraction=1./PhotonPrescale)
+       
+    else:
+        raise ValueError("Don't know how to simulate %ds yet" % (sensor))
 
     tray.AddSegment(I3CLSimTabulatePhotons, name+"makeCLSimPhotons",
         MCTreeName = mctree,                        # if source is a cascade this will point to the I3MCTree

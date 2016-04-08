@@ -89,14 +89,12 @@ icetray.logging.set_level_for_unit('I3CLSimTabulatorModule', 'DEBUG')
 icetray.logging.set_level_for_unit('I3CLSimLightSourceToStepConverterGeant4', 'TRACE')
 icetray.logging.set_level_for_unit('I3CLSimLightSourceToStepConverterFlasher', 'TRACE')
 
-# TODO: add configurations for alternate sensors
-if opts.sensor != 'dom':
-	raise NotImplementedError("Don't know how to simulate %ds yet" % (opts.sensor))
+axes = None
 
 tray.AddSegment(TabulatePhotonsFromSource, 'generator', Seed=opts.seed, PhotonSource=opts.light_source,
     Zenith=opts.zenith, ZCoordinate=opts.z, Energy=opts.energy, NEvents=opts.nevents, Filename=outfile,
     TabulateImpactAngle=opts.tabulate_impact_angle, PhotonPrescale=opts.prescale,
-    DisableTilt=True, IceModel=opts.ice_model)
+    DisableTilt=True, IceModel=opts.ice_model, Axes=axes, Sensor=opts.sensor)
     
 tray.AddModule('TrashCan', 'MemoryHole')
 tray.Execute()
