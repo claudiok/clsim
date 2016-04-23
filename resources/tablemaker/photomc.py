@@ -45,7 +45,7 @@ parser.add_option("--zenith", dest="zenith", type="float", default=0.,
     help="Zenith angle of source, in IceCube convention and degrees [%default]")
 parser.add_option("--energy", dest="energy", type="float", default=1,
     help="Energy of light source, in GeV [%default]")
-parser.add_option("--light-source", choices=('cascade', 'flasher', 'infinite-muon'), default='cascade',
+parser.add_option("--light-source", choices=('cascade', 'flasher', 'infinite-muon', 'muon-segment'), default='cascade',
     help="Type of light source. If 'infinite-muon', Z will be ignored, and tracks sampled over all depths. [%default]")
 parser.add_option("--tabulate-impact-angle", default=False, action="store_true",
     help="Tabulate the impact angle on the DOM instead of weighting by the angular acceptance")

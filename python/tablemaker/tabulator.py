@@ -492,9 +492,12 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
     if Directions is None:
         Directions = numpy.asarray([(Zenith, Azimuth)])
 
-    if PhotonSource == 'cascade' or PhotonSource == 'flasher':
-
-        ptype = I3Particle.ParticleType.EMinus
+    if PhotonSource in ('cascade', 'flasher', 'muon-segment'):
+        
+        if PhotonSource == 'muon-segment':
+            ptype = I3Particle.ParticleType.MuMinus
+        else:
+            ptype = I3Particle.ParticleType.EMinus
 
         def reference_source(zenith, azimuth, scale):
             source = I3Particle()
@@ -503,7 +506,10 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
             source.pos = I3Position(0., 0., ZCoordinate)
             source.dir = I3Direction(zenith, azimuth)
             source.time = 0.
-            source.length = 0.
+            if PhotonSource == 'muon-segment':
+                source.length = 3.
+            else:
+                source.length = 0.
             source.location_type = I3Particle.LocationType.InIce
         
             return source
