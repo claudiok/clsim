@@ -30,6 +30,7 @@ from icecube.dataclasses import I3Position, I3Particle, I3MCTree, I3Direction, I
 from icecube.phys_services import I3Calculator, I3GSLRandomService
 from icecube.clsim import I3CLSimFunctionConstant
 from icecube.clsim import GetIceCubeDOMAcceptance, GetIceCubeDOMAngularSensitivity
+from icecube.clsim import Gen2Sensors
 from icecube.clsim import FlasherInfoVectToFlasherPulseSeriesConverter, I3CLSimFlasherPulse, I3CLSimFlasherPulseSeries
 import numpy, math
 from icecube.photospline import numpy_extensions # meshgrid_nd
@@ -630,13 +631,10 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
     if Sensor.lower() == 'dom':
         angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=True)
     elif Sensor.lower() == 'degg':
-        angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=False)
-        coeffs = numpy.array(angularAcceptance.GetCoefficients())
-        coeffs[numpy.arange(coeffs.size) % 2 == 1] *= -1
-        angularAcceptance = clsim.I3CLSimFunctionPolynomial(numpy.array(angularAcceptance.GetCoefficients()) + coeffs)
+        referenceArea = dataclasses.I3Constants.pi*(300.*I3Units.mm/2)**2
+        angularAcceptance = Gen2Sensors.GetDEggAngularSensitivity(pmt='both')
+        domAcceptance = Gen2Sensors.GetDEggAcceptance(active_fraction=1./PhotonPrescale)
     elif Sensor.lower() == 'wom':
-       from icecube.clsim import Gen2Sensors
-
        # outer diameter of the pressure vessel is 11.4 cm, walls are 9 mm thick
        referenceArea = (11-2*0.9)*90*icetray.I3Units.cm2
        angularAcceptance = Gen2Sensors.GetWOMAngularSensitivity()
