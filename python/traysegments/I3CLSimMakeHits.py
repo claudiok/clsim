@@ -64,6 +64,7 @@ def I3CLSimMakeHits(tray, name,
                     UseGeant4=False,
                     CrossoverEnergyEM=None,
                     CrossoverEnergyHadron=None,
+                    UseCascadeExtension=True,
                     StopDetectedPhotons=True,
                     PhotonHistoryEntries=0,
                     DoNotParallelize=False,
@@ -207,6 +208,10 @@ def I3CLSimMakeHits(tray, name,
         If CrossoverEnergyHadron is set to 0 (GeV) while CrossoverEnergyHadron is
         set so hybrid mode is working, hadronic cascades will use parameterizations
         for the whole energy range.
+    :param UseCascadeExtension:
+    	If set, the cascade light emission parameterizations will include 
+    	longitudinal extension. Otherwise, parameterized cascades will be 
+    	treated as point-like. 
     :param DoNotParallelize:
         Try only using a single work item in parallel when running the
         OpenCL simulation. This might be useful if you want to run jobs
@@ -280,6 +285,7 @@ def I3CLSimMakeHits(tray, name,
                                      UseGeant4=UseGeant4,
                                      CrossoverEnergyEM=CrossoverEnergyEM,
                                      CrossoverEnergyHadron=CrossoverEnergyHadron,
+                                     UseCascadeExtension=UseCascadeExtension,
                                      StopDetectedPhotons=StopDetectedPhotons,
                                      PhotonHistoryEntries=PhotonHistoryEntries,
                                      DoNotParallelize=DoNotParallelize,
