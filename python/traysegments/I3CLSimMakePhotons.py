@@ -16,11 +16,11 @@
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 # 
 # 
-# $Id$
+# $Id: I3CLSimMakePhotons.py 140286 2015-12-09 22:48:28Z benedikt.riedel $
 # 
 # @file I3CLSimMakePhotons.py
-# @version $Revision$
-# @date $Date$
+# @version $Revision: 140286 $
+# @date $Date: 2015-12-09 15:48:28 -0700 (Wed, 09 Dec 2015) $
 # @author Claudio Kopper
 #
 
@@ -60,9 +60,11 @@ def I3CLSimMakePhotons(tray, name,
                        IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
                        DisableTilt=False,
                        UnWeightedPhotons=False,
+                       UnWeightedPhotonsScalingFactor=None,
                        UseGeant4=False,
                        CrossoverEnergyEM=None,
                        CrossoverEnergyHadron=None,
+                       UseCascadeExtension=True,
                        StopDetectedPhotons=True,
                        PhotonHistoryEntries=0,
                        DoNotParallelize=False,
@@ -134,7 +136,7 @@ def I3CLSimMakePhotons(tray, name,
         in excessive memory usage (all your frames have to be cached
         in RAM). Setting it too low may impact simulation performance.
         The optimal value depends on your energy distribution/particle type.
-    :param TotalEnergyToProcess
+    :param TotalEnergyToProcess:
        clsim will work on a couple of events in parallel in order
        not to starve the GPU. With this setting clsim will figure out
        how many frames to accumulate as to not starve the GPU based on 
@@ -171,6 +173,11 @@ def I3CLSimMakePhotons(tray, name,
         slow down the simulation, but the optional ``PhotonSeries``
         will contain an unweighted sample of photons that arrive
         at your DOMs. This can be useful for DOM acceptance studies.
+    :param UnWeightedPhotonsScalingFactor:
+        If UnWeightedPhotons is turned on, this can be used to scale
+        down the overall number of photons generated. This should normally
+        not be touched (it can be used when generating photon paths
+        for animation). Valid range is a float >0. and <=1.
     :param StopDetectedPhotons:
         Configures behaviour for photons that hit a DOM. If this is true (the default)
         photons will be stopped once they hit a DOM. If this is false, they continue to
@@ -207,6 +214,10 @@ def I3CLSimMakePhotons(tray, name,
         If CrossoverEnergyHadron is set to 0 (GeV) while CrossoverEnergyHadron is
         set so hybrid mode is working, hadronic cascades will use parameterizations
         for the whole energy range.
+    :param UseCascadeExtension:
+    	If set, the cascade light emission parameterizations will include 
+    	longitudinal extension. Otherwise, parameterized cascades will be 
+    	treated as point-like. 
     :param DoNotParallelize:
         Try only using a single work item in parallel when running the
         OpenCL simulation. This might be useful if you want to run jobs
@@ -335,17 +346,20 @@ def I3CLSimMakePhotons(tray, name,
     domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius = DOMRadius*DOMOversizeFactor, efficiency=domEfficiencyCorrection)
 
     # photon generation wavelength bias
-    #if isinstance(UnWeightedPhotons, float) or isinstance(UnWeightedPhotons, int):
-    #    print("***** running unweighted simulation with a photon pre-scaling of", UnWeightedPhotons)
-    #    wavelengthGenerationBias = clsim.I3CLSimFunctionConstant(UnWeightedPhotons)
-    #else:
     if not UnWeightedPhotons:
         wavelengthGenerationBias = domAcceptance
+        if UnWeightedPhotonsScalingFactor is not None:
+            raise RuntimeError("UnWeightedPhotonsScalingFactor should not be set when UnWeightedPhotons is not set")
     else:
-        wavelengthGenerationBias = None
+        if UnWeightedPhotonsScalingFactor is not None:
+            print("***** running unweighted simulation with a photon pre-scaling of", UnWeightedPhotonsScalingFactor)
+            wavelengthGenerationBias = clsim.I3CLSimFunctionConstant(UnWeightedPhotonsScalingFactor)
+        else:
+            wavelengthGenerationBias = None
 
     # muon&cascade parameterizations
     ppcConverter = clsim.I3CLSimLightSourceToStepConverterPPC(photonsPerStep=200)
+    ppcConverter.SetUseCascadeExtension(UseCascadeExtension)
     if not UseGeant4:
         particleParameterizations = GetDefaultParameterizationList(ppcConverter, muonOnly=False)
     else:
@@ -375,14 +389,8 @@ def I3CLSimMakePhotons(tray, name,
         OverrideApproximateNumberOfWorkItems=OverrideApproximateNumberOfWorkItems,
         DoNotParallelize=DoNotParallelize,
         UseOnlyDeviceNumber=UseOnlyDeviceNumber
-    )
-    
-    # tray.AddModule(clsim.I3FrameSplitterMerger.I3FrameStreamChanger, "ChangeStream",
-    #                NewStream = icetray.I3Frame.Stream('q'),
-    #                OldStream = icetray.I3Frame.Stream('Q'))
-    #
-    # tray.AddModule(clsim.I3FrameSplitterMerger.I3FrameEnergySplitter, "Splitter")
-    
+	)
+
     tray.AddModule("I3CLSimModule", name + "_clsim",
                    MCTreeName=clSimMCTreeName,
                    PhotonSeriesMapName=PhotonSeriesName,

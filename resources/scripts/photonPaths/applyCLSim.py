@@ -132,7 +132,7 @@ else:
     MCTreeName="I3MCTree_sliced"
     MMCTrackListName=None
 
-flasherData=True
+flasherData=False # note: this is a hack if you have flasher data. we should probably auto-detect this.
 
 if flasherData:
     inputData = dict(
@@ -156,7 +156,8 @@ tray.AddSegment(clsim.I3CLSimMakePhotons, "makeCLSimPhotons",
     PhotonHistoryEntries = 1000,
 
     DOMOversizeFactor = 1.,
-    UnWeightedPhotons = 0.01,
+    UnWeightedPhotons = True,
+    UnWeightedPhotonsScalingFactor=0.01,
     ExtraArgumentsToI3CLSimModule = dict(
         SaveAllPhotons = True,
         SaveAllPhotonsPrescale = 0.01,

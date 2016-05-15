@@ -18,11 +18,11 @@
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 # 
 # 
-# $Id$
+# $Id: AutoSetGeant4Environment.py 137653 2015-09-16 22:30:32Z hdembinski $
 # 
 # @file AutoSetGeant4Environment.py
-# @version $Revision$
-# @date $Date$
+# @version $Revision: 137653 $
+# @date $Date: 2015-09-16 16:30:32 -0600 (Wed, 16 Sep 2015) $
 # @author Claudio Kopper
 #
 

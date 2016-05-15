@@ -31,7 +31,6 @@
 
 #include <cmath>
 #include <boost/lexical_cast.hpp>
-#include <boost/math/special_functions/fpclassify.hpp>
 #include <limits>
 
 #include "phys-services/I3Calculator.h"
@@ -142,8 +141,8 @@ void I3CLSimLightSourceToStepConverterFlasher::Initialize()
 
     double minWlen=flasherSpectrumNoBias_->GetMinWlen();
     double maxWlen=flasherSpectrumNoBias_->GetMaxWlen();
-    if (boost::math::isinf(minWlen)) minWlen=mediumProperties_->GetMinWavelength();
-    if (boost::math::isinf(maxWlen)) maxWlen=mediumProperties_->GetMaxWavelength();
+    if (std::isinf(minWlen)) minWlen=mediumProperties_->GetMinWavelength();
+    if (std::isinf(maxWlen)) maxWlen=mediumProperties_->GetMaxWavelength();
     
     // calculate the photon number correction factor for the selected spectrum and bias
     photonNumberCorrectionFactorForBias_ = 

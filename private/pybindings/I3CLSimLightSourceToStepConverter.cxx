@@ -234,6 +234,7 @@ void register_I3CLSimLightSourceToStepConverter()
             )
            )
          )
+        .def("SetUseCascadeExtension", &I3CLSimLightSourceToStepConverterPPC::SetUseCascadeExtension)
         ;
     }
     

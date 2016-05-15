@@ -32,7 +32,7 @@
 // Things from this module:
 #include "clsim/dom/I3PhotonToMCHitConverterForMDOMs.h"
 
-#include "clsim/I3Photon.h"
+#include "simclasses/I3Photon.h"
 #include "simclasses/I3MCPE.h"
 #include "dataclasses/physics/I3MCTree.h"
 
@@ -145,7 +145,7 @@ void I3PhotonToMCHitConverterForMDOMs::Configure()
 
     if (!glassAbsorptionLength_)
         log_fatal("The \"GlassAbsorptionLength\" parameter must not be empty.");
-    if (isnan(glassThickness_))
+    if (std::isnan(glassThickness_))
         log_fatal("The \"GlassThickness\" parameter must not be empty.");
 
     if (!gelAbsorptionLength_)
@@ -233,7 +233,7 @@ namespace {
             const I3OMGeo &pmtInfo = pmt_it->second;
             
             const double pmtArea = pmtInfo.area;
-            if (isnan(pmtArea)) log_fatal("OMKey(%i,%u,%u) has NaN area!",
+            if (std::isnan(pmtArea)) log_fatal("OMKey(%i,%u,%u) has NaN area!",
                                           pmtKey.GetString(), pmtKey.GetOM(),
                                           static_cast<unsigned int>(pmtKey.GetPMT()));
             
@@ -278,7 +278,7 @@ namespace {
             // there is an intersection with a pmt!
             if (foundIntersection >= 0) {
                 log_warn("found another intersection! previousPMT=#%u, thisPMT=#%u", foundIntersection, pmtNum);
-                if ((isnan(pathLengthInOM)) || (mu < pathLengthInOM))
+                if ((std::isnan(pathLengthInOM)) || (mu < pathLengthInOM))
                 {
                     log_warn(" -> new intersection is closer than previous one. using it.");
                 }
@@ -452,7 +452,7 @@ void I3PhotonToMCHitConverterForMDOMs::DAQ(I3FramePtr frame)
     
     // build an index into the I3MCTree
     std::map<std::pair<uint64_t, int>, const I3Particle *> mcTreeIndex;
-    for (I3MCTree::iterator it = MCTree->begin();
+    for (I3MCTree::const_iterator it = MCTree->begin();
          it != MCTree->end(); ++it)
     {
         const I3Particle &particle = *it;

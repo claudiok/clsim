@@ -54,7 +54,7 @@
 
 #include "clsim/I3CLSimLightSourceParameterization.h"
 
-#include "clsim/I3Photon.h"
+#include "simclasses/I3Photon.h"
 
 #include "clsim/I3CLSimPhotonHistory.h"
 #include "clsim/I3CLSimEventStatistics.h"

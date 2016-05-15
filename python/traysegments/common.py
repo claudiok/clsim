@@ -46,7 +46,7 @@ def configureOpenCLDevices(UseGPUs=True, UseCPUs=False, OverrideApproximateNumbe
                     subDevices = []
                 else:
                     subDevices = device.SplitDevice()
-                
+
                 if len(subDevices) > 0:
                     if OverrideApproximateNumberOfWorkItems is not None:
                         subDevices[0].approximateNumberOfWorkItems=OverrideApproximateNumberOfWorkItems
@@ -61,10 +61,10 @@ def configureOpenCLDevices(UseGPUs=True, UseCPUs=False, OverrideApproximateNumbe
                 logging.log_error("failed to split CPU device into individual cores %s %s [using full device with minimal number of work-items to (hopefully) disable parallelization]" % (device.platform, device.device), unit="clsim")
                 device.approximateNumberOfWorkItems=1
                 openCLDevices.append(device)
-            
+
         else:
             openCLDevices.append(device)
-    
+
     return openCLDevices
 
 def parseIceModel(IceModelLocation, disableTilt=False):

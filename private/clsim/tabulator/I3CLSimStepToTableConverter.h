@@ -49,6 +49,7 @@ public:
 	    clsim::tabulator::AxesConstPtr axes, size_t entriesPerStream,
 	    I3CLSimMediumPropertiesConstPtr medium,
 	    I3CLSimSpectrumTableConstPtr spectrumTable,
+	    double referenceArea,
 	    I3CLSimFunctionConstPtr wavelengthAcceptance,
 	    I3CLSimFunctionConstPtr angularAcceptance,
 	    I3RandomServicePtr rng);

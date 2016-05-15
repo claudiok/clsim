@@ -56,7 +56,8 @@ bunchSizeGranularity_(1),
 maxBunchSize_(512000),
 photonsPerStep_(photonsPerStep),
 highPhotonsPerStep_(highPhotonsPerStep),
-useHighPhotonsPerStepStartingFromNumPhotons_(useHighPhotonsPerStepStartingFromNumPhotons)
+useHighPhotonsPerStepStartingFromNumPhotons_(useHighPhotonsPerStepStartingFromNumPhotons),
+useCascadeExtension_(true)
 {
     if (photonsPerStep_<=0)
         throw I3CLSimLightSourceToStepConverter_exception("photonsPerStep may not be <= 0!");
@@ -278,7 +279,7 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLight
 
     const double E = particle.GetEnergy()/I3Units::GeV;
     const double logE = std::max(0., std::log(E)); // protect against extremely low energies
-    const double Lrad=0.358*(I3Units::g/I3Units::cm3)/density;
+    const double Lrad = useCascadeExtension_ ? 0.358*(I3Units::g/I3Units::cm3)/density : 0.;
 
     if (isElectron) {
         const double pa=2.03+0.604*logE;

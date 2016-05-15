@@ -33,7 +33,7 @@
 
 #include <boost/foreach.hpp>
 
-#include "clsim/I3Photon.h"
+#include "simclasses/I3Photon.h"
 
 //#include "dataclasses/geometry/I3Geometry.h"
 

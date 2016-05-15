@@ -16,11 +16,11 @@
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 # 
 # 
-# $Id$
+# $Id: __init__.py 117054 2014-02-20 21:24:56Z musner $
 # 
 # @file __init__.py
-# @version $Revision$
-# @date $Date$
+# @version $Revision: 117054 $
+# @date $Date: 2014-02-20 14:24:56 -0700 (Thu, 20 Feb 2014) $
 # @author Claudio Kopper
 #
 

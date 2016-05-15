@@ -1924,8 +1924,8 @@ protected:
 } // namespace detail
 //! \endcond
 
-/*! \stuct ImageFormat
- *  \brief Adds constructors and member functions for cl_image_format.
+/*! \struct ImageFormat
+ *  \brief  Adds constructors and member functions for cl_image_format.
  *
  *  \see cl_image_format
  */

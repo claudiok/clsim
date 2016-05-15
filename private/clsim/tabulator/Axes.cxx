@@ -52,10 +52,11 @@ Axes::Axes(const std::vector<value_type> &axes) : axes_(axes), n_dim_(axes_.size
     shape_(n_dim_), strides_(n_dim_)
 {
 	int i = n_dim_-1;
-	shape_[i] = axes_[i]->GetNBins();
+	// NB: every axis has an over- and an under-flow bin.
+	shape_[i] = axes_[i]->GetNBins()+2;
 	strides_[i] = 1;
 	for (i--; i >= 0; i--) {
-		shape_[i] = axes_[i]->GetNBins();
+		shape_[i] = axes_[i]->GetNBins()+2;
 		strides_[i] = strides_[i+1]*shape_[i+1];
 	}
 	n_bins_ = strides_[0]*shape_[0];

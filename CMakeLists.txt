@@ -73,13 +73,14 @@ endif (BUILD_CLSIM_DATACLASSES_ONLY)
 SET(LIB_${PROJECT_NAME}_SOURCEFILES
   # private/clsim
   private/clsim/I3CLSimEventStatistics.cxx
-  private/clsim/I3Photon.cxx
-  private/clsim/I3CompressedPhoton.cxx
+  # private/clsim/I3Photon.cxx
+  # private/clsim/I3CompressedPhoton.cxx
   private/clsim/I3CLSimFlasherPulse.cxx
   private/clsim/util/I3MuonSlicer.cxx
   private/clsim/util/I3MuonSliceRemoverAndPulseRelabeler.cxx
   private/clsim/util/I3TauSanitizer.cxx
   private/clsim/dom/I3PhotonToMCPEConverter.cxx
+  private/clsim/dom/I3PhotonToMCHitConverterForMDOMs.cxx
   private/clsim/shadow/I3ShadowedPhotonRemover.cxx
   private/clsim/shadow/I3ShadowedPhotonRemoverModule.cxx
   private/clsim/shadow/I3ExtraGeometryItem.cxx
@@ -88,12 +89,12 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
   private/clsim/shadow/I3ExtraGeometryItemCylinder.cxx
 
   # tableio converters
-  private/clsim/converter/I3PhotonConverter.cxx
+  # private/clsim/converter/I3PhotonConverter.cxx
   private/clsim/converter/I3MCHitConverterWithIDs.cxx
-  private/clsim/converter/I3MCPEConverterWithIDs.cxx
+  # private/clsim/converter/I3MCPEConverterWithIDs.cxx
 )
 
-SET(LIB_${PROJECT_NAME}_PROJECTS icetray dataio dataclasses phys-services tableio simclasses)
+SET(LIB_${PROJECT_NAME}_PROJECTS icetray dataio dataclasses phys-services tableio simclasses sim-services)
 SET(LIB_${PROJECT_NAME}_TOOLS python boost gsl)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse -msse2 -msse3")
 
@@ -123,11 +124,11 @@ endif (GEANT4_FOUND AND OPENCL_FOUND AND NOT DISABLE_GEANT4_IN_CLSIM)
 
 # these files will be compiled in any case (with or without OpenCL/Geant4)
 SET(LIB_${PROJECT_NAME}_PYBINDINGS_SOURCEFILES
-  private/pybindings/I3Photon.cxx
-  private/pybindings/I3CompressedPhoton.cxx
+  # private/pybindings/I3Photon.cxx
+  # private/pybindings/I3CompressedPhoton.cxx
   private/pybindings/I3CLSimEventStatistics.cxx
   private/pybindings/I3CLSimFlasherPulse.cxx
-  private/pybindings/I3Converters.cxx
+  # private/pybindings/I3Converters.cxx
   private/pybindings/I3ShadowedPhotonRemover.cxx
   private/pybindings/I3ExtraGeometryItem.cxx
   private/pybindings/module.cxx
@@ -283,9 +284,8 @@ endif(NOT BUILD_CLSIM_DATACLASSES_ONLY)
 # the clsim library definition
 i3_add_library(${PROJECT_NAME}
   ${LIB_${PROJECT_NAME}_SOURCEFILES}
-  USE_TOOLS ${LIB_${PROJECT_NAME}_TOOLS} scipy
+  USE_TOOLS ${LIB_${PROJECT_NAME}_TOOLS}
   USE_PROJECTS ${LIB_${PROJECT_NAME}_PROJECTS}
-  NOT_INSPECTABLE
   )
 
 if(NOT BUILD_CLSIM_DATACLASSES_ONLY)

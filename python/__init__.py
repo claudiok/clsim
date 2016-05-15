@@ -16,11 +16,11 @@
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 # 
 # 
-# $Id$
+# $Id: __init__.py 140286 2015-12-09 22:48:28Z benedikt.riedel $
 # 
 # @file __init__.py
-# @version $Revision$
-# @date $Date$
+# @version $Revision: 140286 $
+# @date $Date: 2015-12-09 15:48:28 -0700 (Wed, 09 Dec 2015) $
 # @author Claudio Kopper
 #
 
@@ -53,9 +53,6 @@ from .AutoSetGeant4Environment import AutoSetGeant4Environment
 
 from .I3CLSimRandomValueIceCubeFlasherTimeProfile import I3CLSimRandomValueIceCubeFlasherTimeProfile
 
-from .I3FrameSplitterMerger import I3FrameStreamChanger, I3FrameEnergySplitter, I3FrameMCPEMerger
-
-
 from . import util
 
 # import tray segments (if available)
@@ -64,4 +61,4 @@ from .traysegments import I3CLSimMakeHits, I3CLSimMakePhotons, I3CLSimMakeHitsFr
 # clean up the clsim namespace
 del icetray
 del dataclasses
-
+del simclasses

@@ -39,8 +39,11 @@ public:
 	Axis(double min, double max, unsigned n_bins);
 	virtual ~Axis();
 	
+	/// lowest bin edge
 	double GetMin() const { return min_; };
-	double GetMax() const { return max_; };	
+	/// highest bin edge
+	double GetMax() const { return max_; };
+	/// the number of bins *without under/overflow*
 	unsigned GetNBins() const { return n_bins_; };
 	
 	std::string GetIndexCode(const std::string &varName) const;
