@@ -112,7 +112,7 @@ void register_I3Photon()
 {
     {
         scope i3photon_scope = 
-        class_<I3Photon, boost::shared_ptr<I3Photon> >("I3Photon")
+          class_<I3Photon, bases<I3FrameObject>, boost::shared_ptr<I3Photon> >("I3Photon")
         .add_property("pos", 
                       make_function(&I3Photon::GetPos, return_value_policy<copy_const_reference>()),
                       make_function(&I3Photon::SetPos))
