@@ -42,8 +42,8 @@ The table of photo-electron acceptance of the OM is
 calculated at an injection angle of 0 deg.
 
 The acceptance is calculated the following way
-eff_area = PM collection efficiency
-           * PM quantum efficiency (lambda)
+eff_area = PM collection efficiency \
+           * PM quantum efficiency (lambda) \
            * glass + gel transmission probability (lambda)
 """
 
