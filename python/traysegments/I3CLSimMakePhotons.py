@@ -244,7 +244,7 @@ def I3CLSimMakePhotons(tray, name,
     # make sure the geometry is updated to the new granular format (in case it is supported)
     if hasattr(dataclasses, "I3ModuleGeo"):
         tray.AddModule("I3GeometryDecomposer", name + "_decomposeGeometry",
-                       If=lambda frame: If(frame) and ("I3OMGeoMap" not in frame))
+                       If=lambda frame: If(frame) and ("I3OMGeoMap" not in frame) and ("I3ModuleGeoMap" not in frame))
 
     if UseGeant4:
         if not clsim.I3CLSimLightSourceToStepConverterGeant4.can_use_geant4:
