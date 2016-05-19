@@ -71,6 +71,7 @@ def I3CLSimMakePhotons(tray, name,
                        DOMOversizeFactor=5.,
                        UnshadowedFraction=0.9,
                        UseHoleIceParameterization=True,
+                       DOMRadius=0.16510*icetray.I3Units.m # 13" diameter
                        OverrideApproximateNumberOfWorkItems=None,
                        ExtraArgumentsToI3CLSimModule=dict(),
                        If=lambda f: True
@@ -229,6 +230,8 @@ def I3CLSimMakePhotons(tray, name,
         Fraction of photocathode available to receive light (e.g. unshadowed by the cable)
     :param UseHoleIceParameterization:
         Use an angular acceptance correction for hole ice scattering.
+    :param DOMRadius:
+        Allow the DOMRadius to be set externally, for things like mDOMs.
     :param OverrideApproximateNumberOfWorkItems:
         Allows to override the auto-detection for the maximum number of parallel work items.
         You should only change this if you know what you are doing.
@@ -260,8 +263,7 @@ def I3CLSimMakePhotons(tray, name,
         print("If this is what you want, you can safely ignore this warning.")
         print("********************")
 
-    # some constants
-    DOMRadius = 0.16510*icetray.I3Units.m # 13" diameter
+    # a constant
     Jitter = 2.*icetray.I3Units.ns
 
     if MMCTrackListName is None or MMCTrackListName=="":
