@@ -71,7 +71,7 @@ def I3CLSimMakePhotons(tray, name,
                        DOMOversizeFactor=5.,
                        UnshadowedFraction=0.9,
                        UseHoleIceParameterization=True,
-                       DOMRadius=0.16510*icetray.I3Units.m # 13" diameter
+                       DOMRadius=0.16510*icetray.I3Units.m, # 13" diameter
                        OverrideApproximateNumberOfWorkItems=None,
                        ExtraArgumentsToI3CLSimModule=dict(),
                        If=lambda f: True
