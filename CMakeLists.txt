@@ -94,7 +94,7 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
   # private/clsim/converter/I3MCPEConverterWithIDs.cxx
 )
 
-SET(LIB_${PROJECT_NAME}_PROJECTS icetray dataio dataclasses phys-services tableio simclasses)
+SET(LIB_${PROJECT_NAME}_PROJECTS serialization icetray dataio dataclasses phys-services tableio simclasses)
 SET(LIB_${PROJECT_NAME}_TOOLS python boost gsl)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse -msse2 -msse3")
 
@@ -301,7 +301,7 @@ if(GMP_FOUND)
     )
   i3_executable(convert_safeprimes
     private/make_safeprimes/convert.cxx
-    USE_PROJECTS icetray
+    USE_PROJECTS serialization icetray
     USE_TOOLS python boost
     )
   colormsg(GREEN "+-- gmp support (make_safeprimes utility)")
@@ -312,7 +312,7 @@ endif(GMP_FOUND)
 i3_add_pybindings(clsim
   ${LIB_${PROJECT_NAME}_PYBINDINGS_SOURCEFILES}
   USE_TOOLS boost python
-  USE_PROJECTS icetray dataclasses clsim
+  USE_PROJECTS serialization icetray dataclasses clsim
 )
 
 ## restore OPENCL_FOUND

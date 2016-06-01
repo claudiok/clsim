@@ -37,7 +37,7 @@
 
 
 #include <boost/shared_ptr.hpp>
-#include <boost/serialization/shared_ptr.hpp>
+#include <serialization/shared_ptr.hpp>
 #include <boost/foreach.hpp>
 
 const uint32_t I3CLSimMediumProperties::default_layersNum=1;

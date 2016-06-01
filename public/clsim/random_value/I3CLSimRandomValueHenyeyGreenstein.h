@@ -68,12 +68,12 @@ private:
 
     double meanCosine_;
     
-    friend class boost::serialization::access;
+    friend class icecube::serialization::access;
     template <class Archive> void serialize(Archive & ar, unsigned version);
 };
 
 
-BOOST_CLASS_VERSION(I3CLSimRandomValueHenyeyGreenstein, i3clsimrandomvaluehenyeygreenstein_version_);
+I3_CLASS_VERSION(I3CLSimRandomValueHenyeyGreenstein, i3clsimrandomvaluehenyeygreenstein_version_);
 
 I3_POINTER_TYPEDEFS(I3CLSimRandomValueHenyeyGreenstein);
 

@@ -90,12 +90,12 @@ private:
     double volumeConcentrationSmallParticles_;
     double volumeConcentrationLargeParticles_;
     
-    friend class boost::serialization::access;
+    friend class icecube::serialization::access;
     template <class Archive> void serialize(Archive & ar, unsigned version);
 };
 
 
-BOOST_CLASS_VERSION(I3CLSimFunctionScatLenPartic, i3clsimfunctionscatlenpartic_version_);
+I3_CLASS_VERSION(I3CLSimFunctionScatLenPartic, i3clsimfunctionscatlenpartic_version_);
 
 I3_POINTER_TYPEDEFS(I3CLSimFunctionScatLenPartic);
 

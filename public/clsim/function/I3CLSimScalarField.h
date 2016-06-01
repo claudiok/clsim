@@ -81,7 +81,7 @@ public:
     virtual bool CompareTo(const I3CLSimScalarField &other) const = 0;
     
 private:
-    friend class boost::serialization::access;
+    friend class icecube::serialization::access;
     template <class Archive> void serialize(Archive & ar, unsigned version);
 };
 
@@ -96,7 +96,7 @@ inline bool operator!=(const I3CLSimScalarField& a, const I3CLSimScalarField& b)
 }
 
 
-BOOST_CLASS_VERSION(I3CLSimScalarField, i3clsimscalarfield_version_);
+I3_CLASS_VERSION(I3CLSimScalarField, i3clsimscalarfield_version_);
 
 I3_POINTER_TYPEDEFS(I3CLSimScalarField);
 

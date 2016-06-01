@@ -109,14 +109,14 @@ private:
     
 
 private: // static stuff
-    friend class boost::serialization::access;
+    friend class icecube::serialization::access;
     template <class Archive> void serialize(Archive & ar, unsigned version);
 
     friend bool operator==(const I3CLSimFlasherPulse &, const I3CLSimFlasherPulse &);
 };
 bool operator==(const I3CLSimFlasherPulse &a, const I3CLSimFlasherPulse &b);
 
-BOOST_CLASS_VERSION(I3CLSimFlasherPulse, i3clsimflasherpulse_version_);
+I3_CLASS_VERSION(I3CLSimFlasherPulse, i3clsimflasherpulse_version_);
 
 typedef I3Vector<I3CLSimFlasherPulse> I3CLSimFlasherPulseSeries;
 

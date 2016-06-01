@@ -71,12 +71,12 @@ private:
     
     double value_;
     
-    friend class boost::serialization::access;
+    friend class icecube::serialization::access;
     template <class Archive> void serialize(Archive & ar, unsigned version);
 };
 
 
-BOOST_CLASS_VERSION(I3CLSimScalarFieldConstant, i3clsimscalarfieldconstant_version_);
+I3_CLASS_VERSION(I3CLSimScalarFieldConstant, i3clsimscalarfieldconstant_version_);
 
 I3_POINTER_TYPEDEFS(I3CLSimScalarFieldConstant);
 

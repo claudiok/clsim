@@ -86,12 +86,12 @@ private:
     double magnitudeAlongDir_;
     double magnitudePerpToDir_;
     
-    friend class boost::serialization::access;
+    friend class icecube::serialization::access;
     template <class Archive> void serialize(Archive & ar, unsigned version);
 };
 
 
-BOOST_CLASS_VERSION(I3CLSimScalarFieldAnisotropyAbsLenScaling, i3clsimscalarfieldanisotropyabslenscaling_version_);
+I3_CLASS_VERSION(I3CLSimScalarFieldAnisotropyAbsLenScaling, i3clsimscalarfieldanisotropyabslenscaling_version_);
 
 I3_POINTER_TYPEDEFS(I3CLSimScalarFieldAnisotropyAbsLenScaling);
 
