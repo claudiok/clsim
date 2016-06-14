@@ -93,7 +93,7 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
   private/clsim/converter/I3MCPEConverterWithIDs.cxx
 )
 
-SET(LIB_${PROJECT_NAME}_PROJECTS icetray dataio dataclasses phys-services tableio simclasses)
+SET(LIB_${PROJECT_NAME}_PROJECTS serialization icetray dataio dataclasses phys-services tableio simclasses)
 SET(LIB_${PROJECT_NAME}_TOOLS python boost gsl)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse -msse2 -msse3")
 
