@@ -11,7 +11,7 @@ from I3Tray import I3Units
 numberOfTrials = 100000
 renormalizeUnitVector = True
 
-maximumRelativeDeviation = 1e-5
+maximumRelativeDeviation = 1e-4
 
 theMatrix = numpy.random.uniform(-10.,10.,(3,3))
 
