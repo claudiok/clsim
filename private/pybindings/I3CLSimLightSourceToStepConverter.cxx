@@ -116,7 +116,7 @@ struct vc : boost::static_visitor<bp::object>
         return bp::object(v);
     }
     
-    // do this for everything but shared_ptrs
+    // do this for everything but boost::shared_ptrs
     template <typename T>
     bp::object operator()(const T& v,
                           typename boost::disable_if<is_shared_ptr<T> >::type * = 0) const
@@ -234,6 +234,7 @@ void register_I3CLSimLightSourceToStepConverter()
             )
            )
          )
+        .def("SetUseCascadeExtension", &I3CLSimLightSourceToStepConverterPPC::SetUseCascadeExtension)
         ;
     }
     

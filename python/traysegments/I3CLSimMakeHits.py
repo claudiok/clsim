@@ -16,11 +16,11 @@
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 # 
 # 
-# $Id$
+# $Id: I3CLSimMakeHits.py 131589 2015-04-16 22:51:50Z claudio.kopper $
 # 
 # @file I3CLSimMakeHits.py
-# @version $Revision$
-# @date $Date$
+# @version $Revision: 131589 $
+# @date $Date: 2015-04-16 16:51:50 -0600 (Thu, 16 Apr 2015) $
 # @author Claudio Kopper
 #
 
@@ -64,6 +64,7 @@ def I3CLSimMakeHits(tray, name,
                     UseGeant4=False,
                     CrossoverEnergyEM=None,
                     CrossoverEnergyHadron=None,
+                    UseCascadeExtension=True,
                     StopDetectedPhotons=True,
                     PhotonHistoryEntries=0,
                     DoNotParallelize=False,
@@ -134,7 +135,7 @@ def I3CLSimMakeHits(tray, name,
         in excessive memory usage (all your frames have to be cached
         in RAM). Setting it too low may impact simulation performance.
         The optimal value depends on your energy distribution/particle type.
-    :param TotalEnergyToProcess
+    :param TotalEnergyToProcess:
        clsim will work on a couple of events in parallel in order
        not to starve the GPU. With this setting clsim will figure out
        how many frames to accumulate as to not starve the GPU based on 
@@ -207,6 +208,10 @@ def I3CLSimMakeHits(tray, name,
         If CrossoverEnergyHadron is set to 0 (GeV) while CrossoverEnergyHadron is
         set so hybrid mode is working, hadronic cascades will use parameterizations
         for the whole energy range.
+    :param UseCascadeExtension:
+    	If set, the cascade light emission parameterizations will include 
+    	longitudinal extension. Otherwise, parameterized cascades will be 
+    	treated as point-like. 
     :param DoNotParallelize:
         Try only using a single work item in parallel when running the
         OpenCL simulation. This might be useful if you want to run jobs
@@ -280,6 +285,7 @@ def I3CLSimMakeHits(tray, name,
                                      UseGeant4=UseGeant4,
                                      CrossoverEnergyEM=CrossoverEnergyEM,
                                      CrossoverEnergyHadron=CrossoverEnergyHadron,
+                                     UseCascadeExtension=UseCascadeExtension,
                                      StopDetectedPhotons=StopDetectedPhotons,
                                      PhotonHistoryEntries=PhotonHistoryEntries,
                                      DoNotParallelize=DoNotParallelize,

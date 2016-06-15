@@ -30,14 +30,16 @@ __kernel void testKernel(
     __global float* inputValuesZ,
     __global float* outputValues)
 {
-//    dbg_printf("Start kernel... (work item %u of %u)\n", get_global_id(0), get_global_size(0));
+    //dbg_printf("Start kernel... (work item %u of %u)\n", get_global_id(0), get_global_size(0));
 
     unsigned int i = get_global_id(0);
     //unsigned int global_size = get_global_size(0);
 
     // evaluate the function
-    outputValues[i] = evaluateScalarField((float4)(inputValuesX[i], inputValuesY[i], inputValuesZ[i], 0.f));
+    const float4 input_vector = (float4)(inputValuesX[i], inputValuesY[i], inputValuesZ[i], 0.f);
+    outputValues[i] = evaluateScalarField(input_vector);
 
-//    dbg_printf("Stop kernel... (work item %u of %u)\n", i, global_size);
-//    dbg_printf("Kernel finished.\n");
+    //dbg_printf("Stop kernel... (work item %u of %u)\n", i, global_size);
+    //dbg_printf("Kernel finished.\n");
 }
+

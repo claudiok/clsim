@@ -52,10 +52,11 @@ Axes::Axes(const std::vector<value_type> &axes) : axes_(axes), n_dim_(axes_.size
     shape_(n_dim_), strides_(n_dim_)
 {
 	int i = n_dim_-1;
-	shape_[i] = axes_[i]->GetNBins();
+	// NB: every axis has an over- and an under-flow bin.
+	shape_[i] = axes_[i]->GetNBins()+2;
 	strides_[i] = 1;
 	for (i--; i >= 0; i--) {
-		shape_[i] = axes_[i]->GetNBins();
+		shape_[i] = axes_[i]->GetNBins()+2;
 		strides_[i] = strides_[i+1]*shape_[i+1];
 	}
 	n_bins_ = strides_[0]*shape_[0];
@@ -96,7 +97,11 @@ Axes::GenerateBinningCode() const
 std::string
 SphericalAxes::GetCoordinateFunction() const
 {
-	return loadKernel("spherical_coordinates");
+	std::ostringstream ss;
+	if (at(1)->GetMax() > 180.)
+		ss << "#define HAS_FULL_AZIMUTH_EXTENSION\n";
+	ss << loadKernel("spherical_coordinates");
+	return ss.str();
 }
 
 std::string
@@ -119,10 +124,13 @@ SphericalAxes::GetBinVolume(const std::vector<size_t> &idxs) const
 	// NB: since we combine the bins at azimuth > 180 degrees with the
 	// other half of the sphere, the true volume of an azimuthal bin is
 	// twice its nominal value.
+	// In case of a full table the azimuthal bin volume is simply the nominal volume.
 	assert(idxs.size() >= 3);
+	double scalefactor = (at(1)->GetMax() > 180.) ? 1 : 2;
 	return ((std::pow(at(0)->GetBinEdge(idxs[0]+1), 3) - std::pow(at(0)->GetBinEdge(idxs[0]), 3))/3.)
-	    * 2*I3Units::degree*(at(1)->GetBinEdge(idxs[1]+1) - at(1)->GetBinEdge(idxs[1]))
+	    * scalefactor*I3Units::degree*(at(1)->GetBinEdge(idxs[1]+1) - at(1)->GetBinEdge(idxs[1]))
 	    * (at(2)->GetBinEdge(idxs[2]+1) - at(2)->GetBinEdge(idxs[2]));
+
 }
 
 std::string

@@ -36,7 +36,7 @@
 
 #include <boost/foreach.hpp>
 
-#include "clsim/I3Photon.h"
+#include "simclasses/I3Photon.h"
 
 #include "phys-services/I3SummaryService.h"
 
@@ -45,6 +45,8 @@
 
 #include "simclasses/I3MCPE.h"
 #include "dataclasses/physics/I3MCTree.h"
+#include "dataclasses/physics/I3MCTreeUtils.h"
+#include "dataclasses/physics/I3ParticleID.h"
 
 #include "dataclasses/I3Constants.h"
 
@@ -267,17 +269,6 @@ void I3PhotonToMCPEConverter::DAQ(I3FramePtr frame)
 
     // allocate the output hitSeriesMap
     I3MCPESeriesMapPtr outputMCPESeriesMap(new I3MCPESeriesMap());
-    
-    std::map<std::pair<uint64_t, int>, const I3Particle *> mcTreeIndex;
-    if (MCTree) {
-        // build an index into the I3MCTree
-        for (I3MCTree::const_iterator it = MCTree->begin();
-             it != MCTree->end(); ++it)
-        {
-            const I3Particle &particle = *it;
-            mcTreeIndex.insert(std::make_pair(std::make_pair(particle.GetMajorID(), particle.GetMinorID()), &particle));
-        }
-    }    
     
     BOOST_FOREACH(const I3PhotonSeriesMap::value_type &it, *inputPhotonSeriesMap)
     {
@@ -519,15 +510,10 @@ void I3PhotonToMCPEConverter::DAQ(I3FramePtr frame)
             // find the particle
             const I3Particle *particle = NULL;
             
-            if ((photon.GetParticleMajorID() != 0) || (photon.GetParticleMinorID() != 0))
+            if ((photon.GetParticleMajorID() != 0) && (photon.GetParticleMinorID() != 0))
             {
                 // index (0,0) is used for flasher photons, set no hit particle for those
-                std::map<std::pair<uint64_t, int>, const I3Particle *>::const_iterator it = 
-                mcTreeIndex.find(std::make_pair(photon.GetParticleMajorID(), photon.GetParticleMinorID()));
-                if (it==mcTreeIndex.end())
-                    log_fatal("Particle with id maj=%" PRIu64 ", min=%i does not exist in MC tree, but we have a photon that claims it was created by that particle..",
-                              photon.GetParticleMajorID(), photon.GetParticleMinorID());
-                particle = it->second;
+                particle = I3MCTreeUtils::GetParticlePtr(MCTree, photon.GetParticleID());
             }
         
             // allocate the output vector if not already done
@@ -542,10 +528,10 @@ void I3PhotonToMCPEConverter::DAQ(I3FramePtr frame)
             }
             
             // add a new hit
-			if(particle)
-				hits->push_back(I3MCPE(*particle));
-			else
-				hits->push_back(I3MCPE());
+            if(particle)
+                hits->push_back(I3MCPE(*particle));
+            else
+                hits->push_back(I3MCPE());
             I3MCPE &hit = hits->back();
             
             // fill in all information

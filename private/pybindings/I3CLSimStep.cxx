@@ -117,13 +117,13 @@ void register_I3CLSimStep()
     .def_pickle(bp::boost_serializable_pickle_suite<I3CLSimStepSeries>())
     ;
 
-    // does not base on I3FrameObject, so register only the shared_ptr<T>-to-shared_ptr<const T> conversion
+    // does not base on I3FrameObject, so register only the boost::shared_ptr<T>-to-shared_ptr<const T> conversion
     //register_pointer_conversions<I3CLSimStep>();
     bp::implicitly_convertible<boost::shared_ptr<I3CLSimStep>, boost::shared_ptr<const I3CLSimStep> >();
 
     register_pointer_conversions<I3CLSimStepSeries>();
     
-    // make python accept shared_ptr<const blah>.. this is slightly evil bacause it uses const_cast:
+    // make python accept boost::shared_ptr<const blah>.. this is slightly evil bacause it uses const_cast:
     bp::to_python_converter<I3CLSimStepSeriesConstPtr, ConstPtr_to_python<I3CLSimStepSeries> >();
 
 }

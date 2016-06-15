@@ -81,13 +81,17 @@ void I3CLSimTesterBase::DoSetup(const I3CLSimOpenCLDevice &device,
     // prepend the rng to the sources list
     sourceStrings_.clear();
     cl::Program::Sources source_;
+
+    std::string combined_source;
     
     // copy the input source strings
     BOOST_FOREACH(const std::string &src, source)
     {
-        sourceStrings_.push_back(src);
-        source_.push_back(std::make_pair(sourceStrings_.back().c_str(),sourceStrings_.back().size()));
+        combined_source += src + "\n";
     }
+
+    sourceStrings_.push_back(combined_source);
+    source_.push_back(std::make_pair(sourceStrings_.back().c_str(),sourceStrings_.back().size()));
     
     // get the device object
     boost::shared_ptr<cl::Platform> platformHandle = device.GetPlatformHandle();

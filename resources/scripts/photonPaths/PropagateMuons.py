@@ -11,7 +11,7 @@ def MakePropagator(
     length=1600*I3Units.m,
     particleType=dataclasses.I3Particle.ParticleType.MuMinus,
     impl='proposal',
-    mediadef=expandvars('$I3_BUILD/mmc-icetray/resources/mediadef')):
+    mediadef=expandvars('$I3_BUILD/PROPOSAL/resources/mediadef')):
         """
         Create a muon propagator service.
 

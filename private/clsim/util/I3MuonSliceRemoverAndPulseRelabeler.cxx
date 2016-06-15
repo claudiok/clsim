@@ -44,7 +44,7 @@
 #include "dataclasses/I3Constants.h"
 
 #include "simclasses/I3MCPE.h"
-#include "clsim/I3Photon.h"
+#include "simclasses/I3Photon.h"
 
 /**
  * @brief Removes muon slices in I3MCTree objects

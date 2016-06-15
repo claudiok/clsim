@@ -80,7 +80,7 @@ void register_I3CLSimPhotonHistory()
     .def_pickle(bp::boost_serializable_pickle_suite<I3CLSimPhotonHistorySeries>())
     ;
 
-    // does not base on I3FrameObject, so register only the shared_ptr<T>-to-shared_ptr<const T> conversion
+    // does not base on I3FrameObject, so register only the boost::shared_ptr<T>-to-shared_ptr<const T> conversion
     //register_pointer_conversions<I3CLSimPhoton>();
     boost::python::implicitly_convertible<boost::shared_ptr<I3CLSimPhotonHistory>, boost::shared_ptr<const I3CLSimPhotonHistory> >();
     

@@ -1,3 +1,5 @@
+#ifndef TRKPRIMARYGENERATORACTION_H_INCLUDED
+#define TRKPRIMARYGENERATORACTION_H_INCLUDED
 /**
  * Copyright (c) 2011, 2012
  * Claudio Kopper <claudio.kopper@icecube.wisc.edu>
@@ -51,3 +53,5 @@ private:
 #endif
 
 
+
+#endif  // TRKPRIMARYGENERATORACTION_H_INCLUDED

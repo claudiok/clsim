@@ -47,7 +47,7 @@ namespace I3CLSimHelper
     
     
     
-    // takes a vector of shared_ptrs-to-const and dynamic_casts all
+    // takes a vector of boost::shared_ptrs-to-const and dynamic_casts all
     // contents to a new type. only returns a filled vector if the
     // cast succeeds for all elements. "worked" is set to true
     // if the cast worked and "false" if it did not.

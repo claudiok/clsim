@@ -73,13 +73,14 @@ endif (BUILD_CLSIM_DATACLASSES_ONLY)
 SET(LIB_${PROJECT_NAME}_SOURCEFILES
   # private/clsim
   private/clsim/I3CLSimEventStatistics.cxx
-  private/clsim/I3Photon.cxx
-  private/clsim/I3CompressedPhoton.cxx
+  # private/clsim/I3Photon.cxx
+  # private/clsim/I3CompressedPhoton.cxx
   private/clsim/I3CLSimFlasherPulse.cxx
   private/clsim/util/I3MuonSlicer.cxx
   private/clsim/util/I3MuonSliceRemoverAndPulseRelabeler.cxx
   private/clsim/util/I3TauSanitizer.cxx
   private/clsim/dom/I3PhotonToMCPEConverter.cxx
+  private/clsim/dom/I3PhotonToMCHitConverterForMDOMs.cxx
   private/clsim/shadow/I3ShadowedPhotonRemover.cxx
   private/clsim/shadow/I3ShadowedPhotonRemoverModule.cxx
   private/clsim/shadow/I3ExtraGeometryItem.cxx
@@ -88,9 +89,9 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
   private/clsim/shadow/I3ExtraGeometryItemCylinder.cxx
 
   # tableio converters
-  private/clsim/converter/I3PhotonConverter.cxx
+  # private/clsim/converter/I3PhotonConverter.cxx
   private/clsim/converter/I3MCHitConverterWithIDs.cxx
-  private/clsim/converter/I3MCPEConverterWithIDs.cxx
+  # private/clsim/converter/I3MCPEConverterWithIDs.cxx
 )
 
 SET(LIB_${PROJECT_NAME}_PROJECTS serialization icetray dataio dataclasses phys-services tableio simclasses)
@@ -123,19 +124,66 @@ else (GEANT4_FOUND AND OPENCL_FOUND AND NOT DISABLE_GEANT4_IN_CLSIM)
     colormsg(RED   "+-- Geant4 or OpenCL is not installed on your system. clsim will fail if it is not used with parameterizations.")
 endif (GEANT4_FOUND AND OPENCL_FOUND AND NOT DISABLE_GEANT4_IN_CLSIM)
 
+# these files will be compiled in any case (with or without OpenCL/Geant4)
+SET(LIB_${PROJECT_NAME}_PYBINDINGS_SOURCEFILES
+  # private/pybindings/I3Photon.cxx
+  # private/pybindings/I3CompressedPhoton.cxx
+  private/pybindings/I3CLSimEventStatistics.cxx
+  private/pybindings/I3CLSimFlasherPulse.cxx
+  # private/pybindings/I3Converters.cxx
+  private/pybindings/I3ShadowedPhotonRemover.cxx
+  private/pybindings/I3ExtraGeometryItem.cxx
+  private/pybindings/module.cxx
+)
 
-# check for numpy. The C++ part of the tabulator needs it.
-if(NUMPY_FOUND)
-  ADD_DEFINITIONS(-DUSE_NUMPY)
+if(BUILD_CLSIM_DATACLASSES_ONLY)
+  ADD_DEFINITIONS(-DBUILD_CLSIM_DATACLASSES_ONLY)
+else(BUILD_CLSIM_DATACLASSES_ONLY)
+  # add all extra source files that do depend on OpenCL and/or Geant4
+  LIST(APPEND LIB_${PROJECT_NAME}_PYBINDINGS_SOURCEFILES
+    private/pybindings/I3CLSimStep.cxx
+    private/pybindings/I3CLSimPhoton.cxx
+    private/pybindings/I3CLSimPhotonHistory.cxx
+    private/pybindings/I3CLSimFunction.cxx
+    private/pybindings/I3CLSimScalarField.cxx
+    private/pybindings/I3CLSimVectorTransform.cxx
+    private/pybindings/I3CLSimRandomValue.cxx
+    private/pybindings/I3CLSimMediumProperties.cxx
+    private/pybindings/I3CLSimLightSourceToStepConverter.cxx
+    private/pybindings/I3CLSimStepToPhotonConverter.cxx
+    private/pybindings/I3CLSimSimpleGeometry.cxx
+    private/pybindings/I3CLSimLightSourceParameterization.cxx
+    private/pybindings/I3CLSimTester.cxx
+    private/pybindings/I3CLSimModuleHelper.cxx
+    private/pybindings/I3CLSimLightSourceToStepConverterUtils.cxx
+    private/pybindings/I3CLSimOpenCLDevice.cxx
+    private/pybindings/I3CLSimLightSource.cxx
+    private/pybindings/I3CLSimSpectrumTable.cxx
+  )
+endif(BUILD_CLSIM_DATACLASSES_ONLY)
 
-  LIST(APPEND LIB_${PROJECT_NAME}_TOOLS numpy)
-  ADD_DEFINITIONS(-DUSE_TABULATOR)
-  SET(BUILD_TABULATOR YES)
-  colormsg(GREEN "+-- numpy support (for tabulator)")
-else(NUMPY_FOUND)
-  SET(BUILD_TABULATOR NO)
-  colormsg(GREEN "+-- no numpy support (tabulator will not be built)")
-endif(NUMPY_FOUND)
+if(USE_BACKPORTED_I3MATRIX)
+  LIST(APPEND LIB_${PROJECT_NAME}_PYBINDINGS_SOURCEFILES
+    I3Matrix.cxx
+  )    
+endif(USE_BACKPORTED_I3MATRIX)
+
+# Check for a new enough version of OpenCL
+if(OPENCL_VERSION_STRING VERSION_GREATER 1.1)
+  ADD_DEFINITIONS(-DBUILD_CLSIM_TABULATOR)
+  LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
+    private/clsim/tabulator/I3CLSimTabulatorModule.cxx
+    private/clsim/tabulator/I3CLSimStepToTableConverter.cxx
+    private/clsim/tabulator/Axis.cxx
+    private/clsim/tabulator/Axes.cxx
+  )
+  LIST(APPEND LIB_${PROJECT_NAME}_PYBINDINGS_SOURCEFILES
+    private/pybindings/tabulator.cxx
+  )
+  colormsg(GREEN "+-- tabulator (have OpenCL ${OPENCL_VERSION_STRING})")
+else()
+  colormsg(RED "--- no tabulator (OpenCL ${OPENCL_VERSION_STRING} is too old)")
+endif()
 
 if(CFITSIO_FOUND)
   ADD_DEFINITIONS(-DUSE_CFITSIO)
@@ -200,11 +248,6 @@ if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
     private/clsim/I3CLSimLightSource.cxx
     private/clsim/I3CLSimSpectrumTable.cxx
     private/clsim/I3CLSimLightSourceToStepConverterFlasher.cxx
-    
-    private/clsim/tabulator/I3CLSimTabulatorModule.cxx
-    private/clsim/tabulator/I3CLSimStepToTableConverter.cxx
-    private/clsim/tabulator/Axis.cxx
-    private/clsim/tabulator/Axes.cxx
 
     # private/geant4
     private/geant4/I3CLSimLightSourceToStepConverterGeant4.cxx
@@ -249,6 +292,11 @@ i3_add_library(${PROJECT_NAME}
   USE_PROJECTS ${LIB_${PROJECT_NAME}_PROJECTS}
   )
 
+if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
+  # run python tests if in full-build mode
+  i3_test_scripts(resources/tests/*.py)
+endif(NOT BUILD_CLSIM_DATACLASSES_ONLY)
+
 # the make-safeprimes tool needs gmp, so only compile it if that tool is available
 if(GMP_FOUND)
   i3_executable(make_safeprimes
@@ -265,8 +313,11 @@ else(GMP_FOUND)
   colormsg(CYAN  "+-- no gmp support (make_safeprimes utility)")
 endif(GMP_FOUND)
 
-
-add_subdirectory(private/pybindings)
+i3_add_pybindings(clsim
+  ${LIB_${PROJECT_NAME}_PYBINDINGS_SOURCEFILES}
+  USE_TOOLS boost python
+  USE_PROJECTS serialization icetray dataclasses clsim
+)
 
 ## restore OPENCL_FOUND
 set(OPENCL_FOUND ${tmp_OPENCL_FOUND})

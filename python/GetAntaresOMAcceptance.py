@@ -16,11 +16,11 @@
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 # 
 # 
-# $Id$
+# $Id: GetAntaresOMAcceptance.py 131589 2015-04-16 22:51:50Z claudio.kopper $
 # 
 # @file GetAntaresOMAcceptance.py
-# @version $Revision$
-# @date $Date$
+# @version $Revision: 131589 $
+# @date $Date: 2015-04-16 16:51:50 -0600 (Thu, 16 Apr 2015) $
 # @author Claudio Kopper
 #
 """
@@ -42,8 +42,8 @@ The table of photo-electron acceptance of the OM is
 calculated at an injection angle of 0 deg.
 
 The acceptance is calculated the following way
-eff_area = PM collection efficiency
-           * PM quantum efficiency (lambda)
+eff_area = PM collection efficiency \
+           * PM quantum efficiency (lambda) \
            * glass + gel transmission probability (lambda)
 """
 

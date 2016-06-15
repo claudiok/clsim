@@ -580,15 +580,6 @@ TrkCerenkov::GetAverageNumberOfPhotons(const G4double charge,
     if(!(CerenkovAngleIntegrals1->IsFilledVectorExist()))return 0.0;
     if(!(CerenkovAngleIntegrals2->IsFilledVectorExist()))return 0.0;
     
-    // Min and Max photon energies 
-#ifdef MATERIAL_PROPERTY_VECTOR_IS_PHYSICS_VECTOR
-    G4double Pmin = Rindex->GetMinLowEdgeEnergy();
-    G4double Pmax = Rindex->GetMaxLowEdgeEnergy();
-#else
-    G4double Pmin = Rindex->GetMinPhotonEnergy();
-    G4double Pmax = Rindex->GetMaxPhotonEnergy();
-#endif
-    
     // Min and Max Refraction Indices 
 #ifdef MATERIAL_PROPERTY_VECTOR_IS_PHYSICS_VECTOR
     G4double nMin = Rindex->GetMinValue();
@@ -626,12 +617,11 @@ TrkCerenkov::GetAverageNumberOfPhotons(const G4double charge,
     
     else {
 #ifdef MATERIAL_PROPERTY_VECTOR_IS_PHYSICS_VECTOR
-        Pmin = Rindex->GetEnergy(BetaInverse);
+      G4double Pmin = Rindex->GetEnergy(BetaInverse);
 #else
-        Pmin = Rindex->GetPhotonEnergy(BetaInverse);
+      G4double Pmin = Rindex->GetPhotonEnergy(BetaInverse);
 #endif
-        dp = Pmax - Pmin;
-        
+
         // need boolean for current implementation of G4PhysicsVector
         // ==> being phased out
         G4bool isOutRange;

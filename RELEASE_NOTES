@@ -1,10 +1,15 @@
-# $Id$
-# $Author$
-# $Date$
+.. $Id$
+.. $Author$
+.. $Date$
+
+Release Notes
+=============
 
 trunk
 -----
 
+* Fixed a bug where in rare cases the last few frames would not be processed
+  by clsim. (Thanks dschultz!)
 * The cutoff distance for sources further away from any DOM than a certain
   distance is now configurable using the I3CLSimModule option
   "ClosestDOMDistanceCutoff". It used to be hard-coded to 300m.
@@ -14,9 +19,18 @@ trunk
   should reduce fluctuations in the memory requirements of clsim jobs.
   This cannot currently be used with flasher simulations. If unset, the
   previous behavior is used.
+* Moved I3Photon and I3CompressedPhoton to simclasses
+
+December 22, 2014 Alex Olivas  (olivas@icecube.umd.edu) 
+--------------------------------------------------------------------
+
+Release V04-00-05
+
+* Loading safeprimes files (without the .txt extension). 
 
 November 24, 2014 Alex Olivas  (olivas@icecube.umd.edu)
---------------------------------------------------------------------
+-------------------------------------------------------
+
 Release V04-00-04
 
 * Builds without OpenGL and with Intel i7.
@@ -26,15 +40,23 @@ Release V04-00-04
 * Get all devices, even those that are neither CPUs nor GPUs, like the Xeon Phi.
 
 July 11, 2014 Claudio Kopper  (ckopper@icecube.wisc.edu)
---------------------------------------------------------------------
-trunk (some of these happened in earlier releases but this file has not been updated)
+--------------------------------------------------------
+
+Release V04-00-03
+
 
 * some code cleanup: removed the dataclasses header backports
-  -> this version will not work with outdated dataclasses
+  
+  .. warning:: this version will not work with outdated dataclasses
+  
 * minor OpenCL cleanups to make some implementations happy
-* safeprimes file will now be taken from I3_DATA if it exists
 * added a benchmark script which can be used to check the GPU/CPU
   performance by propagating a couple of photons
+* safeprimes file will now be taken from I3_DATA if it exists
+
+February 03, 2013, Alex Olivas  (olivas@icecube.umd.edu)
+--------------------------------------------------------
+
 * more cleanups to move from I3MCPulse to I3MCPE
 * fixed a bug where the MCTree chopping would ignore secondary losses
   leading to light from muon stochastic losses to be ignored
@@ -42,13 +64,15 @@ trunk (some of these happened in earlier releases but this file has not been upd
 
 January 29, 2013 Claudio Kopper  (ckopper@icecube.wisc.edu)
 --------------------------------------------------------------------
-Release V00-03-00
+
+Release V03-00-00
 
 * support for ice tilt and anisotropy
 * tuned when running on AMD cards (Radeon 7970 on cobaltamdgpu)
 
 June 14, 2012 Claudio Kopper  (ckopper@icecube.wisc.edu)
---------------------------------------------------------------------
+--------------------------------------------------------
+
 Release V00-02-01
 
 * replaces the OpenCL 1.1 version of the cl.hpp OpenCL C++ bindings
@@ -57,7 +81,8 @@ Release V00-02-01
   but allows clsim to be compiled with newer versions of the AMD APP SDK.
 
 May 31, 2012 Claudio Kopper  (ckopper@icecube.wisc.edu)
---------------------------------------------------------------------
+-------------------------------------------------------
+
 Release V00-02-00
 
 * fixes a bug where particles that fall below the Cherenkov threshold are immediately killed in Geant4
@@ -74,7 +99,8 @@ Release V00-02-00
 
 
 April 18, 2012 Claudio Kopper  (ckopper@icecube.wisc.edu)
---------------------------------------------------------------------
+---------------------------------------------------------
+
 Release V00-01-05
 
 This is a minor release that should improve compatibility with

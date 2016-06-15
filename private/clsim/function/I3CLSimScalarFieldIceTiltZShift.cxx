@@ -149,7 +149,7 @@ std::string I3CLSimScalarFieldIceTiltZShift::GetOpenCLFunction(const std::string
 
     std::string dataDef;
     
-    dataDef +=
+    dataDef += std::string("\n") + 
     "#define " + dataName + "_numDistances  " + boost::lexical_cast<std::string>(zCorrections_.size1()) + "\n" +
     "#define " + dataName + "_numZCoords    " + boost::lexical_cast<std::string>(zCorrections_.size2()) + "\n" +
     "#define " + dataName + "_firstZCoord   " + ToFloatString(firstZCoordinate_) + "\n" +
@@ -159,7 +159,7 @@ std::string I3CLSimScalarFieldIceTiltZShift::GetOpenCLFunction(const std::string
     "__constant float " + dataName + "_distancesFromOriginAlongTilt[" + dataName + "_numDistances] = {\n";
     for (std::size_t i=0;i<distancesFromOriginAlongTilt_.size();++i)
     {
-        dataDef += ToFloatString(distancesFromOriginAlongTilt_[i]) + ", ";
+        dataDef += ToFloatString(distancesFromOriginAlongTilt_[i]) + ", \n";
     }
     dataDef += "};\n\n";
 
@@ -169,7 +169,7 @@ std::string I3CLSimScalarFieldIceTiltZShift::GetOpenCLFunction(const std::string
     {
         for (std::size_t j=0;j<zCorrections_.size2();++j)
         {
-            dataDef += ToFloatString(zCorrections_(i,j)) + ", ";
+            dataDef += ToFloatString(zCorrections_(i,j)) + ", \n";
 
         }
         dataDef += " // distances[" + boost::lexical_cast<std::string>(i) + "]\n";

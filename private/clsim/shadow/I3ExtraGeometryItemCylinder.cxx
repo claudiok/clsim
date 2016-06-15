@@ -391,7 +391,7 @@ I3ExtraGeometryItemCylinder::DoesLineIntersect
 (const I3Position &lineStart,
  const I3Position &lineEnd) const
 {
-    if (isnan(radius_)) return false;
+    if (std::isnan(radius_)) return false;
     
     double result[2];
     double line_segment_length;

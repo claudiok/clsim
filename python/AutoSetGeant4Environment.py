@@ -1,3 +1,5 @@
+# FIXME: The functionality of this script is now integrated into env-shell.sh,
+#        therefore this script should be removed at some point to avoid confusion.
 #
 # Copyright (c) 2011, 2012
 # Claudio Kopper <claudio.kopper@icecube.wisc.edu>
@@ -16,11 +18,11 @@
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 # 
 # 
-# $Id$
+# $Id: AutoSetGeant4Environment.py 131589 2015-04-16 22:51:50Z claudio.kopper $
 # 
 # @file AutoSetGeant4Environment.py
-# @version $Revision$
-# @date $Date$
+# @version $Revision: 131589 $
+# @date $Date: 2015-04-16 16:51:50 -0600 (Thu, 16 Apr 2015) $
 # @author Claudio Kopper
 #
 
