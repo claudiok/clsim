@@ -96,7 +96,7 @@ public:
     virtual bool CompareTo(const I3CLSimRandomValue &other) const = 0;
     
 private:
-    friend class boost::serialization::access;
+    friend class icecube::serialization::access;
     template <class Archive> void serialize(Archive & ar, unsigned version);
 };
 
@@ -106,7 +106,7 @@ inline bool operator==(const I3CLSimRandomValue& a, const I3CLSimRandomValue& b)
 }
 
 
-BOOST_CLASS_VERSION(I3CLSimRandomValue, i3clsimrandomvalue_version_);
+I3_CLASS_VERSION(I3CLSimRandomValue, i3clsimrandomvalue_version_);
 
 I3_POINTER_TYPEDEFS(I3CLSimRandomValue);
 

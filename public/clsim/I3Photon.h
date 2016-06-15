@@ -375,13 +375,13 @@ private:
 
     std::vector<std::pair<I3Position, double> > intermediatePositions_;
     
-    friend class boost::serialization::access;
+    friend class icecube::serialization::access;
     
     template <class Archive> void serialize(Archive & ar, unsigned version);
     
 };
 
-BOOST_CLASS_VERSION(I3Photon, i3photon_version_);
+I3_CLASS_VERSION(I3Photon, i3photon_version_);
 
 typedef I3Vector<I3Photon> I3PhotonSeries;
 

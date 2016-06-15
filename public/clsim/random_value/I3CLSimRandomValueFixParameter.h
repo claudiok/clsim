@@ -74,12 +74,12 @@ private:
     std::size_t parameterIndex_;
     double parameterValue_;
     
-    friend class boost::serialization::access;
+    friend class icecube::serialization::access;
     template <class Archive> void serialize(Archive & ar, unsigned version);
 };
 
 
-BOOST_CLASS_VERSION(I3CLSimRandomValueFixParameter, i3clsimrandomvaluefixparameter_version_);
+I3_CLASS_VERSION(I3CLSimRandomValueFixParameter, i3clsimrandomvaluefixparameter_version_);
 
 I3_POINTER_TYPEDEFS(I3CLSimRandomValueFixParameter);
 

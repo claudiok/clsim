@@ -30,9 +30,9 @@
 #include <icetray/portable_binary_archive.hpp>
 
 #include <boost/static_assert.hpp>
-#include <boost/serialization/binary_object.hpp>
+#include <serialization/binary_object.hpp>
 
-using namespace boost::archive;
+using namespace icecube::archive;
 
 namespace {
     const std::size_t blobSizeV0 = 80; // size of our structure in bytes
@@ -118,7 +118,7 @@ void I3CLSimPhoton::save(portable_binary_oarchive &ar, unsigned version) const
     // check an assumption we will make throughout the code
     BOOST_STATIC_ASSERT((sizeof(I3CLSimPhoton) == blobSizeV0));
     
-    ar << make_nvp("blob", boost::serialization::make_binary_object((void *)this, blobSizeV0));
+    ar << make_nvp("blob", icecube::serialization::make_binary_object((void *)this, blobSizeV0));
 }     
 
 template <>
@@ -131,7 +131,7 @@ void I3CLSimPhoton::load(portable_binary_iarchive &ar, unsigned version)
     // check an assumption we will make throughout the code
     BOOST_STATIC_ASSERT((sizeof(I3CLSimPhoton) == blobSizeV0));
     
-    ar >> make_nvp("blob", boost::serialization::make_binary_object(this, blobSizeV0));
+    ar >> make_nvp("blob", icecube::serialization::make_binary_object(this, blobSizeV0));
 }     
 
 // this serialization is endian-dependent (i.e. if you serializae on a big-endian system, you will
@@ -154,7 +154,7 @@ void I3Vector<I3CLSimPhoton>::serialize(portable_binary_iarchive &ar, unsigned v
     this->resize(size);
 
     // read the binary blob in one go..
-    ar >> make_nvp("blob", boost::serialization::make_binary_object( &((*this)[0]), blobSizeV0*size));
+    ar >> make_nvp("blob", icecube::serialization::make_binary_object( &((*this)[0]), blobSizeV0*size));
 }
 
 template<>
@@ -165,7 +165,7 @@ void I3Vector<I3CLSimPhoton>::serialize(portable_binary_oarchive &ar, unsigned v
     ar << make_nvp("i3clsimphoton_version", i3clsimphoton_version_);
     uint64_t size = this->size();
     ar << make_nvp("num", size);
-    ar << make_nvp("blob", boost::serialization::make_binary_object( &((*this)[0]), blobSizeV0*size ));
+    ar << make_nvp("blob", icecube::serialization::make_binary_object( &((*this)[0]), blobSizeV0*size ));
 }
 
 

@@ -184,12 +184,12 @@ private:
     uint64_t particleMajorID_;
     int32_t particleID_;
 
-    friend class boost::serialization::access;
+    friend class icecube::serialization::access;
     template <class Archive> void serialize(Archive & ar, unsigned version);
     
 };
 
-BOOST_CLASS_VERSION(I3CompressedPhoton, i3compressedphoton_version_);
+I3_CLASS_VERSION(I3CompressedPhoton, i3compressedphoton_version_);
 
 typedef I3Vector<I3CompressedPhoton> I3CompressedPhotonSeries;
 

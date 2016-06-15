@@ -63,7 +63,7 @@ public:
     virtual std::ostream& operator<<(std::ostream& oss) const;
 
 private:
-    friend class boost::serialization::access;
+    friend class icecube::serialization::access;
     template <class Archive> void serialize(Archive & ar, unsigned version);
 };
 
@@ -72,7 +72,7 @@ inline std::ostream& operator<<(std::ostream& oss, const I3ExtraGeometryItem &it
     return item.operator<<(oss);
 }
 
-BOOST_CLASS_VERSION(I3ExtraGeometryItem, i3extrageometryitem_version_);
+I3_CLASS_VERSION(I3ExtraGeometryItem, i3extrageometryitem_version_);
 
 I3_POINTER_TYPEDEFS(I3ExtraGeometryItem);
 

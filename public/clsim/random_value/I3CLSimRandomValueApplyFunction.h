@@ -69,12 +69,12 @@ private:
     I3CLSimRandomValuePtr randomDistUsed_;
     std::string applyFunctionName_;
     
-    friend class boost::serialization::access;
+    friend class icecube::serialization::access;
     template <class Archive> void serialize(Archive & ar, unsigned version);
 };
 
 
-BOOST_CLASS_VERSION(I3CLSimRandomValueApplyFunction, i3clsimrandomvalueapplyfunction_version_);
+I3_CLASS_VERSION(I3CLSimRandomValueApplyFunction, i3clsimrandomvalueapplyfunction_version_);
 
 I3_POINTER_TYPEDEFS(I3CLSimRandomValueApplyFunction);
 

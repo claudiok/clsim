@@ -30,9 +30,9 @@
 #include <icetray/portable_binary_archive.hpp>
 
 #include <boost/static_assert.hpp>
-#include <boost/serialization/binary_object.hpp>
+#include <serialization/binary_object.hpp>
 
-using namespace boost::archive;
+using namespace icecube::archive;
 
 namespace {
     const std::size_t blobSizeV0 = 48; // size of our structure in bytes
@@ -100,7 +100,7 @@ void I3CLSimStep::save(portable_binary_oarchive &ar, unsigned version) const
     // check an assumption we will make throughout the code
     BOOST_STATIC_ASSERT((sizeof(I3CLSimStep) == blobSizeV0));
 
-    ar << make_nvp("blob", boost::serialization::make_binary_object((void *)this, blobSizeV0));
+    ar << make_nvp("blob", icecube::serialization::make_binary_object((void *)this, blobSizeV0));
 }
 
 template <>
@@ -112,7 +112,7 @@ void I3CLSimStep::load(portable_binary_iarchive &ar, unsigned version)
     // check an assumption we will make throughout the code
     BOOST_STATIC_ASSERT((sizeof(I3CLSimStep) == blobSizeV0));
 
-    ar >> make_nvp("blob", boost::serialization::make_binary_object(this, blobSizeV0));
+    ar >> make_nvp("blob", icecube::serialization::make_binary_object(this, blobSizeV0));
 }
 
 template<>
@@ -130,7 +130,7 @@ void I3Vector<I3CLSimStep>::serialize(portable_binary_iarchive &ar, unsigned ver
     this->resize(size);
 
     // read the binary blob in one go..
-    ar >> make_nvp("blob", boost::serialization::make_binary_object( &((*this)[0]), blobSizeV0*size));
+    ar >> make_nvp("blob", icecube::serialization::make_binary_object( &((*this)[0]), blobSizeV0*size));
 }
 
 template<>
@@ -141,7 +141,7 @@ void I3Vector<I3CLSimStep>::serialize(portable_binary_oarchive &ar, unsigned ver
     ar << make_nvp("I3CLSimStep_version", i3clsimstep_version_);
     uint64_t size = this->size();
     ar << make_nvp("num", size);
-    ar << make_nvp("blob", boost::serialization::make_binary_object( &((*this)[0]), blobSizeV0*size ));
+    ar << make_nvp("blob", icecube::serialization::make_binary_object( &((*this)[0]), blobSizeV0*size ));
 }
 
 

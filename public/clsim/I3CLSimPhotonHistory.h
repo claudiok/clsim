@@ -68,7 +68,7 @@ private:
     std::vector<float> distanceInAbsorptionLengths_;
     
 private:
-    friend class boost::serialization::access;
+    friend class icecube::serialization::access;
     template <class Archive> void serialize(Archive & ar, unsigned version);
 };
 
@@ -87,7 +87,7 @@ inline bool operator==(const I3CLSimPhotonHistory &a, const I3CLSimPhotonHistory
     return true;
 }
 
-BOOST_CLASS_VERSION(I3CLSimPhotonHistory, i3clsimphotonhistory_version_);
+I3_CLASS_VERSION(I3CLSimPhotonHistory, i3clsimphotonhistory_version_);
 
 typedef I3Vector<I3CLSimPhotonHistory> I3CLSimPhotonHistorySeries;
 

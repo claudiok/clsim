@@ -257,7 +257,7 @@ if(GMP_FOUND)
     )
   i3_executable(convert_safeprimes
     private/make_safeprimes/convert.cxx
-    USE_PROJECTS icetray
+    USE_PROJECTS serialization icetray
     USE_TOOLS python boost
     )
   colormsg(GREEN "+-- gmp support (make_safeprimes utility)")

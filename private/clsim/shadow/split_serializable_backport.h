@@ -4,8 +4,8 @@
 #ifndef I3_SPLIT_SERIALIZABLE
 #define I3_SPLIT_SERIALIZABLE(T)                                        \
   I3_SERIALIZABLE(T)                                                    \
-  template void T::save(boost::archive::portable_binary_oarchive&, unsigned) const; \
-  template void T::load(boost::archive::portable_binary_iarchive&, unsigned); \
-  template void T::load(boost::archive::xml_iarchive&, unsigned);       \
-  template void T::save(boost::archive::xml_oarchive&, unsigned) const;
+  template void T::save(icecube::archive::portable_binary_oarchive&, unsigned) const; \
+  template void T::load(icecube::archive::portable_binary_iarchive&, unsigned); \
+  template void T::load(icecube::archive::xml_iarchive&, unsigned);       \
+  template void T::save(icecube::archive::xml_oarchive&, unsigned) const;
 #endif
