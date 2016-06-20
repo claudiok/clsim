@@ -389,6 +389,7 @@ __kernel void propKernel(
     const uint maxHitIndex,    // maxNumOutputPhotons_
 #ifndef SAVE_ALL_PHOTONS
     __global unsigned short *geoLayerToOMNumIndexPerStringSet,
+    __local  unsigned short *geoLayerToOMNumIndexPerStringSetLocal,
 #endif
 #endif
 
@@ -417,8 +418,6 @@ __kernel void propKernel(
 #endif
 
 #ifndef SAVE_ALL_PHOTONS
-    __local unsigned short geoLayerToOMNumIndexPerStringSetLocal[GEO_geoLayerToOMNumIndexPerStringSet_BUFFER_SIZE];
-
     // copy the geo data to our local memory (this is done by a whole work group in parallel)
     event_t copyFinishedEvent =
         async_work_group_copy(geoLayerToOMNumIndexPerStringSetLocal,
@@ -442,18 +441,7 @@ __kernel void propKernel(
 
     // download the step
     struct I3CLSimStep step;
-    step.posAndTime = inputSteps[i].posAndTime;
-    step.dirAndLengthAndBeta = inputSteps[i].dirAndLengthAndBeta;
-    step.numPhotons = inputSteps[i].numPhotons;
-    step.weight = inputSteps[i].weight;
-    step.identifier = inputSteps[i].identifier;
-#ifndef NO_FLASHER
-    // only needed for flashers
-    step.sourceType = inputSteps[i].sourceType;
-#endif
-    //step.dummy1 = inputSteps[i].dummy1;  // NOT USED
-    //step.dummy2 = inputSteps[i].dummy2;  // NOT USED
-    //step = inputSteps[i]; // Intel OpenCL does not like this
+    step = inputSteps[i]; // Intel OpenCL does not like this
 
 #ifdef TABULATE
     struct I3CLSimReferenceParticle refParticle = *referenceParticle;

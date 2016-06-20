@@ -280,6 +280,7 @@ void I3CLSimStepToPhotonConverterOpenCL::Initialize()
     if (!saveAllPhotons_) {
         // no need for a geometry buffer if all photons are saved and no
         // geometry is necessary.
+        log_error_stream("Setting up deviceBuffer_GeoLayerToOMNumIndexPerStringSet, size=" << geoLayerToOMNumIndexPerStringSetInfo_.size() << "*" << sizeof(unsigned short));
         deviceBuffer_GeoLayerToOMNumIndexPerStringSet = boost::shared_ptr<cl::Buffer>
         (new cl::Buffer(*context_, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, geoLayerToOMNumIndexPerStringSetInfo_.size() * sizeof(unsigned short), &(geoLayerToOMNumIndexPerStringSetInfo_[0])));
     }
@@ -323,6 +324,7 @@ void I3CLSimStepToPhotonConverterOpenCL::Initialize()
         
         if (!saveAllPhotons_) {
             kernel_[i]->setArg(argN++, *deviceBuffer_GeoLayerToOMNumIndexPerStringSet); // additional geometry information (did not fit into constant memory)
+            kernel_[i]->setArg(argN++, cl::__local(geoLayerToOMNumIndexPerStringSetInfo_.size() * sizeof(unsigned short))); // additional geometry information (did not fit into constant memory)
         }
         
         kernel_[i]->setArg(argN++, *(deviceBuffer_InputSteps[i]));                  // the input steps
@@ -599,6 +601,8 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
     //BuildOptions += "-cl-no-signed-zeros ";
     //BuildOptions += "-cl-unsafe-math-optimizations ";
     BuildOptions += "-cl-mad-enable ";
+    //BuildOptions += "-g "; // enables opencl debug symbols
+    //BuildOptions += "-cl-opt-disable "; // removes all opencl optimizations
 
     const bool nvidiaVerboseCompile=false;
     if (nvidiaVerboseCompile)
