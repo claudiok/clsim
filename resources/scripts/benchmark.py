@@ -308,7 +308,10 @@ tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
     UseCPUs=options.USECPU,
     UseOnlyDeviceNumber=options.DEVICE,
     IceModelLocation=options.ICEMODEL,
-    ExtraArgumentsToI3CLSimModule={"EnableDoubleBuffering":True}
+    ExtraArgumentsToI3CLSimModule=dict(
+        EnableDoubleBuffering=True,
+        DoublePrecision=False,
+        ),
     )
 
 tray.AddModule("TrashCan", "the can")
