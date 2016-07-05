@@ -187,7 +187,7 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
 	preamble << "#define VOLUME_MODE_STEP "<<I3CLSimHelper::ToFloatString(stepLength_)<<"\n";
 	minimumRefractiveIndex_ = GetMinimumRefractiveIndex(*mediumProperties);
 	
-	preamble << "__constant floating_t min_invPhaseVel = " << I3CLSimHelper::ToFloatString(
+	preamble << "__constant floating_t min_invGroupVel = " << I3CLSimHelper::ToFloatString(
 	    minimumRefractiveIndex_.first/I3Constants::c) << ";\n";
 	preamble << "__constant floating_t tan_thetaC = " << I3CLSimHelper::ToFloatString(
 	    std::sqrt(minimumRefractiveIndex_.second*minimumRefractiveIndex_.second-1.)) << ";\n";

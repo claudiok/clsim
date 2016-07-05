@@ -63,7 +63,7 @@ getCoordinates(const floating4_t absPos, floating4_t dirAndWlen,
     // cos(polar angle)
     coords.s2 = (coords.s0 > 0) ? my_divide(l, coords.s0) : 0;
     // delay time
-    coords.s3 = pos.w - coords.s0*min_invPhaseVel;
+    coords.s3 = pos.w - coords.s0*min_invGroupVel;
 #ifdef TABULATE_IMPACT_ANGLE
     // s4 is the cosine of the opening angle between a vector connecting
     // the DOM's center to the photon impact point and a vector connecting
