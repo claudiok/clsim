@@ -539,7 +539,7 @@ void I3PhotonToMCHitConverterForMDOMs::DAQ(I3FramePtr frame)
             // angular acceptance factor from the geometry. So we have to get rid of that first.
             // This means that after the code knows that a PMT is hit, the geometrical acceptance
             // should be 1 if the acceptance factor from the geometry is cos(theta).
-            const double ang_fac = pmtAngularAcceptance_->GetValue(hit_cosangle)/std::fabs(hit_cosangle);
+            const double ang_fac = std::min(pmtAngularAcceptance_->GetValue(hit_cosangle)/std::fabs(hit_cosangle), 1.);
             
             // calculate the measurement probability
             double measurement_prob = photon.GetWeight();
