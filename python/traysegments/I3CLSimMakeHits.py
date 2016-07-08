@@ -267,6 +267,10 @@ def I3CLSimMakeHits(tray, name,
         else:
             clSimMCTreeName = OutputMCTreeName
 
+    kwargs = dict()
+    if len(ExtraArgumentsToI3CLSimModule) > 0:
+        kwargs['ExtraArgumentsToI3CLSimModule'] = ExtraArgumentsToI3CLSimModule
+
     I3CLSimMakePhotons_kwargs = dict(UseCPUs=UseCPUs,
                                      UseGPUs=UseGPUs,
                                      UseOnlyDeviceNumber=UseOnlyDeviceNumber,
@@ -292,8 +296,8 @@ def I3CLSimMakeHits(tray, name,
                                      DOMOversizeFactor=DOMOversizeFactor,
                                      UnshadowedFraction=UnshadowedFraction,
                                      UseHoleIceParameterization=UseHoleIceParameterization,
-                                     ExtraArgumentsToI3CLSimModule=ExtraArgumentsToI3CLSimModule,
-                                     If=If)
+                                     If=If,
+                                     **kwargs)
 
     if hasattr(icetray, "traysegment"):
         tray.AddSegment(I3CLSimMakePhotons, name + "_makePhotons",

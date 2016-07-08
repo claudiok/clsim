@@ -73,7 +73,9 @@ def I3CLSimMakePhotons(tray, name,
                        UseHoleIceParameterization=True,
                        DOMRadius=0.16510*icetray.I3Units.m, # 13" diameter
                        OverrideApproximateNumberOfWorkItems=None,
-                       ExtraArgumentsToI3CLSimModule=dict(),
+                       ExtraArgumentsToI3CLSimModule=dict(
+                           IgnoreSubdetectors=['IceTop'],
+                           ),
                        If=lambda f: True
                        ):
     """Do standard clsim processing up to the I3Photon level.
@@ -404,8 +406,6 @@ def I3CLSimMakePhotons(tray, name,
                    SpectrumTable=spectrumTable,
                    FlasherPulseSeriesName=clSimFlasherPulseSeriesName,
                    OMKeyMaskName=clSimOMKeyMaskName,
-                   # ignore IceTop
-                   IgnoreSubdetectors = ["IceTop"],
                    #IgnoreNonIceCubeOMNumbers=False,
                    GenerateCherenkovPhotonsWithoutDispersion=False,
                    WavelengthGenerationBias=wavelengthGenerationBias,
