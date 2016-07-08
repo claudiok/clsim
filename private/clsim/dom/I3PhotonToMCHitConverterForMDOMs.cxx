@@ -95,6 +95,11 @@ I3PhotonToMCHitConverterForMDOMs::I3PhotonToMCHitConverterForMDOMs(const I3Conte
                  "Wavelength acceptance of a PMT as a I3CLSimFunction object.",
                  pmtWavelengthAcceptance_);
     
+    oversizeFactor_ = 1.;
+    AddParameter("DOMOversizeFactor",
+                 "Size scaling applied to DOM during photon propagation",
+                 oversizeFactor_);
+    
     AddParameter("PMTAngularAcceptance",
                  "Angular acceptance of a PMT as a I3CLSimFunction object.",
                  pmtAngularAcceptance_);
@@ -132,6 +137,7 @@ void I3PhotonToMCHitConverterForMDOMs::Configure()
     GetParameter("IgnoreSubdetectors", ignoreSubdetectors_);
 
     GetParameter("PMTWavelengthAcceptance", pmtWavelengthAcceptance_);
+    GetParameter("DOMOversizeFactor", oversizeFactor_);
     GetParameter("PMTAngularAcceptance", pmtAngularAcceptance_);
 
     GetParameter("GlassAbsorptionLength", glassAbsorptionLength_);
@@ -168,6 +174,7 @@ namespace {
                           const I3ModuleGeo &moduleGeo,
                           const I3OMGeoMap &omGeoMap,
                           const std::vector<unsigned char> &pmtNumbersToCheck,
+                          double oversizeFactor,
                           double glassThickness,
                           double &pathLengthInOM,
                           double &pathLengthInGlass)
@@ -185,6 +192,23 @@ namespace {
         const double dy = photonDir.GetY();
         const double dz = photonDir.GetZ();
         
+        // undo pancaking
+        if (oversizeFactor != 1.) {
+            // find a vector perpendicular to the photon track, connecting
+            // it with the axis of the DOM
+            double parallel = dx*px + dy*py + dz*pz;
+            double nx = px - parallel*dx;
+            double ny = py - parallel*dy;
+            double nz = pz - parallel*dz;
+            // scale the distance of closest approach to the center by
+            // oversizeFactor_
+            double scale = (oversizeFactor - 1.)/oversizeFactor;
+            
+            px -= scale*nx;
+            py -= scale*ny;
+            pz -= scale*nz;
+            pr2 = px*px + py*py + pz*pz;
+        }
         {
             // sanity check: are photons on the OM's surface?
             const double distFromDOMCenter = std::sqrt(pr2);
@@ -490,6 +514,7 @@ void I3PhotonToMCHitConverterForMDOMs::DAQ(I3FramePtr frame)
                                        moduleGeo,
                                        *omGeoMap,
                                        checkPMTNumbers,
+                                       oversizeFactor_,
                                        glassThickness_,
                                        pathLengthInsideOM,
                                        pathLengthInsideGlass);

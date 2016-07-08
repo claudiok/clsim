@@ -129,6 +129,7 @@ class I3PhotonToMCHitConverterForMDOMs : public I3ConditionalModule
          */
         double glassThickness_;
 
+        double oversizeFactor_;
         /**
          * Parameter: The absorption length of the optical gel between the DOM sphere and the PMT.
          */
