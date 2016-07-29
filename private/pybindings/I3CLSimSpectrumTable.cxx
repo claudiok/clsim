@@ -65,5 +65,5 @@ void register_I3CLSimSpectrumTable()
         
     }
     
-    bp::implicitly_convertible<shared_ptr<I3CLSimSpectrumTable>, shared_ptr<const I3CLSimSpectrumTable> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimSpectrumTable>, boost::shared_ptr<const I3CLSimSpectrumTable> >();
 }

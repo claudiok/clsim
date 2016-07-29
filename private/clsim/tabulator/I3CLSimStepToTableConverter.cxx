@@ -120,9 +120,10 @@ GetMinimumRefractiveIndex(const I3CLSimMediumProperties &med)
 I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice device,
     clsim::tabulator::AxesConstPtr axes, size_t entriesPerStream,
     I3CLSimMediumPropertiesConstPtr mediumProperties, I3CLSimSpectrumTableConstPtr spectrumTable,
+    double referenceArea,
     I3CLSimFunctionConstPtr wavelengthAcceptance, I3CLSimFunctionConstPtr angularAcceptance,
     I3RandomServicePtr rng) : entriesPerStream_(entriesPerStream), stepQueue_(1), run_(true),
-    domArea_(M_PI*std::pow(0.16510*I3Units::m, 2)), stepLength_(1.), axes_(axes),
+    domArea_(referenceArea), stepLength_(1.), axes_(axes),
     numPhotons_(0), sumOfPhotonWeights_(0.)
 {
 	std::vector<I3CLSimRandomValueConstPtr> wavelengthGenerators;
@@ -186,7 +187,7 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
 	preamble << "#define VOLUME_MODE_STEP "<<I3CLSimHelper::ToFloatString(stepLength_)<<"\n";
 	minimumRefractiveIndex_ = GetMinimumRefractiveIndex(*mediumProperties);
 	
-	preamble << "__constant floating_t min_invPhaseVel = " << I3CLSimHelper::ToFloatString(
+	preamble << "__constant floating_t min_invGroupVel = " << I3CLSimHelper::ToFloatString(
 	    minimumRefractiveIndex_.first/I3Constants::c) << ";\n";
 	preamble << "__constant floating_t tan_thetaC = " << I3CLSimHelper::ToFloatString(
 	    std::sqrt(minimumRefractiveIndex_.second*minimumRefractiveIndex_.second-1.)) << ";\n";
@@ -500,14 +501,17 @@ I3CLSimStepToTableConverter::Normalize()
 	const unsigned ndim = axes_->GetNDim();
 	const std::vector<size_t> shape = axes_->GetShape();
 	const std::vector<size_t> strides = axes_->GetStrides();
-	std::vector<size_t> idxs(ndim);
+	std::vector<size_t> idxs(ndim, 0);
 
 	// NB: assume that the first 3 dimensions are spatial
 	const size_t spatial_stride = strides[2];
 	for (size_t offset = 0; offset < binContent_.size(); offset += spatial_stride) {
 		// unravel index
-		for (unsigned j=0; j < ndim; j++)
-			idxs[j] = offset/strides[j] % shape[j];
+		for (unsigned j=0; j < ndim; j++) {
+			// each dimension has an under- and an overflow bin.
+			idxs[j] = std::min(std::max(int(offset/strides[j] % shape[j])-1, 0), int(shape[j]-3));
+			assert(idxs[j] < shape[j]-2);
+		}
 		assert(idxs[ndim-1] == 0);
 		
 		// apply volume normalization to each spatial cell

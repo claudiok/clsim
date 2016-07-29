@@ -59,7 +59,8 @@ bunchSizeGranularity_(1),
 maxBunchSize_(512000),
 photonsPerStep_(photonsPerStep),
 highPhotonsPerStep_(highPhotonsPerStep),
-useHighPhotonsPerStepStartingFromNumPhotons_(useHighPhotonsPerStepStartingFromNumPhotons)
+useHighPhotonsPerStepStartingFromNumPhotons_(useHighPhotonsPerStepStartingFromNumPhotons),
+useCascadeExtension_(true)
 {
     if (photonsPerStep_<=0)
         throw I3CLSimLightSourceToStepConverter_exception("photonsPerStep may not be <= 0!");
@@ -103,7 +104,7 @@ void I3CLSimLightSourceToStepConverterPPC::Initialize()
     rngState_ = mwcRngInitState(randomService_, rngA_);
     
     // initialize the pre-calculator threads
-    preCalc_ = shared_ptr<GenerateStepPreCalculator>(new GenerateStepPreCalculator(randomService_, /*a=*/0.39, /*b=*/2.61));
+    preCalc_ = boost::shared_ptr<GenerateStepPreCalculator>(new GenerateStepPreCalculator(randomService_, /*a=*/0.39, /*b=*/2.61));
 
     // make a copy of the medium properties
     {
@@ -289,9 +290,11 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLight
 
     const double E = particle.GetEnergy()/I3Units::GeV;
     const double logE = std::max(0., std::log(E)); // protect against extremely low energies
-    const double Lrad=0.358*(I3Units::g/I3Units::cm3)/density;
 
-    if (isElectron || isHadron) {
+    if (isElectron) {
+        const double Lrad = useCascadeExtension_ ? 0.358*(I3Units::g/I3Units::cm3)/density : 0.;
+        const double pa=2.03+0.604*logE;
+        double pb=Lrad/0.633;
         
         // Meters of charged particle track per GeV of EM energy deposition
         double nph=5.21*(0.924*I3Units::g/I3Units::cm3)/density;
@@ -376,6 +379,70 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLight
         stepGenerationQueue_.push_back(cascadeStepGenInfo);
         
         log_trace("Generate %u steps for E=%fGeV. (electron)", static_cast<unsigned int>(numSteps+1), E);
+    } else if (isHadron) {
+        const double Lrad = useCascadeExtension_ ? 0.95*(I3Units::g/I3Units::cm3)/density : 0.;
+        double pa=1.49+0.359*logE;
+        double pb=Lrad/0.772;
+        
+        if (E < 1.*I3Units::GeV) pb=0.; // this sets the cascade length to 0.
+        
+        const double em=5.21*(0.924*I3Units::g/I3Units::cm3)/density;
+        
+        double f=1.0;
+        const double E0=0.399;
+        const double m=0.130;
+        const double f0=0.467;
+        const double rms0=0.379;
+        const double gamma=1.160;
+        
+        double e=std::max(10.0, E);
+        double F=1.-pow(e/E0, -m)*(1.-f0);
+        double dF=F*rms0*pow(log10(e), -gamma);
+        do {f=F+dF*randomService_->Gaus(0.,1.);} while((f<0.) || (1.<f));
+        
+        const double nph=f*em;
+        
+        const double meanNumPhotons = meanPhotonsPerMeter*nph*E;
+        
+        uint64_t numPhotons;
+        if (meanNumPhotons > 1e7)
+        {
+            log_debug("HUGE EVENT: (hadron) meanNumPhotons=%f, nph=%f, E=%f (approximating possion by gaussian)", meanNumPhotons, nph, E);
+            double numPhotonsDouble=0;
+            do {
+                numPhotonsDouble = randomService_->Gaus(meanNumPhotons, std::sqrt(meanNumPhotons));
+            } while (numPhotonsDouble<0.);
+            
+            if (numPhotonsDouble > static_cast<double>(std::numeric_limits<uint64_t>::max()))
+                log_fatal("Too many photons for counter. internal limitation.");
+            numPhotons = static_cast<uint64_t>(numPhotonsDouble);
+        }
+        else
+        {
+            numPhotons = static_cast<uint64_t>(randomService_->Poisson(meanNumPhotons));
+        }
+        
+        uint64_t usePhotonsPerStep = static_cast<uint64_t>(photonsPerStep_);
+        if (static_cast<double>(numPhotons) > useHighPhotonsPerStepStartingFromNumPhotons_)
+            usePhotonsPerStep = static_cast<uint64_t>(highPhotonsPerStep_);
+        
+        const uint64_t numSteps = numPhotons/usePhotonsPerStep;
+        const uint64_t numPhotonsInLastStep = numPhotons%usePhotonsPerStep;
+        
+        log_trace("Generating %" PRIu64 " steps for hadron", numSteps);
+        
+        CascadeStepData_t cascadeStepGenInfo;
+        cascadeStepGenInfo.particle=particle;
+        cascadeStepGenInfo.particleIdentifier=identifier;
+        cascadeStepGenInfo.photonsPerStep=usePhotonsPerStep;
+        cascadeStepGenInfo.numSteps=numSteps;
+        cascadeStepGenInfo.numPhotonsInLastStep=numPhotonsInLastStep;
+        cascadeStepGenInfo.pa=pa;
+        cascadeStepGenInfo.pb=pb;
+        log_trace("== enqueue cascade (hadron)");
+        stepGenerationQueue_.push_back(cascadeStepGenInfo);
+
+        log_trace("Generate %lu steps for E=%fGeV. (hadron)", static_cast<unsigned long>(numSteps+1), E);
     } else if (isMuon || isTau) {
         // TODO: for now, treat muons and taus (with lengths after MMC) the same.
         // This is compatible to what hit-maker does, but is of course not the right thing
@@ -733,7 +800,7 @@ queueFromFeederThreads_(10)  // size 10 for 5 threads
     for (unsigned int i=0;i<numFeederThreads;++i)
     {
         const uint64_t rngState = mwcRngInitState(randomService, rngAs[i]);
-        shared_ptr<boost::thread> newThread(new boost::thread(boost::bind(&I3CLSimLightSourceToStepConverterPPC::GenerateStepPreCalculator::FeederThread, this, i, rngState, rngAs[i])));
+        boost::shared_ptr<boost::thread> newThread(new boost::thread(boost::bind(&I3CLSimLightSourceToStepConverterPPC::GenerateStepPreCalculator::FeederThread, this, i, rngState, rngAs[i])));
         feederThreads_.push_back(newThread);
     }
 
@@ -774,7 +841,7 @@ void I3CLSimLightSourceToStepConverterPPC::GenerateStepPreCalculator::FeederThre
     for (;;)
     {
         // make a bunch of steps
-        shared_ptr<queueVector_t> outputVector(new queueVector_t());
+        boost::shared_ptr<queueVector_t> outputVector(new queueVector_t());
         outputVector->reserve(numberOfValues_);
         
         // calculate values

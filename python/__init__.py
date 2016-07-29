@@ -16,11 +16,11 @@
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 # 
 # 
-# $Id$
+# $Id: __init__.py 123693 2014-09-23 13:25:52Z vehring $
 # 
 # @file __init__.py
-# @version $Revision$
-# @date $Date$
+# @version $Revision: 123693 $
+# @date $Date: 2014-09-23 15:25:52 +0200 (Tue, 23 Sep 2014) $
 # @author Claudio Kopper
 #
 
@@ -61,4 +61,4 @@ from .traysegments import I3CLSimMakeHits, I3CLSimMakePhotons, I3CLSimMakeHitsFr
 # clean up the clsim namespace
 del icetray
 del dataclasses
-
+del simclasses

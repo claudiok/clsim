@@ -55,7 +55,7 @@ import sys
 import math
 import numpy
 
-from icecube import icetray, dataclasses, dataio, phys_services, sim_services, clsim
+from icecube import icetray, dataclasses, dataio, phys_services, sim_services, simclasses, clsim
 
 # icetray.I3Logger.global_logger.set_level(icetray.I3LogLevel.LOG_INFO)
 icetray.I3Logger.global_logger.set_level(icetray.I3LogLevel.LOG_WARN)
@@ -308,7 +308,10 @@ tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
     UseCPUs=options.USECPU,
     UseOnlyDeviceNumber=options.DEVICE,
     IceModelLocation=options.ICEMODEL,
-    ExtraArgumentsToI3CLSimModule={"EnableDoubleBuffering":True}
+    ExtraArgumentsToI3CLSimModule=dict(
+        EnableDoubleBuffering=True,
+        DoublePrecision=False,
+        ),
     )
 
 tray.AddModule("TrashCan", "the can")

@@ -87,8 +87,6 @@ double I3CLSimRandomValueInterpolatedDistribution::SampleFromDistribution(const 
     if (!random) log_fatal("random service is NULL!");
     if (parameters.size() != 0) log_fatal("This distribution expects 0 parameters. Got %zu.", parameters.size());
 
-    typedef std::vector<double>::size_type sizeType;
-
     const double randomNumber = random->Uniform();
 
     unsigned int k=0;

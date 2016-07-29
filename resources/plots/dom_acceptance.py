@@ -117,7 +117,8 @@ def Cherenkov_dN_dXdE(energy, beta=1.):
 from icecube import icetray, dataclasses, clsim, phys_services
 from I3Tray import I3Units
 
-rng = phys_services.I3SPRNGRandomService(seed=3244, nstreams=2, streamnum=0)
+# rng = phys_services.I3SPRNGRandomService(seed=3244, nstreams=2, streamnum=0)
+rng = phys_services.I3GSLRandomService(seed=3244)
 
 # get OpenCL CPU devices
 openCLDevices = [device for device in clsim.I3CLSimOpenCLDevice.GetAllDevices() if device.cpu]

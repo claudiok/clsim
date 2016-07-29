@@ -11,16 +11,14 @@ from I3Tray import I3Units
 numberOfTrials = 100000
 renormalizeUnitVector = True
 
-maximumRelativeDeviation = 1e-5
+maximumRelativeDeviation = 1e-4
 
 theMatrix = numpy.random.uniform(-10.,10.,(3,3))
-# print "matrix:", theMatrix
-
 
 # get OpenCL CPU devices
-openCLDevices = [device for device in clsim.I3CLSimOpenCLDevice.GetAllDevices() if device.cpu]
+openCLDevices = [device for device in clsim.I3CLSimOpenCLDevice.GetAllDevices()]
 if len(openCLDevices)==0:
-    raise RuntimeError("No CPU OpenCL devices available!")
+    raise RuntimeError("No OpenCL devices available!")
 openCLDevice = openCLDevices[0]
 
 openCLDevice.useNativeMath=False

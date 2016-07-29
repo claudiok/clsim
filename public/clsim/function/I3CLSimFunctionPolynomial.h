@@ -117,12 +117,12 @@ private:
     double rangemin_, rangemax_; //The range for which the polynomial can be calculated
     double underflow_, overflow_; //Value that is returned if the polynomial is called with an argument outside the range
     
-    friend class boost::serialization::access;
+    friend class icecube::serialization::access;
     template <class Archive> void serialize(Archive & ar, unsigned version);
 };
 
 
-BOOST_CLASS_VERSION(I3CLSimFunctionPolynomial, i3clsimfunctionpolynomial_version_);
+I3_CLASS_VERSION(I3CLSimFunctionPolynomial, i3clsimfunctionpolynomial_version_);
 
 I3_POINTER_TYPEDEFS(I3CLSimFunctionPolynomial);
 

@@ -81,20 +81,24 @@ void I3CLSimTesterBase::DoSetup(const I3CLSimOpenCLDevice &device,
     // prepend the rng to the sources list
     sourceStrings_.clear();
     cl::Program::Sources source_;
+
+    std::string combined_source;
     
     // copy the input source strings
     BOOST_FOREACH(const std::string &src, source)
     {
-        sourceStrings_.push_back(src);
-        source_.push_back(std::make_pair(sourceStrings_.back().c_str(),sourceStrings_.back().size()));
+        combined_source += src + "\n";
     }
+
+    sourceStrings_.push_back(combined_source);
+    source_.push_back(std::make_pair(sourceStrings_.back().c_str(),sourceStrings_.back().size()));
     
     // get the device object
-    shared_ptr<cl::Platform> platformHandle = device.GetPlatformHandle();
-    shared_ptr<cl::Device> deviceHandle = device.GetDeviceHandle();
+    boost::shared_ptr<cl::Platform> platformHandle = device.GetPlatformHandle();
+    boost::shared_ptr<cl::Device> deviceHandle = device.GetDeviceHandle();
     
     // initialize things
-    shared_ptr<std::vector<cl::Device> > devices(new std::vector<cl::Device>(1, *deviceHandle));
+    boost::shared_ptr<std::vector<cl::Device> > devices(new std::vector<cl::Device>(1, *deviceHandle));
     
     try {
         // prepare a device vector (containing a single device)
@@ -102,11 +106,23 @@ void I3CLSimTesterBase::DoSetup(const I3CLSimOpenCLDevice &device,
         { CL_CONTEXT_PLATFORM, (cl_context_properties)(*platformHandle)(), 0};
         
         // create a context
-        context = shared_ptr<cl::Context>(new cl::Context(*devices, properties));
+        context = boost::shared_ptr<cl::Context>(new cl::Context(*devices, properties));
     } catch (cl::Error &err) {
         log_error("OpenCL error: could not set up context!");
         throw std::runtime_error("OpenCL error: could not set up context!");
     }
+
+// #ifndef NDEBUG
+	std::stringstream ssource;
+	BOOST_FOREACH(const std::string &part, source)
+		ssource << part;
+	std::string line;
+	unsigned lineno = 1;
+	while (std::getline(ssource, line)) {
+		std::cout << std::setw(4) << lineno << " " << line << std::endl;
+		lineno++;
+	}
+// #endif
 
     log_debug("Compiling..");
     // accumulate the build options
@@ -124,7 +140,7 @@ void I3CLSimTesterBase::DoSetup(const I3CLSimOpenCLDevice &device,
     BuildOptions += compilerOptions;
     
     try {
-        program = shared_ptr<cl::Program>(new cl::Program(*context, source_));
+        program = boost::shared_ptr<cl::Program>(new cl::Program(*context, source_));
         log_debug("building...");
         program->build(*devices, BuildOptions.c_str());
         log_debug("...building finished.");
@@ -146,8 +162,8 @@ void I3CLSimTesterBase::DoSetup(const I3CLSimOpenCLDevice &device,
     // instantiate the command queue
     log_debug("Initializing..");
     try {
-        //queue_ = shared_ptr<cl::CommandQueue>(new cl::CommandQueue(*context_, device.GetDeviceHandle(), CL_QUEUE_PROFILING_ENABLE));
-        queue = shared_ptr<cl::CommandQueue>(new cl::CommandQueue(*context, *deviceHandle, 0));
+        //queue_ = boost::shared_ptr<cl::CommandQueue>(new cl::CommandQueue(*context_, device.GetDeviceHandle(), CL_QUEUE_PROFILING_ENABLE));
+        queue = boost::shared_ptr<cl::CommandQueue>(new cl::CommandQueue(*context, *deviceHandle, 0));
     } catch (cl::Error &err) {
         log_error("OpenCL ERROR: %s (%i)", err.what(), err.err());
         throw std::runtime_error("OpenCL error: could not set up command queue!");
@@ -159,7 +175,7 @@ void I3CLSimTesterBase::DoSetup(const I3CLSimOpenCLDevice &device,
     
     try {
         // instantiate the kernel object
-        kernel = shared_ptr<cl::Kernel>(new cl::Kernel(*program, "testKernel"));
+        kernel = boost::shared_ptr<cl::Kernel>(new cl::Kernel(*program, "testKernel"));
         maxWorkgroupSize = kernel->getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(*deviceHandle);
         
         log_debug("Maximum workgroup sizes for the kernel is %" PRIu64, maxWorkgroupSize);

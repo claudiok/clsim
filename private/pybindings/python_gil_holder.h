@@ -1,3 +1,5 @@
+#ifndef PYTHON_GIL_HOLDER_H_INCLUDED
+#define PYTHON_GIL_HOLDER_H_INCLUDED
 /**
  * Copyright (c) 2012
  * Claudio Kopper <claudio.kopper@icecube.wisc.edu>
@@ -49,3 +51,5 @@ namespace utils{
 
 }
 
+
+#endif  // PYTHON_GIL_HOLDER_H_INCLUDED

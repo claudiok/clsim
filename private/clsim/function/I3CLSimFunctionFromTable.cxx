@@ -243,7 +243,7 @@ std::string I3CLSimFunctionFromTable::GetOpenCLFunction(const std::string &funct
     std::string interpHelperBody =
     "{\n"
     "    float fbin;\n"
-    "    *fraction = modf((wavelength-" + ToFloatString(startWlen_) + ")/" + ToFloatString(wlenStep_) + ", &fbin);\n"
+    "    *fraction = modf((wavelength - " + ToFloatString(startWlen_) + ")/" + ToFloatString(wlenStep_) + ", &fbin);\n"
     "    \n"
     "    int ibin=(int)fbin;\n"
     "    \n"

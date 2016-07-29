@@ -202,7 +202,7 @@ I3CLSimOpenCLDeviceSeriesPtr I3CLSimOpenCLDevice::SplitDevice() const
         newDevice.platform_ = platform_;
         newDevice.useNativeMath_ = useNativeMath_;
         newDevice.approximateNumberOfWorkItems_ = approximateNumberOfWorkItems_;
-        newDevice.device_ = shared_ptr<cl::Device>(new cl::Device(subDevice));
+        newDevice.device_ = boost::shared_ptr<cl::Device>(new cl::Device(subDevice));
         newDevice.platformName_ = platformName_;
 
         // replace OpenCL info
@@ -269,7 +269,7 @@ void I3CLSimOpenCLDevice::InitializeStaticStuff()
     
     // enumerate platforms and devices
     std::vector<std::pair<std::string, std::string> > deviceNameList;
-    std::vector<std::pair<shared_ptr<cl::Platform>, shared_ptr<cl::Device> > > clPlatformDeviceList;
+    std::vector<std::pair<boost::shared_ptr<cl::Platform>, boost::shared_ptr<cl::Device> > > clPlatformDeviceList;
     
     std::vector<cl::Platform> platforms;
     
@@ -297,7 +297,7 @@ void I3CLSimOpenCLDevice::InitializeStaticStuff()
             const std::string deviceName = device.getInfo<CL_DEVICE_NAME>();
             
             deviceNameList.push_back(std::make_pair(platformName, deviceName));
-            clPlatformDeviceList.push_back(std::make_pair(shared_ptr<cl::Platform>(new cl::Platform(platform)), shared_ptr<cl::Device>(new cl::Device(device))));
+            clPlatformDeviceList.push_back(std::make_pair(boost::shared_ptr<cl::Platform>(new cl::Platform(platform)), boost::shared_ptr<cl::Device>(new cl::Device(device))));
             
             log_trace("raw: PLATFORM: \"%s\" -> DEVICE: \"%s\"",
                       platformName.c_str(),

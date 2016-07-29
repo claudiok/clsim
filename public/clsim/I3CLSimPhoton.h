@@ -203,14 +203,14 @@ public:
     cl_float distInAbsLens;
     
 private:
-    friend class boost::serialization::access;
+    friend class icecube::serialization::access;
     template <class Archive> void load(Archive & ar, unsigned version);
     template <class Archive> void save(Archive & ar, unsigned version) const;
-    BOOST_SERIALIZATION_SPLIT_MEMBER();
+    I3_SERIALIZATION_SPLIT_MEMBER();
 } __attribute__ ((packed)) ;
 
-template<> void I3CLSimPhoton::save(boost::archive::portable_binary_oarchive &ar, unsigned version) const;
-template<> void I3CLSimPhoton::load(boost::archive::portable_binary_iarchive &ar, unsigned version);
+template<> void I3CLSimPhoton::save(icecube::archive::portable_binary_oarchive &ar, unsigned version) const;
+template<> void I3CLSimPhoton::load(icecube::archive::portable_binary_iarchive &ar, unsigned version);
 
 
 inline bool operator==(const I3CLSimPhoton &a, const I3CLSimPhoton &b)
@@ -219,7 +219,7 @@ inline bool operator==(const I3CLSimPhoton &a, const I3CLSimPhoton &b)
     return (std::memcmp(&a, &b, sizeof(I3CLSimPhoton))==0);
 }
 
-BOOST_CLASS_VERSION(I3CLSimPhoton, i3clsimphoton_version_);
+I3_CLASS_VERSION(I3CLSimPhoton, i3clsimphoton_version_);
 
 typedef I3Vector<I3CLSimPhoton> I3CLSimPhotonSeries;
 typedef I3Map<OMKey, I3CLSimPhotonSeries> I3CLSimPhotonSeriesMap;
@@ -228,7 +228,7 @@ I3_POINTER_TYPEDEFS(I3CLSimPhoton);
 I3_POINTER_TYPEDEFS(I3CLSimPhotonSeries);
 I3_POINTER_TYPEDEFS(I3CLSimPhotonSeriesMap);
 
-template<> template<> void I3Vector<I3CLSimPhoton>::serialize(boost::archive::portable_binary_iarchive &ar, unsigned version);
-template<> template<> void I3Vector<I3CLSimPhoton>::serialize(boost::archive::portable_binary_oarchive &ar, unsigned version);
+template<> template<> void I3Vector<I3CLSimPhoton>::serialize(icecube::archive::portable_binary_iarchive &ar, unsigned version);
+template<> template<> void I3Vector<I3CLSimPhoton>::serialize(icecube::archive::portable_binary_oarchive &ar, unsigned version);
 
 #endif //I3CLSIMPHOTON_H_INCLUDED

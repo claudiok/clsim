@@ -59,14 +59,14 @@ private:
     mutable I3Position boundingBoxLower_;
     mutable I3Position boundingBoxUpper_;
     
-    friend class boost::serialization::access;
+    friend class icecube::serialization::access;
     template <class Archive> void load(Archive & ar, unsigned version);
     template <class Archive> void save(Archive & ar, unsigned version) const;
 
-    BOOST_SERIALIZATION_SPLIT_MEMBER();
+    I3_SERIALIZATION_SPLIT_MEMBER();
 };
 
-BOOST_CLASS_VERSION(I3ExtraGeometryItemUnion, i3extrageometryitemunion_version_);
+I3_CLASS_VERSION(I3ExtraGeometryItemUnion, i3extrageometryitemunion_version_);
 
 I3_POINTER_TYPEDEFS(I3ExtraGeometryItemUnion);
 

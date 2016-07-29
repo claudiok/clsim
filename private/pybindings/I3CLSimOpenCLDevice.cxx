@@ -174,8 +174,8 @@ void register_I3CLSimOpenCLDevice()
     .def(list_indexing_suite<I3CLSimOpenCLDeviceSeries>())
     ;
     
-    bp::implicitly_convertible<shared_ptr<I3CLSimOpenCLDevice>, shared_ptr<const I3CLSimOpenCLDevice> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimOpenCLDeviceSeries>, shared_ptr<const I3CLSimOpenCLDeviceSeries> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimOpenCLDevice>, boost::shared_ptr<const I3CLSimOpenCLDevice> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimOpenCLDeviceSeries>, boost::shared_ptr<const I3CLSimOpenCLDeviceSeries> >();
 
     from_python_sequence<I3CLSimOpenCLDeviceSeries, variable_capacity_policy>();
     

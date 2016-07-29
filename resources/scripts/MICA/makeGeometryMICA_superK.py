@@ -26,13 +26,6 @@ tray.AddModule("I3MCEventHeaderGenerator","gen_header",
                EventID=1,
                IncrementEventID=True)
 
-## empty GCD
-#tray.AddService("I3EmptyStreamsFactory", "empty_streams",
-#    InstallCalibration=True,
-#    InstallGeometry=True,
-#    InstallStatus=True)
-#tray.AddModule("I3MetaSynth", "synth")
-
 tray.AddModule("I3GeometryDecomposer", "decompose")
 
 ringRadius = numpy.array([57.*I3Units.m, 50.*I3Units.m])

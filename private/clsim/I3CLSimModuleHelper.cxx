@@ -79,7 +79,7 @@ namespace I3CLSimModuleHelper {
         {
             // special handling for delta peaks
             I3CLSimFunctionDeltaPeakConstPtr deltaPeak =
-            dynamic_pointer_cast<const I3CLSimFunctionDeltaPeak>(unbiasedSpectrum);
+            boost::dynamic_pointer_cast<const I3CLSimFunctionDeltaPeak>(unbiasedSpectrum);
             if (deltaPeak) {
                 const double peakPosition = deltaPeak->GetPeakPosition();
                 
@@ -97,7 +97,7 @@ namespace I3CLSimModuleHelper {
         // a parameterized one)
         I3CLSimFunctionFromTableConstPtr unbiasedSpectrumFromTable;
         unbiasedSpectrumFromTable =
-        dynamic_pointer_cast<const I3CLSimFunctionFromTable>(unbiasedSpectrum);
+        boost::dynamic_pointer_cast<const I3CLSimFunctionFromTable>(unbiasedSpectrum);
 
         if (!unbiasedSpectrumFromTable) {
             // do not clip wavelengths if they are from a tabulated distribution. In that case,
@@ -192,7 +192,7 @@ namespace I3CLSimModuleHelper {
         
         {
             I3CLSimFunctionConstantConstPtr wavelengthGenerationBiasConstant =
-            dynamic_pointer_cast<const I3CLSimFunctionConstant>(wavelengthGenerationBias);
+            boost::dynamic_pointer_cast<const I3CLSimFunctionConstant>(wavelengthGenerationBias);
             
             if (wavelengthGenerationBiasConstant)
             {
@@ -205,7 +205,7 @@ namespace I3CLSimModuleHelper {
         
         I3CLSimFunctionFromTableConstPtr wavelengthGenerationBiasFromTable;
         wavelengthGenerationBiasFromTable =
-        dynamic_pointer_cast<const I3CLSimFunctionFromTable>(wavelengthGenerationBias);
+        boost::dynamic_pointer_cast<const I3CLSimFunctionFromTable>(wavelengthGenerationBias);
         
         
 

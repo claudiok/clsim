@@ -59,10 +59,10 @@ private:
 
     void InitBuffers();
 
-    shared_ptr<cl::Buffer> deviceBuffer_results;
-    shared_ptr<cl::Buffer> deviceBuffer_inputs_x;
-    shared_ptr<cl::Buffer> deviceBuffer_inputs_y;
-    shared_ptr<cl::Buffer> deviceBuffer_inputs_z;
+    boost::shared_ptr<cl::Buffer> deviceBuffer_results;
+    boost::shared_ptr<cl::Buffer> deviceBuffer_inputs_x;
+    boost::shared_ptr<cl::Buffer> deviceBuffer_inputs_y;
+    boost::shared_ptr<cl::Buffer> deviceBuffer_inputs_z;
 
     I3CLSimScalarFieldConstPtr theField_;
     

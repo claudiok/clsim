@@ -66,9 +66,9 @@ void register_I3CLSimVectorTransform()
         ;
     }
     
-    bp::implicitly_convertible<shared_ptr<I3CLSimVectorTransformWrapper>, shared_ptr<const I3CLSimVectorTransform> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimVectorTransformWrapper>, shared_ptr<I3CLSimVectorTransform> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimVectorTransformWrapper>, shared_ptr<const I3CLSimVectorTransformWrapper> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimVectorTransformWrapper>, boost::shared_ptr<const I3CLSimVectorTransform> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimVectorTransformWrapper>, boost::shared_ptr<I3CLSimVectorTransform> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimVectorTransformWrapper>, boost::shared_ptr<const I3CLSimVectorTransformWrapper> >();
     utils::register_const_ptr<I3CLSimVectorTransform>();
 
     // constant value
@@ -85,9 +85,9 @@ void register_I3CLSimVectorTransform()
          )
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimVectorTransformConstant>, shared_ptr<const I3CLSimVectorTransformConstant> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimVectorTransformConstant>, shared_ptr<I3CLSimVectorTransform> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimVectorTransformConstant>, shared_ptr<const I3CLSimVectorTransform> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimVectorTransformConstant>, boost::shared_ptr<const I3CLSimVectorTransformConstant> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimVectorTransformConstant>, boost::shared_ptr<I3CLSimVectorTransform> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimVectorTransformConstant>, boost::shared_ptr<const I3CLSimVectorTransform> >();
     utils::register_const_ptr<I3CLSimVectorTransformConstant>();
 
 
@@ -112,9 +112,9 @@ void register_I3CLSimVectorTransform()
          )
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3CLSimVectorTransformMatrix>, shared_ptr<const I3CLSimVectorTransformMatrix> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimVectorTransformMatrix>, shared_ptr<I3CLSimVectorTransform> >();
-    bp::implicitly_convertible<shared_ptr<I3CLSimVectorTransformConstant>, shared_ptr<const I3CLSimVectorTransform> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimVectorTransformMatrix>, boost::shared_ptr<const I3CLSimVectorTransformMatrix> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimVectorTransformMatrix>, boost::shared_ptr<I3CLSimVectorTransform> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimVectorTransformConstant>, boost::shared_ptr<const I3CLSimVectorTransform> >();
     utils::register_const_ptr<I3CLSimVectorTransformMatrix>();
 
 }

@@ -114,9 +114,9 @@ void register_I3ExtraGeometryItem()
         ;
     }
     
-    bp::implicitly_convertible<shared_ptr<I3ExtraGeometryItemWrapper>, shared_ptr<const I3ExtraGeometryItem> >();
-    bp::implicitly_convertible<shared_ptr<I3ExtraGeometryItemWrapper>, shared_ptr<I3ExtraGeometryItem> >();
-    bp::implicitly_convertible<shared_ptr<I3ExtraGeometryItemWrapper>, shared_ptr<const I3ExtraGeometryItemWrapper> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3ExtraGeometryItemWrapper>, boost::shared_ptr<const I3ExtraGeometryItem> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3ExtraGeometryItemWrapper>, boost::shared_ptr<I3ExtraGeometryItem> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3ExtraGeometryItemWrapper>, boost::shared_ptr<const I3ExtraGeometryItemWrapper> >();
     utils::register_const_ptr<I3ExtraGeometryItem>();
 
     std_pair_to_python_converter<I3Position, I3Position>();
@@ -148,9 +148,9 @@ void register_I3ExtraGeometryItem()
         .def(bp::dataclass_suite<I3ExtraGeometryItemUnion>())
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3ExtraGeometryItemUnion>, shared_ptr<const I3ExtraGeometryItemUnion> >();
-    bp::implicitly_convertible<shared_ptr<I3ExtraGeometryItemUnion>, shared_ptr<I3ExtraGeometryItem> >();
-    bp::implicitly_convertible<shared_ptr<I3ExtraGeometryItemUnion>, shared_ptr<const I3ExtraGeometryItem> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3ExtraGeometryItemUnion>, boost::shared_ptr<const I3ExtraGeometryItemUnion> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3ExtraGeometryItemUnion>, boost::shared_ptr<I3ExtraGeometryItem> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3ExtraGeometryItemUnion>, boost::shared_ptr<const I3ExtraGeometryItem> >();
     utils::register_const_ptr<I3ExtraGeometryItemUnion>();
 
     
@@ -176,9 +176,9 @@ void register_I3ExtraGeometryItem()
         .def(bp::dataclass_suite<I3ExtraGeometryItemMove>())
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3ExtraGeometryItemMove>, shared_ptr<const I3ExtraGeometryItemMove> >();
-    bp::implicitly_convertible<shared_ptr<I3ExtraGeometryItemMove>, shared_ptr<I3ExtraGeometryItem> >();
-    bp::implicitly_convertible<shared_ptr<I3ExtraGeometryItemMove>, shared_ptr<const I3ExtraGeometryItem> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3ExtraGeometryItemMove>, boost::shared_ptr<const I3ExtraGeometryItemMove> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3ExtraGeometryItemMove>, boost::shared_ptr<I3ExtraGeometryItem> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3ExtraGeometryItemMove>, boost::shared_ptr<const I3ExtraGeometryItem> >();
     utils::register_const_ptr<I3ExtraGeometryItemMove>();
 
     
@@ -205,9 +205,9 @@ void register_I3ExtraGeometryItem()
         .def(bp::dataclass_suite<I3ExtraGeometryItemCylinder>())
         ;
     }
-    bp::implicitly_convertible<shared_ptr<I3ExtraGeometryItemCylinder>, shared_ptr<const I3ExtraGeometryItemCylinder> >();
-    bp::implicitly_convertible<shared_ptr<I3ExtraGeometryItemCylinder>, shared_ptr<I3ExtraGeometryItem> >();
-    bp::implicitly_convertible<shared_ptr<I3ExtraGeometryItemCylinder>, shared_ptr<const I3ExtraGeometryItem> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3ExtraGeometryItemCylinder>, boost::shared_ptr<const I3ExtraGeometryItemCylinder> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3ExtraGeometryItemCylinder>, boost::shared_ptr<I3ExtraGeometryItem> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3ExtraGeometryItemCylinder>, boost::shared_ptr<const I3ExtraGeometryItem> >();
     utils::register_const_ptr<I3ExtraGeometryItemCylinder>();
 
 

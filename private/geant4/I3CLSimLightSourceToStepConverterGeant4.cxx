@@ -341,7 +341,7 @@ void I3CLSimLightSourceToStepConverterGeant4::Geant4Thread_impl(boost::this_thre
     I3CLSimStepStorePtr stepStore(new I3CLSimStepStore( (std::isnan(maxNumPhotonsPerStep_)||(maxNumPhotonsPerStep_<0.))?0:(static_cast<uint32_t>(maxNumPhotonsPerStep_*1.5)) ));
 
     // this stores all particles that will be ent to parametrizations
-    shared_ptr<std::deque<boost::tuple<I3CLSimLightSourceConstPtr, uint32_t, const I3CLSimLightSourceParameterization> > > sendToParameterizationQueue
+    boost::shared_ptr<std::deque<boost::tuple<I3CLSimLightSourceConstPtr, uint32_t, const I3CLSimLightSourceParameterization> > > sendToParameterizationQueue
     (new std::deque<boost::tuple<I3CLSimLightSourceConstPtr, uint32_t, const I3CLSimLightSourceParameterization> >());
     
 #ifdef HAS_GEANT4

@@ -94,7 +94,7 @@ public:
     virtual bool CompareTo(const I3CLSimFunction &other) const = 0;
     
 private:
-    friend class boost::serialization::access;
+    friend class icecube::serialization::access;
     template <class Archive> void serialize(Archive & ar, unsigned version);
 };
 
@@ -109,7 +109,7 @@ inline bool operator!=(const I3CLSimFunction& a, const I3CLSimFunction& b)
 }
 
 
-BOOST_CLASS_VERSION(I3CLSimFunction, i3clsimfunction_version_);
+I3_CLASS_VERSION(I3CLSimFunction, i3clsimfunction_version_);
 
 I3_POINTER_TYPEDEFS(I3CLSimFunction);
 

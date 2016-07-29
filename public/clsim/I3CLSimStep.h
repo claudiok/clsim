@@ -149,16 +149,14 @@ public:
     cl_ushort dummy2;
 
 private:
-    friend class boost::serialization::access;
+    friend class icecube::serialization::access;
     template <class Archive> void load(Archive & ar, unsigned version);
     template <class Archive> void save(Archive & ar, unsigned version) const;
-    BOOST_SERIALIZATION_SPLIT_MEMBER();
+    I3_SERIALIZATION_SPLIT_MEMBER();
 } __attribute__ ((packed)) ;
 
-#if 0
-template<> void I3CLSimStep::save(boost::archive::portable_binary_oarchive &ar, unsigned version) const;
-template<> void I3CLSimStep::load(boost::archive::portable_binary_iarchive &ar, unsigned version);
-#endif
+template<> void I3CLSimStep::save(icecube::archive::portable_binary_oarchive &ar, unsigned version) const;
+template<> void I3CLSimStep::load(icecube::archive::portable_binary_iarchive &ar, unsigned version);
 
 inline bool operator==(const I3CLSimStep &a, const I3CLSimStep &b)
 {
@@ -166,16 +164,14 @@ inline bool operator==(const I3CLSimStep &a, const I3CLSimStep &b)
     return (std::memcmp(&a, &b, sizeof(I3CLSimStep)-sizeof(cl_int))==0);
 }
 
-BOOST_CLASS_VERSION(I3CLSimStep, i3clsimstep_version_);
+I3_CLASS_VERSION(I3CLSimStep, i3clsimstep_version_);
 
 typedef I3Vector<I3CLSimStep> I3CLSimStepSeries;
 
 I3_POINTER_TYPEDEFS(I3CLSimStep);
 I3_POINTER_TYPEDEFS(I3CLSimStepSeries);
 
-#if 0
-template<> template<> void I3Vector<I3CLSimStep>::serialize(boost::archive::portable_binary_iarchive &ar, unsigned version);
-template<> template<> void I3Vector<I3CLSimStep>::serialize(boost::archive::portable_binary_oarchive &ar, unsigned version);
-#endif
+template<> template<> void I3Vector<I3CLSimStep>::serialize(icecube::archive::portable_binary_iarchive &ar, unsigned version);
+template<> template<> void I3Vector<I3CLSimStep>::serialize(icecube::archive::portable_binary_oarchive &ar, unsigned version);
 
 #endif //I3CLSIMSTEP_H_INCLUDED

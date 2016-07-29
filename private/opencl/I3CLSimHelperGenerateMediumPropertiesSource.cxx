@@ -65,14 +65,14 @@ namespace I3CLSimHelper
     }
     
     template<class T>
-    void OptimizeLayeredValue(const std::vector<shared_ptr<const T> > &inputValues, // input
-                              std::vector<shared_ptr<const T> > &outputFunctions,   // output
+    void OptimizeLayeredValue(const std::vector<boost::shared_ptr<const T> > &inputValues, // input
+                              std::vector<boost::shared_ptr<const T> > &outputFunctions,   // output
                               std::vector<std::size_t> &outputFunctionForLayer)     // output
     {
         outputFunctions.clear();
         outputFunctionForLayer.clear();
         
-        BOOST_FOREACH(const shared_ptr<const T> &inputValue, inputValues)
+        BOOST_FOREACH(const boost::shared_ptr<const T> &inputValue, inputValues)
         {
             std::size_t pos;
             if (is_in_vector(inputValue, outputFunctions, pos))

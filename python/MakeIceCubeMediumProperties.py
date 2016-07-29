@@ -16,11 +16,11 @@
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 # 
 # 
-# $Id$
+# $Id: MakeIceCubeMediumProperties.py 118519 2014-04-05 16:42:23Z claudio.kopper $
 # 
 # @file MakeIceCubeMediumProperties.py
-# @version $Revision$
-# @date $Date$
+# @version $Revision: 118519 $
+# @date $Date: 2014-04-05 18:42:23 +0200 (Sat, 05 Apr 2014) $
 # @author Claudio Kopper
 #
 

@@ -30,7 +30,7 @@
 // Things from this module:
 #include "clsim/dom/I3PhotonToMCHitConverterForMultiPMT.h"
 
-#include "clsim/I3Photon.h"
+#include "simclasses/I3Photon.h"
 #include "dataclasses/physics/I3MCHit.h"
 #include "dataclasses/physics/I3MCTree.h"
 
@@ -206,7 +206,7 @@ namespace {
             // there is an intersection with a pmt!
             if (foundIntersection >= 0) {
                 log_warn("found another intersection! previousPMT=#%u, thisPMT=#%u", foundIntersection, pmtNum);
-                if ((isnan(pathLengthInOM)) || (mu < pathLengthInOM))
+                if ((std::isnan(pathLengthInOM)) || (mu < pathLengthInOM))
                 {
                     log_warn(" -> new intersection is closer than previous one. using it.");
                 }

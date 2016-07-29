@@ -30,6 +30,7 @@
 #include <inttypes.h>
 #include <cmath>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include "clsim/I3CLSimStepToPhotonConverterOpenCL.h"
 
 // debugging: show GPUtime/photon
@@ -44,7 +45,6 @@
 #include <stdlib.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <icetray/I3Units.h>
 
@@ -271,16 +271,16 @@ void I3CLSimStepToPhotonConverterOpenCL::Initialize()
     
     
     // set up device buffers from existing host buffers
-    deviceBuffer_MWC_RNG_x = shared_ptr<cl::Buffer>
+    deviceBuffer_MWC_RNG_x = boost::shared_ptr<cl::Buffer>
     (new cl::Buffer(*context_, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, MWC_RNG_x.size() * sizeof(uint64_t), &(MWC_RNG_x[0])));
     
-    deviceBuffer_MWC_RNG_a = shared_ptr<cl::Buffer>
+    deviceBuffer_MWC_RNG_a = boost::shared_ptr<cl::Buffer>
     (new cl::Buffer(*context_, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, MWC_RNG_a.size() * sizeof(uint32_t), &(MWC_RNG_a[0])));
     
     if (!saveAllPhotons_) {
         // no need for a geometry buffer if all photons are saved and no
         // geometry is necessary.
-        deviceBuffer_GeoLayerToOMNumIndexPerStringSet = shared_ptr<cl::Buffer>
+        deviceBuffer_GeoLayerToOMNumIndexPerStringSet = boost::shared_ptr<cl::Buffer>
         (new cl::Buffer(*context_, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, geoLayerToOMNumIndexPerStringSetInfo_.size() * sizeof(unsigned short), &(geoLayerToOMNumIndexPerStringSetInfo_[0])));
     }
     
@@ -289,18 +289,18 @@ void I3CLSimStepToPhotonConverterOpenCL::Initialize()
     // allocate empty buffers on the device
     for (unsigned int i=0;i<numBuffers;++i)
     {
-        deviceBuffer_InputSteps.push_back(shared_ptr<cl::Buffer>
+        deviceBuffer_InputSteps.push_back(boost::shared_ptr<cl::Buffer>
         (new cl::Buffer(*context_, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, maxNumWorkitems_*sizeof(I3CLSimStep), NULL)));
         
-        deviceBuffer_OutputPhotons.push_back(shared_ptr<cl::Buffer>
+        deviceBuffer_OutputPhotons.push_back(boost::shared_ptr<cl::Buffer>
         (new cl::Buffer(*context_, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, maxNumOutputPhotons_*sizeof(I3CLSimPhoton), NULL)));
         
-        deviceBuffer_CurrentNumOutputPhotons.push_back(shared_ptr<cl::Buffer>
+        deviceBuffer_CurrentNumOutputPhotons.push_back(boost::shared_ptr<cl::Buffer>
         (new cl::Buffer(*context_, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, sizeof(uint32_t), NULL)));
 
         if (photonHistoryEntries_>0) {
             deviceBuffer_PhotonHistory.push_back
-            (shared_ptr<cl::Buffer>
+            (boost::shared_ptr<cl::Buffer>
              (new cl::Buffer(*context_,
                              CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR,
                              static_cast<std::size_t>(maxNumOutputPhotons_)*static_cast<std::size_t>(photonHistoryEntries_)*sizeof(cl_float4),
@@ -542,7 +542,7 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
     {
         try {
             // create a context
-            context_ = shared_ptr<cl::Context>(new cl::Context(devices, properties));
+            context_ = boost::shared_ptr<cl::Context>(new cl::Context(devices, properties));
         } catch (cl::Error &err) {
             if ((err.err() == CL_OUT_OF_RESOURCES) && (createContextRetriesLeft>0)) {
                 --createContextRetriesLeft;
@@ -625,17 +625,22 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
     cl::Program program;
     try {
         // build the program
-        cl::Program::Sources source;
-        
-        source.push_back(std::make_pair(prependSource_.c_str(),prependSource_.size()));
-        source.push_back(std::make_pair(mwcrngKernelSource_.c_str(),mwcrngKernelSource_.size()));
-        source.push_back(std::make_pair(wlenGeneratorSource_.c_str(),wlenGeneratorSource_.size()));
-        source.push_back(std::make_pair(wlenBiasSource_.c_str(),wlenBiasSource_.size()));
-        source.push_back(std::make_pair(mediumPropertiesSource_.c_str(),mediumPropertiesSource_.size()));
+
+        // combine into a single string first to work around Intel OpenCL
+        // compiler issues (as found on OSX 10.11 for example)
+        std::string combined_source;
+        combined_source += prependSource_ + "\n";
+        combined_source += mwcrngKernelSource_ + "\n";
+        combined_source += wlenGeneratorSource_ + "\n";
+        combined_source += wlenBiasSource_ + "\n";
+        combined_source += mediumPropertiesSource_ + "\n";
         if (!saveAllPhotons_) {
-            source.push_back(std::make_pair(geometrySource_.c_str(),geometrySource_.size()));
+            combined_source += geometrySource_ + "\n";
         }
-        source.push_back(std::make_pair(propagationKernelSource_.c_str(),propagationKernelSource_.size()));
+        combined_source += propagationKernelSource_ + "\n";
+        
+        cl::Program::Sources source;
+        source.push_back(std::make_pair(combined_source.c_str(),combined_source.size()));
         
         program = cl::Program(*context_, source);
         log_debug("building...");
@@ -684,9 +689,9 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
         for (unsigned int i=0;i<numBuffers;++i)
         {
 #ifdef DUMP_STATISTICS
-            queue_.push_back(shared_ptr<cl::CommandQueue>(new cl::CommandQueue(*context_, device, CL_QUEUE_PROFILING_ENABLE)));
+            queue_.push_back(boost::shared_ptr<cl::CommandQueue>(new cl::CommandQueue(*context_, device, CL_QUEUE_PROFILING_ENABLE)));
 #else
-            queue_.push_back(shared_ptr<cl::CommandQueue>(new cl::CommandQueue(*context_, device, 0)));
+            queue_.push_back(boost::shared_ptr<cl::CommandQueue>(new cl::CommandQueue(*context_, device, 0)));
 #endif
         }
     } catch (cl::Error &err) {
@@ -702,7 +707,7 @@ void I3CLSimStepToPhotonConverterOpenCL::SetupQueueAndKernel(const cl::Platform 
         // instantiate the kernel object
         for (unsigned int i=0;i<numBuffers;++i)
         {
-            kernel_.push_back(shared_ptr<cl::Kernel>(new cl::Kernel(program, "propKernel")));
+            kernel_.push_back(boost::shared_ptr<cl::Kernel>(new cl::Kernel(program, "propKernel")));
         }
 
         maxWorkgroupSize_ = kernel_[0]->getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device);
@@ -968,7 +973,7 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl_downloadPhotons(boost
    
     I3CLSimPhotonSeriesPtr photons;
     I3CLSimPhotonHistorySeriesPtr photonHistories;
-    shared_ptr<std::vector<cl_float4> > photonHistoriesRaw;
+    boost::shared_ptr<std::vector<cl_float4> > photonHistoriesRaw;
     
     try {
         uint32_t numberOfGeneratedPhotons;
@@ -1006,7 +1011,7 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl_downloadPhotons(boost
             // allocate the result vector while waiting for the mapping operation to complete
             photons = I3CLSimPhotonSeriesPtr(new I3CLSimPhotonSeries(numberOfGeneratedPhotons));
             if (photonHistoryEntries_>0) {
-                photonHistoriesRaw = shared_ptr<std::vector<cl_float4> >(new std::vector<cl_float4>(numberOfGeneratedPhotons*static_cast<std::size_t>(photonHistoryEntries_)));
+                photonHistoriesRaw = boost::shared_ptr<std::vector<cl_float4> >(new std::vector<cl_float4>(numberOfGeneratedPhotons*static_cast<std::size_t>(photonHistoryEntries_)));
             }
             
             queue_[bufferIndex]->enqueueReadBuffer(*deviceBuffer_OutputPhotons[bufferIndex], CL_FALSE, 0, numberOfGeneratedPhotons*sizeof(I3CLSimPhoton), &((*photons)[0]), NULL, &copyComplete[0]);
@@ -1117,10 +1122,10 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
     if (queue_.size() != numBuffers) log_fatal("Internal error: queue_.size() != 2!");
     if (kernel_.size() != numBuffers) log_fatal("Internal error: kernel_.size() != 2!");
 
-    BOOST_FOREACH(shared_ptr<cl::CommandQueue> &ptr, queue_) {
+    BOOST_FOREACH(boost::shared_ptr<cl::CommandQueue> &ptr, queue_) {
         if (!ptr) log_fatal("Internal error: queue_[] is (null)");
     }
-    BOOST_FOREACH(shared_ptr<cl::Kernel> &ptr, kernel_) {
+    BOOST_FOREACH(boost::shared_ptr<cl::Kernel> &ptr, kernel_) {
         if (!ptr) log_fatal("Internal error: kernel_[] is (null)");
     }
 
@@ -1131,18 +1136,18 @@ void I3CLSimStepToPhotonConverterOpenCL::OpenCLThread_impl(boost::this_thread::d
         if (deviceBuffer_PhotonHistory.size() != numBuffers) log_fatal("Internal error: deviceBuffer_PhotonHistory.size() != 2!");
     }
     
-    BOOST_FOREACH(shared_ptr<cl::Buffer> &ptr, deviceBuffer_InputSteps) {
+    BOOST_FOREACH(boost::shared_ptr<cl::Buffer> &ptr, deviceBuffer_InputSteps) {
         if (!ptr) log_fatal("Internal error: deviceBuffer_InputSteps[] is (null)");
     }
-    BOOST_FOREACH(shared_ptr<cl::Buffer> &ptr, deviceBuffer_OutputPhotons) {
+    BOOST_FOREACH(boost::shared_ptr<cl::Buffer> &ptr, deviceBuffer_OutputPhotons) {
         if (!ptr) log_fatal("Internal error: deviceBuffer_OutputPhotons[] is (null)");
     }
-    BOOST_FOREACH(shared_ptr<cl::Buffer> &ptr, deviceBuffer_CurrentNumOutputPhotons) {
+    BOOST_FOREACH(boost::shared_ptr<cl::Buffer> &ptr, deviceBuffer_CurrentNumOutputPhotons) {
         if (!ptr) log_fatal("Internal error: deviceBuffer_CurrentNumOutputPhotons[] is (null)");
     }
 
     if (photonHistoryEntries_ > 0) {
-        BOOST_FOREACH(shared_ptr<cl::Buffer> &ptr, deviceBuffer_PhotonHistory) {
+        BOOST_FOREACH(boost::shared_ptr<cl::Buffer> &ptr, deviceBuffer_PhotonHistory) {
             if (!ptr) log_fatal("Internal error: deviceBuffer_PhotonHistory[] is (null)");
         }
     }

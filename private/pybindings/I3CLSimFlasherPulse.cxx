@@ -98,6 +98,6 @@ void register_I3CLSimFlasherPulse()
     
     ;
 
-    bp::implicitly_convertible<shared_ptr<I3CLSimFlasherPulse>, shared_ptr<const I3CLSimFlasherPulse> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimFlasherPulse>, boost::shared_ptr<const I3CLSimFlasherPulse> >();
     register_pointer_conversions<I3CLSimFlasherPulseSeries>();
 }
