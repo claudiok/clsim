@@ -32,6 +32,7 @@
 class G4LogicalVolume;
 class G4VPhysicalVolume;
 class G4Box;
+class G4Material;
 
 #include "G4Material.hh"
 #include "G4RotationMatrix.hh"
@@ -48,6 +49,8 @@ public:
     virtual ~TrkDetectorConstruction();
     
     G4VPhysicalVolume* Construct();
+    G4Material*
+    MaterialWithSingleIsotope(G4String, G4String, G4double, G4int, G4int);
     
     //Functions to modify the geometry
     
@@ -86,7 +89,14 @@ private:
     G4Element* Mg;
     G4Element* Cl;
     G4Element* Ca;
-    
+    G4Element* D;
+    G4Element* O18;
+    G4Material* normal_ice;
+    G4Material* semiheavy_ice;
+    G4Material* H2O18;
+    G4Material* iso_ice;
+    G4Material* Ice;
+
     G4MaterialPropertiesTable* MPT;
     
     

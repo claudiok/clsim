@@ -44,6 +44,10 @@
 #include "G4LogicalVolumeStore.hh"
 #include "G4PhysicalVolumeStore.hh"
 #include "G4GeometryManager.hh"
+#include "G4NistManager.hh"
+
+#include "G4SystemOfUnits.hh"
+#include "G4PhysicalConstants.hh"
 
 #include "icetray/I3Logging.h"
 #include "icetray/I3Units.h"
@@ -64,6 +68,7 @@ void TrkDetectorConstruction::DefineMaterials(){
     G4double a;  // atomic mass
     G4double z;  // atomic number
     G4double density;
+    G4int ncomponents, natoms;
     
     //***Elements
     H = new G4Element("Hydrogen",   "H",  z=1.,  a=  1.00794*g/mole);
@@ -75,7 +80,11 @@ void TrkDetectorConstruction::DefineMaterials(){
     Mg = new G4Element("Magnesium", "Mg", z=12., a= 24.3050 *g/mole);
     Cl = new G4Element("Chlorine",  "Cl", z=17., a= 35.4527 *g/mole);
     Ca = new G4Element("Calcium",   "Ca", z=20., a= 40.0784*g/mole);
-    
+
+    D = new G4Element("Deuterium","D",  z=1.,  a=  2.013553*g/mole);
+    O18 = new G4Element("IsoOxygen","O18",  z=8.,  a= 17.99916*g/mole);
+   
+ 
     //***Materials
     //Vacuum
     Vacuum = new G4Material("Vacuum",z=1.,a=1.01*g/mole,
@@ -107,6 +116,42 @@ void TrkDetectorConstruction::DefineMaterials(){
     H2O->AddElement(Na,  1.32*perCent);
     H2O->AddElement(Mg,  0.15*perCent);
     H2O->AddElement(Cl,  2.37*perCent);
+
+
+    // More realistic Ice
+    // ********************************************
+
+    // densities of isoptope ices extrapolated with rho(IceCube)=(rho(25Celsius)) * (rho_water(IceCube) / rho_water(25Celsius) ). [for rho(25celsius) see http://www1.lsbu.ac.uk/water/water_properties.html]
+    // Mistake should be minimal...
+
+    G4Material* normal_ice = new G4Material("normal_ice", 0.9216*g/cm3 , ncomponents=2);
+    normal_ice->AddElement(H, natoms=2);
+    normal_ice->AddElement(O, natoms=1);
+
+    G4Material* semiheavy_ice = new G4Material("semiheavy_ice", 0.9712*g/cm3 , ncomponents=3);
+    semiheavy_ice->AddElement(H, natoms=1);
+    semiheavy_ice->AddElement(D, natoms=1);
+    semiheavy_ice->AddElement(O, natoms=1);
+
+    G4Material* H2O18 = new G4Material("H2O18", 1.0254*g/cm3 , ncomponents=2);
+    H2O18->AddElement(H, natoms=2);
+    H2O18->AddElement(O18, natoms=1);
+
+    G4Material* iso_ice = new G4Material("iso_ice", 0.92*g/cm3, ncomponents=3);
+    iso_ice->AddMaterial(normal_ice, 99.7*perCent);
+    iso_ice->AddMaterial(semiheavy_ice, 0.03*perCent);
+    iso_ice->AddMaterial(H2O18, 0.2*perCent);
+
+    // We got Air bubbles in the ice!
+    G4NistManager* man = G4NistManager::Instance();
+    G4Material* AirBubble  = man->FindOrBuildMaterial("G4_AIR");
+
+    // The more realistic ice 
+    Ice = new G4Material("Ice", 0.9216*g/cm3, ncomponents=2);
+    Ice->AddMaterial(iso_ice,  91.7*perCent);
+    Ice->AddMaterial(AirBubble, 8.3*perCent);
+    Ice->GetIonisation()->SetMeanExcitationEnergy(75.0*eV);
+
     
     
     //***Material properties tables
@@ -145,7 +190,7 @@ void TrkDetectorConstruction::DefineMaterials(){
     
     std::map<double, double> wlenToRindexMap;
     
-    //G4cout << "map<wlen,rindex> (before):" << G4endl;
+    //std::cout << "map<wlen,rindex> (before):" << std::endl;
     for (unsigned int i=0;i<initialPoints;++i)
     {
         const double wlen = fromWlen + static_cast<double>(i)*(toWlen-fromWlen)/static_cast<double>(initialPoints-1);
@@ -153,9 +198,9 @@ void TrkDetectorConstruction::DefineMaterials(){
         
         wlenToRindexMap.insert(std::make_pair(wlen, rindex));
         
-        //G4cout << " " << wlen/I3Units::nanometer << "nm -> " << rindex << G4endl;
+        //std::cout << " " << wlen/I3Units::nanometer << "nm -> " << rindex << std::endl;
     }
-    //G4cout << G4endl;
+    //std::cout << std::endl;
     
     // check if any intermediate points are needed
     const double maxRelativeError = 1e-5; // no more than 1% deviation of interpolated result from real function
@@ -178,7 +223,7 @@ void TrkDetectorConstruction::DefineMaterials(){
             // do we need to insert a new data point?
             if (fabs(relativeError) > maxRelativeError)
             {
-                //G4cout << "relative error @ " << inbetween_wlen/I3Units::nanometer << "nm: " << relativeError << ", interp=" << interpolated_rindex << ", real=" << real_rindex << G4endl;
+                //std::cout << "relative error @ " << inbetween_wlen/I3Units::nanometer << "nm: " << relativeError << ", interp=" << interpolated_rindex << ", real=" << real_rindex << std::endl;
 
                 wlenToRindexMap.insert(std::make_pair(inbetween_wlen, real_rindex));
                 
@@ -194,25 +239,26 @@ void TrkDetectorConstruction::DefineMaterials(){
     std::vector<double> rindex;
     std::vector<double> rindex_ppckov;
 
-    //G4cout << "map<wlen,rindex>:" << G4endl;
+    //std::cout << "map<wlen,rindex>:" << std::endl;
     for (std::map<double, double>::reverse_iterator it=wlenToRindexMap.rbegin();
          it!=wlenToRindexMap.rend();++it)
     {
-        //G4cout << " " << it->first/I3Units::nanometer << "nm -> " << it->second << G4endl;
+        //std::cout << " " << it->first/I3Units::nanometer << "nm -> " << it->second << std::endl;
         
         const double wlenInG4Units = (it->first/I3Units::nanometer)*nanometer;
         
         rindex_ppckov.push_back((h_Planck*c_light)/wlenInG4Units);
         rindex.push_back(it->second);
     }
-    G4cout << G4endl;
+    std::cout << std::endl;
 
     
     // set up material properties table
     MPT = new G4MaterialPropertiesTable();
     MPT->AddProperty("RINDEX", &(rindex_ppckov[0]), &(rindex[0]), rindex_ppckov.size());
     
-    H2O->SetMaterialPropertiesTable(MPT);
+    //H2O->SetMaterialPropertiesTable(MPT);
+    Ice->SetMaterialPropertiesTable(MPT);
 }
 
 G4VPhysicalVolume* TrkDetectorConstruction::Construct()
@@ -223,7 +269,7 @@ G4VPhysicalVolume* TrkDetectorConstruction::Construct()
 
 G4VPhysicalVolume* TrkDetectorConstruction::ConstructDetector()
 {
-    G4cout << " ===---***---=== CONSTRUCTING DETECTOR" << G4endl;
+    std::cout << " ===---***---=== CONSTRUCTING DETECTOR" << std::endl;
     
     const double seaFloorZCoordinate = (mediumProperties_->GetRockZCoord()/I3Units::m)*m;
     const double airZCoordinate = (mediumProperties_->GetAirZCoord()/I3Units::m)*m;
@@ -236,26 +282,36 @@ G4VPhysicalVolume* TrkDetectorConstruction::ConstructDetector()
     const double simvolume_z = std::max(fabs(seaFloorZCoordinate)+1.*km, fabs(airZCoordinate)+1.*km);
     
     
-    G4cout << "world_r_x=+/-" << simvolume_x/km << "km, " 
+    std::cout << "world_r_x=+/-" << simvolume_x/km << "km, " 
            << "world_r_y=+/-" << simvolume_y/km << "km, " 
            << "world_r_z=+/-" << simvolume_z/km << "km"
-           << G4endl; 
+           << std::endl; 
     
     world_sol = new G4Box("world_sol",
                           simvolume_x, // half-lengths!
                           simvolume_y,
                           simvolume_z);
-    world_log = new G4LogicalVolume(world_sol,H2O,
-                                    "world_log"
+
+    world_log = new G4LogicalVolume(world_sol,         //shape
+				    Ice,               //material
+				    Ice->GetName()     //name
+                                    //"world_log"        //name
                                     //,0,0,0,false
                                     );
     
-    world_phys = new G4PVPlacement(0,G4ThreeVector(),
-                                  world_log,"world_phys",NULL,false,0,false);
+    world_phys = new G4PVPlacement(0,                 //no rotation
+                                  G4ThreeVector(),    //at (0,0,0)
+                                  world_log,          //logical volume
+                                  Ice->GetName(),     //name
+				  //"world_phys",       //name
+		                  NULL,               //mother  volume
+                                  false,              //no boolean operation
+                                  0,                  //copy number
+                                  false);             //Don't know ...
 
     
     
-    G4cout << "Placing rock at z=" << seaFloorZCoordinate/m << "m." << G4endl;
+    std::cout << "Placing rock at z=" << seaFloorZCoordinate/m << "m." << std::endl;
 
     // place the sea floor rock box
     {
@@ -266,7 +322,7 @@ G4VPhysicalVolume* TrkDetectorConstruction::ConstructDetector()
         rock_phys = new G4PVPlacement(rot,G4ThreeVector(0.,0.,-simvolume_z+seafloor_rock_height/2.),rock_log,"rock_phys",world_log,false,0);
     }
     
-    G4cout << "Placing air at z=" << airZCoordinate/m << "m." << G4endl;
+    std::cout << "Placing air at z=" << airZCoordinate/m << "m." << std::endl;
 
     // place the air box
     {
