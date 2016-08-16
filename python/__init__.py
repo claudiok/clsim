@@ -36,6 +36,9 @@ from .GetIceCubeDOMAcceptance import GetIceCubeDOMAcceptance
 from .GetIceCubeDOMAngularSensitivity import GetIceCubeDOMAngularSensitivity
 from .GetIceCubeFlasherSpectrum import GetIceCubeFlasherSpectrum
 
+from .GetMDOMAcceptance import GetMDOMAcceptance
+from .GetMDOMAngularSensitivity import GetMDOMAngularSensitivity
+
 from .GetAntaresOMAcceptance import GetAntaresOMAcceptance
 from .GetAntaresOMAngularSensitivity import GetAntaresOMAngularSensitivity
 

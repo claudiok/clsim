@@ -40,11 +40,10 @@ getCoordinates(const floating4_t absPos, floating4_t dirAndWlen,
     const struct I3CLSimReferenceParticle *source, RNG_ARGS)
 {
     coordinate_t coords;
-    
     // NB: the reference vectors sourcePos, sourceDir, and perpDir are
     //     defined as static variables at compile time
-    floating4_t pos = absPos - source->posAndTime;
-    floating_t l = dot(pos, source->dir);
+    floating4_t pos = absPos - source->posAndTime;     // set the source to (0,0,0)
+    floating_t l = dot(pos, source->dir);              
     floating4_t rho = pos - l*source->dir;
     floating_t n_rho = magnitude(rho);
     
@@ -72,11 +71,14 @@ getCoordinates(const floating4_t absPos, floating4_t dirAndWlen,
     // DOM. Note that because the impact parameter is expressed as a 
     // rotation across the surface of the DOM, it is independent of the DOM
     // radius.
+    // Not sure if this makes sense for the mDOM upgrade
     floating_t sina = my_sqrt(RNG_CALL_UNIFORM_CO);
     scatterDirectionByAngle(my_sqrt(1-sina*sina), sina, &dirAndWlen, RNG_CALL_UNIFORM_CO);
     coords.s4 = (coords.s0 > 0) ? my_divide(dot(dirAndWlen, pos), coords.s0) : 1;
+
 #endif
-    
+
+    //printf(coords.s4);    
     //dbg_printf("     %4.1f %4.1f %4.2f %6.2f\n", coords.s0, coords.s1, coords.s2, coords.s3);
     
     return coords;

@@ -92,7 +92,7 @@ namespace I3CLSimLightSourceToStepConverterUtils {
                             H_TIMES_C/toWlen,
                             H_TIMES_C/fromWlen,
                             0,
-                            1e-5,
+                            1e-4,     // changed for mDOM photonTable production (original 1e-5)
                             1000,
                             GSL_INTEG_GAUSS61,
                             w,

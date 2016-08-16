@@ -223,6 +223,151 @@ inline float2 sphDirFromCar(float4 carDir)
 }
 #endif
 
+// new mDOM stuff for flat disc approach
+
+inline floating4_t GetMDomCenter(const floating4_t photonPosAndTime,
+                                 const floating4_t photonDirAndWlen,
+                                 RNG_ARGS)
+{
+    // Calculate the center of the hit mDOM
+    
+    // Get a point on a half sphere in the photon coordinate system
+    float Phi = 2.0 * PI * RNG_CALL_UNIFORM_CO ;
+    float SinPhi = my_sin(Phi);
+    float CosPhi = my_cos(Phi);
+    float CosTheta = RNG_CALL_UNIFORM_CO ;
+    float Theta = acos(CosTheta);
+    float SinTheta = my_sin(Theta);
+    float R = 0.178;
+
+    // rotate to the normal coordiante system
+
+    //// get rotation axis n (z-axis x photonDirection) with length 1 
+    float n_x = -1 * photonDirAndWlen.y;
+    float n_y = photonDirAndWlen.x;
+    float n_z = 0;
+
+    float mag_n = my_sqrt(n_x*n_x + n_y*n_y + n_z*n_z);
+
+    n_x = n_x / mag_n;
+    n_y = n_y / mag_n;
+    n_z = n_z / mag_n;
+
+
+    //// get rotation angle alpha
+    float alpha = acos(photonDirAndWlen.z);
+
+    //// calculate cartesian coordinates for the half sphere point (x,y,z) in the photon coordinate system 
+    float x = R * my_sin(Theta) * my_cos(Phi);
+    float y = R * my_sin(Theta) * my_sin(Phi);
+    float z = R * my_cos(Theta);
+
+    //// calculate the rotated cartesian coordiantes for the point of the half sphere aka the dom center
+    float x_rot = ( n_x * n_x * (1 - my_cos(alpha)) + my_cos(alpha) ) * x +
+                  ( n_x * n_y * (1 - my_cos(alpha) ) ) * y + 
+                  ( n_y * my_sin(alpha) ) * z ;
+
+    float y_rot = ( n_x * n_y * ( 1 - my_cos(alpha) ) ) * x +
+                  ( n_y * n_y * (1 - my_cos(alpha) )  + my_cos(alpha) ) * y +
+                  ( -1 * n_x * my_sin(alpha) ) * z ;
+
+    float z_rot = (-1 *  n_y * my_sin(alpha) ) * x + 
+                  ( n_x * my_sin(alpha) ) * y + 
+                  my_cos(alpha) * z ;
+
+    // shift the mDOM center and return
+    floating4_t mDOMCenter;
+    mDOMCenter.x = x_rot + photonPosAndTime.x ;
+    mDOMCenter.y = y_rot + photonPosAndTime.y ;
+    mDOMCenter.z = z_rot + photonPosAndTime.z ;
+
+    return mDOMCenter;
+}
+
+
+bool HitDisk(floating4_t photonPosAndTime,
+             floating4_t photonDirAndWlen,
+             floating4_t mDOMCenter)
+{
+  
+    // check for photon flux 
+    // return true;
+        
+    // check if the impact angle is bigger than 90deg
+
+    /*
+    float n_x = 0;
+    float n_y = 0;
+    float n_z = -1;
+
+    float cosImpactAngle = n_z * photonDirAndWlen.z ;
+    
+    if (cosImpactAngle >= 0.0){
+        return false;
+    }
+
+    // check if photon path and disc have intersection
+    
+    //// position of the center of the disc in the DOM coordinate system
+    float A_x = 0;
+    float A_y = 0;
+    float A_z = -0.1518;
+    */
+
+    // optimized 
+    if (photonDirAndWlen.z <= 0){      
+        // photon is down going, ergo cannot hit a pmt facing downwards
+        return false;
+    }
+
+    float A_z = -0.1518;            // y position of the PMT center
+
+    //// position of the photon when it hits the DOM in the DOM coordinate system
+    float P_x = photonPosAndTime.x - mDOMCenter.x ;
+    float P_y = photonPosAndTime.y - mDOMCenter.y ;
+    float P_z = photonPosAndTime.z - mDOMCenter.z ;
+
+    /*
+    //// get intersection point
+    float d = (A_z - P_z) / photonDirAndWlen.z ;
+    float I_x = P_x + photonDirAndWlen.x * d ;
+    float I_y = P_y + photonDirAndWlen.y * d ;
+    float I_z = P_z + photonDirAndWlen.z * d ;
+
+
+    //// Check if distance between intersection point is within PMTRadius 
+    float PMTRadius = 0.05375 ;
+    
+    float D_x = I_x - A_x;
+    float D_y = I_y - A_y;
+    float D_z = I_z - A_z;
+
+    
+    float Distance_ = my_sqrt( D_x * D_x +
+			      D_y * D_y + 
+			      D_z * D_z );
+
+    
+    */
+    // Optimized 
+
+    float PMTRadius = 0.05375 ;
+    float d = (A_z - P_z) / photonDirAndWlen.z ;
+    float Distance = my_sqrt( my_powr((P_x + photonDirAndWlen.x * d), 2) + 
+                              my_powr((P_y + photonDirAndWlen.y * d), 2) ) ;
+
+    //printf("Distance = %f \n", Distance);
+    //printf("Distance_ = %f \n", Distance_);
+
+    if (Distance > PMTRadius){
+        return false;
+    }
+
+    return true;
+}
+			
+
+
 #ifdef TABULATE
 
 inline bool savePath(
@@ -243,6 +388,9 @@ inline bool savePath(
 {
     // NB: the quantum efficiency of the receiver is already taken into
     //     account though the bias in the input photon spectrum
+
+    // Debugging Stuff 
+    
     floating_t impactWeight = 
 #ifndef TABULATE_IMPACT_ANGLE
         step->weight*getAngularAcceptance(photonDirAndWlen.z);
@@ -250,45 +398,86 @@ inline bool savePath(
         step->weight;
 #endif
     
+
+
     //dbg_printf("step depth %e + %e impactWeight %e\n", depth, thisStepDepth, impactWeight);
     
     floating_t d = *prevStepLength;
     //dbg_printf("first step is %f\n", d);
     uint offset = *entry_counter;
     for (; d < thisStepLength && offset < TABLE_ENTRIES_PER_STREAM;
-        d += VOLUME_MODE_STEP, offset++) {
+         d += VOLUME_MODE_STEP, offset++) {
 
         floating4_t pos = photonPosAndTime;
         pos.x = photonPosAndTime.x + d*photonDirAndWlen.x;
         pos.y = photonPosAndTime.y + d*photonDirAndWlen.y;
         pos.z = photonPosAndTime.z + d*photonDirAndWlen.z;
-        pos.w = photonPosAndTime.w + d*inv_groupvel;
+        pos.w = photonPosAndTime.w + d*inv_groupvel; 
 
+        /*
 #ifdef DOM_RADIUS
+        printf("DOM_RADIUS");
         floating_t cosa = RNG_CALL_UNIFORM_CO;
         floating4_t toCenter = photonDirAndWlen;
-        scatterDirectionByAngle(cosa, my_sqrt(1-cosa*cosa), &toCenter, RNG_CALL_UNIFORM_CO);
+        //scatterDirectionByAngle(cosa, my_sqrt(1-cosa*cosa), &toCenter, RNG_CALL_UNIFORM_CO);
         pos.x += DOM_RADIUS*toCenter.x;
         pos.y += DOM_RADIUS*toCenter.y;
         pos.z += DOM_RADIUS*toCenter.z;
 #endif
+        */
+
+        //coordinate_t coords = getCoordinates(pos, photonDirAndWlen, source, RNG_ARGS_TO_CALL);
         
-        coordinate_t coords = getCoordinates(pos, photonDirAndWlen, source, RNG_ARGS_TO_CALL);
-        
+        // This is a new approach which includes the flat disc approach for mDOMs 
+        // 1.Step: Choose the center of the dom which is uniformly distributed across a half sphere
+        //         with radius R_mDOM (=0.178m).
+	
+        // DEBUGING STUFF
+	
+        floating4_t mDOMCenter = GetMDomCenter(pos,
+                                               photonDirAndWlen,
+                                               RNG_ARGS_TO_CALL);
+
+        // 2.Step: Check wheater the photon hits a disc
+        floating_t FlatDiskWeight;
+        if ( HitDisk(pos, photonDirAndWlen, mDOMCenter) ){
+            FlatDiskWeight = 1.0;
+        }
+        else{
+            FlatDiskWeight = 0.0;
+        }   
+
+
+        // 3. Step get the table coordinates and add the correct time
+        coordinate_t coords = getCoordinates(mDOMCenter, photonDirAndWlen, source, RNG_ARGS_TO_CALL);
+        // set detection time equal to arrival time of photon on the sphere (consistent with direct simulation)
+        float distance = magnitude(pos - source->posAndTime) ;
+        coords.s3 = pos.w - (source->posAndTime).w - distance * min_invGroupVel ;
+
         if (isOutOfBounds(coords)) {
             *stop = true;
             break;
         }
         
-        entries[thread_id*TABLE_ENTRIES_PER_STREAM + offset].index
+        entries[thread_id * TABLE_ENTRIES_PER_STREAM + offset].index
             = getBinIndex(coords);
         // Weight the photon by its probability of:
         // 1) Being detected, given its wavelength
-        // 2) Being detected, given its impact angle with the DOM
+        // 2) Being detected, given its impact angle and position with the DOM
         // 3) Having survived this far without being absorbed
-        entries[thread_id*TABLE_ENTRIES_PER_STREAM + offset].weight =
-            impactWeight*my_exp(-(depth + (d/thisStepLength)*thisStepDepth));
+        entries[thread_id * TABLE_ENTRIES_PER_STREAM + offset].weight =
+            impactWeight * my_exp( -(depth + (d/thisStepLength) * thisStepDepth) ) * FlatDiskWeight;
+
+        //float absorptionProb = my_exp(-(depth + (d/thisStepLength)*thisStepDepth));
+        //printf("survival Prob = %f \n", absorptionProb);
+        //printf("impactWeight = %f \n", impactWeight);
+        //printf("FlatDiscWeight = %f \n", FlatDiscWeight);
+        //printf("weight = %f \n", entries[thread_id*TABLE_ENTRIES_PER_STREAM + offset].weight);
+        //return false;
+
     }
+
+    //printf("%f\n",HitCounter);
     
     if (d < thisStepLength && !(*stop)) {
         // we ran out of space. erase.
@@ -299,6 +488,8 @@ inline bool savePath(
         *prevStepLength = d - thisStepLength;
         return true;
     }
+
+
 
 }
 #endif
@@ -321,7 +512,7 @@ inline void saveHit(
     uint maxHitIndex,
     __global struct I3CLSimPhoton *outputPhotons
 #ifdef SAVE_PHOTON_HISTORY
-  , __global float4 *photonHistory,
+    , __global float4 *photonHistory,
     float4 *currentPhotonHistory
 #endif
     )
@@ -336,11 +527,11 @@ inline void saveHit(
 
         outputPhotons[myIndex].posAndTime = (float4)
             (
-            photonPosAndTime.x+thisStepLength*photonDirAndWlen.x,
-            photonPosAndTime.y+thisStepLength*photonDirAndWlen.y,
-            photonPosAndTime.z+thisStepLength*photonDirAndWlen.z,
-            photonPosAndTime.w+thisStepLength*inv_groupvel
-            );
+                photonPosAndTime.x+thisStepLength*photonDirAndWlen.x,
+                photonPosAndTime.y+thisStepLength*photonDirAndWlen.y,
+                photonPosAndTime.z+thisStepLength*photonDirAndWlen.z,
+                photonPosAndTime.w+thisStepLength*inv_groupvel
+                );
 
         outputPhotons[myIndex].dir = sphDirFromCar(photonDirAndWlen);
         outputPhotons[myIndex].wavelength = photonDirAndWlen.w;

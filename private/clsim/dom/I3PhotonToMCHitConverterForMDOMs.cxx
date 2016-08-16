@@ -571,8 +571,8 @@ void I3PhotonToMCHitConverterForMDOMs::DAQ(I3FramePtr frame)
             measurement_prob *= glassGelSurvival_fac;
             measurement_prob *= qe_fac;
             measurement_prob *= ang_fac;
-            
-            if (measurement_prob > 1.)
+	                
+	    if (measurement_prob > 1.)
                 log_fatal("measurement_prob > 1 (it's %f): cannot continue. your hit weights are too high. (weight=%f, wlen=%fnm)",
                           measurement_prob, photon.GetWeight(),
                           photon.GetWavelength()/I3Units::nanometer);
