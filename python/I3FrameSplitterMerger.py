@@ -3,9 +3,15 @@ from copy import copy
 
 class I3FrameMCPEMerger(icetray.I3ConditionalModule):
     """
-
+    IceTray Python I3Module to merge frames and frameobjects
+    that were broken apart because they cause clsim to eat
+    all the RAM
     """
     def __init__(self, context):
+        """
+        Standard IceTray module __init__ defines 
+        I3Module parameters
+        """
         icetray.I3ConditionalModule.__init__(self, context)
         self.AddParameter('InputMCPESeriesMapName',
                           'Name of input I3MCPESeriesMapName',
@@ -26,14 +32,20 @@ class I3FrameMCPEMerger(icetray.I3ConditionalModule):
         self.frame_count = 0
 
     def Process(self):
+        """
+        Process() to merge the frames. It will Flush the accumulated frame out
+        if any frame that is not the split stream stop.
+        """
         frame = self.PopFrame()
         if frame.Stop not in [self.original_stream, self.split_stream]:
             if self.frame_count > 0:
                 self.Flush()
+                self.frame_count = 0
             self.PushFrame(frame)
         if frame.Stop == self.original_stream:
             if self.frame_count > 0:
                 self.Flush()
+                self.frame_count = 0
             self.original_frame = I3FrameStreamChanger.ChangeFrame(frame, self.split_stream)
             self.frame_count += 1
             self.new_mcpeseries = simclasses.I3MCPESeriesMap()
@@ -45,6 +57,10 @@ class I3FrameMCPEMerger(icetray.I3ConditionalModule):
         self.Flush()
             
     def Flush(self):
+        """
+        Function that flushes the combined frame out. It will sort the
+        new I3MCPESeriesMap before putting it in the original frame.
+        """
         self.new_mcpeseries.sort()
         self.original_frame[self.input_mcpeseries_name] = self.new_mcpeseries
         self.PushFrame(self.original_frame)
@@ -89,13 +105,13 @@ class I3FrameMCPEMerger(icetray.I3ConditionalModule):
 
 class I3FrameEnergySplitter(icetray.I3ConditionalModule):
     """
-    I3Module that breaks apart frames into smaller frames. 
+    IceTray Python I3Module that breaks apart frames into smaller frames. 
     Needed for ultra high energy events to decrease the memory usage
-    
     """
     def __init__(self, context):
         """
-        
+        Standard IceTray module __init__ defines 
+        I3Module parameters
         """
         icetray.I3ConditionalModule.__init__(self, context)
         self.AddParameter('InputMCTreeName',
@@ -111,13 +127,17 @@ class I3FrameEnergySplitter(icetray.I3ConditionalModule):
         self.AddOutBox('OutBox')
     
     def Configure(self):
-        
         self.input_mctree_name = self.GetParameter("InputMCTreeName")
         self.energy_per_frame = self.GetParameter("EnergyPerFrame")
         self.dummy_stream = self.GetParameter("DummyStream")        
         # self.Register(self.stream, self.Splitter)
         
     def DAQ(self, frame):
+        """
+        DAQ() function that takes the frames and breaks them apart
+        trying to keep the maximum energy per frame below a 
+        set threshold
+        """
         i = 0
         frame_list = []
         mctree = frame[self.input_mctree_name]
