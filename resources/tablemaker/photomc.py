@@ -53,6 +53,8 @@ parser.add_option("--prescale", dest="prescale", type="float", default=100,
     help="Only propagate 1/PRESCALE of photons. This is useful for controlling \
     how many photons are simulated per source, e.g. for infinite muons where \
     multiple trajectories need to be sampled [%default]")
+parser.add_option("--record-errors", dest="errors", action="store_true", default=False,
+    help="Record both weights and squares of weights (useful for error bars)")
 parser.add_option("--sensor", default="dom", choices=("dom", "degg", "wom", "mdom"),
     help="Type of sensor to simulate")
 parser.add_option("--ice-model", default="spice_mie", help="Ice model to simulate [%default]")
@@ -93,7 +95,7 @@ axes = None
 
 tray.AddSegment(TabulatePhotonsFromSource, 'generator', Seed=opts.seed, PhotonSource=opts.light_source,
     Zenith=opts.zenith, ZCoordinate=opts.z, Energy=opts.energy, NEvents=opts.nevents, Filename=outfile,
-    TabulateImpactAngle=opts.tabulate_impact_angle, PhotonPrescale=opts.prescale,
+    TabulateImpactAngle=opts.tabulate_impact_angle, PhotonPrescale=opts.prescale, RecordErrors=opts.errors,
     DisableTilt=True, IceModel=opts.ice_model, Axes=axes, Sensor=opts.sensor)
     
 tray.AddModule('TrashCan', 'MemoryHole')

@@ -118,7 +118,7 @@ GetMinimumRefractiveIndex(const I3CLSimMediumProperties &med)
 }
 
 I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice device,
-    clsim::tabulator::AxesConstPtr axes, size_t entriesPerStream,
+    clsim::tabulator::AxesConstPtr axes, size_t entriesPerStream, bool storeSquaredWeights,
     I3CLSimMediumPropertiesConstPtr mediumProperties, I3CLSimSpectrumTableConstPtr spectrumTable,
     double referenceArea,
     I3CLSimFunctionConstPtr wavelengthAcceptance, I3CLSimFunctionConstPtr angularAcceptance,
@@ -205,6 +205,8 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
 	sources.push_back(loadKernel("propagation_kernel", false));
 	
 	binContent_.resize(axes_->GetNBins());
+	if (storeSquaredWeights)
+		squaredWeights_.resize(axes->GetNBins());
 	
 #ifndef NDEBUG
 	std::stringstream source;
@@ -489,6 +491,11 @@ I3CLSimStepToTableConverter::FetchSteps(cl::Kernel kernel, I3RandomServicePtr rn
 			for (size_t j = 0; j < size; j++) {
 				binContent_[tableEntries[offset+j].index] += tableEntries[offset+j].weight;
 			}
+			if (squaredWeights_.size() > 0) {
+				for (size_t j = 0; j < size; j++) {
+					binContent_[tableEntries[offset+j].index] += std::pow(tableEntries[offset+j].weight, 2);
+				}
+			}
 		}
 		
 		stats.Record(kernelFinished[0], n_photons, real_steps, misses);
@@ -518,7 +525,61 @@ I3CLSimStepToTableConverter::Normalize()
 		double norm = axes_->GetBinVolume(idxs)/(stepLength_*domArea_);
 		for (size_t i=0; i < spatial_stride; i++)
 			binContent_[i+offset] /= norm;
+		// apply to squared weights as well if needed
+		if (squaredWeights_.size() > 0) {
+			norm *= norm;
+			for (size_t i=0; i < spatial_stride; i++)
+				squaredWeights_[i+offset] /= norm;
+		}
 	}
+}
+
+namespace {
+
+std::string error_text(int error)
+{
+	std::string text(30, '\0');
+	if (error != 0) {
+		fits_get_errstatus(error, &text[0]);
+	}
+	
+	return text;
+}
+
+/*
+ * Create the bin content array with transposed axis
+ * counts, like PyFITS does.
+ */
+void create_image(fitsfile *fits, std::vector<size_t> &shape, std::string name=std::string())
+{
+	int error(0);
+	std::vector<long> naxes(shape.size());
+	std::reverse_copy(shape.begin(), shape.end(), naxes.begin());
+	fits_create_img(fits, FLOAT_IMG, shape.size(), &naxes[0], &error);
+	if (error != 0) {
+		log_fatal_stream("Could not create image: " << error_text(error));
+	}
+	if (name.size() > 0) {
+		fits_write_key(fits, TSTRING, "EXTNAME", (void*)(name.c_str()),
+		    NULL, &error);
+	}
+	if (error != 0) {
+		log_fatal_stream("Could name HDU "<<name<<": " << error_text(error));
+	}
+}
+
+void write_pixels(fitsfile *fits, std::vector<size_t> &shape,
+    std::vector<float> &pixels)
+{
+	int error(0);
+	std::vector<long> fpixel(shape.size(), 1);
+	fits_write_pix(fits, TFLOAT, &fpixel[0], pixels.size(),
+	    &pixels[0], &error);
+	if (error != 0) {
+		log_fatal_stream("Could not fill image: " << error_text(error));
+	}
+}
+
 }
 
 
@@ -529,39 +590,20 @@ void I3CLSimStepToTableConverter::WriteFITSFile(const std::string &path, boost::
 
 	fits_create_diskfile(&fits, path.c_str(), &error);
 	if (error != 0) {
-		char err_text[30];
-		fits_get_errstatus(error, err_text);
-		log_fatal_stream("Could not create " << path << ": " << err_text);
-	}
-	
-	/*
-	 * Create the bin content array with transposed axis
-	 * counts, like PyFITS does.
-	 */
-	{
-		std::vector<size_t> shape(axes_->GetShape());
-		std::vector<long> naxes(shape.size());
-		std::reverse_copy(shape.begin(), shape.end(), naxes.begin());
-		fits_create_img(fits, FLOAT_IMG, axes_->GetNDim(), &naxes[0], &error);
-		if (error != 0) {
-			char err_text[30];
-			fits_get_errstatus(error, err_text);
-			log_fatal_stream("Could not create image: " << err_text);
-		}
+		log_fatal_stream("Could not create " << path << ": " << error_text(error));
 	}
 	
 	/*
 	 * Write bin content
 	 */
-	Normalize();
+	this->Normalize();
 	{
-		std::vector<long> fpixel(axes_->GetNDim(), 1);
-		fits_write_pix(fits, TFLOAT, &fpixel[0], binContent_.size(),
-		    &binContent_[0], &error);
-		if (error != 0) {
-			char err_text[30];
-			fits_get_errstatus(error, err_text);
-			log_fatal_stream("Could not fill image: " << err_text);
+		std::vector<size_t> shape(axes_->GetShape());
+		create_image(fits, shape);
+		write_pixels(fits, shape, binContent_);
+		if (squaredWeights_.size() > 0) {
+			create_image(fits, shape, "ERRORS");
+			write_pixels(fits, shape, squaredWeights_);
 		}
 	}
 	
@@ -593,9 +635,7 @@ void I3CLSimStepToTableConverter::WriteFITSFile(const std::string &path, boost::
 				    NULL, &error);
 			}
 			if (error != 0) {
-				char err_text[30];
-				fits_get_errstatus(error, err_text);
-				log_fatal_stream("Could not write header keyword "<<name.str()<<": " << err_text);
+				log_fatal_stream("Could not write header keyword "<<name.str()<<": " << error_text(error));
 			}
 		}
 	}
@@ -612,31 +652,23 @@ void I3CLSimStepToTableConverter::WriteFITSFile(const std::string &path, boost::
 		
 		fits_create_img(fits, DOUBLE_IMG, 1, &size, &error);
 		if (error != 0) {
-			char err_text[30];
-			fits_get_errstatus(error, err_text);
-			log_fatal_stream("Could not create edge array "<<i<<": " << err_text);
+			log_fatal_stream("Could not create edge array "<<i<<": " << error_text(error));
 		}
 		fits_write_key(fits, TSTRING, "EXTNAME", (void*)(name.str().c_str()),
 		    NULL, &error);
 		if (error != 0) {
-			char err_text[30];
-			fits_get_errstatus(error, err_text);
-			log_fatal_stream("Could not name HDU "<<name.str()<<": " << err_text);
+			log_fatal_stream("Could not name HDU "<<name.str()<<": " << error_text(error));
 		}
 		
 		fits_write_pix(fits, TDOUBLE, &fpixel, size,
 		    &edges[0], &error);
 		if (error != 0) {
-			char err_text[30];
-			fits_get_errstatus(error, err_text);
-			log_fatal_stream("Could not write edge array "<<i<<": " << err_text);
+			log_fatal_stream("Could not write edge array "<<i<<": " << error_text(error));
 		}
 	}
 	
 	fits_close_file(fits, &error);
 	if (error != 0) {
-		char err_text[30];
-		fits_get_errstatus(error, err_text);
-		log_fatal_stream("Could not close " << path << ": " << err_text);
+		log_fatal_stream("Could not close " << path << ": " << error_text(error));
 	}
 }

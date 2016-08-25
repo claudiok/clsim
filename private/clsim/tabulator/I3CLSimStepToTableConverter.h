@@ -47,6 +47,7 @@ class I3CLSimStepToTableConverter : boost::noncopyable {
 public:
 	I3CLSimStepToTableConverter(I3CLSimOpenCLDevice device,
 	    clsim::tabulator::AxesConstPtr axes, size_t entriesPerStream,
+	    bool storeSquaredWeights,
 	    I3CLSimMediumPropertiesConstPtr medium,
 	    I3CLSimSpectrumTableConstPtr spectrumTable,
 	    double referenceArea,
@@ -84,6 +85,7 @@ private:
 	
 	clsim::tabulator::AxesConstPtr axes_;
 	std::vector<float> binContent_;
+	std::vector<float> squaredWeights_;
 	// double rather than an integer because steps have weights
 	uint64_t numPhotons_;
 	double sumOfPhotonWeights_;
