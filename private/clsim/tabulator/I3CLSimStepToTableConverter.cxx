@@ -204,9 +204,9 @@ I3CLSimStepToTableConverter::I3CLSimStepToTableConverter(I3CLSimOpenCLDevice dev
 	sources.push_back(axes_->GenerateBinningCode());
 	sources.push_back(loadKernel("propagation_kernel", false));
 	
-	binContent_.resize(axes_->GetNBins());
+	binContent_.resize(axes_->GetNBins(), 0);
 	if (storeSquaredWeights)
-		squaredWeights_.resize(axes->GetNBins());
+		squaredWeights_.resize(axes->GetNBins(), 0);
 	
 #ifndef NDEBUG
 	std::stringstream source;
@@ -493,7 +493,7 @@ I3CLSimStepToTableConverter::FetchSteps(cl::Kernel kernel, I3RandomServicePtr rn
 			}
 			if (squaredWeights_.size() > 0) {
 				for (size_t j = 0; j < size; j++) {
-					binContent_[tableEntries[offset+j].index] += std::pow(tableEntries[offset+j].weight, 2);
+					squaredWeights_[tableEntries[offset+j].index] += std::pow(tableEntries[offset+j].weight, 2);
 				}
 			}
 		}
@@ -601,10 +601,6 @@ void I3CLSimStepToTableConverter::WriteFITSFile(const std::string &path, boost::
 		std::vector<size_t> shape(axes_->GetShape());
 		create_image(fits, shape);
 		write_pixels(fits, shape, binContent_);
-		if (squaredWeights_.size() > 0) {
-			create_image(fits, shape, "ERRORS");
-			write_pixels(fits, shape, squaredWeights_);
-		}
 	}
 	
 	// Fill in things that only we know
@@ -638,6 +634,15 @@ void I3CLSimStepToTableConverter::WriteFITSFile(const std::string &path, boost::
 				log_fatal_stream("Could not write header keyword "<<name.str()<<": " << error_text(error));
 			}
 		}
+	}
+	
+	/*
+	 * Write squared weights
+	 */
+	if (squaredWeights_.size() > 0) {
+		std::vector<size_t> shape(axes_->GetShape());
+		create_image(fits, shape, "ERRORS");
+		write_pixels(fits, shape, squaredWeights_);
 	}
 	
 	/*
