@@ -35,7 +35,7 @@ import scipy
 import scipy.interpolate
 import scipy.integrate
 
-
+from os.path import expandvars
 from icecube import icetray, dataclasses, clsim, phys_services
 from I3Tray import I3Units
 
@@ -79,8 +79,8 @@ def applyOpenCLWlenDependentFunction(xValues, functionOpenCL, useReferenceFuncti
     return yValues
 
 
-domAngularAcceptance_holeIce = clsim.GetIceCubeDOMAngularSensitivity(holeIce=True)
-domAngularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=False)
+domAngularAcceptance_holeIce = clsim.GetIceCubeDOMAngularSensitivity(holeIce=expandvars("$I3_SRC/ice-models/resources/models/angsens/as.h2-50cm"))
+domAngularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=expandvars("$I3_SRC/ice-models/resources/models/angsens/as.nominal"))
 
 ####
 

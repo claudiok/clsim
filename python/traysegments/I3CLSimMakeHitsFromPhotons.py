@@ -41,7 +41,7 @@ def I3CLSimMakeHitsFromPhotons(tray, name,
                                RandomService=None,
                                DOMOversizeFactor=5.,
                                UnshadowedFraction=0.9,
-                               UseHoleIceParameterization=True,
+                               HoleIceParameterization=expandvars("$I3_SRC/ice-models/resources/models/angsens/as.nominal"),
                                If=lambda f: True
                                ):
     """
@@ -66,8 +66,11 @@ def I3CLSimMakeHitsFromPhotons(tray, name,
         Set the DOM oversize factor. To disable oversizing, set this to 1.
     :param UnshadowedFraction:
         Fraction of photocathode available to receive light (e.g. unshadowed by the cable)
-    :param UseHoleIceParameterization:
-        Use an angular acceptance correction for hole ice scattering.
+    :param HoleIceParameterization:
+        Set this to a hole ice parameterization file. The default value points to a file 
+        with the coefficients for no angular acceptance correction due to hole ice scattering. 
+        (ice-models project is required). The nominal hole ice correction originally used in 
+        clsim can be found in $I3_SRC/ice-models/resources/models/angsens/as.h2-50cm. 
     :param If:
         Python function to use as conditional execution test for segment modules.        
     """
@@ -80,7 +83,7 @@ def I3CLSimMakeHitsFromPhotons(tray, name,
 
     # detector properties
     domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius = DOMRadius*DOMOversizeFactor, efficiency=UnshadowedFraction)
-    domAngularSensitivity = clsim.GetIceCubeDOMAngularSensitivity(holeIce=UseHoleIceParameterization)
+    domAngularSensitivity = clsim.GetIceCubeDOMAngularSensitivity(holeIce=HoleIceParameterization)
 
     tray.AddModule("I3PhotonToMCPEConverter", name + "_clsim_make_hits",
                    RandomService = RandomService,
