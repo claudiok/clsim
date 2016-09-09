@@ -513,6 +513,8 @@ void I3PhotonToMCPEConverter::DAQ(I3FramePtr frame)
             if ((photon.GetParticleMajorID() != 0) && (photon.GetParticleMinorID() != 0))
             {
                 // index (0,0) is used for flasher photons, set no hit particle for those
+                if (!MCTree)
+                    log_fatal_stream("Did not find a valid I3MCTree with name '" << MCTreeName_ << "'");
                 particle = I3MCTreeUtils::GetParticlePtr(MCTree, photon.GetParticleID());
             }
         
