@@ -44,7 +44,6 @@ def GetHybridParameterizationList(PPCConverter, CrossoverEnergyEM=0.1, Crossover
 
     em_cascades = [dataclasses.I3Particle.EMinus,
                 dataclasses.I3Particle.EPlus,
-                dataclasses.I3Particle.Pi0, #Pi0s produce pure EM cascades ... in PPC they are "hadrons", though
                 dataclasses.I3Particle.Gamma,
                 dataclasses.I3Particle.Brems,
                 dataclasses.I3Particle.DeltaE,
@@ -54,6 +53,7 @@ def GetHybridParameterizationList(PPCConverter, CrossoverEnergyEM=0.1, Crossover
                 dataclasses.I3Particle.Hadrons,
                 dataclasses.I3Particle.PiPlus,
                 dataclasses.I3Particle.PiMinus,
+                dataclasses.I3Particle.Pi0, #Pi0s are parametrized as EM cascades above crossover energy, but have mass and should be propagated with hadrons 
                 dataclasses.I3Particle.K0_Long,
                 dataclasses.I3Particle.KPlus,
                 dataclasses.I3Particle.KMinus,
