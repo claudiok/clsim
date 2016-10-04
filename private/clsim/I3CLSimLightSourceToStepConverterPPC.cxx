@@ -32,6 +32,7 @@
 #include <cmath>
 
 #include "clsim/I3CLSimLightSourceToStepConverterPPC.h"
+#include "sim-services/I3SimConstants.h"
 
 #include "clsim/function/I3CLSimFunction.h"
 
@@ -280,40 +281,25 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLight
     const double E = particle.GetEnergy()/I3Units::GeV;
     const double logE = std::max(0., std::log(E)); // protect against extremely low energies
 
-    if (isElectron) {
-
+    if (isElectron || isHadron) {
         const double nph=5.21*(0.924*I3Units::g/I3Units::cm3)/density;
-        const double Lrad = useCascadeExtension_ ? 0.358*(I3Units::g/I3Units::cm3)/density : 0.;
-        double pa=0.0;
-        double pb=0.0;     
-
-        switch(particle.GetType()){
-            default:
-            case I3Particle::DeltaE:
-            case I3Particle::Brems:
-            case I3Particle::PairProd:
-            case I3Particle::EMinus:
-                pa=2.01849+0.63176*logE;
-                pb=Lrad/0.63207;
-                break;
-            case I3Particle::EPlus:  // e+
-                pa=2.00035+0.63190*logE; 
-                pb=Lrad/0.63008;
-                break;
-            case I3Particle::Gamma:
-            case I3Particle::Pi0:   // gamma, pi0
-                pa=2.83923+0.58209*logE; 
-                pb=Lrad/0.64526;
-                break;  
-        }   
-        if (E < 1.*I3Units::GeV) pb=0.; // this sets the cascade length to 0.
         
-        const double meanNumPhotons = meanPhotonsPerMeter*nph*E;
+        // Get cascade extension and fluctuation parameters
+        I3SimConstants::ShowerParameters shower_params(particle.GetType(), E, density);
+        double f = 1.;
+        if (shower_params.emScaleSigma != 0.) {
+            do {
+                f=shower_params.emScale +
+                    shower_params.emScaleSigma*randomService_->Gaus(0.,1.);
+            } while((f<0.) || (1.<f));
+        }
+        
+        const double meanNumPhotons = f*meanPhotonsPerMeter*nph*E;
         
         uint64_t numPhotons;
         if (meanNumPhotons > 1e7)
         {
-            log_debug("HUGE EVENT: (e-m) meanNumPhotons=%f, nph=%f, E=%f (approximating possion by gaussian)", meanNumPhotons, nph, E);
+            log_debug("HUGE EVENT: (cascade) meanNumPhotons=%f, nph=%f, E=%f (approximating possion by gaussian)", meanNumPhotons, nph, E);
             double numPhotonsDouble=0;
             do {
                 numPhotonsDouble = randomService_->Gaus(meanNumPhotons, std::sqrt(meanNumPhotons));
@@ -335,139 +321,38 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLight
         const uint64_t numSteps = numPhotons/usePhotonsPerStep;
         const uint64_t numPhotonsInLastStep = numPhotons%usePhotonsPerStep;
 
-        log_trace("Generating %" PRIu64 " steps for electromagetic", numSteps);
+        log_trace("Generating %" PRIu64 " steps for cascade", numSteps);
         
-        CascadeStepData_t cascadeStepGenInfo;
-        cascadeStepGenInfo.particle=particle;
-        cascadeStepGenInfo.particle=particle;
-        cascadeStepGenInfo.particleIdentifier=identifier;
-        cascadeStepGenInfo.photonsPerStep=usePhotonsPerStep;
-        cascadeStepGenInfo.numSteps=numSteps;
-        cascadeStepGenInfo.numPhotonsInLastStep=numPhotonsInLastStep;
-        cascadeStepGenInfo.pa=pa;
-        cascadeStepGenInfo.pb=pb;
-        
-        log_trace("== enqueue cascade (e-m)");
-        stepGenerationQueue_.push_back(cascadeStepGenInfo);
-        
-        log_trace("Generate %u steps for E=%fGeV. (electron)", static_cast<unsigned int>(numSteps+1), E);
-    } else if (isHadron) {
-        
-        const double Lrad = useCascadeExtension_ ? 0.95*(I3Units::g/I3Units::cm3)/density : 0.;        
-        const double em=5.21*(0.924*I3Units::g/I3Units::cm3)/density;
-        double f=1.0;
-        double pa,pb;
-        double E0, m, f0, rms0, gamma;
-        switch(particle.GetType()){
-            default:
-            case I3Particle::NuclInt:
-            case I3Particle::Hadrons:
-            case I3Particle::PiPlus:
-                pa=1.58357292+0.41886807*logE; 
-                pb=Lrad/0.33833116;
-                E0=0.18791678;
-                m =0.16267529;
-                f0=0.30974123;
-                rms0 =0.95899551;
-                gamma=1.35589541;
-                break;
-            case I3Particle::PiMinus:
-                pa=1.69176636+0.40803489*logE; 
-                pb=Lrad/0.34108075;
-                E0=0.19826506;
-                m =0.16218006;
-                f0=0.31859323;
-                rms0 =0.94033488;
-                gamma=1.35070162;
-                break;
-            case I3Particle::K0_Long:
-                pa=1.95948974+0.34934666*logE;
-                pb=Lrad/0.34535151;
-                E0=0.21687243;
-                m =0.16861530;
-                f0=0.27724987;
-                rms0 =1.00318874;
-                gamma=1.37528605;
-                break;
-            case I3Particle::PPlus:
-                pa=1.47495778+0.40450398*logE;
-                pb=Lrad/0.35226706;
-                E0=0.29579368;
-                m =0.19373018;
-                f0=0.02455403;
-                rms0 =1.01619344;
-                gamma=1.45477346;
-                break;
-            case I3Particle::Neutron:
-                pa=1.57739060+0.40631102*logE; 
-                pb=Lrad/0.35269455;
-                E0=0.66725124;
-                m =0.19263595;
-                f0=0.17559033;
-                rms0 =1.01414337;
-                gamma=1.45086895;
-                break;
-            case I3Particle::PMinus:
-                pa=1.92249171+0.33701751*logE;
-                pb=Lrad/0.34969748;
-                E0=0.29579368;
-                m =0.19373018;
-                f0=0.02455403;
-                rms0 =1.01094637;
-                gamma=1.50438415;
-                break;
-            } 
-        
-        if (E < 1.*I3Units::GeV) pb=0.; // this sets the cascade length to 0.
-        
-        double e=std::max(2.71828183, E);
-        double F=1.-pow(e/E0, -m)*(1.-f0);
-        double dF=F*rms0*pow(log(e), -gamma);  //XXX: Should be log (and not log10) according to values from ppc
-        do {f=F+dF*randomService_->Gaus(0.,1.);} while((f<0.) || (1.<f));
-        
-        const double nph=f*em;
-        
-        const double meanNumPhotons = meanPhotonsPerMeter*nph*E;
-        
-        uint64_t numPhotons;
-        if (meanNumPhotons > 1e7)
-        {
-            log_debug("HUGE EVENT: (hadron) meanNumPhotons=%f, nph=%f, E=%f (approximating possion by gaussian)", meanNumPhotons, nph, E);
-            double numPhotonsDouble=0;
-            do {
-                numPhotonsDouble = randomService_->Gaus(meanNumPhotons, std::sqrt(meanNumPhotons));
-            } while (numPhotonsDouble<0.);
-            
-            if (numPhotonsDouble > static_cast<double>(std::numeric_limits<uint64_t>::max()))
-                log_fatal("Too many photons for counter. internal limitation.");
-            numPhotons = static_cast<uint64_t>(numPhotonsDouble);
-        }
-        else
-        {
-            numPhotons = static_cast<uint64_t>(randomService_->Poisson(meanNumPhotons));
-        }
-        
-        uint64_t usePhotonsPerStep = static_cast<uint64_t>(photonsPerStep_);
-        if (static_cast<double>(numPhotons) > useHighPhotonsPerStepStartingFromNumPhotons_)
-            usePhotonsPerStep = static_cast<uint64_t>(highPhotonsPerStep_);
-        
-        const uint64_t numSteps = numPhotons/usePhotonsPerStep;
-        const uint64_t numPhotonsInLastStep = numPhotons%usePhotonsPerStep;
-        
-        log_trace("Generating %" PRIu64 " steps for hadron", numSteps);
-        
-        CascadeStepData_t cascadeStepGenInfo;
-        cascadeStepGenInfo.particle=particle;
-        cascadeStepGenInfo.particleIdentifier=identifier;
-        cascadeStepGenInfo.photonsPerStep=usePhotonsPerStep;
-        cascadeStepGenInfo.numSteps=numSteps;
-        cascadeStepGenInfo.numPhotonsInLastStep=numPhotonsInLastStep;
-        cascadeStepGenInfo.pa=pa;
-        cascadeStepGenInfo.pb=pb;
-        log_trace("== enqueue cascade (hadron)");
-        stepGenerationQueue_.push_back(cascadeStepGenInfo);
+        if (particle.GetShape() == I3Particle::CascadeSegment) {
+            if (!(particle.GetLength() > 0))
+                log_fatal_stream("Found a cascade segment with length "
+                    << particle.GetLength() << ". This should not be.");
+            MuonStepData_t segmentStepGenInfo;
+            segmentStepGenInfo.particle=particle;
+            segmentStepGenInfo.particle=particle;
+            segmentStepGenInfo.particleIdentifier=identifier;
+            segmentStepGenInfo.photonsPerStep=usePhotonsPerStep;
+            segmentStepGenInfo.numSteps=numSteps;
+            segmentStepGenInfo.numPhotonsInLastStep=numPhotonsInLastStep;
+            segmentStepGenInfo.stepIsCascadeLike=true;
+            segmentStepGenInfo.length=particle.GetLength();
 
-        log_trace("Generate %lu steps for E=%fGeV. (hadron)", static_cast<unsigned long>(numSteps+1), E);
+            log_trace("== enqueue cascade segment");
+            stepGenerationQueue_.push_back(segmentStepGenInfo);
+        } else {
+            CascadeStepData_t cascadeStepGenInfo;
+            cascadeStepGenInfo.particle=particle;
+            cascadeStepGenInfo.particle=particle;
+            cascadeStepGenInfo.particleIdentifier=identifier;
+            cascadeStepGenInfo.photonsPerStep=usePhotonsPerStep;
+            cascadeStepGenInfo.numSteps=numSteps;
+            cascadeStepGenInfo.numPhotonsInLastStep=numPhotonsInLastStep;
+            cascadeStepGenInfo.pa=shower_params.a;
+            cascadeStepGenInfo.pb=shower_params.b;
+        
+            log_trace("== enqueue cascade");
+            stepGenerationQueue_.push_back(cascadeStepGenInfo);
+        }
     } else if (isMuon || isTau) {
         // TODO: for now, treat muons and taus (with lengths after MMC) the same.
         // This is compatible to what hit-maker does, but is of course not the right thing
