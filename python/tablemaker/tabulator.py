@@ -424,7 +424,7 @@ def I3CLSimTabulatePhotons(tray, name,
 def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Units.degree, Azimuth=0.*I3Units.degree, ZCoordinate=0.*I3Units.m,
     Energy=1.*I3Units.GeV, FlasherWidth=127, FlasherBrightness=127, Seed=12345, NEvents=100,
     IceModel='spice_mie', DisableTilt=False, Filename="", TabulateImpactAngle=False,
-    PhotonPrescale=1, Axes=None, Directions=None):
+    PhotonPrescale=1, Axes=None, Directions=None, Sensor='DOM', RecordErrors=False):
     
     """
     Tabulate the distribution of photoelectron yields on IceCube DOMs from various
@@ -463,6 +463,7 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
     :param FlasherBrightness: the brightness of the flasher pulse (only for flasher tables)
     :param Seed: the seed for the random number service
     :param NEvents: the number of events to simulate
+    :param RecordErrors: record the squares of weights as well (useful for error bars)
     :param IceModel: the path to an ice model in $I3_SRC/clsim/resources/ice. Likely values include:
         'spice_mie' ppc-style SPICE-Mie parametrization
         'photonics_spice_1/Ice_table.spice.i3coords.cos080.10feb2010.txt' Photonics-style SPICE1 table
@@ -654,6 +655,6 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
         UseGeant4=False,
         OverrideApproximateNumberOfWorkItems=1,     # if you *would* use multi-threading, this would be the maximum number of jobs to run in parallel (OpenCL is free to split them)
         ExtraArgumentsToI3CLSimModule=dict(Filename=Filename, TableHeader=header,
-            Axes=Axes, PhotonsPerBunch=200, EntriesPerPhoton=5000),
+            Axes=Axes, PhotonsPerBunch=200, EntriesPerPhoton=5000, RecordErrors=RecordErrors),
         MediumProperties=parseIceModel(expandvars("$I3_SRC/clsim/resources/ice/" + IceModel), disableTilt=DisableTilt),
     )

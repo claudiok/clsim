@@ -41,6 +41,7 @@
 #include <boost/foreach.hpp>
 #include <boost/thread.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <boost/filesystem.hpp>
 
 #include <fstream>
@@ -69,9 +70,10 @@ private:
 	I3CLSimOpenCLDeviceSeries openCLDeviceList_;
 	double referenceArea_;
 	size_t photonsPerBunch_, entriesPerPhoton_;
+	bool recordErrors_;
 	
 	I3CLSimLightSourceToStepConverterPtr particleToStepsConverter_;
-	I3CLSimStepToTableConverterPtr tabulator_;
+	boost::scoped_ptr<I3CLSimStepToTableConverter> tabulator_;
 	
 	std::string tablePath_;
 	boost::python::dict tableHeader_;
@@ -108,6 +110,7 @@ I3CLSimTabulatorModule::I3CLSimTabulatorModule(const I3Context &ctx)
 	AddParameter("PhotonsPerBunch", "", 200);
 	AddParameter("EntriesPerPhoton", "", 3000);
 	AddParameter("Filename", "", "");
+	AddParameter("RecordErrors", "", false);
 	AddParameter("TableHeader", "", boost::python::dict());
 	AddParameter("Axes", "", axes_);
 }
@@ -127,6 +130,7 @@ void I3CLSimTabulatorModule::Configure()
 	GetParameter("PhotonsPerBunch", photonsPerBunch_);
 	GetParameter("EntriesPerPhoton", entriesPerPhoton_);
 	GetParameter("Filename", tablePath_);
+	GetParameter("RecordErrors", recordErrors_);
 	GetParameter("TableHeader", tableHeader_);
 	GetParameter("Axes", axes_);
 	
@@ -141,10 +145,12 @@ void I3CLSimTabulatorModule::Configure()
 	}
 	fs::remove(tablePath_);
 	
-	tabulator_ = boost::make_shared<I3CLSimStepToTableConverter>(
+	tabulator_.reset(
+	    new I3CLSimStepToTableConverter(
 	    openCLDeviceList_[0], axes_, entriesPerPhoton_*photonsPerBunch_,
+	    recordErrors_,
 	    mediumProperties_, spectrumTable_, referenceArea_,
-	    wavelengthGenerationBias_, angularAcceptance_, randomService_);
+	    wavelengthGenerationBias_, angularAcceptance_, randomService_));
 	
 	particleToStepsConverter_ =
 	    I3CLSimModuleHelper::initializeGeant4(randomService_,

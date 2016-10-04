@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <cstddef>
 
 // this uses GMP for arbitrary precision math and Miller-Rabin probabilistic primality tests
 #include "gmp.h"

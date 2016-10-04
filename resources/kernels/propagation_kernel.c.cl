@@ -447,6 +447,7 @@ inline bool savePath(
             FlatDiskWeight = 0.0;
         }   
 
+        // FlatDiskWeight = 1.0;    // use to make a photon table for the photon flux
 
         // 3. Step get the table coordinates and add the correct time
         coordinate_t coords = getCoordinates(mDOMCenter, photonDirAndWlen, source, RNG_ARGS_TO_CALL);
