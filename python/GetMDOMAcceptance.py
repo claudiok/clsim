@@ -7,14 +7,14 @@ from icecube.clsim import I3CLSimFunctionFromTable
 from I3Tray import I3Units
 from os.path import expandvars
 
-def GetMDOMAcceptance():
+def GetMDOMAcceptance(efficiency=1.0):
 
     ### this' the new shit with flat disc 'n' everything
     
     filename = os.environ['I3_SRC'] + '/clsim/resources/tablemaker/mDOM/Acceptance_PMT_in_mDOM_IceTray.txt'
     acceptancemDOM = np.loadtxt(filename, dtype = { 'names' : ('wlen', 'acceptance'),
                                                        'formats' : ('f8', 'f8')})    
-    efficiencyFnc = I3CLSimFunctionFromTable(250.0 * I3Units.nanometer,  2.0 * I3Units.nanometer, acceptancemDOM['acceptance'])
+    efficiencyFnc = I3CLSimFunctionFromTable(250.0 * I3Units.nanometer,  2.0 * I3Units.nanometer, efficiency*acceptancemDOM['acceptance'])
 
 
     ### this is the old stuff

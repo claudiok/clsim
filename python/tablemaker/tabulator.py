@@ -111,7 +111,7 @@ from icecube.clsim import AutoSetGeant4Environment
 
 from icecube.clsim.traysegments.common import configureOpenCLDevices, parseIceModel
 from icecube import icetray
-from os.path import expandvars
+from os.path import expandvars, isdir
 
 @icetray.traysegment
 def I3CLSimTabulatePhotons(tray, name,
@@ -635,9 +635,12 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
 
     ### changed this or the mDOM ###
     #domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius=math.sqrt(PhotonPrescale)*DOMRadius)
-    domAcceptance = clsim.GetMDOMAcceptance()
+    domAcceptance = clsim.GetMDOMAcceptance(efficiency=1./PhotonPrescale)
     #angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=True)
     angularAcceptance = clsim.GetMDOMAngularSensitivity()
+
+    if not isdir(IceModel):
+        IceModel = expandvars("$I3_SRC/clsim/resources/ice/" + IceModel)
 
     tray.AddSegment(I3CLSimTabulatePhotons, name+"makeCLSimPhotons",
         MCTreeName = mctree,                        # if source is a cascade this will point to the I3MCTree
@@ -656,5 +659,5 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
         OverrideApproximateNumberOfWorkItems=1,     # if you *would* use multi-threading, this would be the maximum number of jobs to run in parallel (OpenCL is free to split them)
         ExtraArgumentsToI3CLSimModule=dict(Filename=Filename, TableHeader=header,
             Axes=Axes, PhotonsPerBunch=200, EntriesPerPhoton=5000, RecordErrors=RecordErrors),
-        MediumProperties=parseIceModel(expandvars("$I3_SRC/clsim/resources/ice/" + IceModel), disableTilt=DisableTilt),
+        MediumProperties=parseIceModel(IceModel, disableTilt=DisableTilt),
     )
