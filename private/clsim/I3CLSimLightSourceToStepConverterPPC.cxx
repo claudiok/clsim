@@ -348,7 +348,7 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLight
             cascadeStepGenInfo.numSteps=numSteps;
             cascadeStepGenInfo.numPhotonsInLastStep=numPhotonsInLastStep;
             cascadeStepGenInfo.pa=shower_params.a;
-            cascadeStepGenInfo.pb=shower_params.b;
+            cascadeStepGenInfo.pb=(useCascadeExtension_ ? shower_params.b : 0.);
         
             log_trace("== enqueue cascade");
             stepGenerationQueue_.push_back(cascadeStepGenInfo);
