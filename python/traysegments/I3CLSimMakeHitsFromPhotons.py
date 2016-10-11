@@ -41,7 +41,7 @@ def I3CLSimMakeHitsFromPhotons(tray, name,
                                RandomService=None,
                                DOMOversizeFactor=5.,
                                UnshadowedFraction=0.9,
-                               HoleIceParameterization=expandvars("$I3_SRC/ice-models/resources/models/angsens/as.nominal"),
+                               HoleIceParameterization=expandvars("$I3_SRC/ice-models/resources/models/angsens/as.h2-50cm"),
                                If=lambda f: True
                                ):
     """
@@ -67,10 +67,10 @@ def I3CLSimMakeHitsFromPhotons(tray, name,
     :param UnshadowedFraction:
         Fraction of photocathode available to receive light (e.g. unshadowed by the cable)
     :param HoleIceParameterization:
-        Set this to a hole ice parameterization file. The default value points to a file 
-        with the coefficients for no angular acceptance correction due to hole ice scattering. 
-        (ice-models project is required). The nominal hole ice correction originally used in 
-        clsim can be found in $I3_SRC/ice-models/resources/models/angsens/as.h2-50cm. 
+        Set this to a hole ice parameterization file. The default file contains the 
+        coefficients for nominal angular acceptance correction due to hole ice (ice-models 
+        project is required). Use file $I3_SRC/ice-models/resources/models/angsens/as.nominal 
+        for no hole ice parameterization. 
     :param If:
         Python function to use as conditional execution test for segment modules.        
     """

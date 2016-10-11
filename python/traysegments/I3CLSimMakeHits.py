@@ -70,7 +70,7 @@ def I3CLSimMakeHits(tray, name,
                     DoNotParallelize=False,
                     DOMOversizeFactor=5.,
                     UnshadowedFraction=0.9,
-                    UseHoleIceParameterization=True,
+                    HoleIceParameterization=expandvars("$I3_SRC/ice-models/resources/models/angsens/as.h2-50cm"),
                     ExtraArgumentsToI3CLSimModule=dict(),
                     If=lambda f: True
                     ):
@@ -220,8 +220,11 @@ def I3CLSimMakeHits(tray, name,
         Set the DOM oversize factor. To disable oversizing, set this to 1.
     :param UnshadowedFraction:
         Fraction of photocathode available to receive light (e.g. unshadowed by the cable)
-    :param UseHoleIceParameterization:
-        Use an angular acceptance correction for hole ice scattering.
+    :param HoleIceParameterization:
+        Set this to a hole ice parameterization file. The default file contains the 
+        coefficients for nominal angular acceptance correction due to hole ice (ice-models 
+        project is required). Use file $I3_SRC/ice-models/resources/models/angsens/as.nominal 
+        for no hole ice parameterization.
     :param If:
         Python function to use as conditional execution test for segment modules.        
     """
@@ -295,7 +298,7 @@ def I3CLSimMakeHits(tray, name,
                                      DoNotParallelize=DoNotParallelize,
                                      DOMOversizeFactor=DOMOversizeFactor,
                                      UnshadowedFraction=UnshadowedFraction,
-                                     UseHoleIceParameterization=UseHoleIceParameterization,
+                                     HoleIceParameterization=HoleIceParameterization,
                                      If=If,
                                      **kwargs)
 
@@ -314,7 +317,7 @@ def I3CLSimMakeHits(tray, name,
                                                  RandomService=RandomService,
                                                  DOMOversizeFactor=DOMOversizeFactor,
                                                  UnshadowedFraction=UnshadowedFraction,
-                                                 UseHoleIceParameterization=UseHoleIceParameterization,
+                                                 HoleIceParameterization=HoleIceParameterization,
                                                  If=If)
         
         if hasattr(icetray, "traysegment"):

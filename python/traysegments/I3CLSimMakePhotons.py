@@ -27,6 +27,8 @@
 from __future__ import print_function
 
 import string
+import numpy
+
 from os.path import expandvars, exists, isdir, isfile
 
 from icecube import icetray, dataclasses
@@ -70,7 +72,7 @@ def I3CLSimMakePhotons(tray, name,
                        DoNotParallelize=False,
                        DOMOversizeFactor=5.,
                        UnshadowedFraction=0.9,
-                       UseHoleIceParameterization=True,
+                       HoleIceParameterization=expandvars("$I3_SRC/ice-models/resources/models/angsens/as.h2-50cm"),
                        DOMRadius=0.16510*icetray.I3Units.m, # 13" diameter
                        OverrideApproximateNumberOfWorkItems=None,
                        ExtraArgumentsToI3CLSimModule=dict(
@@ -230,8 +232,11 @@ def I3CLSimMakePhotons(tray, name,
         Set the DOM oversize factor. To disable oversizing, set this to 1.
     :param UnshadowedFraction:
         Fraction of photocathode available to receive light (e.g. unshadowed by the cable)
-    :param UseHoleIceParameterization:
-        Use an angular acceptance correction for hole ice scattering.
+    :param HoleIceParameterization:
+        Set this to a hole ice parameterization file. The default file contains the 
+        coefficients for nominal angular acceptance correction due to hole ice (ice-models 
+        project is required). Use file $I3_SRC/ice-models/resources/models/angsens/as.nominal 
+        for no hole ice parameterization.
     :param DOMRadius:
         Allow the DOMRadius to be set externally, for things like mDOMs.
     :param OverrideApproximateNumberOfWorkItems:
@@ -342,11 +347,11 @@ def I3CLSimMakePhotons(tray, name,
         mediumProperties = IceModelLocation
 
     # detector properties
-    if UseHoleIceParameterization:
-        # the hole ice acceptance curve peaks at 0.75 instead of 1
-        domEfficiencyCorrection = UnshadowedFraction*0.75*1.35 * 1.01 # DeepCore DOMs have a relative efficiency of 1.35 plus security margin of +1%
-    else:
-        domEfficiencyCorrection = UnshadowedFraction*1.35      * 1.01 # security margin of +1%
+    
+    # the hole ice acceptance curve peaks at a value different than 1
+    peak = numpy.loadtxt(HoleIceParameterization)[0] # The value at which the hole ice acceptance curve peaks
+    domEfficiencyCorrection = UnshadowedFraction*peak*1.35 * 1.01 # DeepCore DOMs have a relative efficiency of 1.35 plus security margin of +1%
+                                                                
     domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius = DOMRadius*DOMOversizeFactor, efficiency=domEfficiencyCorrection)
 
     # photon generation wavelength bias
