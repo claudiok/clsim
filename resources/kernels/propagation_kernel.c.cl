@@ -351,7 +351,11 @@ bool HitDisk(floating4_t photonPosAndTime,
     */
     // Optimized 
 
-    float PMTRadius = 0.05375 ;
+    // the radius of the flat disk used to be 0.05375m, which yields in the geometric
+    // area of a 3" PMT with the reflector ring at an angle of 0°. Since there is a 
+    // gap between PMT and reflector ring the disk radius was reduced to 0.051m to take
+    // the reduced sensitive area into account.
+    float PMTRadius = 0.051 ;  
     float d = (A_z - P_z) / photonDirAndWlen.z ;
     float Distance = my_sqrt( my_powr((P_x + photonDirAndWlen.x * d), 2) + 
                               my_powr((P_y + photonDirAndWlen.y * d), 2) ) ;
