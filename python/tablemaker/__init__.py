@@ -1,2 +1,2 @@
 
-from tabulator import TabulatePhotonsFromSource
+from .tabulator import TabulatePhotonsFromSource
