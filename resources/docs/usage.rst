@@ -100,30 +100,15 @@ a python object (instead of a I3Service) is demonstrated.
    from icecube import clsim
 
    I3Seed  = 12345
-   MMCSeed = 12345
-   mmcOpts = "-seed=%i -radius=900 -length=1600" % (MMCseed)
-
    # a random number generator
    randomService = phys_services.I3SPRNGRandomService(
        seed = I3Seed,
        nstreams = 10000,
        streamnum = 1)
-
-   # MMC stuff
-   load("libc2j-icetray")
-   load("libmmc-icetray")
-
    tray = I3Tray()
 
    tray.AddModule("I3Reader","reader",
                   Filename="input.i3")
-
-   tray.AddModule("I3PropagatorMMC","propagate",
-                  PrimaryTreeName = "I3MCTree",
-                  mode=-1,
-                  opts=mmcOpts,
-                  ShiftParticles = False,
-                  )
 
    tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
        RandomService = randomService,
