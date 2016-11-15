@@ -141,6 +141,21 @@ Another example (using a *photonics* file) would be:
     tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
                     IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos090.11jul2011.txt"))
 
+Prototype Optical Sensors
+-------------------------
+
+By default spherical optical modules are assumed. As most prototype optical modules 
+like WOM, mDOM, D-Egg have some kind of cylindrical extension this has been added to the collision kernel.
+Just add the parameter OMHeight to your call of clsim like so:
+
+tray.Add(I3CLSimMakePhotons, DOMOversizeFactor=1, OMHeight = 0.9*I3Units.m)
+
+This will calculate collisions of photons with your OM for two spheres sepperated by OMHeight 
+and a cylindrical surface connecting those. However there are some constrains to that,
+clsim.I3CLSimMakeHits will not correctly since currently DOMs are assumed. Only DOMOversizeFactor=1
+has been tested yet. The height is also scaled with that factor, however there is no PANCAKE_FACTOR applied, 
+therefore the module will have the actuall size indicated by the DOMOversizeFactor. 
+
 
 License
 -------
