@@ -148,7 +148,7 @@ By default spherical optical modules are assumed. As most prototype optical modu
 like WOM, mDOM, D-Egg have some kind of cylindrical extension this has been added to the collision kernel.
 Just add the parameter OMHeight to your call of clsim like so:
 
-tray.Add(I3CLSimMakePhotons, DOMOversizeFactor=1, OMHeight = 0.9*I3Units.m)
+	tray.Add(I3CLSimMakePhotons, DOMOversizeFactor=1, OMHeight = 0.9*I3Units.m)
 
 This will calculate collisions of photons with your OM for two spheres sepperated by OMHeight 
 and a cylindrical surface connecting those. However there are some constrains to that,

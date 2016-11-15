@@ -5,6 +5,20 @@
 Release Notes
 =============
 
+cylinder_extension_OMs
+----------------------
+
+* Added OMHeight to better simulate new prototype OMs. 
+  This allows to determine collisions of photons with OMs with elongated shape.  
+  Basicaly two spheres sepperated by OMHeight and a cylindrical surface connecting those are assumed.
+  It is suggested to add a parameter OMType which defaults to "DOM" to I3CLSimMakeHits.
+* Removed smin2 from collision Kernel since it does not seem to serve any function.
+  Please revert this change if unexpected behaviour occures (also see code comemnts).
+
+November 15, 2016 Dsutin Hebecker  (hebecker@icecube.wisc.edu)
+--------------------------------------------------------------------------------
+
+
 trunk
 -----
 
