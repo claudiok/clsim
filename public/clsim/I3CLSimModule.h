@@ -172,6 +172,9 @@ private:
     /// Parameter: The DOM radius used during photon tracking.
     double DOMRadius_;
 
+    /// Parameter: The OM Height for cylindrical extensions of OM in GEN2 used during photon tracking.
+    double OMHeight_;
+
     /// Parameter: Specifiy the "oversize factor" (i.e. DOM radius scaling factor).
     double DOMOversizeFactor_;
 

@@ -43,6 +43,8 @@ struct I3CLSimSimpleGeometryWrapper : I3CLSimSimpleGeometry, bp::wrapper<I3CLSim
     // pure virtual
     virtual std::size_t size() const {utils::python_gil_holder gil; return this->get_override("size")();}
     virtual double GetOMRadius() const {utils::python_gil_holder gil; return this->get_override("GetOMRadius")();}
+    virtual double GetOMHeight() const {utils::python_gil_holder gil; return this->get_override("GetOMHeight")();}
+
     
     virtual const std::vector<int32_t> &GetStringIDVector() const {utils::python_gil_holder gil; return this->get_override("GetStringIDVector")();}
     virtual const std::vector<uint32_t> &GetDomIDVector() const {utils::python_gil_holder gil; return this->get_override("GetDomIDVector")();}
@@ -61,7 +63,7 @@ struct I3CLSimSimpleGeometryWrapper : I3CLSimSimpleGeometry, bp::wrapper<I3CLSim
 };
 
 static boost::shared_ptr<I3CLSimSimpleGeometryFromI3Geometry>
-MakeSimpleGeometrySimply(double OMRadius, double oversizeFactor,
+MakeSimpleGeometrySimply(double OMRadius, double OMHeight, double oversizeFactor,
                          const I3FramePtr &frame,
                          const std::vector<int> &ignoreStrings,
                          const std::vector<unsigned int> &ignoreDomIDs,
@@ -77,7 +79,7 @@ MakeSimpleGeometrySimply(double OMRadius, double oversizeFactor,
 	std::set<unsigned int> ignoreDomIDss(ignoreDomIDs.begin(), ignoreDomIDs.end());
 	std::set<std::string> ignoreSubdetectorss(ignoreSubdetectors.begin(), ignoreSubdetectors.end());
 	return I3CLSimSimpleGeometryFromI3GeometryPtr(new I3CLSimSimpleGeometryFromI3Geometry(
-		OMRadius, oversizeFactor,
+		OMRadius, OMHeight, oversizeFactor,
 		frame,
 		ignoreStringss,
 		ignoreDomIDss,
@@ -99,6 +101,7 @@ void register_I3CLSimSimpleGeometry()
         .def("__len__", bp::pure_virtual(&I3CLSimSimpleGeometry::size))
         
         .def("GetOMRadius", bp::pure_virtual(&I3CLSimSimpleGeometry::GetOMRadius))
+        .def("GetOMHeight", bp::pure_virtual(&I3CLSimSimpleGeometry::GetOMHeight))
 
         .def("GetStringIDVector", bp::pure_virtual(&I3CLSimSimpleGeometry::GetStringIDVector), bp::return_value_policy<bp::copy_const_reference>())
         .def("GetDomIDVector", bp::pure_virtual(&I3CLSimSimpleGeometry::GetDomIDVector), bp::return_value_policy<bp::copy_const_reference>())
@@ -138,10 +141,11 @@ void register_I3CLSimSimpleGeometry()
         (
          "I3CLSimSimpleGeometryUserConfigurable",
          bp::init<
-         double, std::size_t
+         double, double, std::size_t
          >(
            (
             bp::arg("OMRadius"),
+            bp::arg("OMHeight"),
             bp::arg("numOMs")
            )
           )
@@ -170,12 +174,13 @@ void register_I3CLSimSimpleGeometry()
         (
          "I3CLSimSimpleGeometryTextFile",
          bp::init<
-         double, const std::string &,
+         double, double, const std::string &,
          int32_t, int32_t,
          uint32_t, uint32_t
          >(
            (
             bp::arg("OMRadius"),
+            bp::arg("OMHeight"),
             bp::arg("filename"),
             bp::arg("ignoreStringIDsSmallerThan")=I3CLSimSimpleGeometryTextFile::default_ignoreStringIDsSmallerThan,
             bp::arg("ignoreStringIDsLargerThan")=I3CLSimSimpleGeometryTextFile::default_ignoreStringIDsLargerThan,
@@ -204,6 +209,7 @@ void register_I3CLSimSimpleGeometry()
         .def("__init__", bp::make_constructor(MakeSimpleGeometrySimply, bp::default_call_policies(),
            (
             bp::arg("OMRadius"),
+            bp::arg("OMHeight"),
             bp::arg("oversizeFactor"),
             bp::arg("frame"),
 #define default(name, type) std::vector<type>(I3CLSimSimpleGeometryFromI3Geometry::default_##name.begin(), I3CLSimSimpleGeometryFromI3Geometry::default_##name.end()) 

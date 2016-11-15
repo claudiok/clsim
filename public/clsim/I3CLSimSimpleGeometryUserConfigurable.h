@@ -39,13 +39,14 @@ class I3CLSimSimpleGeometryUserConfigurable : public I3CLSimSimpleGeometry
 {
     
 public:
-    I3CLSimSimpleGeometryUserConfigurable(double OMRadius, std::size_t numOMs);
+    I3CLSimSimpleGeometryUserConfigurable(double OMRadius, double OMHeight, std::size_t numOMs);
     virtual ~I3CLSimSimpleGeometryUserConfigurable();
 
     virtual std::size_t size() const {return numOMs_;}
 
     /// This is the radius *with* oversizing applied!
     virtual double GetOMRadius() const {return OMRadius_;}
+    virtual double GetOMHeight() const {return OMHeight_;}
     
     virtual const std::vector<int32_t> &GetStringIDVector() const {return stringIDs_;}
     virtual const std::vector<uint32_t> &GetDomIDVector() const {return domIDs_;}
@@ -73,6 +74,7 @@ public:
     
 private:
     double OMRadius_;
+    double OMHeight_;
     std::size_t numOMs_;
     
     std::vector<int32_t> stringIDs_;

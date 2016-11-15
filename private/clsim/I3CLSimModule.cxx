@@ -162,6 +162,11 @@ geometryIsConfigured_(false)
                  "The DOM radius used during photon tracking.",
                  DOMRadius_);
 
+    OMHeight_=0*I3Units::m; //default 0 for spherical modules
+    AddParameter("OMHeight",
+                 "The OM Height for cylindrical extensions of OM in GEN2 used during photon tracking.",
+                 OMHeight_);
+
     DOMOversizeFactor_=1.; // no oversizing
     AddParameter("DOMOversizeFactor",
                  "Specifiy the \"oversize factor\" (i.e. DOM radius scaling factor).",
@@ -403,6 +408,7 @@ void I3CLSimModule::Configure()
     GetParameter("OpenCLDeviceList", openCLDeviceList_);
 
     GetParameter("DOMRadius", DOMRadius_);
+    GetParameter("OMHeight",OMHeight_);
     GetParameter("DOMOversizeFactor", DOMOversizeFactor_);
     GetParameter("DOMPancakeFactor", pancakeFactor_);
 
@@ -688,6 +694,7 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
         geometry_ = I3CLSimSimpleGeometryFromI3GeometryPtr
         (
          new I3CLSimSimpleGeometryFromI3Geometry(DOMRadius_,
+                                                 OMHeight_,
                                                  DOMOversizeFactor_,
                                                  frame,
                                                  ignoreStringsSet,
@@ -706,6 +713,7 @@ void I3CLSimModule::DigestGeometry(I3FramePtr frame)
         geometry_ = I3CLSimSimpleGeometryFromI3GeometryPtr
         (
          new I3CLSimSimpleGeometryFromI3Geometry(DOMRadius_,
+                                                 OMHeight_,
                                                  DOMOversizeFactor_,
                                                  frame,
                                                  ignoreStringsSet,

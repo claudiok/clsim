@@ -106,7 +106,8 @@ inline void checkForCollision_OnString(
         floating_t domPosX, domPosY, domPosZ;
         geometryGetDomPosition(stringNum, domNum, &domPosX, &domPosY, &domPosZ);
 
-        floating_t urdot, discr;
+        floating_t smin1 = INFINITY;
+#ifndef OM_HEIGHT // check if DOM/pDOM or GEN2 OM
         {
             const floating4_t drvec = (const floating4_t)(domPosX - photonPosAndTime.x,
                                                           domPosY - photonPosAndTime.y,
@@ -114,32 +115,99 @@ inline void checkForCollision_OnString(
                                                           ZERO);
             const floating_t dr2 = dot(drvec,drvec);
 
-            urdot = dot(drvec, photonDirAndWlen); // this assumes drvec.w==0
-            discr   = sqr(urdot) - dr2 + OM_RADIUS*OM_RADIUS;   // (discr)^2
-        }
-        
-        if (discr < ZERO) continue; // no intersection with this DOM
-        
+            const floating_t urdot = dot(drvec, photonDirAndWlen); // this assumes drvec.w==0
+            floating_t discr   = sqr(urdot) - dr2 + OM_RADIUS*OM_RADIUS;   // (discr)^2  // new constant introduced 
+
+            if (discr < ZERO) continue; // no intersection with this DOM
 #ifdef PANCAKE_FACTOR        
-        discr = my_sqrt(discr)/PANCAKE_FACTOR;
+            discr = my_sqrt(discr)/PANCAKE_FACTOR;
 #else
-        discr = my_sqrt(discr);
-#endif        
+            discr = my_sqrt(discr);
+#endif   
+            // I removed smin2 because if smin1 < ZERO => either smin2 < ZERO or flasher photon starting in om in both cases a "continue" follows. 
+            // The only exception should be tangential photons that are very improbable 1/(floatmax) and should be suppressed by the OM angular acceptance anyway
+            // However if any unexpected behavior occurs try uncommenting the following block
+            /*{// by construction: smin1 < smin2
+                // distance from current point along the track to second intersection
+                // smin2 > 0 && smin1 < 0 means that there *is* an intersection, but we are starting inside the DOM. 
+                // This allows photons starting inside a DOM to leave (necessary for flashers):
+                const floating_t smin2 = urdot + discr;
+                if (smin2 < ZERO) continue; // implies smin1 < 0, so no intersection
+            }*/
 
-        // by construction: smin1 < smin2
-
-        {
-            // distance from current point along the track to second intersection
-            const floating_t smin2 = urdot + discr;
-            if (smin2 < ZERO) continue; // implies smin1 < 0, so no intersection
+            // distance from current point along the track to first intersection
+            smin1 = urdot - discr;
         }
+#else
+        {
+            //Calculate intersection for cylindrical modules::
+            //spheres calculated as before but twice with +/- height/2 offset
+                //get smin1 each
+            //for the cylinder side area calculate the intersection in the horizontal plane and ignore height for starters
+                //also get smin1 but only keep photons where where photonDirAndWlen.z*smin1 < height/2. && photonDirAndWlen.z*smin > -height/2 relative to OM position.
+            // keep the shortest (earliest) smin1 intersection
+            // FYI smin 2 is actually not needed and has been excluded for simplification and speed
+            floating_t urdot_us, urdot_ls, urdot_m, discr_us, discr_ls, discr_m, h_norm;
+            {//upper sphere
+                const floating4_t drvec_us = (const floating4_t)(domPosX - photonPosAndTime.x,
+                                                              domPosY - photonPosAndTime.y,
+                                                              domPosZ - photonPosAndTime.z + OM_HEIGHT/2.,
+                                                              ZERO);
+                const floating_t dr2_us = dot(drvec_us, drvec_us);
 
-        // distance from current point along the track to first intersection
-        const floating_t smin1 = urdot - discr;
+                urdot_us = dot(drvec_us, photonDirAndWlen); // this assumes drvec.w==0 / actually it does not need to be 0, it is ignored anyway 
+                discr_us   = sqr(urdot_us) - dr2_us + OM_RADIUS*OM_RADIUS;   // (discr)^2  // new constant introduced 
+            }
+            {//lower sphere
+                const floating4_t drvec_ls = (const floating4_t)(domPosX - photonPosAndTime.x,
+                                                              domPosY - photonPosAndTime.y,
+                                                              domPosZ - photonPosAndTime.z - OM_HEIGHT/2.,
+                                                              ZERO);
+                const floating_t dr2_ls = dot(drvec_ls, drvec_ls);
 
-        // smin2 > 0 && smin1 < 0 means that there *is* an intersection, but we are starting inside the DOM. 
-        // This allows photons starting inside a DOM to leave (necessary for flashers):
-        if (smin1 < ZERO) continue;
+                urdot_ls = dot(drvec_ls, photonDirAndWlen); // this assumes drvec.w==0 
+                discr_ls   = sqr(urdot_ls) - dr2_ls + OM_RADIUS*OM_RADIUS;   // (discr)^2  // new constant introduced 
+            }
+            {//cylinder (side area) / mantle (it's a German thing ;) )
+                const floating4_t drvec_m = (const floating4_t)(domPosX - photonPosAndTime.x,
+                                                              domPosY - photonPosAndTime.y,
+                                                              ZERO, //assume infinite long mantle for starters
+                                                              ZERO);
+                const floating_t dr2_m = dot(drvec_m, drvec_m);
+
+                h_norm = my_sqrt(sqr(photonDirAndWlen.x) + sqr(photonDirAndWlen.y)); //length of the two dimensional direction vector
+                urdot_m = (h_norm > ZERO )  ? dot(drvec_m, photonDirAndWlen/h_norm) : ZERO ; // avoid division by zero, h_norm==0 means straight up going photon thus no intersection with cylinder side area anyway / this assumes drvec.w==0 
+                discr_m   = sqr(urdot_m) - dr2_m + OM_RADIUS*OM_RADIUS;   // (discr)^2 
+            }
+            if (discr_us < ZERO && discr_ls < ZERO && discr_m < ZERO) continue; // no intersection with the upper sphere and lower sphere and infinite mantle aka no intersection with this OM
+
+            //how can I distribute the following to 3 different worker groups?
+            if (discr_us > ZERO ){
+                discr_us = my_sqrt(discr_us);
+                floating_t smin_temp  = urdot_us - discr_us;
+                smin1 = (smin_temp < smin1 )  ? smin_temp : smin1 ;
+                if (smin1 < ZERO) continue; // only first intersection needed
+            }            
+            if (discr_ls > ZERO ){
+                discr_ls = my_sqrt(discr_ls);
+                floating_t smin_temp  = urdot_ls - discr_ls;
+                smin1 = (smin_temp < smin1 )  ? smin_temp : smin1 ; // take the shortest distance until intersection
+                if (smin1 < ZERO) continue; // only first intersection needed
+            }
+            if (discr_m > ZERO ){
+                discr_m = my_sqrt(discr_m);
+                floating_t smin_temp  = (urdot_m - discr_m)/h_norm; // calculating distance for 3 Dimensions
+                smin1 = (smin_temp < smin1 
+                            && (domPosZ - photonPosAndTime.z - photonDirAndWlen.z*smin_temp) < OM_HEIGHT/2. //check lower constrain
+                            && (domPosZ - photonPosAndTime.z - photonDirAndWlen.z*smin_temp) > -OM_HEIGHT/2. ) //check upper constrain / height constrain for mantle intersection
+                            ? smin_temp : smin1 ;
+                if (smin1 < ZERO) continue; // only first intersection needed
+            }
+        }
+#endif
+
+        //by cosntruction flasher must be in the upper or lower sphere, if they are within the cylinder but not any of the spheres the code needs to be modified!!!
+        if (smin1 < ZERO || smin1 == INFINITY) continue; // reject if no hit or inside any of the 3 geometries 2 spheres 1 cylinder
 
         // if we get here, there *is* an intersection with the DOM (there are two actually, one for
         // the ray enetering the DOM and one when it leaves again). We are interested in the one where enters

@@ -57,6 +57,7 @@ namespace I3CLSimHelper
                                              const std::vector<double> &posZ,
                                              const std::vector<std::string> &subdetectors,
                                              const double omRadius,
+                                             const double omHeight,
                                              std::vector<cl_ushort> &geoLayerToOMNumIndexPerStringSetBuffer,
                                              std::vector<int> &stringIndexToStringIDBuffer,
                                              std::vector<std::vector<unsigned int> > &domIndexToDomIDBuffer_perStringIndex
@@ -93,6 +94,7 @@ namespace I3CLSimHelper
                                                 geometry.GetPosZVector(),
                                                 geometry.GetSubdetectorVector(),
                                                 geometry.GetOMRadius(),
+                                                geometry.GetOMHeight(),
                                                 geoLayerToOMNumIndexPerStringSetBuffer,
                                                 stringIndexToStringIDBuffer,
                                                 domIndexToDomIDBuffer_perStringIndex
@@ -275,10 +277,12 @@ namespace I3CLSimHelper
                            double layerHeight,
                            unsigned int layerNum,
                            const double domRadius,
+                           const double omHeight,
                            const std::vector<unsigned short> &layerToOMNumIndex)
     {
         if (layerNum==0) return false;
         if (domRadius < 0.) return false;
+        if (omHeight < 0.) return false;
         if (currentString.doms.size() >= 0xFFFF) {
             log_fatal("Dom numbers >= 65535 are not supported!");
         }
@@ -302,14 +306,14 @@ namespace I3CLSimHelper
                 
                 bool layerContainsDom=false;
                 
-                if ((domZ-domRadius <= layerZMin) &&
-                    (domZ+domRadius >= layerZMin))
+                if ((domZ-domRadius-omHeight <= layerZMin) &&
+                    (domZ+domRadius+omHeight >= layerZMin))
                     layerContainsDom=true;
-                if ((domZ-domRadius <= layerZMax) &&
-                    (domZ+domRadius >= layerZMax))
+                if ((domZ-domRadius-omHeight <= layerZMax) &&
+                    (domZ+domRadius+omHeight >= layerZMax))
                     layerContainsDom=true;
-                if ((domZ-domRadius >= layerZMin) &&
-                    (domZ+domRadius <= layerZMax))
+                if ((domZ-domRadius-omHeight >= layerZMin) &&
+                    (domZ+domRadius+omHeight <= layerZMax))
                     layerContainsDom=true;
                 
                 
@@ -343,6 +347,7 @@ namespace I3CLSimHelper
     
     void findOverallStringMinMaxZ(const std::vector<stringStruct> &strings,
                                   const double domRadius,
+                                  const double omHeight,
                                   double &minZ,
                                   double &maxZ,
                                   bool includeDomRadius)
@@ -352,11 +357,11 @@ namespace I3CLSimHelper
         if (includeDomRadius) {
             BOOST_FOREACH(const stringStruct& currentString, strings)
             {
-                if ((currentString.minZ-domRadius < minZ) || std::isnan(minZ)) {
-                    minZ = currentString.minZ-domRadius;
+                if ((currentString.minZ-domRadius-omHeight < minZ) || std::isnan(minZ)) {
+                    minZ = currentString.minZ-domRadius-omHeight;
                 }
-                if ((currentString.maxZ+domRadius > maxZ) || std::isnan(maxZ)) {
-                    maxZ = currentString.maxZ+domRadius;
+                if ((currentString.maxZ+domRadius+omHeight > maxZ) || std::isnan(maxZ)) {
+                    maxZ = currentString.maxZ+domRadius+omHeight;
                 }
             }
         } else {
@@ -377,11 +382,13 @@ namespace I3CLSimHelper
                           double &layerHeight,
                           unsigned int layerNum,
                           const double domRadius,
+                          const double omHeight,
                           double minZHint, double maxZHint,
                           std::vector<unsigned short> &layerToOMNumIndex)
     {
         if (layerNum==0) return false;
         if (domRadius < 0.) return false;
+        if (omHeight < 0.) return false;
         if (currentString.doms.size() >= 0xFFFF) {
             log_fatal("Dom numbers >= 65535 are not supported!");
         }
@@ -391,11 +398,11 @@ namespace I3CLSimHelper
         
         // find minimum and maximum z detector coordinates
         double minZ=minZHint, maxZ=maxZHint;
-        if ((currentString.minZ-domRadius < minZ) || std::isnan(minZ)) {
-            minZ = currentString.minZ-domRadius;
+        if ((currentString.minZ-domRadius-omHeight < minZ) || std::isnan(minZ)) {
+            minZ = currentString.minZ-domRadius-omHeight;
         }
-        if ((currentString.maxZ+domRadius > maxZ) || std::isnan(maxZ)) {
-            maxZ = currentString.maxZ+domRadius;
+        if ((currentString.maxZ+domRadius+omHeight > maxZ) || std::isnan(maxZ)) {
+            maxZ = currentString.maxZ+domRadius+omHeight;
         }
         
         // calculate layer heights
@@ -416,14 +423,14 @@ namespace I3CLSimHelper
                 
                 bool layerContainsDom=false;
                 
-                if ((domZ-domRadius <= layerZMin) &&
-                    (domZ+domRadius >= layerZMin))
+                if ((domZ-domRadius-omHeight <= layerZMin) &&
+                    (domZ+domRadius+omHeight >= layerZMin))
                     layerContainsDom=true;
-                if ((domZ-domRadius <= layerZMax) &&
-                    (domZ+domRadius >= layerZMax))
+                if ((domZ-domRadius-omHeight <= layerZMax) &&
+                    (domZ+domRadius+omHeight >= layerZMax))
                     layerContainsDom=true;
-                if ((domZ-domRadius >= layerZMin) &&
-                    (domZ+domRadius <= layerZMax))
+                if ((domZ-domRadius-omHeight >= layerZMin) &&
+                    (domZ+domRadius+omHeight <= layerZMax))
                     layerContainsDom=true;
                 
                 
@@ -717,6 +724,7 @@ namespace I3CLSimHelper
                                              const std::vector<double> &posZ,
                                              const std::vector<std::string> &subdetectors,
                                              const double omRadius,
+                                             const double omHeight,
                                              std::vector<cl_ushort> &geoLayerToOMNumIndexPerStringSetBuffer,
                                              std::vector<int> &stringIndexToStringIDBuffer,
                                              std::vector<std::vector<unsigned int> > &domIndexToDomIDBuffer_perStringIndex
@@ -732,7 +740,8 @@ namespace I3CLSimHelper
             (posZ.size() != numEntries) ||
             (subdetectors.size() != numEntries))
             return false;
-        if (omRadius < 0.) {std::cerr << "Zero or negative OM radius." << std::endl; return false;}
+        if (omRadius <= 0.) {std::cerr << "Zero or negative OM radius." << std::endl; return false;}
+        if (omHeight < 0.) {std::cerr << "Negative OM height." << std::endl; return false;}
         
         typedef std::pair<int, std::string> intStringPair_t;
         std::set<intStringPair_t> stringIDSet;
@@ -961,7 +970,7 @@ namespace I3CLSimHelper
         std::vector<unsigned char> stringInStringSet(strings.size()); 
         
         double minZHint, maxZHint;
-        findOverallStringMinMaxZ(strings, omRadius, minZHint, maxZHint, false);
+        findOverallStringMinMaxZ(strings, omRadius, omHeight, minZHint, maxZHint, false);
         
         log_trace("overall minZ=%fm, maxZ=%fm", minZHint, maxZHint);
 
@@ -981,6 +990,7 @@ namespace I3CLSimHelper
                                              layerHeight[stringSetNum],
                                              geoLayerNum[stringSetNum],
                                              omRadius,
+                                             omHeight,
                                              layerToOMNumIndexPerStringSet[stringSetNum]);
                 if (ret) {existingStringSetNum=stringSetNum;matchFound=true; break;}
             }
@@ -1013,6 +1023,7 @@ namespace I3CLSimHelper
                                                            layerHeight.back(),
                                                            geoLayerNum.back(),
                                                            omRadius,
+                                                           omHeight,
                                                            strings[stringNum].minZ-strings[stringNum].meandZ/2.,
                                                            strings[stringNum].maxZ+strings[stringNum].meandZ/2.,
                                                            layerToOMNumIndexPerStringSet.back());
@@ -1027,6 +1038,7 @@ namespace I3CLSimHelper
                                                           layerHeight.back(),
                                                           geoLayerNum.back(),
                                                           omRadius,
+                                                          omHeight,
                                                           strings[stringNum].minZ-strings[stringNum].meandZ/2.,
                                                           strings[stringNum].maxZ+strings[stringNum].meandZ/2.,
                                                           layerToOMNumIndexPerStringSet.back());
@@ -1048,6 +1060,7 @@ namespace I3CLSimHelper
                                                               layerHeight.back(),
                                                               geoLayerNum.back(),
                                                               omRadius,
+                                                              omHeight,
                                                               strings[stringNum].minZ-strings[stringNum].meandZ/2.,
                                                               strings[stringNum].maxZ+strings[stringNum].meandZ/2.,
                                                               layerToOMNumIndexPerStringSet.back());
@@ -1068,9 +1081,9 @@ namespace I3CLSimHelper
                                 ++counter;
                             }
                             
-                            log_fatal("There does not seem to be a possible layer division for your string %i on subdetector %i (\"%s\"). minZ=%fm, maxZ=%fm, meandZ=%fm, omRadius=%fm",
+                            log_fatal("There does not seem to be a possible layer division for your string %i on subdetector %i (\"%s\"). minZ=%fm, maxZ=%fm, meandZ=%fm, omRadius=%fm, omHeight=%fm",
                                       stringNum, strings[stringNum].subdetectorNum, subdetectorNameList[strings[stringNum].subdetectorNum].c_str(),
-                                      strings[stringNum].minZ/I3Units::m, strings[stringNum].maxZ/I3Units::m, strings[stringNum].meandZ/I3Units::m, omRadius/I3Units::m);
+                                      strings[stringNum].minZ/I3Units::m, strings[stringNum].maxZ/I3Units::m, strings[stringNum].meandZ/I3Units::m, omRadius/I3Units::m, omHeight/I3Units::m);
                         }
                     }
                 }
@@ -1152,6 +1165,9 @@ namespace I3CLSimHelper
         // all the other data
         output << "#define NUM_STRINGS " << strings.size() << std::endl;
         output << "#define OM_RADIUS " << omRadius << "f" << std::endl;
+        if (omHeight > 0.){
+            output << "#define OM_HEIGHT " << omHeight << "f" << std::endl;
+        }
         
         output << "#define GEO_LAYER_STRINGSET_NUM " << numStringSets << std::endl;
         output << "#define GEO_LAYER_STRINGSET_MAX_NUM_LAYERS " << maxLayerNum << std::endl;

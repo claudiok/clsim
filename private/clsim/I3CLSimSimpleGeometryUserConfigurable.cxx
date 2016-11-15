@@ -28,10 +28,11 @@
 
 
 I3CLSimSimpleGeometryUserConfigurable::
-I3CLSimSimpleGeometryUserConfigurable(double OMRadius,
+I3CLSimSimpleGeometryUserConfigurable(double OMRadius, double OMHeight,
                                       std::size_t numOMs)
 :
 OMRadius_(OMRadius),
+OMHeight_(OMHeight),
 numOMs_(numOMs),
 stringIDs_(numOMs, 0),
 domIDs_(numOMs, 0),

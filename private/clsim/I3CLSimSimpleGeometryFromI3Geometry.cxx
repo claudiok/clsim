@@ -56,6 +56,7 @@ const bool I3CLSimSimpleGeometryFromI3Geometry::default_useHardcodedDeepCoreSubd
 
 I3CLSimSimpleGeometryFromI3Geometry::
 I3CLSimSimpleGeometryFromI3Geometry(double OMRadius,
+                                    double OMHeight,
                                     double oversizeFactor,
                                     const I3FramePtr &frame,
                                     const std::set<int> &ignoreStrings,
@@ -70,6 +71,7 @@ I3CLSimSimpleGeometryFromI3Geometry(double OMRadius,
                                     bool useHardcodedDeepCoreSubdetector)
 :
 OMRadius_(OMRadius),
+OMHeight_(OMHeight),
 oversizeFactor_(oversizeFactor),
 ignoreStrings_(ignoreStrings),
 ignoreDomIDs_(ignoreDomIDs),
@@ -153,7 +155,12 @@ useHardcodedDeepCoreSubdetector_(useHardcodedDeepCoreSubdetector)
         if (std::abs(geo.GetRadius()-OMRadius_) > 0.001*I3Units::mm)
             log_fatal("This version of clsim does only support DOMs with one single size. Configured size=%fmm, size in geometry=%fmm",
                       OMRadius_/I3Units::mm, geo.GetRadius()/I3Units::mm);
-        
+
+        // sanity check
+        if (OMHeight_ < 0*I3Units::mm)
+            log_fatal("Negative OM heights are not physically possible. Configured size=%fmm. Please consider your intentions.",
+                      OMHeight_/I3Units::mm);
+                
         stringIDs_.push_back(string);
         domIDs_.push_back(dom);
         posX_.push_back(geo.GetPos().GetX());

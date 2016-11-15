@@ -39,6 +39,7 @@ const uint32_t I3CLSimSimpleGeometryTextFile::default_ignoreDomIDsLargerThan = 6
 
 I3CLSimSimpleGeometryTextFile::
 I3CLSimSimpleGeometryTextFile(double OMRadius,
+                              double OMHeight,
                               const std::string &filename,
                               int32_t ignoreStringIDsSmallerThan,
                               int32_t ignoreStringIDsLargerThan,
@@ -47,6 +48,7 @@ I3CLSimSimpleGeometryTextFile(double OMRadius,
                               )
 :
 OMRadius_(OMRadius),
+OMHeight_(OMHeight),
 ignoreStringIDsSmallerThan_(ignoreStringIDsSmallerThan),
 ignoreStringIDsLargerThan_(ignoreStringIDsLargerThan),
 ignoreDomIDsSmallerThan_(ignoreDomIDsSmallerThan),

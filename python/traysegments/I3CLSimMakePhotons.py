@@ -74,6 +74,7 @@ def I3CLSimMakePhotons(tray, name,
                        UnshadowedFraction=0.9,
                        HoleIceParameterization=expandvars("$I3_SRC/ice-models/resources/models/angsens/as.h2-50cm"),
                        DOMRadius=0.16510*icetray.I3Units.m, # 13" diameter
+                       OMHeight=0*icetray.I3Units.m,
                        OverrideApproximateNumberOfWorkItems=None,
                        ExtraArgumentsToI3CLSimModule=dict(
                            IgnoreSubdetectors=['IceTop'],
@@ -239,6 +240,8 @@ def I3CLSimMakePhotons(tray, name,
         for no hole ice parameterization.
     :param DOMRadius:
         Allow the DOMRadius to be set externally, for things like mDOMs.
+    :param OMHeight:
+        Allow to add a cylindrical extension of a OM in z-direction for WOMs, mDOMs and D-Eggs.
     :param OverrideApproximateNumberOfWorkItems:
         Allows to override the auto-detection for the maximum number of parallel work items.
         You should only change this if you know what you are doing.
@@ -404,6 +407,7 @@ def I3CLSimMakePhotons(tray, name,
                    MCTreeName=clSimMCTreeName,
                    PhotonSeriesMapName=PhotonSeriesName,
                    DOMRadius = DOMRadius,
+                   OMHeight = OMHeight,
                    DOMOversizeFactor = DOMOversizeFactor,
                    DOMPancakeFactor = DOMOversizeFactor, # you will probably want this to be the same as DOMOversizeFactor
                    RandomService=RandomService,

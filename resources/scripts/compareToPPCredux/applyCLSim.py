@@ -127,7 +127,7 @@ else:
 MCTreeName="I3MCTree"
 MMCTrackListName=None
 
-tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
+tray.AddSegment(clsim.I3CLSimMakePhotons, "makeCLSimHits",
     PhotonSeriesName = photonSeriesName,
     MCTreeName = MCTreeName,
     MMCTrackListName = MMCTrackListName,

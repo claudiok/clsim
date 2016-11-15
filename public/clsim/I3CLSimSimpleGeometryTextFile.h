@@ -45,6 +45,7 @@ public:
     static const uint32_t default_ignoreDomIDsLargerThan;
     
     I3CLSimSimpleGeometryTextFile(double OMRadius, 
+                                  double OMHeight,
                                   const std::string &filename,
                                   int32_t ignoreStringIDsSmallerThan=default_ignoreStringIDsSmallerThan,
                                   int32_t ignoreStringIDsLargerThan=default_ignoreStringIDsLargerThan,
@@ -57,6 +58,7 @@ public:
 
     /// This is the radius *with* oversizing applied!
     virtual double GetOMRadius() const {return OMRadius_;}
+    virtual double GetOMHeight() const {return OMHeight_;}
     
     virtual const std::vector<int32_t> &GetStringIDVector() const {return stringIDs_;}
     virtual const std::vector<uint32_t> &GetDomIDVector() const {return domIDs_;}
@@ -74,6 +76,7 @@ public:
     
 private:
     double OMRadius_;
+    double OMHeight_;
     std::size_t numOMs_;
     
     std::vector<int32_t> stringIDs_;
