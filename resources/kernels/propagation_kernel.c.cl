@@ -280,6 +280,7 @@ inline floating4_t GetMDomCenter(const floating4_t photonPosAndTime,
     mDOMCenter.x = x_rot + photonPosAndTime.x ;
     mDOMCenter.y = y_rot + photonPosAndTime.y ;
     mDOMCenter.z = z_rot + photonPosAndTime.z ;
+    mDOMCenter.w = photonPosAndTime.w ;
 
     return mDOMCenter;
 }
@@ -455,9 +456,6 @@ inline bool savePath(
 
         // 3. Step get the table coordinates and add the correct time
         coordinate_t coords = getCoordinates(mDOMCenter, photonDirAndWlen, source, RNG_ARGS_TO_CALL);
-        // set detection time equal to arrival time of photon on the sphere (consistent with direct simulation)
-        float distance = magnitude(pos - source->posAndTime) ;
-        coords.s3 = pos.w - (source->posAndTime).w - distance * min_invGroupVel ;
 
         if (isOutOfBounds(coords)) {
             *stop = true;
