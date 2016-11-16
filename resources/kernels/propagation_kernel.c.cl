@@ -410,13 +410,13 @@ inline bool savePath(
     //dbg_printf("first step is %f\n", d);
     uint offset = *entry_counter;
     for (; d < thisStepLength && offset < TABLE_ENTRIES_PER_STREAM;
-         d += VOLUME_MODE_STEP, offset++) {
+        d += VOLUME_MODE_STEP, offset++) {
 
         floating4_t pos = photonPosAndTime;
         pos.x = photonPosAndTime.x + d*photonDirAndWlen.x;
         pos.y = photonPosAndTime.y + d*photonDirAndWlen.y;
         pos.z = photonPosAndTime.z + d*photonDirAndWlen.z;
-        pos.w = photonPosAndTime.w + d*inv_groupvel; 
+        pos.w = photonPosAndTime.w + d*inv_groupvel;
 
         /*
 #ifdef DOM_RADIUS
@@ -429,7 +429,7 @@ inline bool savePath(
         pos.z += DOM_RADIUS*toCenter.z;
 #endif
         */
-
+        
         //coordinate_t coords = getCoordinates(pos, photonDirAndWlen, source, RNG_ARGS_TO_CALL);
         
         // This is a new approach which includes the flat disc approach for mDOMs 
@@ -464,13 +464,13 @@ inline bool savePath(
             break;
         }
         
-        entries[thread_id * TABLE_ENTRIES_PER_STREAM + offset].index
+        entries[thread_id*TABLE_ENTRIES_PER_STREAM + offset].index
             = getBinIndex(coords);
         // Weight the photon by its probability of:
         // 1) Being detected, given its wavelength
         // 2) Being detected, given its impact angle and position with the DOM
         // 3) Having survived this far without being absorbed
-        entries[thread_id * TABLE_ENTRIES_PER_STREAM + offset].weight =
+        entries[thread_id*TABLE_ENTRIES_PER_STREAM + offset].weight =
             impactWeight * my_exp( -(depth + (d/thisStepLength) * thisStepDepth) ) * FlatDiskWeight;
 
         //float absorptionProb = my_exp(-(depth + (d/thisStepLength)*thisStepDepth));
@@ -481,7 +481,7 @@ inline bool savePath(
         //return false;
 
     }
-
+    
     //printf("%f\n",HitCounter);
     
     if (d < thisStepLength && !(*stop)) {
@@ -517,7 +517,7 @@ inline void saveHit(
     uint maxHitIndex,
     __global struct I3CLSimPhoton *outputPhotons
 #ifdef SAVE_PHOTON_HISTORY
-    , __global float4 *photonHistory,
+  , __global float4 *photonHistory,
     float4 *currentPhotonHistory
 #endif
     )
@@ -532,11 +532,11 @@ inline void saveHit(
 
         outputPhotons[myIndex].posAndTime = (float4)
             (
-                photonPosAndTime.x+thisStepLength*photonDirAndWlen.x,
-                photonPosAndTime.y+thisStepLength*photonDirAndWlen.y,
-                photonPosAndTime.z+thisStepLength*photonDirAndWlen.z,
-                photonPosAndTime.w+thisStepLength*inv_groupvel
-                );
+            photonPosAndTime.x+thisStepLength*photonDirAndWlen.x,
+            photonPosAndTime.y+thisStepLength*photonDirAndWlen.y,
+            photonPosAndTime.z+thisStepLength*photonDirAndWlen.z,
+            photonPosAndTime.w+thisStepLength*inv_groupvel
+            );
 
         outputPhotons[myIndex].dir = sphDirFromCar(photonDirAndWlen);
         outputPhotons[myIndex].wavelength = photonDirAndWlen.w;

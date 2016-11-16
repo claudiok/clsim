@@ -100,15 +100,15 @@ inline int findLayerForGivenZPos(floating_t posZ);
 inline floating_t mediumLayerBoundary(int layer);
 
 void scatterDirectionByAngle(floating_t cosa,
-                             floating_t sina,
-                             floating4_t *direction,
-                             floating_t randomNumber);
+    floating_t sina,
+    floating4_t *direction,
+    floating_t randomNumber);
 
 inline void createPhotonFromTrack(struct I3CLSimStep *step,
-                                  const floating4_t stepDir,
-                                  RNG_ARGS,
-                                  floating4_t *photonPosAndTime,
-                                  floating4_t *photonDirAndWlen);
+    const floating4_t stepDir,
+    RNG_ARGS,
+    floating4_t *photonPosAndTime,
+    floating4_t *photonDirAndWlen);
 
 #ifdef DOUBLE_PRECISION
 inline float2 sphDirFromCar(double4 carDir);
@@ -141,7 +141,7 @@ inline void saveHit(
     uint maxHitIndex,
     __global struct I3CLSimPhoton *outputPhotons
 #ifdef SAVE_PHOTON_HISTORY
-    , __global float4 *photonHistory,
+  , __global float4 *photonHistory,
     float4 *currentPhotonHistory
 #endif
     );
