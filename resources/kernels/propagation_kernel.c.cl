@@ -223,7 +223,7 @@ inline float2 sphDirFromCar(float4 carDir)
 }
 #endif
 
-// new mDOM stuff for flat disc approach
+// flat disk approach for mDOMs
 
 inline floating4_t GetMDomCenter(const floating4_t photonPosAndTime,
                                  const floating4_t photonDirAndWlen,
@@ -246,13 +246,11 @@ inline floating4_t GetMDomCenter(const floating4_t photonPosAndTime,
     float n_x = -1 * photonDirAndWlen.y;
     float n_y = photonDirAndWlen.x;
     float n_z = 0;
-
     float mag_n = my_sqrt(n_x*n_x + n_y*n_y + n_z*n_z);
 
     n_x = n_x / mag_n;
     n_y = n_y / mag_n;
     n_z = n_z / mag_n;
-
 
     //// get rotation angle alpha
     float alpha = acos(photonDirAndWlen.z);
@@ -292,30 +290,8 @@ bool HitDisk(floating4_t photonPosAndTime,
 {
   
     // check for photon flux 
-    // return true;
         
     // check if the impact angle is bigger than 90deg
-
-    /*
-    float n_x = 0;
-    float n_y = 0;
-    float n_z = -1;
-
-    float cosImpactAngle = n_z * photonDirAndWlen.z ;
-    
-    if (cosImpactAngle >= 0.0){
-        return false;
-    }
-
-    // check if photon path and disc have intersection
-    
-    //// position of the center of the disc in the DOM coordinate system
-    float A_x = 0;
-    float A_y = 0;
-    float A_z = -0.1518;
-    */
-
-    // optimized 
     if (photonDirAndWlen.z <= 0){      
         // photon is down going, ergo cannot hit a pmt facing downwards
         return false;
@@ -328,31 +304,7 @@ bool HitDisk(floating4_t photonPosAndTime,
     float P_y = photonPosAndTime.y - mDOMCenter.y ;
     float P_z = photonPosAndTime.z - mDOMCenter.z ;
 
-    /*
-    //// get intersection point
-    float d = (A_z - P_z) / photonDirAndWlen.z ;
-    float I_x = P_x + photonDirAndWlen.x * d ;
-    float I_y = P_y + photonDirAndWlen.y * d ;
-    float I_z = P_z + photonDirAndWlen.z * d ;
-
-
-    //// Check if distance between intersection point is within PMTRadius 
-    float PMTRadius = 0.05375 ;
-    
-    float D_x = I_x - A_x;
-    float D_y = I_y - A_y;
-    float D_z = I_z - A_z;
-
-    
-    float Distance_ = my_sqrt( D_x * D_x +
-			      D_y * D_y + 
-			      D_z * D_z );
-
-    
-    */
-    // Optimized 
-
-    // the radius of the flat disk used to be 0.05375m, which yields in the geometric
+    // the radius of the flat disk used to be 0.05375m, which yields the geometric
     // area of a 3" PMT with the reflector ring at an angle of 0°. Since there is a 
     // gap between PMT and reflector ring the disk radius was reduced to 0.051m to take
     // the reduced sensitive area into account.
@@ -361,16 +313,12 @@ bool HitDisk(floating4_t photonPosAndTime,
     float Distance = my_sqrt( my_powr((P_x + photonDirAndWlen.x * d), 2) + 
                               my_powr((P_y + photonDirAndWlen.y * d), 2) ) ;
 
-    //printf("Distance = %f \n", Distance);
-    //printf("Distance_ = %f \n", Distance_);
-
     if (Distance > PMTRadius){
         return false;
     }
 
     return true;
 }
-			
 
 
 #ifdef TABULATE
@@ -393,17 +341,12 @@ inline bool savePath(
 {
     // NB: the quantum efficiency of the receiver is already taken into
     //     account though the bias in the input photon spectrum
-
-    // Debugging Stuff 
-    
     floating_t impactWeight = 
 #ifndef TABULATE_IMPACT_ANGLE
         step->weight*getAngularAcceptance(photonDirAndWlen.z);
 #else
         step->weight;
 #endif
-    
-
 
     //dbg_printf("step depth %e + %e impactWeight %e\n", depth, thisStepDepth, impactWeight);
     
@@ -421,24 +364,18 @@ inline bool savePath(
 
         /*
 #ifdef DOM_RADIUS
-        printf("DOM_RADIUS");
         floating_t cosa = RNG_CALL_UNIFORM_CO;
         floating4_t toCenter = photonDirAndWlen;
-        //scatterDirectionByAngle(cosa, my_sqrt(1-cosa*cosa), &toCenter, RNG_CALL_UNIFORM_CO);
+        scatterDirectionByAngle(cosa, my_sqrt(1-cosa*cosa), &toCenter, RNG_CALL_UNIFORM_CO);
         pos.x += DOM_RADIUS*toCenter.x;
         pos.y += DOM_RADIUS*toCenter.y;
         pos.z += DOM_RADIUS*toCenter.z;
 #endif
         */
         
-        //coordinate_t coords = getCoordinates(pos, photonDirAndWlen, source, RNG_ARGS_TO_CALL);
-        
         // This is a new approach which includes the flat disc approach for mDOMs 
         // 1.Step: Choose the center of the dom which is uniformly distributed across a half sphere
         //         with radius R_mDOM (=0.178m).
-	
-        // DEBUGING STUFF
-	
         floating4_t mDOMCenter = GetMDomCenter(pos,
                                                photonDirAndWlen,
                                                RNG_ARGS_TO_CALL);
@@ -451,7 +388,6 @@ inline bool savePath(
         else{
             FlatDiskWeight = 0.0;
         }   
-
         // FlatDiskWeight = 1.0;    // use to make a photon table for the photon flux
 
         // 3. Step get the table coordinates and add the correct time
@@ -470,17 +406,7 @@ inline bool savePath(
         // 3) Having survived this far without being absorbed
         entries[thread_id*TABLE_ENTRIES_PER_STREAM + offset].weight =
             impactWeight * my_exp( -(depth + (d/thisStepLength) * thisStepDepth) ) * FlatDiskWeight;
-
-        //float absorptionProb = my_exp(-(depth + (d/thisStepLength)*thisStepDepth));
-        //printf("survival Prob = %f \n", absorptionProb);
-        //printf("impactWeight = %f \n", impactWeight);
-        //printf("FlatDiscWeight = %f \n", FlatDiscWeight);
-        //printf("weight = %f \n", entries[thread_id*TABLE_ENTRIES_PER_STREAM + offset].weight);
-        //return false;
-
     }
-    
-    //printf("%f\n",HitCounter);
     
     if (d < thisStepLength && !(*stop)) {
         // we ran out of space. erase.
@@ -491,8 +417,6 @@ inline bool savePath(
         *prevStepLength = d - thisStepLength;
         return true;
     }
-
-
 
 }
 #endif

@@ -30,6 +30,7 @@ from icecube.dataclasses import I3Position, I3Particle, I3MCTree, I3Direction, I
 from icecube.phys_services import I3Calculator, I3GSLRandomService
 from icecube.clsim import I3CLSimFunctionConstant
 from icecube.clsim import GetIceCubeDOMAcceptance, GetIceCubeDOMAngularSensitivity
+from icecube.clsim import Gen2Sensors
 from icecube.clsim import FlasherInfoVectToFlasherPulseSeriesConverter, I3CLSimFlasherPulse, I3CLSimFlasherPulseSeries
 import numpy, math
 from icecube.photospline import numpy_extensions # meshgrid_nd
@@ -344,28 +345,21 @@ def I3CLSimTabulatePhotons(tray, name,
             clSimMCTreeName = clSimMCTreeName
 
     # some constants
-    # DOMRadius = 0.16510*icetray.I3Units.m # 13" diameter
-    R_pDOM = 0.16510*icetray.I3Units.m
-    R_mDOM = 0.178*icetray.I3Units.m
-    DOMRadius = R_mDOM
-
-
+    R_pDOM = 0.16510 * icetray.I3Units.m # 13" diameter
+    DOMRadius = R_pDOM                   # use icdom as default sensor
+    
     if Area is None:
         referenceArea = dataclasses.I3Constants.pi*DOMRadius**2
     else:
         referenceArea = Area
 
-    referenceArea = dataclasses.I3Constants.pi*DOMRadius**2
-
-
     if WavelengthAcceptance is None:
-        #domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius=DOMRadius)    #changed for mDOM
-        domAcceptance = clsim.GetMDOMAcceptance()
+        domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius=DOMRadius)
     else:
         domAcceptance = WavelengthAcceptance
+        
     if AngularAcceptance is None:
-        #angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=True)   #changed for mDOM
-        angularAcceptance = clsim.GetMDOMAngularSensitivity()
+        angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=True)
     else:
         angularAcceptance = AngularAcceptance
 
@@ -592,6 +586,7 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
     header['type'] = int(ptype)
     header['efficiency'] = Efficiency.RECEIVER | Efficiency.WAVELENGTH
     header['n_events'] = NEvents/float(PhotonPrescale)
+    header['sensor'] = Sensor.lower()
     
     if Axes is None:
         if PhotonSource != "infinite-muon":
@@ -619,9 +614,6 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
         header['flasherwidth'] = FlasherWidth
         header['flasherbrightness'] = FlasherBrightness
     
-    # some constants
-    DOMRadius = 0.16510*icetray.I3Units.m # 13" diameter
-    referenceArea = dataclasses.I3Constants.pi*DOMRadius**2
     
     # NB: GetIceCubeDOMAcceptance() calculates the quantum efficiency by
     #     dividing the geometric area (a circle of radius domRadius) by the
@@ -633,12 +625,31 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
     #     *prescale* in the header above.
     #     to be propagated per light source.
 
-    ### changed this or the mDOM ###
-    #domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius=math.sqrt(PhotonPrescale)*DOMRadius)
-    domAcceptance = clsim.GetMDOMAcceptance(efficiency=1./PhotonPrescale)
-    #angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=True)
-    angularAcceptance = clsim.GetMDOMAngularSensitivity()
+    # set DOM radius, acceptance and angular sensitivity according to the Sensor type
+    if Sensor.lower() == 'dom':
+        DOMRadius = 0.16510*icetray.I3Units.m # 13" diameter
+        referenceArea = dataclasses.I3Constants.pi*DOMRadius**2
+        domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius=math.sqrt(PhotonPrescale)*DOMRadius)
+        angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=True)
+    elif Sensor.lower() == 'mdom':
+        DOMRadius = 0.178 * icetray.I3Units.m # 14" diameter
+        referenceArea = dataclasses.I3Constants.pi*DOMRadius**2
+        angularAcceptance = clsim.GetMDOMAngularSensitivity()
+        domAcceptance = clsim.GetMDOMAcceptance(efficiency=1./PhotonPrescale)
+    elif Sensor.lower() == 'degg':
+        referenceArea = dataclasses.I3Constants.pi*(300.*I3Units.mm/2)**2
+        angularAcceptance = Gen2Sensors.GetDEggAngularSensitivity(pmt='both')
+        domAcceptance = Gen2Sensors.GetDEggAcceptance(active_fraction=1./PhotonPrescale)
+    elif Sensor.lower() == 'wom':
+       # outer diameter of the pressure vessel is 11.4 cm, walls are 9 mm thick
+       referenceArea = (11-2*0.9)*90*icetray.I3Units.cm2
+       angularAcceptance = Gen2Sensors.GetWOMAngularSensitivity()
+       domAcceptance = Gen2Sensors.GetWOMAcceptance(active_fraction=1./PhotonPrescale)     
+    else:
+        raise ValueError("Don't know how to simulate %ds yet" % (sensor))
+        
 
+    
     if not isdir(IceModel):
         IceModel = expandvars("$I3_SRC/clsim/resources/ice/" + IceModel)
 

@@ -31,10 +31,8 @@ Tabulate the photon flux from a light source in South Pole ice.
 
 #!/bin/sh /cvmfs/icecube.opensciencegrid.org/py2-v2/icetray-start
 #METAPROJECT /afs/ifh.de/group/amanda/scratch/tkittler/simulation/iceTray/combo/trunk/build
-
 #$ -S /cvmfs/icecube.opensciencegrid.org/py2-v2/icetray-start
 #$ -l h_cpu=23:59:59
-
 
 from optparse import OptionParser
 from icecube.icetray import I3Units
@@ -46,8 +44,6 @@ from os import path, unlink
 import os
 os.environ["MODULEPATH"] = "/usr/share/Modules/modulefiles:/etc/modulefiles"
 exec(os.popen('/usr/bin/modulecmd python load amd-app-sdk-x86_64'))
-
-
 
 usage = "usage: %prog [options] outputfile"
 parser = OptionParser(usage, description=__doc__)
