@@ -155,6 +155,8 @@ and a cylindrical surface connecting those. However there are some constrains to
 clsim.I3CLSimMakeHits will not correctly since currently DOMs are assumed. Only DOMOversizeFactor=1
 has been tested yet. The height is also scaled with that factor, however there is no PANCAKE_FACTOR applied, 
 therefore the module will have the actuall size indicated by the DOMOversizeFactor. 
+If flashers are implemented they need to be positioned in either of the two spheres or pointed in a way
+that the photons do not hit the sphere. This can be changed if needed however this makes the code run faster.
 
 
 License
