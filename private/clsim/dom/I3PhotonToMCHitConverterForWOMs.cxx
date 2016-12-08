@@ -80,6 +80,10 @@ I3PhotonToMCHitConverterForWOMs::I3PhotonToMCHitConverterForWOMs(const I3Context
                  "Height acceptance of the WOM as I3tobedetermined object.",
                  HeightAcceptance_);
 
+    AddParameter("PMTHeightAcceptance",
+                 "PMT Height acceptance of the WOM as I3tobedetermined object.",
+                 PMTHeightAcceptance_);
+
     AddParameter("AngularAcceptance",
                  "Angular acceptance of the WOM as a I3WlenDependedValue object.\n" 
                  "This includes Propagation from ice to glass to air to PMMA with Fresnel",
@@ -145,6 +149,7 @@ void I3PhotonToMCHitConverterForWOMs::Configure()
     GetParameter("MCTreeName", MCTreeName_);
 
     GetParameter("HeightAcceptance", HeightAcceptance_);
+    GetParameter("PMTHeightAcceptance", PMTHeightAcceptance_);
     GetParameter("AngularAcceptance", AngularAcceptance_);
 
     GetParameter("DOMOversizeFactor", DOMOversizeFactor_);
@@ -154,7 +159,6 @@ void I3PhotonToMCHitConverterForWOMs::Configure()
     GetParameter("GlassAbsorptionLength", GlassAbsorptionLength_);
     GetParameter("GlassThickness", GlassThickness_);
     GetParameter("WLSPropagationEfficiency", WLSPropagationEfficiency_);
-    GetParameter("HeightAcceptance", HeightAcceptance_);
 
     GetParameter("OnlyWarnAboutInvalidPhotonPositions", onlyWarnAboutInvalidPhotonPositions_);
 
@@ -163,6 +167,9 @@ void I3PhotonToMCHitConverterForWOMs::Configure()
 
     if (!HeightAcceptance_) 
         log_fatal("The \"HeightAcceptance\" parameter must be given!");
+
+    if (!PMTHeightAcceptance_) 
+        log_fatal("The \"PMTHeightAcceptance\" parameter must be given!");
     
     if (!AngularAcceptance_)
         log_fatal("The \"AngularAcceptance\" parameter must not be empty.");
@@ -175,6 +182,8 @@ void I3PhotonToMCHitConverterForWOMs::Configure()
         
     if (!HeightAcceptance_->HasNativeImplementation())
         log_fatal("The height acceptance function must have a native (i.e. non-OpenCL) implementation!");
+    if (!PMTHeightAcceptance_->HasNativeImplementation())
+        log_fatal("The PMT height acceptance function must have a native (i.e. non-OpenCL) implementation!");
     if (!AngularAcceptance_->HasNativeImplementation())
         log_fatal("The angular acceptance function must have a native (i.e. non-OpenCL) implementation!");
     if (!WLSPropagationEfficiency_->HasNativeImplementation())
@@ -201,16 +210,13 @@ namespace {
     }
 }
 
-/*
-DO:::
-sanity check, is photon on OM surface
-does photon make it through the glass (from ice)
-    that means glass transparency and fresnel
-look at resulting angles and do fresnel again to hit the wls tube
-wls + capture + propagation + pmt acceptance
-result? (one result for both PMTs)
-
-*/
+namespace {
+    // Return whether first element is greater than the second
+    bool MCHitTimeLess(const I3MCPE &elem1, const I3MCPE &elem2)
+    {
+        return elem1.time < elem2.time;
+    }
+}
 
 
 
@@ -240,6 +246,7 @@ void I3PhotonToMCHitConverterForWOMs::DAQ(I3FramePtr frame)
     //get this part from GCD file in the future
     double OM_Radius = DOMOversizeFactor_*DOMRadius_;
     double OM_Height = DOMOversizeFactor_*OMHeight_;
+    double WLS_decaytime = 5*I3Units::ns;
 
     const double distanceAccuracy = 3.*I3Units::cm;
     // currently, the only reason we need the MCTree is that I3MCPE does
@@ -287,27 +294,35 @@ void I3PhotonToMCHitConverterForWOMs::DAQ(I3FramePtr frame)
             // refractive indexes, might be changed later by function(wvl)
             const double refractiveIndexIce = 1.33; 
             const double refractiveIndexGlass = 1.5;
+            const double refractiveIndexPMMA = 1.5;
 
             const double dx=photon.GetDir().GetX();
             const double dy=photon.GetDir().GetY();
             const double dz=photon.GetDir().GetZ();
-            const double px=om.position.GetX()-photon.GetPos().GetX();
-            const double py=om.position.GetY()-photon.GetPos().GetY();
-            const double pz=om.position.GetZ()-photon.GetPos().GetZ();
+            const double px=module.GetPos().GetX()-photon.GetPos().GetX();
+            const double py=module.GetPos().GetY()-photon.GetPos().GetY();
+            const double pz=module.GetPos().GetZ()-photon.GetPos().GetZ();
             const double len2center = std::sqrt(px*px+py*py);
 
-            // sanity check (is photon on OM surface +- 0.1 mm)
+            // sanity check (is photon on OM surface +- 3 cm)
             bool isOnSurface = false;
-            if( std::abs(pz) > OM_Height/2. ){
+            double minimalDistance=2*distanceAccuracy;
+            if(std::abs(pz) < OM_Height/2. + distanceAccuracy){
+                const double cylidnerDistance = std::abs(len2center-OM_Radius);
+                minimalDistance = minimalDistance < cylidnerDistance ? minimalDistance : cylidnerDistance;
+            }
+            if( std::abs(pz) > OM_Height/2. - distanceAccuracy){
                 const double pz2 = std::abs(pz)-OM_Height/2.;
-                if( std::abs(std::sqrt(px*px+py*py+pz2*pz2)-OM_Radius)<distanceAccuracy ) isOnSurface = true;
-            }else{// Photon must be on cylinder extension area
-                if( std::abs(len2center-OM_Radius)<distanceAccuracy ) isOnSurface = true;
+                const double sphereDistance = std::abs(std::sqrt(px*px+py*py+pz2*pz2)-OM_Radius);
+                minimalDistance = minimalDistance < sphereDistance ? minimalDistance : sphereDistance;
+            }
+            if( minimalDistance < distanceAccuracy){ 
+                isOnSurface = true;
             }
 
             if(!isOnSurface){
               if (onlyWarnAboutInvalidPhotonPositions_) {
-                        log_warn("Photon is not within %f mm of the OMs surface. DOMOversizeFactor=%f, DOMRadius=%fmm and %fmm, OMHeight=%fmm,  (OMKey=(%i,%u) (photon @ pos=(%g,%g,%g)m) (DOM @ pos=(%g,%g,%g)m, distance is %fmm or %fmm)",
+                        log_warn("Photon is not within %f mm of the OMs surface. DOMOversizeFactor=%f, DOMRadius=%fmm and %fmm, OMHeight=%fmm,  (OMKey=(%i,%u) (photon @ pos=(%g,%g,%g)m) (DOM @ pos=(%g,%g,%g)m, distance is cylinder %fmm or sphere %fmm)",
                                  distanceAccuracy/I3Units::mm,
                                  DOMOversizeFactor_,
                                  DOMRadius_/I3Units::mm,
@@ -324,7 +339,7 @@ void I3PhotonToMCHitConverterForWOMs::DAQ(I3FramePtr frame)
                                  std::abs(std::sqrt(px*px+py*py+(std::abs(pz)-OM_Height/2.)*(std::abs(pz)-OM_Height/2.))-OM_Radius)/I3Units::mm
                                  );
                     } else {
-                        log_fatal("Photon is not within %f mm of the OMs surface. DOMOversizeFactor=%f, DOMRadius=%fmm and %fmm, OMHeight=%fmm,  (OMKey=(%i,%u) (photon @ pos=(%g,%g,%g)m) (DOM @ pos=(%g,%g,%g)m, distance is %fmm or %fmm)",
+                        log_fatal("Photon is not within %f mm of the OMs surface. DOMOversizeFactor=%f, DOMRadius=%fmm and %fmm, OMHeight=%fmm,  (OMKey=(%i,%u) (photon @ pos=(%g,%g,%g)m) (DOM @ pos=(%g,%g,%g)m, distance is cylinder %fmm or sphere %fmm)",
                                  distanceAccuracy/I3Units::mm,
                                  DOMOversizeFactor_,
                                  DOMRadius_/I3Units::mm,
@@ -371,7 +386,7 @@ void I3PhotonToMCHitConverterForWOMs::DAQ(I3FramePtr frame)
             //photonCosAngle = std::max(-1., std::min(1., photonCosAngle));
 
             // check sanity of photon direction
-            if (cosIncidenceAngle<0){
+            if (cosIncidenceAngle < 0){
                     if (onlyWarnAboutInvalidPhotonPositions_) {
                         log_warn("Photon is directed away from the OMs surface. DOMOversizeFactor=%f, DOMRadius=%fmm, OMHeight=%fmm,  (OMKey=(%i,%u) (photon @ pos=(%g,%g,%g)m) (DOM @ pos=(%g,%g,%g)m)",
                                  DOMOversizeFactor_,
@@ -437,31 +452,53 @@ void I3PhotonToMCHitConverterForWOMs::DAQ(I3FramePtr frame)
                     log_fatal_stream("Did not find a valid I3MCTree with name '" << MCTreeName_ << "'");
                 particle = I3MCTreeUtils::GetParticlePtr(MCTree, photon.GetParticleID());
             }
-        
-            // allocate the output vector if not already done
-            if (!hits) hits = &(outputMCHitSeriesMap->insert(std::make_pair(key, I3MCPESeries())).first->second);
 
+
+            //determine pmt by use of PMTHeightAcceptance_
+            int hitPmtNum=0;
+            if (PMTHeightAcceptance_->GetValue(pz+OMHeight_/2.) <= randomService_->Uniform()){
+                hitPmtNum=1;
+            }
+
+            
+            const OMKey pmtKey(key.GetString(), key.GetOM(), static_cast<unsigned char>(hitPmtNum));
+            I3MCPESeries &hitSeries = outputMCHitSeriesMap->insert(std::make_pair(pmtKey, I3MCPESeries())).first->second;
+            
             // add a new hit
             if(particle)
-                hits->push_back(I3MCPE(*particle));
+                hitSeries.push_back(I3MCPE(*particle));
             else
-                hits->push_back(I3MCPE());
-            I3MCPE &hit = hits->back();
+                hitSeries.push_back(I3MCPE());
+            I3MCPE &hit = hitSeries.back();
             
-            // fill in all information
-            hit.time=photon.GetTime();
-            hit.npe=1;
-        }
-        
-        if (hits) {
-            // sort the photons in each hit series by time
-            std::sort(hits->begin(), hits->end(), MCPETimeLess);
-            
-            // keep track of the number of hits generated
-            numGeneratedHits_ += static_cast<uint64_t>(hits->size());
+            // fill in all information // WLS_decaytime + z
+            double timeOffset;
+            double randVar=randomService_->Uniform();
+            while(randVar==0){
+                randVar=randomService_->Uniform();               
+            }
+            if(hitPmtNum==1)
+                timeOffset=(pz+OMHeight_/2.)*refractiveIndexPMMA/I3Constants::c;
+            else
+                timeOffset=std::abs(-pz+OMHeight_/2.)*refractiveIndexPMMA/I3Constants::c;
+
+            timeOffset+=-WLS_decaytime*std::log(randVar);
+            hit.time=photon.GetTime()+timeOffset;
+            hit.npe=1;   
         }
     }
     
+    // sort the hit vectors for each PMT
+    for (I3MCPESeriesMap::iterator pmtIt = outputMCHitSeriesMap->begin();
+         pmtIt != outputMCHitSeriesMap->end(); ++pmtIt){
+        I3MCPESeries &hitSeries = pmtIt->second;
+        
+        // now sort by time, regardless of particle ID
+        std::sort(hitSeries.begin(), hitSeries.end(), MCHitTimeLess);
+    }
+
+
+
     // store the output I3MCPESeriesMap
     frame->Put(outputMCHitSeriesMapName_, outputMCHitSeriesMap);
     

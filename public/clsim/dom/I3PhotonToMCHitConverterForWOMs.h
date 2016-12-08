@@ -116,6 +116,12 @@ class I3PhotonToMCHitConverterForWOMs : public I3ConditionalModule
          * This Only includes positional effects of the WLS tube.
          */
         I3CLSimFunctionConstPtr HeightAcceptance_;
+
+        /**
+         * Parameter: PMT Height acceptance of the tube as a I3CLSimFunction object. 
+         * This Only includes positional effects of the WLS tube.
+         */
+        I3CLSimFunctionConstPtr PMTHeightAcceptance_;
         
         /**
          * Parameter: Angular acceptance of the tube as a I3CLSimFunction object. This is a correction factor

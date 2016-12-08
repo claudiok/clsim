@@ -76,6 +76,7 @@ def I3CLSimMakePhotons(tray, name,
                        DOMRadius=0.16510*icetray.I3Units.m, # 13" diameter
                        OMHeight=0*icetray.I3Units.m,
                        OverrideApproximateNumberOfWorkItems=None,
+                       DOMAcceptance=None,
                        ExtraArgumentsToI3CLSimModule=dict(
                            IgnoreSubdetectors=['IceTop'],
                            ),
@@ -245,6 +246,10 @@ def I3CLSimMakePhotons(tray, name,
     :param OverrideApproximateNumberOfWorkItems:
         Allows to override the auto-detection for the maximum number of parallel work items.
         You should only change this if you know what you are doing.
+    :param DOMAcceptance:
+        Allows to overwrite the DOM acceptance function for the generation of photons.
+        This is useful for acceptance studies or alternative OMs.
+        Should be a 1D function of wavelength
     :param If:
         Python function to use as conditional execution test for segment modules.        
     """
@@ -354,8 +359,11 @@ def I3CLSimMakePhotons(tray, name,
     # the hole ice acceptance curve peaks at a value different than 1
     peak = numpy.loadtxt(HoleIceParameterization)[0] # The value at which the hole ice acceptance curve peaks
     domEfficiencyCorrection = UnshadowedFraction*peak*1.35 * 1.01 # DeepCore DOMs have a relative efficiency of 1.35 plus security margin of +1%
-                                                                
+
     domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius = DOMRadius*DOMOversizeFactor, efficiency=domEfficiencyCorrection)
+    if DOMAcceptance is not None:
+        domAcceptance=DOMAcceptance
+
 
     # photon generation wavelength bias
     if not UnWeightedPhotons:

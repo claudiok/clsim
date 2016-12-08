@@ -110,9 +110,9 @@ namespace I3CLSimModuleHelper {
         if (wlenRange <= 0.) log_fatal("Internal error, wavelength range <= 0!");
 
         if (wavelengthGenerationBias->GetMinWlen() > minWlen)
-            log_fatal("wavelength generation bias has to have a wavelength range larger or equal to the spectrum wavelength range!");
+            log_fatal("wavelength generation bias has to have a wavelength range larger or equal to the spectrum wavelength range! MinSupplied=%f, Needed=%f", wavelengthGenerationBias->GetMinWlen() , minWlen);
         if (wavelengthGenerationBias->GetMaxWlen() < maxWlen)
-            log_fatal("wavelength generation bias has to have a wavelength range larger or equal to the spectrum wavelength range!");
+            log_fatal("wavelength generation bias has to have a wavelength range larger or equal to the spectrum wavelength range! MaxSupplied=%f, Needed=%f", wavelengthGenerationBias->GetMaxWlen() , maxWlen);
 
         // Check if the spectrum values are from a tabulated distribution.
         // If yes, use the table binning, if not make up a binning.
@@ -183,10 +183,10 @@ namespace I3CLSimModuleHelper {
         if (wlenRange <= 0.) log_fatal("Internal error, wavelength range <= 0!");
 
         if (wavelengthGenerationBias->GetMinWlen() > minWlen)
-            log_fatal("wavelength generation bias has to have a wavelength range larger or equal to the medium property range!");
+            log_fatal("wavelength generation bias has to have a wavelength range larger or equal to the spectrum wavelength range! MinSupplied=%e, Needed=%e", wavelengthGenerationBias->GetMinWlen() , minWlen);
         if (wavelengthGenerationBias->GetMaxWlen() < maxWlen)
-            log_fatal("wavelength generation bias has to have a wavelength range larger or equal to the medium property range!");
-        
+            log_fatal("wavelength generation bias has to have a wavelength range larger or equal to the spectrum wavelength range! MaxSupplied=%e, Needed=%e", wavelengthGenerationBias->GetMaxWlen() , maxWlen);
+       
         bool noBias=false;
         //bool biasIsConstant=false;
         
