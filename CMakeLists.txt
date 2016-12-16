@@ -305,8 +305,6 @@ if(GMP_FOUND)
     USE_PROJECTS serialization icetray
     USE_TOOLS python boost
     )
-  target_compile_options(clsim-convert_safeprimes BEFORE PUBLIC "-pthread")
-  set_target_properties(clsim-convert_safeprimes PROPERTIES LINK_FLAGS "-pthread")
   colormsg(GREEN "+-- gmp support (make_safeprimes utility)")
 else(GMP_FOUND)
   colormsg(CYAN  "+-- no gmp support (make_safeprimes utility)")
