@@ -3,6 +3,8 @@ from icecube.icetray import I3Units
 from icecube.dataclasses import I3Constants
 from icecube.clsim import I3CLSimFunctionFromTable, I3CLSimFunctionPolynomial
 
+from os.path import expandvars
+
 def GetDEggAcceptance(active_fraction=1.):
     """
     :param active_fraction: the fraction of the head-on geometric area that
@@ -68,7 +70,7 @@ def GetDEggAngularSensitivity(pmt='both'):
     import numpy
     from icecube.clsim import GetIceCubeDOMAngularSensitivity
     
-    angularAcceptance = GetIceCubeDOMAngularSensitivity(holeIce=False)
+    angularAcceptance = GetIceCubeDOMAngularSensitivity(holeIce=expandvars("$I3_SRC/ice-models/resources/models/angsens/as.nominal"))
     
     # mirror the function in cos(eta) by inverting the odd components
     coeffs = numpy.array(angularAcceptance.GetCoefficients())
