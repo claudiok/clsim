@@ -27,8 +27,6 @@
 #include <icetray/serialization.h>
 #include <clsim/I3CLSimStep.h>
 
-#include <icetray/portable_binary_archive.hpp>
-
 #include <boost/static_assert.hpp>
 #include <serialization/binary_object.hpp>
 
