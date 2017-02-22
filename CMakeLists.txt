@@ -80,7 +80,7 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
   private/clsim/util/I3MuonSliceRemoverAndPulseRelabeler.cxx
   private/clsim/util/I3TauSanitizer.cxx
   private/clsim/dom/I3PhotonToMCPEConverter.cxx
-  private/clsim/dom/I3PhotonToMCHitConverterForMDOMs.cxx
+  # private/clsim/dom/I3PhotonToMCHitConverterForMDOMs.cxx
   private/clsim/shadow/I3ShadowedPhotonRemover.cxx
   private/clsim/shadow/I3ShadowedPhotonRemoverModule.cxx
   private/clsim/shadow/I3ExtraGeometryItem.cxx
