@@ -1,5 +1,5 @@
 
-from icecube.icetray import I3Units
+from icecube.icetray import I3Units, logging
 from icecube.dataclasses import I3Constants
 from icecube.clsim import I3CLSimFunctionFromTable, I3CLSimFunctionPolynomial
 
@@ -14,6 +14,9 @@ def GetDEggAcceptance(active_fraction=1.):
     # Combined efficiency for D-Egg glass (10 mm), high-UV transparency gel
     # (5 mm), and Hamamatsu R5912-100 at the center of the photocathode
     # Pers. comm., Lu Lu, April 2016
+
+    logging.log_warn("DeprecationWarning: The numbers here are outdated! Also this functionality is now part of the 'mDOM-WOM-simulation' project. Please check it out!")
+
     center_efficiency = [0.0,
                          0.0,
                          0.0,
@@ -67,6 +70,8 @@ def GetDEggAcceptance(active_fraction=1.):
 
 def GetDEggAngularSensitivity(pmt='both'):
     
+    logging.log_warn("DeprecationWarning: The numbers here are outdated! Also this functionality is now part of the 'mDOM-WOM-simulation' project. Please check it out!")
+
     import numpy
     from icecube.clsim import GetIceCubeDOMAngularSensitivity
     
