@@ -73,6 +73,7 @@ def I3CLSimMakePhotons(tray, name,
                        DOMOversizeFactor=5.,
                        UnshadowedFraction=0.9,
                        HoleIceParameterization=expandvars("$I3_SRC/ice-models/resources/models/angsens/as.h2-50cm"),
+                       WavelengthAcceptance=None,
                        DOMRadius=0.16510*icetray.I3Units.m, # 13" diameter
                        OverrideApproximateNumberOfWorkItems=None,
                        ExtraArgumentsToI3CLSimModule=dict(
@@ -237,6 +238,10 @@ def I3CLSimMakePhotons(tray, name,
         coefficients for nominal angular acceptance correction due to hole ice (ice-models 
         project is required). Use file $I3_SRC/ice-models/resources/models/angsens/as.nominal 
         for no hole ice parameterization.
+    :param WavelengthAcceptance:
+        If specified, use this wavelength acceptance to scale the generated
+        Cherenkov spectrum rather than using the DOM acceptance modified for
+        oversizing and angular acceptance.
     :param DOMRadius:
         Allow the DOMRadius to be set externally, for things like mDOMs.
     :param OverrideApproximateNumberOfWorkItems:
@@ -347,12 +352,14 @@ def I3CLSimMakePhotons(tray, name,
         mediumProperties = IceModelLocation
 
     # detector properties
-    
-    # the hole ice acceptance curve peaks at a value different than 1
-    peak = numpy.loadtxt(HoleIceParameterization)[0] # The value at which the hole ice acceptance curve peaks
-    domEfficiencyCorrection = UnshadowedFraction*peak*1.35 * 1.01 # DeepCore DOMs have a relative efficiency of 1.35 plus security margin of +1%
+    if WavelengthAcceptance is None:
+        # the hole ice acceptance curve peaks at a value different than 1
+        peak = numpy.loadtxt(HoleIceParameterization)[0] # The value at which the hole ice acceptance curve peaks
+        domEfficiencyCorrection = UnshadowedFraction*peak*1.35 * 1.01 # DeepCore DOMs have a relative efficiency of 1.35 plus security margin of +1%
                                                                 
-    domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius = DOMRadius*DOMOversizeFactor, efficiency=domEfficiencyCorrection)
+        domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius = DOMRadius*DOMOversizeFactor, efficiency=domEfficiencyCorrection)
+    else:
+        domAcceptance = WavelengthAcceptance
 
     # photon generation wavelength bias
     if not UnWeightedPhotons:
