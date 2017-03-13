@@ -145,6 +145,9 @@ void I3CLSimTabulatorModule::Configure()
 	}
 	fs::remove(tablePath_);
 	
+	if (openCLDeviceList_.size() == 0)
+		log_fatal_stream("No OpenCL devices provided. Does your OpenCL runtime support CPUs?");
+	
 	tabulator_.reset(
 	    new I3CLSimStepToTableConverter(
 	    openCLDeviceList_[0], axes_, entriesPerPhoton_*photonsPerBunch_,
