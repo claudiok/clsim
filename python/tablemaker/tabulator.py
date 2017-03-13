@@ -73,10 +73,33 @@ def unpin_threads(delay=60):
     import subprocess
     import threading
     import time
+    
+    def which(program):
+        def is_exe(fpath):
+            return os.path.exists(fpath) and os.access(fpath, os.X_OK)
+
+        def ext_candidates(fpath):
+            yield fpath
+            for ext in os.environ.get("PATHEXT", "").split(os.pathsep):
+                yield fpath + ext
+
+        fpath, fname = os.path.split(program)
+        if fpath:
+            if is_exe(program):
+                return program
+        else:
+            for path in os.environ["PATH"].split(os.pathsep):
+                exe_file = os.path.join(path, program)
+                for candidate in ext_candidates(exe_file):
+                    if is_exe(candidate):
+                        return candidate
+
+        return None
+    
     def taskset(pid,tt=None):
         # get/set the taskset affinity for pid
         # uses a binary number string for the core affinity
-        l = ['/bin/taskset','-p']
+        l = [which('taskset'),'-p']
         if tt:
             l.append(hex(int(tt,2))[2:])
         l.append(str(pid))
@@ -91,7 +114,7 @@ def unpin_threads(delay=60):
         num_cpus = reduce(lambda b,a: b+int('processor' in a),open('/proc/cpuinfo').readlines(),0)
         tt = '1'*num_cpus
         #tt = taskset(main_pid)
-        p = subprocess.Popen(['/bin/ps','-Lo','tid','--no-headers','%d'%main_pid],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        p = subprocess.Popen([which('ps'),'-Lo','tid','--no-headers','%d'%main_pid],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         for tid in p.communicate()[0].split():
             tid = tid.strip()
             if tid:
@@ -100,6 +123,9 @@ def unpin_threads(delay=60):
     try:
         open('/proc/cpuinfo')
     except IOError:
+        return
+    # and only if taskset exists
+    if not which('taskset'):
         return
     threading.Thread(target=resetTasksetThreads,args=(os.getpid(),)).start()
     
