@@ -11,8 +11,11 @@ trunk
 Major bug fixes are marked with "***".
 Do not use older versions of clsim without these for anything!
 
-  * r153865: thread unpinning to work around stupid cluster managers works on
-    Ubuntu now
+  * r153861 + r153865: Make thread unpinning to work around stupid cluster 
+    managers also work on Ubuntu, and make the tabulator raise an error if no
+    CPU OpenCL devices are found.
+  * r153710: I3CLSimMakePhotons can now take a wavelength acceptance directly.
+    The user is responsible for getting all the scaling factors right.
   * r149069 + r150508: new parameterizations for hadronic and EM showers are used
     (thanks andrii.terliuk) -> now re-factored into CMC (thanks jvs!)
 *** r148636: fixed the hadronic shower parametrization by using the correct
