@@ -8,25 +8,44 @@ Release Notes
 trunk
 -----
 
-* Fixed a bug where in rare cases the last few frames would not be processed
-  by clsim. (Thanks dschultz!)
-* The cutoff distance for sources further away from any DOM than a certain
-  distance is now configurable using the I3CLSimModule option
-  "ClosestDOMDistanceCutoff". It used to be hard-coded to 300m.
-* New "TotalEnergyToProcess" option to keep collecting input events as long
-  as the total energy to be propagated is below a threshold. (Instead of
-  just processing a fixed number of events in parallel.) Using this option
-  should reduce fluctuations in the memory requirements of clsim jobs.
-  This cannot currently be used with flasher simulations. If unset, the
-  previous behavior is used.
-* Moved I3Photon and I3CompressedPhoton to simclasses
+Major bug fixes are marked with "***".
+Do not use older versions of clsim without these for anything!
 
-December 22, 2014 Alex Olivas  (olivas@icecube.umd.edu) 
+  * r153865: thread unpinning to work around stupid cluster managers works on
+    Ubuntu now
+  * r149069 + r150508: new parameterizations for hadronic and EM showers are used
+    (thanks andrii.terliuk) -> now re-factored into CMC (thanks jvs!)
+*** r148636: fixed the hadronic shower parametrization by using the correct
+    radiation length (thanks musner!)
+*** r149250: clsim/Geant4 does no longer use seawater when simulating glacial
+    ice. This mostly affects late pulses from neutrons. (thanks asteuer!)
+  * r149878: hole ice parameterizations can now be configured when setting
+    up clsim (thanks sebastian.sanchez)
+  * several minor improvements to support mDOMs better (such as optional
+    oversizing [r148281])
+*** r147029 and r150787: Make clsim run efficiently on GTX 1080* cards and
+    on TITAN X GPUs. Do *NOT* use older versions of clsim on these cards
+    or you will waste a ton of GPU cycles.
+  * r143614: Moved I3Photon and I3CompressedPhoton to simclasses
+*** r140057: Fixed a bug where in rare cases the last few frames would not be processed
+    by clsim. (Thanks dschultz!)
+  * r131448: The cutoff distance for sources further away from any DOM than a certain
+    distance is now configurable using the I3CLSimModule option
+    "ClosestDOMDistanceCutoff". It used to be hard-coded to 300m.
+  * r130869: New "TotalEnergyToProcess" option to keep collecting input events as long
+    as the total energy to be propagated is below a threshold. (Instead of
+    just processing a fixed number of events in parallel.) Using this option
+    should reduce fluctuations in the memory requirements of clsim jobs.
+    This cannot currently be used with flasher simulations. If unset, the
+    previous behavior is used.
+  * various tablemaker fixes
+
+December 22, 2014 Alex Olivas  (olivas@icecube.umd.edu)
 --------------------------------------------------------------------
 
 Release V04-00-05
 
-* Loading safeprimes files (without the .txt extension). 
+* Loading safeprimes files (without the .txt extension).
 
 November 24, 2014 Alex Olivas  (olivas@icecube.umd.edu)
 -------------------------------------------------------
@@ -46,9 +65,9 @@ Release V04-00-03
 
 
 * some code cleanup: removed the dataclasses header backports
-  
+
   .. warning:: this version will not work with outdated dataclasses
-  
+
 * minor OpenCL cleanups to make some implementations happy
 * added a benchmark script which can be used to check the GPU/CPU
   performance by propagating a couple of photons
