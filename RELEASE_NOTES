@@ -8,6 +8,11 @@ Release Notes
 trunk
 -----
 
+March 24, 2017 Juan Carlos Diaz-Velez (juancarlos@icecube.wisc.edu)
+--------------------------------------------------------------------
+
+Release V04-02-00
+
 Major bug fixes are marked with "***".
 Do not use older versions of clsim without these for anything!
 
