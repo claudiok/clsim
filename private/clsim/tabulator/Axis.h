@@ -89,7 +89,7 @@ public:
 	virtual std::string GetTransformCode(const std::string &varName) const;
 	virtual std::string GetInverseTransformCode(const std::string &varName) const;
 private:
-	int power_;
+	unsigned power_;
 };
 
 }

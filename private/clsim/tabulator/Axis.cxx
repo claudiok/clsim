@@ -139,7 +139,7 @@ PowerAxis::GetTransformCode(const std::string &var) const
 		ss << 1;
 	} else if (power_ < 5) {
 		ss << var;
-		for (unsigned i = 0; i < power_-1; i++)
+		for (unsigned i = 0; i+1 < power_; i++)
 			ss << "*" << var;
 	} else {
 		ss << "pow("<<var<<", "<<power_<< ")";
