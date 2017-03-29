@@ -20,6 +20,13 @@ trunk
   This cannot currently be used with flasher simulations. If unset, the
   previous behavior is used.
 
+March 29, 2014 Alex Olivas  (olivas@icecube.umd.edu) 
+--------------------------------------------------------------------
+
+Release V04-01-02
+
+* Applying patches r150787 and r147029 that are necessary for sites with GTX 1080 cards
+
 December 22, 2014 Alex Olivas  (olivas@icecube.umd.edu) 
 --------------------------------------------------------------------
 
