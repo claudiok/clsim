@@ -65,6 +65,10 @@
 
 #ifdef HAS_GEANT4
 #include "Randomize.hh"
+
+#if G4VERSION_NUMBER >= 1000
+using CLHEP::mm;
+#endif
 #endif
 
 // other headers

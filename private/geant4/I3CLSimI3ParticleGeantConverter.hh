@@ -44,6 +44,7 @@
 #include "G4ParticleTable.hh"
 #include "G4ParticleDefinition.hh"
 #include "globals.hh"
+#include "G4Version.hh"
 
 namespace I3CLSimI3ParticleGeantConverter
 {
@@ -274,14 +275,20 @@ namespace I3CLSimI3ParticleGeantConverter
         particleGun->SetParticleDefinition(particleDef);
         
         // configure energy, position, momentum and time. Convert from I3Units to G4Units
+#if G4VERSION_NUMBER >= 1000
+        particleGun->SetParticleEnergy((particle.GetEnergy()/I3Units::GeV)*CLHEP::GeV);
+        particleGun->SetParticlePosition(G4ThreeVector(particle.GetX()/I3Units::m, particle.GetY()/I3Units::m, particle.GetZ()/I3Units::m)*CLHEP::m);
+        particleGun->SetParticleTime((particle.GetTime()/I3Units::ns)*CLHEP::ns);
+#else
         particleGun->SetParticleEnergy((particle.GetEnergy()/I3Units::GeV)*GeV);
         particleGun->SetParticlePosition(G4ThreeVector(particle.GetX()/I3Units::m, particle.GetY()/I3Units::m, particle.GetZ()/I3Units::m)*m);
+        particleGun->SetParticleTime((particle.GetTime()/I3Units::ns)*ns);
+#endif
         {
             const I3Direction &dir=particle.GetDir();
             particleGun->SetParticleMomentumDirection(G4ThreeVector(dir.GetX(), dir.GetY(), dir.GetZ()));
         }
 
-        particleGun->SetParticleTime((particle.GetTime()/I3Units::ns)*ns);
         
         particleGun->SetNumberOfParticles(1);
         

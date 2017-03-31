@@ -38,6 +38,7 @@
 #include "G4ParticleTable.hh"
 
 #include "G4OpticalPhoton.hh"
+#include "G4Version.hh"
 
 TrkOpticalPhysics::TrkOpticalPhysics(const G4String& name, 
                                      double maxBetaChangePerStep,
@@ -75,6 +76,9 @@ void TrkOpticalPhysics::ConstructProcess()
     G4ProcessManager * pManager = NULL;
     
     
+#if G4VERSION_NUMBER >= 1000
+    G4ParticleTable::G4PTblDicIterator* theParticleIterator;
+#endif
     theParticleIterator->reset();
     while ((*theParticleIterator)())
     {

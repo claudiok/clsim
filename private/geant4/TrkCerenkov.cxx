@@ -61,6 +61,18 @@
 // with a different interface. Try to support both
 // versions with an ifdef.
 #define MATERIAL_PROPERTY_VECTOR_IS_PHYSICS_VECTOR
+
+#if G4VERSION_NUMBER >= 1000
+using CLHEP::h_Planck;
+using CLHEP::c_light;
+using CLHEP::eplus;
+using CLHEP::m;
+using CLHEP::cm;
+using CLHEP::um;
+using CLHEP::nm;
+using CLHEP::ns;
+using CLHEP::eV;
+#endif
 #endif
 
 /////////////////////////

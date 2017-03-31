@@ -40,6 +40,13 @@
 #include "G4UnitsTable.hh"
 
 #include "I3CLSimI3ParticleGeantConverter.hh"
+#include "G4Version.hh"
+
+#if G4VERSION_NUMBER >= 1000
+using CLHEP::m;
+using CLHEP::ns;
+using CLHEP::GeV;
+#endif
 
 TrkStackingAction::TrkStackingAction()
 {
