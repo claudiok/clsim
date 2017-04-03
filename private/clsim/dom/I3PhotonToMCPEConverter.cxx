@@ -37,6 +37,7 @@
 #include <boost/foreach.hpp>
 
 #include "simclasses/I3Photon.h"
+#include "simclasses/I3CompressedPhoton.h"
 
 #include "phys-services/I3SummaryService.h"
 
@@ -227,12 +228,37 @@ namespace {
     {
         return elem1.time < elem2.time;
     }
+    
+    template <typename Photon>
+    void CheckSanity(const Photon &photon)
+    {}
+    
+    template <>
+    void CheckSanity<I3Photon>(const I3Photon &photon) {
+        // sanity check for unscattered photons: is their direction ok
+        // w.r.t. the vector from emission to detection?
+        if (photon.GetNumScattered()==0)
+        {
+            I3Position pp(photon.GetPos() - photon.GetStartPos());
+            const double ppl = pp.Magnitude();
+            const double cosang = (pp*photon.GetDir())/ppl;
+            
+            if ((cosang < 0.9) && (ppl>1.*I3Units::m)) {
+                log_fatal("unscattered photon direction is inconsistent: cos(ang)==%f, d=(%f,%f,%f), pp=(%f,%f,%f) pp_l=%f",
+                          cosang,
+                          photon.GetDir().GetX(), photon.GetDir().GetY(), photon.GetDir().GetZ(),
+                          pp.GetX(), pp.GetY(), pp.GetZ(),
+                          ppl
+                          );
+            }
+        }
+    }
 }
 
-void I3PhotonToMCPEConverter::DAQ(I3FramePtr frame)
+template <typename PhotonMapType>
+I3MCPESeriesMapPtr
+I3PhotonToMCPEConverter::Convert(I3FramePtr frame)
 {
-    log_trace("%s", __PRETTY_FUNCTION__);
-    
     // First we need to get our geometry
     I3OMGeoMapConstPtr omgeo = frame->Get<I3OMGeoMapConstPtr>("I3OMGeoMap");
     I3ModuleGeoMapConstPtr modulegeo = frame->Get<I3ModuleGeoMapConstPtr>("I3ModuleGeoMap");
@@ -242,40 +268,25 @@ void I3PhotonToMCPEConverter::DAQ(I3FramePtr frame)
     if (!modulegeo)
         log_fatal("Missing geometry information! (No \"I3ModuleGeoMap\")");
     
-    if (!replaceRelativeDOMEfficiencyWithDefault_) {
-        // no need to check for exitsing calibration frames if the efficiency
-        // will be replaced with a default value anyway
-        if (!calibration_)
-            log_fatal("no Calibration frame yet, but received a Physics frame.");
-    }
-
-    if ((!status_) && (ignoreDOMsWithoutDetectorStatusEntry_))
-        log_fatal("no DetectorStatus frame yet, but received a Physics frame.");
-    
-    I3PhotonSeriesMapConstPtr inputPhotonSeriesMap = frame->Get<I3PhotonSeriesMapConstPtr>(inputPhotonSeriesMapName_);
-    if (!inputPhotonSeriesMap) {
-        log_debug("Frame does not contain an I3PhotonSeriesMap named \"%s\".",
-                  inputPhotonSeriesMapName_.c_str());
-        
-        // do nothing if there is no input data
-        PushFrame(frame);
-        return;
-    }
+    boost::shared_ptr<const PhotonMapType> inputPhotonSeriesMap = frame->Get<boost::shared_ptr<const PhotonMapType> >(inputPhotonSeriesMapName_);
     
     // currently, the only reason we need the MCTree is that I3MCPE does
     // only allow setting the major/minor particle IDs using an existing
     // I3Particle instance with that ID combination.
     I3MCTreeConstPtr MCTree = frame->Get<I3MCTreeConstPtr>(MCTreeName_);
-
+    
     // allocate the output hitSeriesMap
     I3MCPESeriesMapPtr outputMCPESeriesMap(new I3MCPESeriesMap());
     
-    BOOST_FOREACH(const I3PhotonSeriesMap::value_type &it, *inputPhotonSeriesMap)
+    typedef PhotonMapType PhotonSeriesMap;
+    typedef typename PhotonSeriesMap::mapped_type PhotonSeries;
+    typedef typename PhotonSeries::value_type Photon;
+    BOOST_FOREACH(const typename PhotonSeriesMap::value_type &it, *inputPhotonSeriesMap)
     {
         const ModuleKey &module_key = it.first;
         // assume this is IceCube (i.e. one PMT with index 0 per DOM)
         const OMKey key(module_key.GetString(), module_key.GetOM(), 0);        
-        const I3PhotonSeries &photons = it.second;
+        const PhotonSeries &photons = it.second;
 
         if (ignoreDOMsWithoutDetectorStatusEntry_) {
             std::map<OMKey, I3DOMStatus>::const_iterator om_stat = status_->domStatus.find(key);
@@ -374,7 +385,7 @@ void I3PhotonToMCPEConverter::DAQ(I3FramePtr frame)
         // hits per OM.
         I3MCPESeries *hits = NULL;
 
-        BOOST_FOREACH(const I3Photon &photon, photons)
+        BOOST_FOREACH(const Photon &photon, photons)
         {
             double hitProbability = photon.GetWeight();
             if (hitProbability < 0.) log_fatal("Photon with negative weight found.");
@@ -434,26 +445,7 @@ void I3PhotonToMCPEConverter::DAQ(I3FramePtr frame)
                 }
             }
             
-            // sanity check for unscattered photons: is their direction ok
-            // w.r.t. the vector from emission to detection?
-            if (photon.GetNumScattered()==0)
-            {
-                double ppx = photon.GetPos().GetX()-photon.GetStartPos().GetX();
-                double ppy = photon.GetPos().GetY()-photon.GetStartPos().GetY();
-                double ppz = photon.GetPos().GetZ()-photon.GetStartPos().GetZ();
-                const double ppl = std::sqrt(ppx*ppx + ppy*ppy + ppz*ppz);
-                ppx/=ppl; ppy/=ppl; ppz/=ppl;
-                const double cosang = dx*ppx + dy*ppy + dz*ppz;
-                
-                if ((cosang < 0.9) && (ppl>1.*I3Units::m)) {
-                    log_fatal("unscattered photon direction is inconsistent: cos(ang)==%f, d=(%f,%f,%f), pp=(%f,%f,%f) pp_l=%f",
-                              cosang,
-                              dx, dy, dz,
-                              ppx, ppy, ppz,
-                              ppl
-                              );
-                }
-            }
+            CheckSanity(photon);
             
 #ifndef NDEBUG
             const double photonAngle = std::acos(photonCosAngle);
@@ -548,6 +540,37 @@ void I3PhotonToMCPEConverter::DAQ(I3FramePtr frame)
             // keep track of the number of hits generated
             numGeneratedHits_ += static_cast<uint64_t>(hits->size());
         }
+    }
+    
+    return outputMCPESeriesMap;
+}
+
+void I3PhotonToMCPEConverter::DAQ(I3FramePtr frame)
+{
+    log_trace("%s", __PRETTY_FUNCTION__);
+    
+    if (!replaceRelativeDOMEfficiencyWithDefault_) {
+        // no need to check for exitsing calibration frames if the efficiency
+        // will be replaced with a default value anyway
+        if (!calibration_)
+            log_fatal("no Calibration frame yet, but received a Physics frame.");
+    }
+
+    if ((!status_) && (ignoreDOMsWithoutDetectorStatusEntry_))
+        log_fatal("no DetectorStatus frame yet, but received a Physics frame.");
+    
+    I3MCPESeriesMapPtr outputMCPESeriesMap;
+    if (frame->Get<I3PhotonSeriesMapConstPtr>(inputPhotonSeriesMapName_)) {
+        outputMCPESeriesMap = Convert<I3PhotonSeriesMap>(frame);
+    } else if (frame->Get<I3CompressedPhotonSeriesMapConstPtr>(inputPhotonSeriesMapName_)) {
+        outputMCPESeriesMap = Convert<I3CompressedPhotonSeriesMap>(frame);
+    } else {
+        log_debug("Frame does not contain an I3PhotonSeriesMap named \"%s\".",
+                  inputPhotonSeriesMapName_.c_str());
+        
+        // do nothing if there is no input data
+        PushFrame(frame);
+        return;
     }
     
     // store the output I3MCPESeriesMap

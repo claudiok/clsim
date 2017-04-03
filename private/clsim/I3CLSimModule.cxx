@@ -32,12 +32,15 @@
 #include "clsim/I3CLSimModule.h"
 
 #include <boost/foreach.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/variant/get.hpp>
 #include <boost/math/common_factor_rt.hpp>
 
 #include "dataclasses/physics/I3MCTree.h"
 #include "dataclasses/physics/I3MCTreeUtils.h"
+
+#include "simclasses/I3CompressedPhoton.h"
 
 #include "phys-services/I3SummaryService.h"
 
@@ -75,9 +78,11 @@ namespace {
 }
 
 // The module
-I3_MODULE(I3CLSimModule);
+I3_MODULE(I3CLSimModule<I3PhotonSeriesMap>);
+I3_MODULE(I3CLSimModule<I3CompressedPhotonSeriesMap>);
 
-I3CLSimModule::I3CLSimModule(const I3Context& context) 
+template <typename OutputMapType>
+I3CLSimModule<OutputMapType>::I3CLSimModule(const I3Context& context) 
 : I3ConditionalModule(context),
 geometryIsConfigured_(false)
 {
@@ -305,7 +310,8 @@ geometryIsConfigured_(false)
     frameListPhysicsFrameCounter_=0;
 }
 
-I3CLSimModule::~I3CLSimModule()
+template <typename OutputMapType>
+I3CLSimModule<OutputMapType>::~I3CLSimModule()
 {
     log_trace("%s", __PRETTY_FUNCTION__);
 
@@ -313,7 +319,8 @@ I3CLSimModule::~I3CLSimModule()
     
 }
 
-void I3CLSimModule::StartThread()
+template <typename OutputMapType>
+void I3CLSimModule<OutputMapType>::StartThread()
 {
     log_trace("%s", __PRETTY_FUNCTION__);
 
@@ -332,7 +339,7 @@ void I3CLSimModule::StartThread()
     threadStarted_=false;
     threadFinishedOK_=false;
     
-    threadObj_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&I3CLSimModule::Thread_starter, this)));
+    threadObj_ = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&I3CLSimModule<OutputMapType>::Thread_starter, this)));
     
     // wait for startup
     {
@@ -348,7 +355,8 @@ void I3CLSimModule::StartThread()
 
 }
 
-void I3CLSimModule::StopThread()
+template <typename OutputMapType>
+void I3CLSimModule<OutputMapType>::StopThread()
 {
     log_trace("%s", __PRETTY_FUNCTION__);
     
@@ -370,7 +378,8 @@ void I3CLSimModule::StopThread()
 }
 
 
-void I3CLSimModule::Configure()
+template <typename OutputMapType>
+void I3CLSimModule<OutputMapType>::Configure()
 {
     log_trace("%s", __PRETTY_FUNCTION__);
 
@@ -535,7 +544,8 @@ void I3CLSimModule::Configure()
  * This thread takes care of passing steps from Geant4 to OpenCL
  */
 
-bool I3CLSimModule::Thread(boost::this_thread::disable_interruption &di)
+template <typename OutputMapType>
+bool I3CLSimModule<OutputMapType>::Thread(boost::this_thread::disable_interruption &di)
 {
     // do some setup while the main thread waits..
     numBunchesSentToOpenCL_.assign(openCLStepsToPhotonsConverters_.size(), 0);
@@ -645,7 +655,8 @@ bool I3CLSimModule::Thread(boost::this_thread::disable_interruption &di)
     return true;
 }
 
-void I3CLSimModule::Thread_starter()
+template <typename OutputMapType>
+void I3CLSimModule<OutputMapType>::Thread_starter()
 {
     // do not interrupt this thread by default
     boost::this_thread::disable_interruption di;
@@ -666,7 +677,8 @@ void I3CLSimModule::Thread_starter()
 }
 
 
-void I3CLSimModule::DigestGeometry(I3FramePtr frame)
+template <typename OutputMapType>
+void I3CLSimModule<OutputMapType>::DigestGeometry(I3FramePtr frame)
 {
     log_trace("%s", __PRETTY_FUNCTION__);
     
@@ -836,17 +848,111 @@ namespace {
     }
 }
 
-void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
-                                       I3CLSimPhotonHistorySeriesConstPtr photonHistories,
-                                       const std::vector<I3PhotonSeriesMapPtr> &photonsForFrameList_,
-                                       std::vector<int32_t> &currentPhotonIdForFrame_,
-                                       const std::vector<I3FramePtr> &frameList_,
-                                       const std::map<uint32_t, particleCacheEntry> &particleCache_,
-                                       const std::vector<std::set<ModuleKey> > &maskedOMKeys_,
-                                       bool collectStatistics_,
-                                       std::map<uint32_t, uint64_t> &photonNumAtOMPerParticle,
-                                       std::map<uint32_t, double> &photonWeightSumAtOMPerParticle
-                                       )
+namespace {
+
+typedef typename I3CLSimModule<I3PhotonSeriesMap>::particleCacheEntry particleCacheEntry;
+
+void EmitPhoton(const I3CLSimPhoton &photon, uint32_t currentPhotonId,
+    double timeShift, uint32_t particleMinorID, uint64_t particleMajorID,
+    I3PhotonSeries &outputPhotonSeries)
+{
+    // append a new I3Photon to the list
+    outputPhotonSeries.push_back(I3Photon());
+    
+    // get a reference to the new photon
+    I3Photon &outputPhoton = outputPhotonSeries.back();
+
+    // fill the photon data
+    outputPhoton.SetTime(photon.GetTime() + timeShift);
+    outputPhoton.SetID(currentPhotonId); // per-frame ID for every photon
+    outputPhoton.SetWeight(photon.GetWeight());
+    outputPhoton.SetParticleMinorID(particleMinorID);
+    outputPhoton.SetParticleMajorID(particleMajorID);
+    outputPhoton.SetCherenkovDist(photon.GetCherenkovDist());
+    outputPhoton.SetWavelength(photon.GetWavelength());
+    outputPhoton.SetGroupVelocity(photon.GetGroupVelocity());
+    outputPhoton.SetNumScattered(photon.GetNumScatters());
+
+    outputPhoton.SetPos(I3Position(photon.GetPosX(), photon.GetPosY(), photon.GetPosZ()));
+    {
+        I3Direction outDir;
+        outDir.SetThetaPhi(photon.GetDirTheta(), photon.GetDirPhi());
+        outputPhoton.SetDir(outDir);
+    }
+
+    outputPhoton.SetStartTime(photon.GetStartTime() + timeShift);
+
+    outputPhoton.SetStartPos(I3Position(photon.GetStartPosX(), photon.GetStartPosY(), photon.GetStartPosZ()));
+    {
+        I3Direction outStartDir;
+        outStartDir.SetThetaPhi(photon.GetStartDirTheta(), photon.GetStartDirPhi());
+        outputPhoton.SetStartDir(outStartDir);
+    }
+
+    outputPhoton.SetDistanceInAbsorptionLengths(photon.GetDistInAbsLens());
+}
+
+void EmitPhoton(const I3CLSimPhoton &photon, uint32_t currentPhotonId,
+    double timeShift, uint32_t particleMinorID, uint64_t particleMajorID,
+    I3CompressedPhotonSeries &outputPhotonSeries)
+{
+    // append a new I3Photon to the list
+    outputPhotonSeries.push_back(I3Photon());
+    
+    // get a reference to the new photon
+    I3CompressedPhoton &outputPhoton = outputPhotonSeries.back();
+
+    // fill the photon data
+    outputPhoton.SetTime(photon.GetTime() + timeShift);
+    outputPhoton.SetWeight(photon.GetWeight());
+    outputPhoton.SetParticleMinorID(particleMinorID);
+    outputPhoton.SetParticleMajorID(particleMajorID);
+    outputPhoton.SetWavelength(photon.GetWavelength());
+    outputPhoton.SetGroupVelocity(photon.GetGroupVelocity());
+
+    outputPhoton.SetPos(I3Position(photon.GetPosX(), photon.GetPosY(), photon.GetPosZ()));
+    {
+        I3Direction outDir;
+        outDir.SetThetaPhi(photon.GetDirTheta(), photon.GetDirPhi());
+        outputPhoton.SetDir(outDir);
+    }
+}
+
+
+void AddHistoryEntries(const I3CLSimPhotonHistory &photonHistory, I3PhotonSeries &outputPhotonSeries)
+{
+    // get a reference to the new photon
+    I3Photon &outputPhoton = outputPhotonSeries.back();
+    
+    if (photonHistory.size() > outputPhoton.GetNumScattered())
+        log_fatal("Logic error: photonHistory.size() [==%zu] > photon.GetNumScatters() [==%zu]",
+                  photonHistory.size(), static_cast<std::size_t>(outputPhoton.GetNumScattered()));
+    
+    for (std::size_t j=0;j<photonHistory.size();++j)
+    {
+        outputPhoton.AppendToIntermediatePositionList(I3Position( photonHistory.GetX(j), photonHistory.GetY(j), photonHistory.GetZ(j) ),
+                                                      photonHistory.GetDistanceInAbsorptionLengths(j)
+                                                     );
+    }
+}
+
+void AddHistoryEntries(const I3CLSimPhotonHistory &photonHistory, I3CompressedPhotonSeries &outputPhotonSeries)
+{
+    
+}
+
+template <typename OutputMapType>
+void AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
+                        I3CLSimPhotonHistorySeriesConstPtr photonHistories,
+                        const std::vector<boost::shared_ptr<OutputMapType> > &photonsForFrameList_,
+                        std::vector<int32_t> &currentPhotonIdForFrame_,
+                        const std::vector<I3FramePtr> &frameList_,
+                        const std::map<uint32_t, typename I3CLSimModule<OutputMapType>::particleCacheEntry> &particleCache_,
+                        const std::vector<std::set<ModuleKey> > &maskedOMKeys_,
+                        bool collectStatistics_,
+                        std::map<uint32_t, uint64_t> &photonNumAtOMPerParticle,
+                        std::map<uint32_t, double> &photonWeightSumAtOMPerParticle
+                        )
 {
     if (photonsForFrameList_.size() != frameList_.size())
         log_fatal("Internal error: cache sizes differ. (1)");
@@ -861,13 +967,16 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
         }
     }
     
-    
+    typedef OutputMapType PhotonSeriesMap;
+    typedef typename PhotonSeriesMap::mapped_type PhotonSeries;
+    typedef typename PhotonSeries::value_type Photon;
+    typedef typename I3CLSimModule<OutputMapType>::particleCacheEntry particleCacheEntry;
     for (std::size_t i=0;i<photons.size();++i)
     {
         const I3CLSimPhoton &photon = photons[i];
         
         // find identifier in particle cache
-        std::map<uint32_t, particleCacheEntry>::const_iterator it = particleCache_.find(photon.identifier);
+        auto it = particleCache_.find(photon.identifier);
         if (it == particleCache_.end())
             log_fatal("Internal error: unknown particle id from OpenCL: %" PRIu32,
                       photon.identifier);
@@ -877,7 +986,7 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
             log_fatal("Internal error: particle cache entry uses invalid frame cache position");
         
         //I3FramePtr &frame = frameList_[cacheEntry.frameListEntry];
-        I3PhotonSeriesMap &outputPhotonMap = *(photonsForFrameList_[cacheEntry.frameListEntry]);
+        PhotonSeriesMap &outputPhotonMap = *(photonsForFrameList_[cacheEntry.frameListEntry]);
 
         // get the current photon id
         int32_t &currentPhotonId = currentPhotonIdForFrame_[cacheEntry.frameListEntry];
@@ -891,56 +1000,15 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
         if (keyMask.count(key) > 0) continue; // ignore masked DOMs
         
         // this either inserts a new vector or retrieves an existing one
-        I3PhotonSeries &outputPhotonSeries = outputPhotonMap.insert(std::make_pair(key, I3PhotonSeries())).first->second;
+        PhotonSeries &outputPhotonSeries = outputPhotonMap.insert(std::make_pair(key, PhotonSeries())).first->second;
         
-        // append a new I3Photon to the list
-        outputPhotonSeries.push_back(I3Photon());
-        
-        // get a reference to the new photon
-        I3Photon &outputPhoton = outputPhotonSeries.back();
-
-        // fill the photon data
-        outputPhoton.SetTime(photon.GetTime() + cacheEntry.timeShift);
-        outputPhoton.SetID(currentPhotonId); // per-frame ID for every photon
-        outputPhoton.SetWeight(photon.GetWeight());
-        outputPhoton.SetParticleMinorID(cacheEntry.particleMinorID);
-        outputPhoton.SetParticleMajorID(cacheEntry.particleMajorID);
-        outputPhoton.SetCherenkovDist(photon.GetCherenkovDist());
-        outputPhoton.SetWavelength(photon.GetWavelength());
-        outputPhoton.SetGroupVelocity(photon.GetGroupVelocity());
-        outputPhoton.SetNumScattered(photon.GetNumScatters());
-
-        outputPhoton.SetPos(I3Position(photon.GetPosX(), photon.GetPosY(), photon.GetPosZ()));
-        {
-            I3Direction outDir;
-            outDir.SetThetaPhi(photon.GetDirTheta(), photon.GetDirPhi());
-            outputPhoton.SetDir(outDir);
-        }
-
-        outputPhoton.SetStartTime(photon.GetStartTime() + cacheEntry.timeShift);
-
-        outputPhoton.SetStartPos(I3Position(photon.GetStartPosX(), photon.GetStartPosY(), photon.GetStartPosZ()));
-        {
-            I3Direction outStartDir;
-            outStartDir.SetThetaPhi(photon.GetStartDirTheta(), photon.GetStartDirPhi());
-            outputPhoton.SetStartDir(outStartDir);
-        }
-
-        outputPhoton.SetDistanceInAbsorptionLengths(photon.GetDistInAbsLens());
+        EmitPhoton(photon, currentPhotonId, cacheEntry.timeShift,
+            cacheEntry.particleMinorID, cacheEntry.particleMajorID,
+            outputPhotonSeries);
         
         if (photonHistories) {
             const I3CLSimPhotonHistory &photonHistory = (*photonHistories)[i];
-            
-            if (photonHistory.size() > photon.GetNumScatters())
-                log_fatal("Logic error: photonHistory.size() [==%zu] > photon.GetNumScatters() [==%zu]",
-                          photonHistory.size(), static_cast<std::size_t>(photon.GetNumScatters()));
-            
-            for (std::size_t j=0;j<photonHistory.size();++j)
-            {
-                outputPhoton.AppendToIntermediatePositionList(I3Position( photonHistory.GetX(j), photonHistory.GetY(j), photonHistory.GetZ(j) ),
-                                                              photonHistory.GetDistanceInAbsorptionLengths(j)
-                                                             );
-            }
+            AddHistoryEntries(photonHistory, outputPhotonSeries);
         }
         
         if (collectStatistics_)
@@ -955,7 +1023,10 @@ void I3CLSimModule::AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
     
 }
 
-std::size_t I3CLSimModule::FlushFrameCache()
+} // namespace
+
+template <typename OutputMapType>
+std::size_t I3CLSimModule<OutputMapType>::FlushFrameCache()
 {
     log_debug("Flushing frame cache..");
     
@@ -994,7 +1065,7 @@ std::size_t I3CLSimModule::FlushFrameCache()
     photonNumGeneratedPerParticle_old.swap(photonNumGeneratedPerParticle_);
     photonWeightSumGeneratedPerParticle_old.swap(photonWeightSumGeneratedPerParticle_);
 
-    std::vector<I3PhotonSeriesMapPtr> photonsForFrameList_old;
+    std::vector<boost::shared_ptr<OutputMapType> > photonsForFrameList_old;
     std::vector<int32_t> currentPhotonIdForFrame_old;
     std::vector<I3FramePtr> frameList_old;
     std::map<uint32_t, particleCacheEntry> particleCache_old;
@@ -1098,7 +1169,7 @@ std::size_t I3CLSimModule::FlushFrameCache()
             it!=photonNumGeneratedPerParticle_old.end();++it)
         {
             // find identifier in particle cache
-            std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_old.find(it->first);
+            typename std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_old.find(it->first);
             if (it_cache == particleCache_old.end())
                 log_error("Internal error: unknown particle id from Geant4: %" PRIu32,
                           it->first);
@@ -1117,7 +1188,7 @@ std::size_t I3CLSimModule::FlushFrameCache()
             it!=photonWeightSumGeneratedPerParticle_old.end();++it)
         {
             // find identifier in particle cache
-            std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_old.find(it->first);
+            typename std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_old.find(it->first);
             if (it_cache == particleCache_old.end())
                 log_fatal("Internal error: unknown particle id from Geant4: %" PRIu32,
                           it->first);
@@ -1137,7 +1208,7 @@ std::size_t I3CLSimModule::FlushFrameCache()
             it!=photonNumAtOMPerParticle.end();++it)
         {
             // find identifier in particle cache
-            std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_old.find(it->first);
+            typename std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_old.find(it->first);
             if (it_cache == particleCache_old.end())
                 log_fatal("Internal error: unknown particle id from Geant4: %" PRIu32,
                           it->first);
@@ -1156,7 +1227,7 @@ std::size_t I3CLSimModule::FlushFrameCache()
             it!=photonWeightSumAtOMPerParticle.end();++it)
         {
             // find identifier in particle cache
-            std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_old.find(it->first);
+            typename std::map<uint32_t, particleCacheEntry>::iterator it_cache = particleCache_old.find(it->first);
             if (it_cache == particleCache_old.end())
                 log_fatal("Internal error: unknown particle id from Geant4: %" PRIu32,
                           it->first);
@@ -1291,12 +1362,14 @@ namespace {
 
 }
 
-bool I3CLSimModule::ShouldDoProcess(I3FramePtr frame)
+template <typename OutputMapType>
+bool I3CLSimModule<OutputMapType>::ShouldDoProcess(I3FramePtr frame)
 {
     return true;
 }
 
-void I3CLSimModule::Process()
+template <typename OutputMapType>
+void I3CLSimModule<OutputMapType>::Process()
 {
     I3FramePtr frame = PopFrame();
     if (!frame) return;
@@ -1387,7 +1460,8 @@ void I3CLSimModule::Process()
     }
 }
 
-double I3CLSimModule::GetLightSourceEnergy(I3FramePtr frame)
+template <typename OutputMapType>
+double I3CLSimModule<OutputMapType>::GetLightSourceEnergy(I3FramePtr frame)
 {
     I3MCTreeConstPtr MCTree;
     I3CLSimFlasherPulseSeriesConstPtr flasherPulses;
@@ -1437,12 +1511,13 @@ double I3CLSimModule::GetLightSourceEnergy(I3FramePtr frame)
     return totalLightSourceEnergy;
 }
 
-bool I3CLSimModule::DigestOtherFrame(I3FramePtr frame, bool startThread)
+template <typename OutputMapType>
+bool I3CLSimModule<OutputMapType>::DigestOtherFrame(I3FramePtr frame, bool startThread)
 {
     log_trace("%s", __PRETTY_FUNCTION__);
-    
+     
     frameList_.push_back(frame);
-    photonsForFrameList_.push_back(I3PhotonSeriesMapPtr(new I3PhotonSeriesMap()));
+    photonsForFrameList_.push_back(boost::make_shared<OutputMapType>());
     currentPhotonIdForFrame_.push_back(0);
     std::size_t currentFrameListIndex = frameList_.size()-1;
     maskedOMKeys_.push_back(std::set<ModuleKey>()); // insert an empty ModuleKey mask
@@ -1570,7 +1645,8 @@ bool I3CLSimModule::DigestOtherFrame(I3FramePtr frame, bool startThread)
     return true;
 }
 
-void I3CLSimModule::Finish()
+template <typename OutputMapType>
+void I3CLSimModule<OutputMapType>::Finish()
 {
     log_trace("%s", __PRETTY_FUNCTION__);
     
@@ -1638,7 +1714,8 @@ void I3CLSimModule::Finish()
 
 //////////////
 
-void I3CLSimModule::ConvertMCTreeToLightSources(const I3MCTree &mcTree,
+template <typename OutputMapType>
+void I3CLSimModule<OutputMapType>::ConvertMCTreeToLightSources(const I3MCTree &mcTree,
                                                 std::deque<I3CLSimLightSource> &lightSources,
                                                 std::deque<double> &timeOffsets)
 {
@@ -1755,7 +1832,8 @@ void I3CLSimModule::ConvertMCTreeToLightSources(const I3MCTree &mcTree,
 }
 
 
-void I3CLSimModule::ConvertFlasherPulsesToLightSources(const I3CLSimFlasherPulseSeries &flasherPulses,
+template <typename OutputMapType>
+void I3CLSimModule<OutputMapType>::ConvertFlasherPulsesToLightSources(const I3CLSimFlasherPulseSeries &flasherPulses,
                                                        std::deque<I3CLSimLightSource> &lightSources,
                                                        std::deque<double> &timeOffsets)
 {

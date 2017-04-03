@@ -73,6 +73,7 @@
 /**
  * @brief
  */
+template <typename OutputMapType>
 class I3CLSimModule : public I3ConditionalModule
 {
 public:
@@ -343,11 +344,12 @@ private:
     std::size_t frameListPhysicsFrameCounter_;
     std::vector<I3FramePtr> frameList_;
     std::deque<I3FramePtr> frameList2_;
-    std::vector<I3PhotonSeriesMapPtr> photonsForFrameList_;
+    std::vector<boost::shared_ptr<OutputMapType> > photonsForFrameList_;
     std::vector<int32_t> currentPhotonIdForFrame_;
     std::vector<bool> frameIsBeingWorkedOn_;
     std::vector<std::set<ModuleKey> > maskedOMKeys_;
-    
+
+public:
     struct particleCacheEntry
     {
         std::size_t frameListEntry; // pointer to the frame list by entry number
@@ -355,22 +357,10 @@ private:
         int particleMinorID;
         double timeShift; // optional time that needs to be added to the final output photon
     };
-    
+private:
     // list of all particles (with pointrs to their frames)
     // currently being simulated
     std::map<uint32_t, particleCacheEntry> particleCache_;
-    
-    static void AddPhotonsToFrames(const I3CLSimPhotonSeries &photons,
-                                   I3CLSimPhotonHistorySeriesConstPtr photonHistories,
-                                   const std::vector<I3PhotonSeriesMapPtr> &photonsForFrameList_,
-                                   std::vector<int32_t> &currentPhotonIdForFrame_,
-                                   const std::vector<I3FramePtr> &frameList_,
-                                   const std::map<uint32_t, particleCacheEntry> &particleCache_,
-                                   const std::vector<std::set<ModuleKey> > &maskedOMKeys_,
-                                   bool collectStatistics_,
-                                   std::map<uint32_t, uint64_t> &photonNumAtOMPerParticle,
-                                   std::map<uint32_t, double> &photonWeightSumAtOMPerParticle
-                                   );
 
     SET_LOGGER("I3CLSimModule");
 };

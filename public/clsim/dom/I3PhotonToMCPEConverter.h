@@ -33,13 +33,14 @@
 #include "dataclasses/geometry/I3Geometry.h"
 #include "dataclasses/calibration/I3Calibration.h"
 #include "dataclasses/status/I3DetectorStatus.h"
+#include "dataclasses/physics/I3MCTree.h"
+#include "simclasses/I3MCPE.h"
 
 #include "phys-services/I3RandomService.h"
 
 #include "clsim/function/I3CLSimFunction.h"
 
 #include <string>
-
 
 /**
  * @brief This module reads I3PhotonSeriesMaps generated
@@ -135,6 +136,9 @@ private:
     I3PhotonToMCPEConverter();
     I3PhotonToMCPEConverter(const I3PhotonToMCPEConverter&);
     I3PhotonToMCPEConverter& operator=(const I3PhotonToMCPEConverter&);
+    
+    template <typename PhotonMapType>
+    I3MCPESeriesMapPtr Convert(I3FramePtr frame);
 
     I3CalibrationConstPtr calibration_;
     I3DetectorStatusConstPtr status_;

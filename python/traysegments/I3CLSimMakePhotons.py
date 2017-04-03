@@ -407,7 +407,11 @@ def I3CLSimMakePhotons(tray, name,
         UseOnlyDeviceNumber=UseOnlyDeviceNumber
 	)
 
-    tray.AddModule("I3CLSimModule", name + "_clsim",
+    if PhotonHistoryEntries == 0:
+        module = 'I3CLSimModule<I3CompressedPhotonSeriesMap>'
+    else:
+        module = 'I3CLSimModule<I3PhotonSeriesMap>'
+    tray.AddModule(module, name + "_clsim",
                    MCTreeName=clSimMCTreeName,
                    PhotonSeriesMapName=PhotonSeriesName,
                    DOMRadius = DOMRadius,
