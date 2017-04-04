@@ -45,8 +45,6 @@
 #include "dataclasses/geometry/I3ModuleGeo.h"
 
 #include "simclasses/I3MCPE.h"
-#include "dataclasses/physics/I3MCTree.h"
-#include "dataclasses/physics/I3MCTreeUtils.h"
 #include "dataclasses/physics/I3ParticleID.h"
 
 #include "dataclasses/I3Constants.h"
@@ -70,11 +68,6 @@ I3PhotonToMCPEConverter::I3PhotonToMCPEConverter(const I3Context& context)
     AddParameter("OutputMCPESeriesMapName",
                  "Name of the output I3MCPESeries frame object.",
                  outputMCPESeriesMapName_);
-
-    MCTreeName_="I3MCTree";
-    AddParameter("MCTreeName",
-                 "Name of the I3MCTree frame object. All photon particle IDs are checked against this tree.",
-                 MCTreeName_);
 
     AddParameter("WavelengthAcceptance",
                  "Wavelength acceptance of the (D)OM as a I3WlenDependedValue object.",
@@ -145,8 +138,6 @@ void I3PhotonToMCPEConverter::Configure()
 
     GetParameter("InputPhotonSeriesMapName", inputPhotonSeriesMapName_);
     GetParameter("OutputMCPESeriesMapName", outputMCPESeriesMapName_);
-
-    GetParameter("MCTreeName", MCTreeName_);
 
     GetParameter("WavelengthAcceptance", wavelengthAcceptance_);
     GetParameter("AngularAcceptance", angularAcceptance_);
@@ -269,11 +260,6 @@ I3PhotonToMCPEConverter::Convert(I3FramePtr frame)
         log_fatal("Missing geometry information! (No \"I3ModuleGeoMap\")");
     
     boost::shared_ptr<const PhotonMapType> inputPhotonSeriesMap = frame->Get<boost::shared_ptr<const PhotonMapType> >(inputPhotonSeriesMapName_);
-    
-    // currently, the only reason we need the MCTree is that I3MCPE does
-    // only allow setting the major/minor particle IDs using an existing
-    // I3Particle instance with that ID combination.
-    I3MCTreeConstPtr MCTree = frame->Get<I3MCTreeConstPtr>(MCTreeName_);
     
     // allocate the output hitSeriesMap
     I3MCPESeriesMapPtr outputMCPESeriesMap(new I3MCPESeriesMap());
@@ -498,17 +484,6 @@ I3PhotonToMCPEConverter::Convert(I3FramePtr frame)
             
             // does it survive?
             if (hitProbability <= randomService_->Uniform()) continue;
-
-            // find the particle
-            const I3Particle *particle = NULL;
-            
-            if ((photon.GetParticleMajorID() != 0) && (photon.GetParticleMinorID() != 0))
-            {
-                // index (0,0) is used for flasher photons, set no hit particle for those
-                if (!MCTree)
-                    log_fatal_stream("Did not find a valid I3MCTree with name '" << MCTreeName_ << "'");
-                particle = I3MCTreeUtils::GetParticlePtr(MCTree, photon.GetParticleID());
-            }
         
             // allocate the output vector if not already done
             if (!hits) hits = &(outputMCPESeriesMap->insert(std::make_pair(key, I3MCPESeries())).first->second);
@@ -522,15 +497,7 @@ I3PhotonToMCPEConverter::Convert(I3FramePtr frame)
             }
             
             // add a new hit
-            if(particle)
-                hits->push_back(I3MCPE(*particle));
-            else
-                hits->push_back(I3MCPE());
-            I3MCPE &hit = hits->back();
-            
-            // fill in all information
-            hit.time=correctedTime;
-            hit.npe=1;
+            hits->emplace_back(photon.GetParticleID(), 1, correctedTime);
         }
         
         if (hits) {

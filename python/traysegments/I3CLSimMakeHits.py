@@ -311,8 +311,7 @@ def I3CLSimMakeHits(tray, name,
                            **I3CLSimMakePhotons_kwargs)
 
     if MCPESeriesName is not None:
-        I3CLSimMakeHitsFromPhotons_kwargs = dict(MCTreeName=clSimMCTreeName,
-                                                 PhotonSeriesName=photonsName,
+        I3CLSimMakeHitsFromPhotons_kwargs = dict(PhotonSeriesName=photonsName,
                                                  MCPESeriesName=MCPESeriesName,
                                                  RandomService=RandomService,
                                                  DOMOversizeFactor=DOMOversizeFactor,

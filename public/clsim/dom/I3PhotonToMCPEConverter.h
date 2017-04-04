@@ -96,9 +96,6 @@ private:
     /// Parameter: Name of the output I3MCPESeries frame object. 
     std::string outputMCPESeriesMapName_;
 
-    /// Parameter: Name of the I3MCTree frame object. All photon particle IDs are checked against this tree.
-    std::string MCTreeName_;
-
     /// Parameter: Wavelength acceptance of the (D)OM as a I3WlenDependedValue object.
     I3CLSimFunctionConstPtr wavelengthAcceptance_;
 

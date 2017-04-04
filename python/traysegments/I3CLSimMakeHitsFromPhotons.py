@@ -35,7 +35,6 @@ def unchanged(func): return func
 my_traysegment = icetray.traysegment if hasattr(icetray, "traysegment") else unchanged
 @my_traysegment
 def I3CLSimMakeHitsFromPhotons(tray, name,
-                               MCTreeName="I3MCTree_sliced",
                                PhotonSeriesName="PhotonSeriesMap",
                                MCPESeriesName="MCPESeriesMap",
                                RandomService=None,
@@ -49,8 +48,6 @@ def I3CLSimMakeHitsFromPhotons(tray, name,
     angular acceptance (and wavenelgth acceptance in case
     you are using the unbiased photon propagation mode.)
 
-    :param MCTreeName:
-        The name of the I3MCTree containing the particles to propagate.
     :param PhotonSeriesName:
         Name of the input I3PhotonSeriesMap to be converted.
     :param MCPESeriesName:
@@ -87,7 +84,6 @@ def I3CLSimMakeHitsFromPhotons(tray, name,
 
     tray.AddModule("I3PhotonToMCPEConverter", name + "_clsim_make_hits",
                    RandomService = RandomService,
-                   MCTreeName = MCTreeName,
                    InputPhotonSeriesMapName = PhotonSeriesName,
                    OutputMCPESeriesMapName = MCPESeriesName,
                    DOMRadiusWithoutOversize=DOMRadius,
