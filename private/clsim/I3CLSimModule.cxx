@@ -1682,7 +1682,7 @@ void I3CLSimModule<OutputMapType>::Finish()
     log_info("I3CLSimModule is done.");
 
     // add some summary information to a potential I3SummaryService
-    I3SummaryServicePtr summary = context_.Get<I3SummaryServicePtr>();
+    I3MapStringDoublePtr summary = context_.Get<I3MapStringDoublePtr>("I3SummaryService");
     if (summary) {
         const std::string prefix = "I3CLSimModule_" + GetName() + "_";
         

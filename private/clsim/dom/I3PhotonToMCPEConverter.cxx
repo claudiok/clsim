@@ -550,7 +550,7 @@ void I3PhotonToMCPEConverter::DAQ(I3FramePtr frame)
 void I3PhotonToMCPEConverter::Finish()
 {
     // add some summary information to a potential I3SummaryService
-    I3SummaryServicePtr summary = context_.Get<I3SummaryServicePtr>();
+    I3MapStringDoublePtr summary = context_.Get<I3MapStringDoublePtr>("I3SummaryService");
     if (summary) {
         const std::string prefix = "I3PhotonToMCPEConverter_" + GetName() + "_";
         
