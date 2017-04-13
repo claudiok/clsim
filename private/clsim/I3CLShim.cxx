@@ -117,7 +117,7 @@ I3CLShim::GetMeanAmplitudes(std::vector<LightSource> &sources, const std::vector
 	
 	// Harvest photons, adding their hit probability weight to the appropriate bin
 	// in each receiver.
-	for (uint32_t j=0; j < pindex; j++) {
+	for (uint32_t j=0; j < pindex+1; j++) {
 		I3CLSimStepToPhotonConverter::ConversionResult_t result = photonConverter_->GetConversionResult();
 		log_info("Got %zu photons", result.photons->size());
 		BOOST_FOREACH(const I3CLSimPhoton &p, *result.photons) {
@@ -135,7 +135,6 @@ I3CLShim::GetMeanAmplitudes(std::vector<LightSource> &sources, const std::vector
 			// find the time bin this photon belongs in
 			int binidx = std::max(std::distance(receiver.time_bin_edges.first,
 			    std::lower_bound(receiver.time_bin_edges.first, receiver.time_bin_edges.second-1, p.GetTime()))-1, ptrdiff_t(0));
-			
 			// each real source is repeated oversampleFactor_ times
 			int sourceidx = p.GetID() / oversampleFactor_;
 			// ensure that we haven't stepped out of bounds
