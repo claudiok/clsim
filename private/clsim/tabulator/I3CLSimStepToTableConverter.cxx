@@ -402,10 +402,12 @@ I3CLSimStepToTableConverter::FetchSteps(cl::Kernel kernel, I3RandomServicePtr rn
 	
 	KernelStatistics stats;
 	
+	bunch_t bunch;
 	while (1) {
-		bunch_t bunch;
 	
-		if (!stepQueue_.GetNonBlocking(bunch)) {
+		// Work on either the remainder of the last bunch or the next bunch
+		// in the queue
+		if (!bunch.first && !stepQueue_.GetNonBlocking(bunch)) {
 			if (run_) {
 				continue;
 			} else {
@@ -462,7 +464,7 @@ I3CLSimStepToTableConverter::FetchSteps(cl::Kernel kernel, I3RandomServicePtr rn
 		I3CLSimStepSeriesPtr rsteps;
 		size_t misses = 0;
 		for (size_t i = 0; i < items; i++) {
-			// If any steps ran out of space, return them to the queue to finish
+			// If any steps ran out of space, return them to the work list
 			if (osteps[i].GetNumPhotons() > 0) {
 				log_trace_stream(osteps[i].GetNumPhotons() << " left");
 				if (!rsteps)
@@ -481,7 +483,9 @@ I3CLSimStepToTableConverter::FetchSteps(cl::Kernel kernel, I3RandomServicePtr rn
 			while (rsteps->size() < maxNumWorkitems_)
 				rsteps->push_back(dummy);
 			bunch.first = rsteps;
-			stepQueue_.Put(bunch);
+		} else {
+			// No steps ran out of space; reset the work list.
+			bunch.first.reset();
 		}
 		
 
