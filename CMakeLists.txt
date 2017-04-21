@@ -106,7 +106,6 @@ if (GEANT4_FOUND AND OPENCL_FOUND AND NOT DISABLE_GEANT4_IN_CLSIM)
     LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
         private/geant4/TrkCerenkov.cxx
         private/geant4/TrkDetectorConstruction.cxx
-        private/geant4/TrkEMPhysicsUHE.cxx
         private/geant4/TrkEventAction.cxx
         private/geant4/TrkOpticalPhysics.cxx
         private/geant4/TrkPrimaryGeneratorAction.cxx
