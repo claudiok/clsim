@@ -19,10 +19,10 @@ def configureOpenCLDevices(UseGPUs=True, UseCPUs=False, OverrideApproximateNumbe
             # skip all devices except for the selected one (if there is a selection)
             continue
 
-        if string.count(device.device, 'Tesla') > 0 or string.count(device.device, 'GTX') > 0:
+        if string.count(device.device, 'Tesla') > 0 or string.count(device.device, 'GTX') > 0 or string.count(device.device, 'TITAN') > 0:
             # assume these are "fast", all others are "slow"
             device.useNativeMath=True
-            if string.count(device.device, '1080') > 0:
+            if string.count(device.device, '1080') > 0 or string.count(device.device, 'TITAN') > 0:
                 # These things have 8GB of memory, so use more of it (because why not)
                 device.approximateNumberOfWorkItems=1024000*2
             elif string.count(device.device, 'Tesla') > 0 or string.count(device.device, '580') > 0 or string.count(device.device, '680') > 0 or string.count(device.device, '980') > 0:
