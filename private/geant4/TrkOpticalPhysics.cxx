@@ -78,6 +78,7 @@ void TrkOpticalPhysics::ConstructProcess()
     
 #if G4VERSION_NUMBER >= 1000
     G4ParticleTable::G4PTblDicIterator* theParticleIterator;
+    theParticleIterator = theParticleTable->GetIterator();
 #endif
     theParticleIterator->reset();
     while ((*theParticleIterator)())
