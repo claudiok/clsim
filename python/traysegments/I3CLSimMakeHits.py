@@ -71,6 +71,7 @@ def I3CLSimMakeHits(tray, name,
                     DOMOversizeFactor=5.,
                     UnshadowedFraction=0.9,
                     HoleIceParameterization=expandvars("$I3_SRC/ice-models/resources/models/angsens/as.h2-50cm"),
+                    IgnoreSubdetectors=['IceTop'],
                     ExtraArgumentsToI3CLSimModule=dict(),
                     If=lambda f: True
                     ):
@@ -299,6 +300,7 @@ def I3CLSimMakeHits(tray, name,
                                      DOMOversizeFactor=DOMOversizeFactor,
                                      UnshadowedFraction=UnshadowedFraction,
                                      HoleIceParameterization=HoleIceParameterization,
+                                     IgnoreSubdetectors=IgnoreSubdetectors,
                                      If=If,
                                      **kwargs)
 

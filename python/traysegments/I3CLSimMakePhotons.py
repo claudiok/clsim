@@ -76,9 +76,8 @@ def I3CLSimMakePhotons(tray, name,
                        WavelengthAcceptance=None,
                        DOMRadius=0.16510*icetray.I3Units.m, # 13" diameter
                        OverrideApproximateNumberOfWorkItems=None,
-                       ExtraArgumentsToI3CLSimModule=dict(
-                           IgnoreSubdetectors=['IceTop'],
-                           ),
+                       IgnoreSubdetectors=['IceTop'],
+                       ExtraArgumentsToI3CLSimModule=dict(),
                        If=lambda f: True
                        ):
     """Do standard clsim processing up to the I3Photon level.
@@ -432,6 +431,7 @@ def I3CLSimMakePhotons(tray, name,
                    #UseHardcodedDeepCoreSubdetector=False, # setting this to true saves GPU constant memory but will reduce performance
                    StopDetectedPhotons=StopDetectedPhotons,
                    PhotonHistoryEntries=PhotonHistoryEntries,
+                   IgnoreSubdetectors=IgnoreSubdetectors,
                    If=If,
                    **ExtraArgumentsToI3CLSimModule
                    )
