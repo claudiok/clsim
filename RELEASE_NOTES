@@ -7,6 +7,9 @@ Release Notes
 
 trunk
 -----
+ * clsim now works with Geant4 versions >= 4.10.x
+ * Emit I3CompressedPhotons if PhotonHistoryEntries? == 0
+ * fixed benchmark.py and tray segment parameters
 
 March 24, 2017 Juan Carlos Diaz-Velez (juancarlos@icecube.wisc.edu)
 --------------------------------------------------------------------
