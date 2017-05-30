@@ -18,7 +18,7 @@
  *
  * $Id$
  *
- * @file I3CLSimTemplateStore.h
+ * @file I3CLSimStepStore.h
  * @version $Revision$
  * @date $Date$
  * @author Claudio Kopper
