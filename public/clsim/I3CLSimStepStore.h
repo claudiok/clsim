@@ -53,11 +53,13 @@ class I3CLSimTemplateStore
 private:
     typedef std::deque<T> TDequeType;
     
+    /// @cond this assert confuses doxygen
     // static_assert: U==unsigned integer (8,16,32 or 64 bit)
     BOOST_STATIC_ASSERT((std::numeric_limits<U>::digits >= 8)
                         && std::numeric_limits<U>::is_specialized
                         && std::numeric_limits<U>::is_integer
                         && !std::numeric_limits<U>::is_signed);
+    /// @endcond
 
     // static_assert: max<U> <= max<std::size_t>
     BOOST_STATIC_ASSERT((std::numeric_limits<U>::digits <= std::numeric_limits<std::size_t>::digits));
