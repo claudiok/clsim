@@ -12,11 +12,11 @@ trunk
  * fixed benchmark.py and tray segment parameters
 
 March 24, 2017 Juan Carlos Diaz-Velez (juancarlos@icecube.wisc.edu)
---------------------------------------------------------------------
+-------------------------------------------------------------------
 
 Release V04-02-00
 
-Major bug fixes are marked with "***".
+Major bug fixes are marked with "``***``".
 Do not use older versions of clsim without these for anything!
 
   * r153861 + r153865: Make thread unpinning to work around stupid cluster 
@@ -26,19 +26,19 @@ Do not use older versions of clsim without these for anything!
     The user is responsible for getting all the scaling factors right.
   * r149069 + r150508: new parameterizations for hadronic and EM showers are used
     (thanks andrii.terliuk) -> now re-factored into CMC (thanks jvs!)
-*** r148636: fixed the hadronic shower parametrization by using the correct
+  * ``***`` r148636: fixed the hadronic shower parametrization by using the correct
     radiation length (thanks musner!)
-*** r149250: clsim/Geant4 does no longer use seawater when simulating glacial
+  * ``***`` r149250: clsim/Geant4 does no longer use seawater when simulating glacial
     ice. This mostly affects late pulses from neutrons. (thanks asteuer!)
   * r149878: hole ice parameterizations can now be configured when setting
     up clsim (thanks sebastian.sanchez)
   * several minor improvements to support mDOMs better (such as optional
     oversizing [r148281])
-*** r147029 and r150787: Make clsim run efficiently on GTX 1080* cards and
+  * ``***`` r147029 and r150787: Make clsim run efficiently on GTX 1080* cards and
     on TITAN X GPUs. Do *NOT* use older versions of clsim on these cards
     or you will waste a ton of GPU cycles.
   * r143614: Moved I3Photon and I3CompressedPhoton to simclasses
-*** r140057: Fixed a bug where in rare cases the last few frames would not be processed
+  * ``***`` r140057: Fixed a bug where in rare cases the last few frames would not be processed
     by clsim. (Thanks dschultz!)
   * r131448: The cutoff distance for sources further away from any DOM than a certain
     distance is now configurable using the I3CLSimModule option
@@ -52,7 +52,7 @@ Do not use older versions of clsim without these for anything!
   * various tablemaker fixes
 
 December 22, 2014 Alex Olivas  (olivas@icecube.umd.edu)
---------------------------------------------------------------------
+-------------------------------------------------------
 
 Release V04-00-05
 
@@ -93,7 +93,7 @@ February 03, 2013, Alex Olivas  (olivas@icecube.umd.edu)
   when looking at data pre-processed with CMC
 
 January 29, 2013 Claudio Kopper  (ckopper@icecube.wisc.edu)
---------------------------------------------------------------------
+-----------------------------------------------------------
 
 Release V03-00-00
 
