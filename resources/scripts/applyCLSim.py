@@ -98,6 +98,7 @@ import sys
 
 from icecube import icetray, dataclasses, dataio, phys_services
 from icecube import clsim
+from icecube.simprod.util import ReadI3Summary, WriteI3Summary
 
 # a random number generator
 randomService = phys_services.I3SPRNGRandomService(
@@ -108,9 +109,9 @@ randomService = phys_services.I3SPRNGRandomService(
 
 tray = I3Tray()
 
+
 # this is how you can dump some of the simulation timings&statistics to an XML file:
-tray.AddService("I3XMLSummaryServiceFactory","summary",
-    OutputFileName = "applyCLSim.xml")
+tray.context['I3SummaryService'] = dataclasses.I3MapStringDouble()
 
 tray.AddModule("I3Reader","reader",
                Filename=infile)
@@ -153,3 +154,5 @@ tray.AddModule("TrashCan", "the can")
 
 tray.Execute()
 tray.Finish()
+summary = tray.context['I3SummaryService']
+WriteI3Summary(summary, "applyCLSim.xml")

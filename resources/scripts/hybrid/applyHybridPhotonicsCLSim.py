@@ -114,12 +114,6 @@ tray = I3Tray()
 
 
 
-# # this is how you can dump some of the simulation timings&statistics to an XML file:
-# tray.AddService("I3XMLSummaryServiceFactory","summary",
-#     OutputFileName = "applyCLSim.xml")
-
-
-
 # read the input file
 tray.AddModule("I3Reader","reader",
                Filename=infile)
