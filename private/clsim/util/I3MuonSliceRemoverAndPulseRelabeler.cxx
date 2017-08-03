@@ -44,6 +44,7 @@
 
 #include "simclasses/I3MCPE.h"
 #include "simclasses/I3Photon.h"
+#include "simclasses/I3ParticleIDMap.hpp"
 
 /**
  * @brief Removes muon slices in I3MCTree objects
@@ -242,11 +243,12 @@ void I3MuonSliceRemoverAndPulseRelabeler::DAQ(I3FramePtr frame)
     for (I3MCTree::const_iterator j=oldMCTree->begin(); j!=oldMCTree->end(); ++j)
         oldTree_IDs.insert(*j);
 
-    I3MCPESeriesMapConstPtr inputMCPESeriesMap;
     I3MCPESeriesMapPtr outputMCPESeriesMap;
+    boost::shared_ptr<const I3ParticleIDMap> inputPEParentTable;
 
     if (inputMCPESeriesMapName_ != "")
     {
+        I3MCPESeriesMapConstPtr inputMCPESeriesMap;
         inputMCPESeriesMap = frame->Get<I3MCPESeriesMapConstPtr>(inputMCPESeriesMapName_);
         if (!inputMCPESeriesMap) {
             log_fatal("Frame does not contain an I3MCPESeriesMap named \"%s\".",
@@ -257,6 +259,9 @@ void I3MuonSliceRemoverAndPulseRelabeler::DAQ(I3FramePtr frame)
 
         // allocate the output map (start with copies of the input objects)
         outputMCPESeriesMap = I3MCPESeriesMapPtr(new I3MCPESeriesMap(*inputMCPESeriesMap));
+        
+        // check for a side table which may also exist
+        inputPEParentTable=frame->Get<boost::shared_ptr<const I3ParticleIDMap>>(inputMCPESeriesMapName_+"ParticleIDMap");
     }
 
     I3PhotonSeriesMapConstPtr inputPhotonSeriesMap;
@@ -306,24 +311,18 @@ void I3MuonSliceRemoverAndPulseRelabeler::DAQ(I3FramePtr frame)
     }
 
     // re-label hits if requested
-    if (inputMCPESeriesMapName_ != "")
+    if (!inputMCPESeriesMapName_.empty())
     {
-        for (I3MCPESeriesMap::iterator it = outputMCPESeriesMap->begin();
-             it != outputMCPESeriesMap->end(); ++it)
+        for (auto& it : *outputMCPESeriesMap)
         {
-            I3MCPESeries &peSeries = it->second;
+            I3MCPESeries &peSeries = it.second;
 
-            BOOST_FOREACH(I3MCPE &pe, peSeries)
+            for (I3MCPE& pe : peSeries)
             {
-                I3ParticleID oldID = pe.ID;
-
-                std::map<I3ParticleID, I3ParticleID>::const_iterator re_label_it = re_label_map.find(oldID);
-                if (re_label_it==re_label_map.end())
-                    // no need to re-label
-                    continue;
-
-                const I3ParticleID newID = re_label_it->second;
-                pe.ID = newID;
+                auto re_label_it = re_label_map.find(pe.ID);
+                if (re_label_it!=re_label_map.end())
+                    pe.ID = re_label_it->second;
+                // otherwise no need to relabel
             }
         }
 
@@ -332,10 +331,42 @@ void I3MuonSliceRemoverAndPulseRelabeler::DAQ(I3FramePtr frame)
             frame->Delete(inputMCPESeriesMapName_);
         }
         frame->Put(outputMCPESeriesMapName_, outputMCPESeriesMap);
+        
+        // if parent information is stored externally, fix it up too
+        if (inputPEParentTable)
+        {
+            boost::shared_ptr<I3ParticleIDMap> outputPEParentTable(new I3ParticleIDMap);
+            for (auto& omdata : *inputPEParentTable)
+            {
+                OMKey om = omdata.first;
+                ParticlePulseIndexMap& dest = (*outputPEParentTable)[om];
+                //relabel and probably merge the index lists
+                for (auto& p : omdata.second)
+                {
+                    I3ParticleID key = p.first;
+                    auto re_label_it = re_label_map.find(key);
+                    if (re_label_it==re_label_map.end())
+                        key = re_label_it->second;
+                    dest[key].insert(dest[key].end(),p.second.begin(),p.second.end());
+                }
+                //sort index lists and remove duplicates merging may have introduced
+                for (auto& p : dest)
+                {
+                    std::sort(p.second.begin(),p.second.end());
+                    std::vector<uint32_t> temp;
+                    std::unique_copy(p.second.begin(),p.second.end(),std::back_inserter(temp));
+                    p.second.swap(temp);
+                }
+            }
+            if (inputMCPESeriesMapName_==outputMCPESeriesMapName_) {
+                frame->Delete(inputMCPESeriesMapName_+"ParticleIDMap");
+            }
+            frame->Put(outputMCPESeriesMapName_+"ParticleIDMap", outputPEParentTable);
+        }
     }
     
     // re-label photons if requested
-    if (inputPhotonSeriesMapName_ != "")
+    if (!inputPhotonSeriesMapName_.empty())
     {
         for (I3PhotonSeriesMap::iterator it = outputPhotonSeriesMap->begin();
              it != outputPhotonSeriesMap->end(); ++it)

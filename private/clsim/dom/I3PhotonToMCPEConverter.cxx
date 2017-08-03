@@ -46,6 +46,7 @@
 
 #include "simclasses/I3MCPE.h"
 #include "dataclasses/physics/I3ParticleID.h"
+#include <sim-services/MCPEMCPulseTools.hpp>
 
 #include "dataclasses/I3Constants.h"
 
@@ -116,6 +117,11 @@ I3PhotonToMCPEConverter::I3PhotonToMCPEConverter(const I3Context& context)
     AddParameter("OnlyWarnAboutInvalidPhotonPositions",
                  "Make photon position/radius check a warning only (instead of a fatal condition)",
                  onlyWarnAboutInvalidPhotonPositions_);
+    
+    mergeHits_=false;
+    AddParameter("MergeHits",
+                 "Merge photoelectrons which are very close in time in the output.",
+                 mergeHits_);
 
     // add an outbox
     AddOutBox("OutBox");
@@ -151,6 +157,8 @@ void I3PhotonToMCPEConverter::Configure()
     GetParameter("IgnoreDOMsWithoutDetectorStatusEntry", ignoreDOMsWithoutDetectorStatusEntry_);
 
     GetParameter("OnlyWarnAboutInvalidPhotonPositions", onlyWarnAboutInvalidPhotonPositions_);
+    
+    GetParameter("MergeHits",mergeHits_);
 
     if (DOMOversizeFactor_ != DOMPancakeFactor_)
         log_warn("You chose \"DOMOversizeFactor\" and \"DOMPancakeFactor\" to be different. Be sure you know whot you are doing! You probably don't want this.");
@@ -247,7 +255,7 @@ namespace {
 }
 
 template <typename PhotonMapType>
-I3MCPESeriesMapPtr
+std::pair<I3MCPESeriesMapPtr,I3ParticleIDMapPtr>
 I3PhotonToMCPEConverter::Convert(I3FramePtr frame)
 {
     // First we need to get our geometry
@@ -263,6 +271,9 @@ I3PhotonToMCPEConverter::Convert(I3FramePtr frame)
     
     // allocate the output hitSeriesMap
     I3MCPESeriesMapPtr outputMCPESeriesMap(new I3MCPESeriesMap());
+    I3ParticleIDMapPtr outputParentInfo;
+    if (mergeHits_) //only create this if it is needed
+        outputParentInfo.reset(new I3ParticleIDMap);
     
     typedef PhotonMapType PhotonSeriesMap;
     typedef typename PhotonSeriesMap::mapped_type PhotonSeries;
@@ -504,12 +515,18 @@ I3PhotonToMCPEConverter::Convert(I3FramePtr frame)
             // sort the photons in each hit series by time
             std::sort(hits->begin(), hits->end(), MCPETimeLess);
             
+            // if merging is turned on, do it now, and collect the external
+            // table which results from pulling the parent information out of
+            // the MCPEs
+            if (mergeHits_)
+                (*outputParentInfo)[key] = MCHitMerging::extractPIDInfoandMerge(*hits,key);
+            
             // keep track of the number of hits generated
             numGeneratedHits_ += static_cast<uint64_t>(hits->size());
         }
     }
     
-    return outputMCPESeriesMap;
+    return std::make_pair(outputMCPESeriesMap,outputParentInfo);
 }
 
 void I3PhotonToMCPEConverter::DAQ(I3FramePtr frame)
@@ -527,10 +544,11 @@ void I3PhotonToMCPEConverter::DAQ(I3FramePtr frame)
         log_fatal("no DetectorStatus frame yet, but received a Physics frame.");
     
     I3MCPESeriesMapPtr outputMCPESeriesMap;
+    I3ParticleIDMapPtr outputParentInfo;
     if (frame->Get<I3PhotonSeriesMapConstPtr>(inputPhotonSeriesMapName_)) {
-        outputMCPESeriesMap = Convert<I3PhotonSeriesMap>(frame);
+        std::tie(outputMCPESeriesMap,outputParentInfo) = Convert<I3PhotonSeriesMap>(frame);
     } else if (frame->Get<I3CompressedPhotonSeriesMapConstPtr>(inputPhotonSeriesMapName_)) {
-        outputMCPESeriesMap = Convert<I3CompressedPhotonSeriesMap>(frame);
+        std::tie(outputMCPESeriesMap,outputParentInfo) = Convert<I3CompressedPhotonSeriesMap>(frame);
     } else {
         log_debug("Frame does not contain an I3PhotonSeriesMap named \"%s\".",
                   inputPhotonSeriesMapName_.c_str());
@@ -542,6 +560,9 @@ void I3PhotonToMCPEConverter::DAQ(I3FramePtr frame)
     
     // store the output I3MCPESeriesMap
     frame->Put(outputMCPESeriesMapName_, outputMCPESeriesMap);
+    if (outputParentInfo) {
+        frame->Put(outputMCPESeriesMapName_+"ParticleIDMap", outputParentInfo);
+    }
     
     // that's it!
     PushFrame(frame);

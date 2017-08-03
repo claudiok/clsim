@@ -35,6 +35,7 @@
 #include "dataclasses/status/I3DetectorStatus.h"
 #include "dataclasses/physics/I3MCTree.h"
 #include "simclasses/I3MCPE.h"
+#include <simclasses/I3ParticleIDMap.hpp>
 
 #include "phys-services/I3RandomService.h"
 
@@ -126,6 +127,9 @@ private:
 
     /// Parameter: Make photon position/radius check a warning only (instead of a fatal condition)
     bool onlyWarnAboutInvalidPhotonPositions_;
+    
+    /// Parameter: Compress the output I3MCPEs
+    bool mergeHits_;
 
     
 private:
@@ -135,7 +139,7 @@ private:
     I3PhotonToMCPEConverter& operator=(const I3PhotonToMCPEConverter&);
     
     template <typename PhotonMapType>
-    I3MCPESeriesMapPtr Convert(I3FramePtr frame);
+    std::pair<I3MCPESeriesMapPtr,I3ParticleIDMapPtr> Convert(I3FramePtr frame);
 
     I3CalibrationConstPtr calibration_;
     I3DetectorStatusConstPtr status_;

@@ -71,6 +71,7 @@ def I3CLSimMakeHits(tray, name,
                     DOMOversizeFactor=5.,
                     UnshadowedFraction=0.9,
                     HoleIceParameterization=expandvars("$I3_SRC/ice-models/resources/models/angsens/as.h2-50cm"),
+                    MergeHits=False,
                     IgnoreSubdetectors=['IceTop'],
                     ExtraArgumentsToI3CLSimModule=dict(),
                     If=lambda f: True
@@ -226,6 +227,11 @@ def I3CLSimMakeHits(tray, name,
         coefficients for nominal angular acceptance correction due to hole ice (ice-models 
         project is required). Use file $I3_SRC/ice-models/resources/models/angsens/as.nominal 
         for no hole ice parameterization.
+    :param MergeHits:
+    	Set to true to perform time merging on the MCPE as they are produced. This is useful for 
+    	reducing the memory and disk space used by high energy (bright) events, and can allow 
+    	detector simulation to run much more quickly. This causes parent particle information to be 
+    	stored in an additional frame object. 
     :param If:
         Python function to use as conditional execution test for segment modules.        
     """
@@ -319,6 +325,7 @@ def I3CLSimMakeHits(tray, name,
                                                  DOMOversizeFactor=DOMOversizeFactor,
                                                  UnshadowedFraction=UnshadowedFraction,
                                                  HoleIceParameterization=HoleIceParameterization,
+                                                 MergeHits=MergeHits,
                                                  If=If)
         
         if hasattr(icetray, "traysegment"):
