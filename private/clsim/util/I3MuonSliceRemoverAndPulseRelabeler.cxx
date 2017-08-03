@@ -32,10 +32,6 @@
 #include "icetray/I3Module.h"
 #include "icetray/I3ConditionalModule.h"
 
-#include <string>
-
-#include <boost/foreach.hpp>
-
 #include "dataclasses/physics/I3Particle.h"
 #include "dataclasses/physics/I3ParticleID.h"
 #include "dataclasses/physics/I3MCTree.h"
@@ -44,6 +40,7 @@
 
 #include "simclasses/I3MCPE.h"
 #include "simclasses/I3Photon.h"
+#include "simclasses/I3CompressedPhoton.h"
 #include "simclasses/I3ParticleIDMap.hpp"
 
 /**
@@ -192,7 +189,7 @@ namespace {
         {
             // yes, it's a dark muon.
 
-            BOOST_FOREACH(const I3Particle &daughter, mcTree.children(particle))
+            for(const I3Particle& daughter : mcTree.children(particle))
             {
                 if ((daughter.GetType() != I3Particle::MuMinus) &&
                     (daughter.GetType() != I3Particle::MuPlus))
@@ -210,14 +207,55 @@ namespace {
 
         }
 
-        BOOST_FOREACH(const I3Particle &daughter, mcTree.children(particle))
+        for(const I3Particle& daughter : mcTree.children(particle))
         {
             RemoveMuonSlicesIfDarkMuon(mcTree, daughter, re_label_map);
         }
 
     }
 
-
+    ///\return whether the photons were found and relabeled
+    template<typename PhotonType>
+    bool RelabelPhotons(I3FramePtr frame,
+                        const std::string& inputPhotonSeriesMapName,
+                        const std::string& outputPhotonSeriesMapName,
+                        const std::map<I3ParticleID, I3ParticleID>& re_label_map)
+    {
+        using PhotonSeriesMap=I3Map<ModuleKey, I3Vector<PhotonType> >;
+        auto inputPhotonSeriesMap = frame->Get<boost::shared_ptr<const PhotonSeriesMap>>(inputPhotonSeriesMapName);
+        if (!inputPhotonSeriesMap)
+            return false;
+        
+        // allocate the output map (start with copies of the input objects)
+        boost::shared_ptr<PhotonSeriesMap> outputPhotonSeriesMap(new PhotonSeriesMap(*inputPhotonSeriesMap));
+        
+        for (auto& dom_entry : *outputPhotonSeriesMap)
+        {
+            I3Vector<PhotonType>& photonSeries = dom_entry.second;
+            
+            for(PhotonType& photon : photonSeries)
+            {
+                I3ParticleID oldID(photon.GetParticleMajorID(), photon.GetParticleMinorID());
+                
+                auto re_label_it = re_label_map.find(oldID);
+                if (re_label_it==re_label_map.end())
+                    // no need to re-label
+                    continue;
+                
+                const I3ParticleID newID = re_label_it->second;
+                photon.SetParticleMajorID(newID.majorID);
+                photon.SetParticleMinorID(newID.minorID);
+            }
+        }
+        
+        // store the output I3MCPhotonSeriesMap
+        if (inputPhotonSeriesMapName==outputPhotonSeriesMapName) {
+            frame->Delete(inputPhotonSeriesMapName);
+        }
+        frame->Put(outputPhotonSeriesMapName, outputPhotonSeriesMap);
+        
+        return true;
+    }
 }
 
 void I3MuonSliceRemoverAndPulseRelabeler::DAQ(I3FramePtr frame)
@@ -264,23 +302,6 @@ void I3MuonSliceRemoverAndPulseRelabeler::DAQ(I3FramePtr frame)
         inputPEParentTable=frame->Get<boost::shared_ptr<const I3ParticleIDMap>>(inputMCPESeriesMapName_+"ParticleIDMap");
     }
 
-    I3PhotonSeriesMapConstPtr inputPhotonSeriesMap;
-    I3PhotonSeriesMapPtr outputPhotonSeriesMap;
-
-    if (inputPhotonSeriesMapName_ != "")
-    {
-        inputPhotonSeriesMap = frame->Get<I3PhotonSeriesMapConstPtr>(inputPhotonSeriesMapName_);
-        if (!inputPhotonSeriesMap) {
-            log_fatal("Frame does not contain an I3PhotonSeriesMap named \"%s\".",
-                      inputPhotonSeriesMapName_.c_str());
-            PushFrame(frame);
-            return;
-        }
-
-        // allocate the output map (start with copies of the input objects)
-        outputPhotonSeriesMap = I3PhotonSeriesMapPtr(new I3PhotonSeriesMap(*inputPhotonSeriesMap));
-    }
-
     // now just work on the output objects
 
     // oldID->newID
@@ -290,7 +311,7 @@ void I3MuonSliceRemoverAndPulseRelabeler::DAQ(I3FramePtr frame)
     const std::vector<const I3Particle*> primaries = I3MCTreeUtils::GetPrimariesPtr(inputMCTree);
     
     // add each one to the output tree and check their children
-    BOOST_FOREACH(const I3Particle* primary, primaries)
+    for(const I3Particle* primary : primaries)
     {
         RemoveMuonSlicesIfDarkMuon(*inputMCTree, *primary, re_label_map);
     }
@@ -368,33 +389,17 @@ void I3MuonSliceRemoverAndPulseRelabeler::DAQ(I3FramePtr frame)
     // re-label photons if requested
     if (!inputPhotonSeriesMapName_.empty())
     {
-        for (I3PhotonSeriesMap::iterator it = outputPhotonSeriesMap->begin();
-             it != outputPhotonSeriesMap->end(); ++it)
-        {
-            I3PhotonSeries &photonSeries = it->second;
-
-            BOOST_FOREACH(I3Photon &photon, photonSeries)
-            {
-                I3ParticleID oldID;
-                oldID.majorID = photon.GetParticleMajorID();
-                oldID.minorID = photon.GetParticleMinorID();
-
-                std::map<I3ParticleID, I3ParticleID>::const_iterator re_label_it = re_label_map.find(oldID);
-                if (re_label_it==re_label_map.end())
-                    // no need to re-label
-                    continue;
-
-                const I3ParticleID newID = re_label_it->second;
-                photon.SetParticleMajorID(newID.majorID);
-                photon.SetParticleMinorID(newID.minorID);
-            }
-        }
-
-        // store the output I3MCPhotonSeriesMap
-        if (inputPhotonSeriesMapName_==outputPhotonSeriesMapName_) {
-            frame->Delete(inputPhotonSeriesMapName_);
-        }
-        frame->Put(outputPhotonSeriesMapName_, outputPhotonSeriesMap);
+        //Try regular photons first
+        bool done = RelabelPhotons<I3Photon>(frame, inputPhotonSeriesMapName_,
+                                             outputPhotonSeriesMapName_, re_label_map);
+        //Try compressed photons
+        if (!done)
+            done = RelabelPhotons<I3CompressedPhoton>(frame, inputPhotonSeriesMapName_,
+                                            outputPhotonSeriesMapName_, re_label_map);
+        //If we still didn't do it, something is wrong
+        if (!done)
+            log_fatal_stream("Frame does not contain photons named \""
+                             << inputPhotonSeriesMapName_ << '"');
     }
     
     // that's it!
