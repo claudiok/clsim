@@ -209,11 +209,8 @@ namespace {
             {
                 log_fatal("It seems you either ran MMC with the \"-recc\" option or I3MuonSlicer has already been applied.");
             }
-
-            if (std::abs(particle.GetSpeed()-I3Constants::c) > 1e-5)
-                log_fatal("Found a muon that does not travel with the speed of light. v=%gm/ns",
-                          particle.GetSpeed()/(I3Units::m/I3Units::ns));
             
+            if (std::isnan(particle.GetSpeed())) log_fatal("Muon must have a speed");
             if (std::isnan(particle.GetEnergy())) log_fatal("Muon must have an energy");
             if (std::isnan(particle.GetTime())) log_fatal("Muon must have a time");
             
@@ -266,7 +263,7 @@ namespace {
             if ((Ef<0.) || (std::isnan(Ef)))
             {
                 Ef = 0.;
-                tf = particle.GetTime() + particle.GetLength()/I3Constants::c;
+                tf = particle.GetTime() + particle.GetLength()/particle.GetSpeed();
                 hadInvalidEf=true;
             }
 
@@ -338,10 +335,10 @@ namespace {
                     if (std::isnan(daughter.GetTime())) continue;
                     
                     // calculate an expected time for the cascade (from its position on the track)
-                    const double expectedTime = particle.GetTime() + distanceOnTrack/I3Constants::c;
+                    const double expectedTime = particle.GetTime() + distanceOnTrack/particle.GetSpeed();
                     
                     if (std::abs(distanceOnTrack-particle.GetLength()) < 5.*I3Units::mm) {
-                        // do NOT correct the cascade time, it might be a delayed muon deacy (which should not be corrected)
+                        // do NOT correct the cascade time, it might be a delayed muon decay (which should not be corrected)
                         log_debug("decaying muon detected, no timing correction for cascade at the track end.");
 // for now, do NOT try to correct what we are given by MMC.
 #ifdef TRY_TO_CORRECT_MMC
