@@ -42,8 +42,6 @@
 
 #include "simclasses/I3CompressedPhoton.h"
 
-#include "phys-services/I3SummaryService.h"
-
 #include "clsim/function/I3CLSimFunctionConstant.h"
 
 #include "clsim/I3CLSimLightSource.h"
@@ -732,6 +730,17 @@ void I3CLSimModule<OutputMapType>::DigestGeometry(I3FramePtr frame)
         );
     }
     
+    if (closestDOMDistanceCutoff_ >= 0 and std::isfinite(closestDOMDistanceCutoff_)) {
+        std::vector<I3Position> doms;
+        const std::vector<double>& x = geometry_->GetPosXVector();
+        const std::vector<double>& y = geometry_->GetPosYVector();
+        const std::vector<double>& z = geometry_->GetPosZVector();
+        
+        for (std::size_t i=0;i<geometry_->size();++i)
+            doms.emplace_back(I3Position(x[i],y[i],z[i]));
+        detectorHull_.reset(new I3Surfaces::ExtrudedPolygon(doms, closestDOMDistanceCutoff_));
+    }
+    
     log_info("Initializing CLSim..");
     // initialize OpenCL converters
     openCLStepsToPhotonsConverters_.clear();
@@ -1281,84 +1290,6 @@ namespace {
         }
         return false;
     }
-    
-    // version for point sources
-    double DistToClosestDOM(const I3CLSimSimpleGeometry &geometry, const I3Position &pos)
-    {
-        double closestDist=NAN;
-        
-        const std::vector<double> xVect = geometry.GetPosXVector();
-        const std::vector<double> yVect = geometry.GetPosYVector();
-        const std::vector<double> zVect = geometry.GetPosZVector();
-
-        
-        for (std::size_t i=0;i<geometry.size();++i)
-        {
-            const double dx = xVect[i]-pos.GetX();
-            const double dy = yVect[i]-pos.GetY();
-            const double dz = zVect[i]-pos.GetZ();
-            
-            const double thisDist = std::sqrt(dx*dx + dy*dy + dz*dz);
-            
-            if (std::isnan(closestDist)) {
-                closestDist=thisDist;
-            } else {
-                if (thisDist<closestDist) closestDist=thisDist;
-            }
-        }
-        
-        if (std::isnan(closestDist)) return 0.;
-        return closestDist;
-    }
-
-    // version for tracks
-    double DistToClosestDOM(const I3CLSimSimpleGeometry &geometry, const I3Position &pos, const I3Direction &dir, double length, bool nostart=false, bool nostop=false)
-    {
-        double closestDist=NAN;
-        
-        const std::vector<double> xVect = geometry.GetPosXVector();
-        const std::vector<double> yVect = geometry.GetPosYVector();
-        const std::vector<double> zVect = geometry.GetPosZVector();
-        
-        
-        for (std::size_t i=0;i<geometry.size();++i)
-        {
-            const double Ax = xVect[i]-pos.GetX();
-            const double Ay = yVect[i]-pos.GetY();
-            const double Az = zVect[i]-pos.GetZ();
-            
-            double d_along = Ax*dir.GetX() + Ay*dir.GetY() + Az*dir.GetZ();
-            
-            if (!nostart) {
-                if (d_along < 0.) d_along=0.;         // there is no track before its start
-            }
-            
-            if (!nostop) {
-                if (d_along > length) d_along=length; // there is no track after its end
-            }
-            
-            const double p_along_x = pos.GetX() + dir.GetX()*d_along;
-            const double p_along_y = pos.GetY() + dir.GetY()*d_along;
-            const double p_along_z = pos.GetZ() + dir.GetZ()*d_along;
-
-            // distance from point to DOM
-            
-            const double dx = xVect[i]-p_along_x;
-            const double dy = yVect[i]-p_along_y;
-            const double dz = zVect[i]-p_along_z;
-            
-            const double thisDist = std::sqrt(dx*dx + dy*dy + dz*dz);
-            
-            if (std::isnan(closestDist)) {
-                closestDist=thisDist;
-            } else {
-                if (thisDist<closestDist) closestDist=thisDist;
-            }
-        }
-        
-        if (std::isnan(closestDist)) return 0.;
-        return closestDist;
-    }
 
 }
 
@@ -1682,7 +1613,7 @@ void I3CLSimModule<OutputMapType>::Finish()
     log_info("I3CLSimModule is done.");
 
     // add some summary information to a potential I3SummaryService
-    I3SummaryServicePtr summary = context_.Get<I3SummaryServicePtr>("I3SummaryService");
+    I3MapStringDoublePtr summary = context_.Get<I3MapStringDoublePtr>("I3SummaryService");
     if (summary) {
         const std::string prefix = "I3CLSimModule_" + GetName() + "_";
         
@@ -1768,14 +1699,14 @@ void I3CLSimModule<OutputMapType>::ConvertMCTreeToLightSources(const I3MCTree &m
         // ignore muons if requested
         if ((ignoreMuons_) && (isMuon)) continue;
         
-        if (!isTrack) 
+        if (!isTrack && detectorHull_)
         {
-            const double distToClosestDOM = DistToClosestDOM(*geometry_, particle_ref.GetPos());
+            auto intersection = detectorHull_->GetIntersection(particle_ref.GetPos(), particle_ref.GetDir());
             
-            if (distToClosestDOM >= closestDOMDistanceCutoff_)
+            if (!(intersection.first <= 0) || !(intersection.second >= 0))
             {
-                log_debug("Ignored a non-track that is %fm (>%fm) away from the closest DOM.",
-                          distToClosestDOM, closestDOMDistanceCutoff_);
+                log_debug("Ignored a non-track that is >%fm away from the detector hull",
+                          closestDOMDistanceCutoff_);
                 continue;
             }
         }
@@ -1783,7 +1714,7 @@ void I3CLSimModule<OutputMapType>::ConvertMCTreeToLightSources(const I3MCTree &m
         // make a copy of the particle, we may need to change its length
         I3Particle particle = particle_ref;
         
-        if (isTrack)
+        if (isTrack && detectorHull_)
         {
             bool nostart = false;
             bool nostop = false;
@@ -1800,11 +1731,15 @@ void I3CLSimModule<OutputMapType>::ConvertMCTreeToLightSources(const I3MCTree &m
                 nostop = true;
             }
             
-            const double distToClosestDOM = DistToClosestDOM(*geometry_, particle.GetPos(), particle.GetDir(), particleLength, nostart, nostop);
-            if (distToClosestDOM >= closestDOMDistanceCutoff_)
+            auto intersection = detectorHull_->GetIntersection(particle_ref.GetPos(), particle_ref.GetDir());
+            // Skip the track if it does not intersect the hull at all,
+            // stops before it reaches the hull, or starts after the hull
+            if ((std::isnan(intersection.first) && std::isnan(intersection.second))
+                || (!nostop && (intersection.first > particleLength))
+                || (intersection.second < 0))
             {
-                log_debug("Ignored a track that is always at least %fm (>%fm) away from the closest DOM.",
-                          distToClosestDOM, closestDOMDistanceCutoff_);
+                log_debug("Ignored a track that is always at least %fm away from the closest DOM.",
+                          closestDOMDistanceCutoff_);
                 continue;
             }
         }

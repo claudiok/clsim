@@ -38,6 +38,7 @@
 #include "dataclasses/ModuleKey.h"
 
 #include "phys-services/I3RandomService.h"
+#include "phys-services/surfaces/ExtrudedPolygon.h"
 
 #include "clsim/I3CLSimOpenCLDevice.h"
 
@@ -288,6 +289,7 @@ private:
     /// Parameter: do not even start light from sources that do not have any DOMs closer to
     ///   to them than this distance. (default is 300m)
     double closestDOMDistanceCutoff_;
+    boost::shared_ptr<I3Surfaces::ExtrudedPolygon> detectorHull_;
 
 
 private:
