@@ -512,6 +512,7 @@ void I3CLSimModule<OutputMapType>::Configure()
     geometryIsConfigured_ = false;
     totalSimulatedEnergyForFlush_ = 0.;
     totalSimulatedEnergy_ = 0;
+    totalSimulatedEnergySecondFlush_ = 0;
     totalNumParticlesForFlush_ = 0;
     
     if (parameterizationList_.size() > 0) {
@@ -1328,15 +1329,15 @@ void I3CLSimModule<OutputMapType>::Process()
     if ((totalEnergyToProcess_ > 0) && (!std::isnan(totalEnergyToProcess_)))
     {
         double totalLightEnergyInFrame = GetLightSourceEnergy(frame);
-        if (totalSimulatedEnergy_ + totalLightEnergyInFrame < totalEnergyToProcess_ / 2.)
+        if (totalSimulatedEnergy_ + totalSimulatedEnergySecondFlush_ + totalLightEnergyInFrame < totalEnergyToProcess_ / 2.)
         {
             maxNumParallelEvents_++;
             totalSimulatedEnergy_ += totalLightEnergyInFrame;
         }
-        else if (totalSimulatedEnergy_ + totalLightEnergyInFrame < totalEnergyToProcess_)
+        else if (totalSimulatedEnergy_ + totalSimulatedEnergySecondFlush_ + totalLightEnergyInFrame < totalEnergyToProcess_)
         {
             maxNumParallelEventsSecondFlush_++;
-            totalSimulatedEnergy_ += totalLightEnergyInFrame;
+            totalSimulatedEnergySecondFlush_ += totalLightEnergyInFrame;
         }
         log_debug("Energy in Frame = %f GeV", totalLightEnergyInFrame);
     }
@@ -1382,7 +1383,8 @@ void I3CLSimModule<OutputMapType>::Process()
         {
             totalSimulatedEnergy_ = 0.;
             maxNumParallelEvents_ = 1;
-            maxNumParallelEventsSecondFlush_ = 1;
+            std::swap(totalSimulatedEnergy_, totalSimulatedEnergySecondFlush_);
+            std::swap(maxNumParallelEvents_, maxNumParallelEventsSecondFlush_);
         }
 
             

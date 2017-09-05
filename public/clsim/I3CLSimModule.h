@@ -332,7 +332,7 @@ private:
     bool geometryIsConfigured_;
     uint32_t currentParticleCacheIndex_;
     double totalSimulatedEnergyForFlush_;
-    double totalSimulatedEnergy_;
+    double totalSimulatedEnergy_, totalSimulatedEnergySecondFlush_;
     uint64_t totalNumParticlesForFlush_;
     
     // this is calculated using wavelengthGenerationBias:
