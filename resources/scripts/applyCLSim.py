@@ -153,6 +153,6 @@ tray.AddModule("I3Writer","writer",
 tray.AddModule("TrashCan", "the can")
 
 tray.Execute()
-tray.Finish()
+
 summary = tray.context['I3SummaryService']
 WriteI3Summary(summary, "applyCLSim.xml")

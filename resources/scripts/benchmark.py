@@ -317,7 +317,7 @@ tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
 tray.AddModule("TrashCan", "the can")
 
 tray.Execute()
-tray.Finish()
+
 
 del tray
 

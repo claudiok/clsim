@@ -148,7 +148,7 @@ if __name__=="__main__":
     tray.AddModule("TrashCan", "the can")
 
     tray.Execute()
-    tray.Finish()
+    
 
 
 

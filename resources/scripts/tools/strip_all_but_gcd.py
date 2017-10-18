@@ -44,4 +44,4 @@ tray.AddModule("I3Writer", "writer")(
 tray.AddModule("TrashCan", "the can");
 
 tray.Execute(10)
-tray.Finish()
+

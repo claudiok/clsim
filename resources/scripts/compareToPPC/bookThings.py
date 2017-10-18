@@ -102,4 +102,4 @@ if options.nframes is not None:
     tray.Execute(options.nframes)
 else:
     tray.Execute()
-tray.Finish()
+

@@ -70,7 +70,7 @@ tray.AddModule("I3Writer","writer",
 tray.AddModule("TrashCan", "the can")
 
 tray.Execute(options.NUMEVENTS+3)
-tray.Finish()
+
 
 
 

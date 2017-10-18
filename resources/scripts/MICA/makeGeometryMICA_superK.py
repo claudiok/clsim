@@ -81,4 +81,4 @@ tray.AddModule("FrameCheck", "check",
 tray.AddModule("TrashCan","trash")
 
 tray.Execute(5)
-tray.Finish()
+

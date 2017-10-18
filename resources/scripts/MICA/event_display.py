@@ -61,4 +61,4 @@ tray.AddModule(eventPlotter2, "plotModule",
 tray.AddModule("TrashCan","trash")
 
 tray.Execute()
-tray.Finish()
+

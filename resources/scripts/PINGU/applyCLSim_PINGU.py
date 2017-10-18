@@ -219,4 +219,4 @@ tray.AddModule(clsim.AsyncTap, "clsimMakePhotonsAndWrite_Async",
 tray.AddModule("TrashCan", "the can")
 
 tray.Execute()
-tray.Finish()
+

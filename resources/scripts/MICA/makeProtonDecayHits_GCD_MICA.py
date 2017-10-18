@@ -301,4 +301,4 @@ tray.AddModule("I3Writer", "writer",
 tray.AddModule("TrashCan","trash")
 
 tray.Execute(options.NUMEVENTS+3)
-tray.Finish()
+

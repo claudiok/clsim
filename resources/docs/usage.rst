@@ -123,4 +123,4 @@ a python object (instead of a I3Service) is demonstrated.
    tray.AddModule("TrashCan", "the can")
 
    tray.Execute()
-   tray.Finish()
+   

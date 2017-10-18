@@ -104,4 +104,4 @@ if options.nevents is None:
     tray.Execute()
 else:
     tray.Execute(options.nevents+4)
-tray.Finish()
+

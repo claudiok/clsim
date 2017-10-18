@@ -100,4 +100,4 @@ tray.AddSegment(TabulatePhotonsFromSource, 'generator', Seed=opts.seed, PhotonSo
     
 tray.AddModule('TrashCan', 'MemoryHole')
 tray.Execute()
-tray.Finish()
+
