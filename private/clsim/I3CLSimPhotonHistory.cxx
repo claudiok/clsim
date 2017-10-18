@@ -48,3 +48,13 @@ void I3CLSimPhotonHistory::serialize(Archive &ar, unsigned version)
 
 I3_SERIALIZABLE(I3CLSimPhotonHistory);
 I3_SERIALIZABLE(I3CLSimPhotonHistorySeries);
+
+std::ostream& operator<<(std::ostream& os, const I3CLSimPhotonHistory& h){
+    os << "[I3CLSimPhotonHistory";
+    for(std::size_t i=0; i<h.size(); i++){
+        os << " (" << h.GetX(i) << ',' << h.GetY(i) << ',' << h.GetZ(i) << ','
+           << h.GetDistanceInAbsorptionLengths(i) << ')';
+    }
+    os << ']';
+    return os;
+}

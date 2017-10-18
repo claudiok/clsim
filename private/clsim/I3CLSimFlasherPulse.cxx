@@ -120,3 +120,19 @@ bool operator==(const I3CLSimFlasherPulse &a, const I3CLSimFlasherPulse &b)
     return true;
 }
 
+std::ostream& I3CLSimFlasherPulse::Print(std::ostream& os) const{
+    os << "[I3CLSimFlasherPulse:\n"
+       << "              Pulse Type: " << flasherPulseType_ << '\n'
+       << "               Direction: " << dir_ << '\n'
+       << "                Position: " << pos_ << '\n'
+       << "                    Time: " << time_ << '\n'
+       << "    Num. Photons no bias: " << numberOfPhotonsNoBias_ << '\n'
+       << "             Pulse Width: " << pulseWidth_ << '\n'
+       << "      Anular Sigma Polar: " << angularEmissionSigmaPolar_ << '\n'
+       << "  Anular Sigma Azimuthal: " << angularEmissionSigmaAzimuthal_ << "\n]";
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const I3CLSimFlasherPulse& p){
+    return(p.Print(os));
+}

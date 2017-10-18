@@ -159,6 +159,7 @@ inline bool operator==(const I3CLSimStep &a, const I3CLSimStep &b)
     // compare all fields except for the last one (which is a dummy)
     return (std::memcmp(&a, &b, sizeof(I3CLSimStep)-sizeof(cl_int))==0);
 }
+std::ostream& operator<<(std::ostream&, const I3CLSimStep&);
 
 I3_CLASS_VERSION(I3CLSimStep, i3clsimstep_version_);
 

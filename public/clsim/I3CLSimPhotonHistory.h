@@ -89,6 +89,8 @@ inline bool operator==(const I3CLSimPhotonHistory &a, const I3CLSimPhotonHistory
 
 I3_CLASS_VERSION(I3CLSimPhotonHistory, i3clsimphotonhistory_version_);
 
+std::ostream& operator<<(std::ostream&, const I3CLSimPhotonHistory&);
+
 typedef I3Vector<I3CLSimPhotonHistory> I3CLSimPhotonHistorySeries;
 
 I3_POINTER_TYPEDEFS(I3CLSimPhotonHistory);

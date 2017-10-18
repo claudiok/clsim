@@ -171,3 +171,25 @@ void I3Vector<I3CLSimPhoton>::serialize(portable_binary_oarchive &ar, unsigned v
 I3_SERIALIZABLE(I3CLSimPhoton);
 I3_SERIALIZABLE(I3CLSimPhotonSeries);
 I3_SERIALIZABLE(I3CLSimPhotonSeriesMap);
+
+
+
+std::ostream& operator<<(std::ostream& os, const I3CLSimPhoton& p){
+    os << "[I3CLSimPhoton:\n"
+       << "         Position: (" << p.GetPosX() << ',' << p.GetPosY() << ',' << p.GetPosZ() << ")\n"
+       << "             Time: " << p.GetTime() << '\n'
+       << "        Direction: (" << p.GetDirTheta() << ',' << p.GetDirPhi() << ")\n"
+       << "   Start Position: (" << p.GetPosX() << ',' << p.GetPosY() << ',' << p.GetPosZ() << ")\n"
+       << "       Start Time: " << p.GetStartTime() << '\n'
+       << "  Start Direction: (" << p.GetStartDirTheta() << ',' << p.GetStartDirPhi() << ")\n"
+       << "       Wavelength: " << p.GetWavelength() << '\n'
+       << "  Cherenkov Dist.: " << p.GetCherenkovDist() << '\n'
+       << "         Scatters: " << p.GetNumScatters() << '\n'
+       << "           Weight: " << p.GetWeight() << '\n'
+       << "               ID: " << p.GetID() << '\n'
+       << "        String ID: " << p.GetStringID() << '\n'
+       << "            OM ID: " << p.GetOMID() << '\n'
+       << "   Group Velocity: " << p.GetGroupVelocity() << '\n'
+       << "     Abs. Lengths: " << p.GetDistInAbsLens() << "\n]";
+  return os;
+}

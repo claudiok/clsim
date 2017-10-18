@@ -93,7 +93,7 @@ public:
     inline double GetAngularEmissionSigmaAzimuthal() const {return angularEmissionSigmaAzimuthal_;}
     inline void SetAngularEmissionSigmaAzimuthal(double newSigma) {angularEmissionSigmaAzimuthal_=newSigma;}
 
-    
+    std::ostream& Print(std::ostream&) const;
 private:
     FlasherPulseType flasherPulseType_;
 
@@ -115,6 +115,7 @@ private: // static stuff
     friend bool operator==(const I3CLSimFlasherPulse &, const I3CLSimFlasherPulse &);
 };
 bool operator==(const I3CLSimFlasherPulse &a, const I3CLSimFlasherPulse &b);
+std::ostream& operator<<(std::ostream&, const I3CLSimFlasherPulse&);
 
 I3_CLASS_VERSION(I3CLSimFlasherPulse, i3clsimflasherpulse_version_);
 

@@ -146,3 +146,19 @@ void I3Vector<I3CLSimStep>::serialize(portable_binary_oarchive &ar, unsigned ver
 
 I3_SERIALIZABLE(I3CLSimStep);
 I3_SERIALIZABLE(I3CLSimStepSeries);
+
+
+
+std::ostream& operator<<(std::ostream& os, const I3CLSimStep& s){
+    os << "[I3CLSimStep:\n"
+       << "      Position: (" << s.GetPosX() << ',' << s.GetPosY() << ',' << s.GetPosZ() << ")\n"
+       << "          Time: " << s.GetTime() << '\n'
+       << "     Direction: (" << s.GetDirTheta() << ',' << s.GetDirPhi() << ")\n"
+       << "        Length: " << s.GetLength() << '\n'
+       << "          Beta: " << s.GetBeta() << '\n'
+       << "  Num. Photons: " << s.GetNumPhotons() << '\n'
+       << "        Weight: " << s.GetWeight() << '\n'
+       << "            ID: " << s.GetID() << '\n'
+       << "   Source Type: " << s.GetSourceType() << "\n]";
+  return os;
+}

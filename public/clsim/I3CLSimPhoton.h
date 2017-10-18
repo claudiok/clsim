@@ -218,6 +218,7 @@ inline bool operator==(const I3CLSimPhoton &a, const I3CLSimPhoton &b)
     // compare all fields (binary)
     return (std::memcmp(&a, &b, sizeof(I3CLSimPhoton))==0);
 }
+std::ostream& operator<<(std::ostream&, const I3CLSimPhoton&);
 
 I3_CLASS_VERSION(I3CLSimPhoton, i3clsimphoton_version_);
 
