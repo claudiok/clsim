@@ -30,7 +30,7 @@ tray.AddModule("I3Writer", "writer",
     Filename = output_file,
     Streams = [icetray.I3Frame.Physics, icetray.I3Frame.DAQ])
  
-tray.AddModule("TrashCan", "the can")
+
 
 tray.Execute()
 

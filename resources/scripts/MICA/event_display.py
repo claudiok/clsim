@@ -58,7 +58,7 @@ tray.AddModule(eventPlotter2, "plotModule",
                pi0Only=False,
                eplusOnly=False)
 
-tray.AddModule("TrashCan","trash")
+
 
 tray.Execute()
 

@@ -245,7 +245,7 @@ else:
                     RemovePhotonData=options.REMOVEPHOTONDATA
                     )
 
-tray.AddModule("TrashCan", "the can")
+
 
 tray.Execute()
 

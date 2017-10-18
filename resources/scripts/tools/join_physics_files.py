@@ -47,7 +47,7 @@ tray.AddModule("I3Writer", "writer")(
     ("Streams", ["Physics"])
     )
  
-tray.AddModule("TrashCan", "the can");
+
 
 tray.Execute()
 

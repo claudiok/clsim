@@ -172,7 +172,7 @@ tray.AddSegment(clsim.I3CLSimMakePhotons, "makeCLSimPhotons",
 tray.AddModule("I3Writer","writer",
     Filename = outdir+outfile)
 
-tray.AddModule("TrashCan", "the can")
+
 
 tray.Execute()
 

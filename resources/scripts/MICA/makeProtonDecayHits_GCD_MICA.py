@@ -298,7 +298,7 @@ tray.AddModule("I3PhotonToMCHitConverterForMDOMs", "mDOM_PMTs",
 tray.AddModule("I3Writer", "writer",
     filename = options.OUTFILE)
 
-tray.AddModule("TrashCan","trash")
+
 
 tray.Execute(options.NUMEVENTS+3)
 

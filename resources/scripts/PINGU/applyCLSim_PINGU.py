@@ -216,7 +216,7 @@ tray.AddModule(clsim.AsyncTap, "clsimMakePhotonsAndWrite_Async",
 #                DOMOversizeFactor=1.,       # PINGU needs this (no oversizing, DOMs on strings are too dense)
 #                )
 
-tray.AddModule("TrashCan", "the can")
+
 
 tray.Execute()
 

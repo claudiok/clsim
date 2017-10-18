@@ -198,7 +198,7 @@ tray.AddModule("Delete", "cleanup_MCTree",
 tray.AddModule("I3Writer","writer",
     Filename = outdir+outfile)
 
-tray.AddModule("TrashCan", "the can")
+
 
 tray.Execute()
 

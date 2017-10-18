@@ -46,7 +46,7 @@ tray.AddModule("I3Writer", "writer")(
     ("SkipKeys", ["I3SkipNEventFilter"])
     )
  
-tray.AddModule("TrashCan", "the can");
+
 
 tray.Execute()
 

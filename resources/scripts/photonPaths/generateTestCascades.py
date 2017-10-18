@@ -152,7 +152,7 @@ if options.APPLYMMC:
 tray.AddModule("I3Writer","writer",
     Filename = options.OUTFILE)
 
-tray.AddModule("TrashCan", "the can")
+
 
 tray.Execute(options.NUMEVENTS+3)
 

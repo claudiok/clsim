@@ -77,7 +77,7 @@ tray.AddModule("AdjEff", "ppc-eff",
 tray.AddModule("I3Writer","writer",
     Filename = options.OUTFILE)
 
-tray.AddModule("TrashCan", "the can")
+
 
 tray.Execute()
 

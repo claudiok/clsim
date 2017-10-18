@@ -120,7 +120,5 @@ a python object (instead of a I3Service) is demonstrated.
    tray.AddModule("I3Writer","writer",
        Filename = "output.i3")
 
-   tray.AddModule("TrashCan", "the can")
-
    tray.Execute()
    

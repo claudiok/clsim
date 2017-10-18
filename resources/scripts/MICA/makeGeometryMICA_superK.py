@@ -78,7 +78,7 @@ tray.AddModule("FrameCheck", "check",
     ensure_physics_has = ["I3Calibration", "I3Geometry", 
                           "I3DetectorStatus"])
 
-tray.AddModule("TrashCan","trash")
+
 
 tray.Execute(5)
 

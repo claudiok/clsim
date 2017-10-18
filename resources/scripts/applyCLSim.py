@@ -150,7 +150,7 @@ tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
 tray.AddModule("I3Writer","writer",
     Filename = outdir+outfile)
 
-tray.AddModule("TrashCan", "the can")
+
 
 tray.Execute()
 

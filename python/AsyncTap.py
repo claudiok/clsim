@@ -135,7 +135,7 @@ def RunAsyncTray(queue,segment,segmentArgs,childIsReady,debug):
     else:
         writeTray.AddModule(segment,"theModule", **segmentArgs)
     
-    writeTray.AddModule("TrashCan", "theCan")
+    
 
     if debug:
         print("worker starting..")

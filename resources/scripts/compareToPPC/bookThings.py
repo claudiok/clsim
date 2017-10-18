@@ -96,7 +96,7 @@ tray.AddModule(tableio.I3TableWriter,'writer1',
 
 
 tray.AddModule(counter,'count-count')
-tray.AddModule('TrashCan','yeswecan')
+
 
 if options.nframes is not None:
     tray.Execute(options.nframes)

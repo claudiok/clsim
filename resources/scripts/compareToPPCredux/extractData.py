@@ -98,7 +98,7 @@ tray.AddModule(tableio.I3TableWriter,'writer',
 
 
 tray.AddModule(counter,'countvoncount')
-tray.AddModule('TrashCan','yeswecan')
+
 
 if options.nevents is None:
     tray.Execute()

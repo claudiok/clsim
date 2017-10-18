@@ -67,7 +67,7 @@ tray.AddModule(clsim.FakeFlasherInfoGenerator, "FakeFlasherInfoGenerator",
 tray.AddModule("I3Writer","writer",
     Filename = options.OUTFILE)
 
-tray.AddModule("TrashCan", "the can")
+
 
 tray.Execute(options.NUMEVENTS+3)
 

@@ -98,6 +98,6 @@ tray.AddSegment(TabulatePhotonsFromSource, 'generator', Seed=opts.seed, PhotonSo
     TabulateImpactAngle=opts.tabulate_impact_angle, PhotonPrescale=opts.prescale, RecordErrors=opts.errors,
     DisableTilt=True, IceModel=opts.ice_model, Axes=axes, Sensor=opts.sensor)
     
-tray.AddModule('TrashCan', 'MemoryHole')
+
 tray.Execute()
 
