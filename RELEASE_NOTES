@@ -8,6 +8,12 @@ Release Notes
 trunk
 -----
 
+Nov 3, 2017 Juan Carlos Diaz-Velez (juancarlos@icecube.umd.edu)
+-------------------------------------------------------------------
+Release V04-03-00
+* @157950 GPU optimization: Fix double buffering in TotalEnergyToProcess? mode Resetting 
+	maxNumParallelEvents_ and maxNumParallelEventsSecondFlush_ Fixes bug #1461
+
 August 22, 2017 Juan Carlos Diaz-Velez (juancarlos@icecube.umd.edu)
 -------------------------------------------------------------------
 Release V04-02-02
