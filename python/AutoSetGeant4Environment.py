@@ -42,17 +42,23 @@ def AutoSetGeant4Environment(force=True):
          "G4ABLADATA" : os.path.expandvars("$I3_PORTS/share/geant4/data/G4ABLA3.0"),
          "G4NEUTRONXSDATA" : "(none)", # geant 4.9.3/4 does not have these
          "G4PIIDATA" : "(none)",       # geant 4.9.3/4 does not have these
-         "G4REALSURFACEDATA" : "(none)"# geant 4.9.3/4 does not have these
+         "G4REALSURFACEDATA" : "(none)",# geant 4.9.3/4 does not have these
+         "G4SAIDXSDATA": "(none)", # geant 4.9.3/4 does not have these
+         "G4ENSDFSTATEDATA": "(none)", # geant 4.9.3/4 does not have these
         }
     hasOldGeant4 = (os.path.isdir(os.path.expandvars("$I3_PORTS/lib/geant4_4.9.4")) or os.path.isdir(os.path.expandvars("$I3_PORTS/lib/geant4_4.9.3"))) and (not os.path.isfile(os.path.expandvars("$I3_PORTS/bin/geant4.sh")))
-
-    if not hasOldGeant4:
-        if not os.path.isfile(os.path.expandvars("$I3_PORTS/bin/geant4.sh")):
-            if force:
-                print("cannot forcibly overwrite the Geant4 environment variables because $I3_PORTS/bin/geant4.sh is not available. Using what's available.")
-                force = False
     
-    Geant4Variables = set(["G4ABLADATA", "G4LEDATA", "G4LEVELGAMMADATA", "G4NEUTRONHPDATA", "G4NEUTRONXSDATA", "G4PIIDATA", "G4RADIOACTIVEDATA", "G4REALSURFACEDATA"])
+    if not hasOldGeant4:
+        
+        if os.path.isfile(os.path.expandvars("$I3_PORTS/bin/geant4.sh")):
+            geant4_script = os.path.expandvars("$I3_PORTS/bin/geant4.sh")
+        elif os.path.isfile(os.path.expandvars("$SROOT/bin/geant4.sh")):
+            geant4_script = os.path.expandvars("$SROOT/bin/geant4.sh")
+        elif force:
+            print("cannot forcibly overwrite the Geant4 environment variables because geant4.sh is not available. Using what's available.")
+            force = False
+    
+    Geant4Variables = set(hardCodedForGeant4_9_3and4.keys())
         
     Geant4Variables_unset = set()
     for var in Geant4Variables:
@@ -69,7 +75,7 @@ def AutoSetGeant4Environment(force=True):
     
     if len(Geant4Variables_unset)>0:
         if not hasOldGeant4:
-            print("Not all Geant4 environment variables are set. Trying to get some of them from $I3_PORTS/bin/geant4.sh..")
+            print("Not all Geant4 environment variables are set. Trying to get some of them from geant4.sh..")
         else:
             print("Not all Geant4 environment variables are set. Trying to use defaults for geant4.9.3/4.9.4..")
             
@@ -88,12 +94,12 @@ def AutoSetGeant4Environment(force=True):
         if hasOldGeant4:
             geant4env = hardCodedForGeant4_9_3and4
         else:
-            if not os.path.isfile(os.path.expandvars("$I3_PORTS/bin/geant4.sh")):
+            if not os.path.isfile(geant4_script):
                 raise RuntimeError("Cannot automatically set missing environment variables. ($I3_PORTS/bin/geant4.sh is missing.) Please set them yourself.")
 
             # get the environment after loading geant4.sh
             #source = os.path.expandvars(". $I3_PORTS/bin/geant4.sh")
-            g4scriptloc = os.path.expandvars("$I3_PORTS/bin/geant4.sh")
+            g4scriptloc = geant4_script
             #dump = '/usr/bin/env python -c "import os,pickle;print pickle.dumps(os.environ)"'
             penv = subprocess.Popen(['/bin/bash', '-c', '. ' + g4scriptloc + ' && /usr/bin/env python -c "import os,pickle;print pickle.dumps(os.environ)"'], stdout=subprocess.PIPE).communicate()[0]
             #penv = subprocess.Popen('%s && %s' %(source,dump), stdout=subprocess.PIPE, shell=True).communicate()[0]
