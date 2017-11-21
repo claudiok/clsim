@@ -57,6 +57,7 @@ def AutoSetGeant4Environment(force=True):
         elif force:
             print("cannot forcibly overwrite the Geant4 environment variables because geant4.sh is not available. Using what's available.")
             force = False
+            geant4_script = ''
     
     Geant4Variables = set(hardCodedForGeant4_9_3and4.keys())
         
