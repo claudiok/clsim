@@ -112,8 +112,10 @@ def AutoSetGeant4Environment(force=True):
         print("setting from geant4.sh:")
         for var in Geant4Variables_setnew:
             if var not in geant4env:
-                raise RuntimeError("Cannot find the %s environment variable in the geant4.sh script." % var)
-            os.environ[var] = geant4env[var]
-            print("  *", var, "->", os.environ[var])
+                if hardCodedForGeant4_9_3and4[var] != '(none)':
+                    raise RuntimeError("Cannot find the %s environment variable in the geant4.sh script." % var)
+            else:
+                os.environ[var] = geant4env[var]
+                print("  *", var, "->", os.environ[var])
 
     
