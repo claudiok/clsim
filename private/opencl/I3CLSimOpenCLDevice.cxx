@@ -243,8 +243,8 @@ bool operator==(const I3CLSimOpenCLDevice &a, const I3CLSimOpenCLDevice &b)
 }
 
 // device information
-bool I3CLSimOpenCLDevice::IsCPU() const {return (device_->getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU);}
-bool I3CLSimOpenCLDevice::IsGPU() const {return (device_->getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_GPU);}
+bool I3CLSimOpenCLDevice::IsCPU() const {return (device_->getInfo<CL_DEVICE_TYPE>() & CL_DEVICE_TYPE_CPU);}
+bool I3CLSimOpenCLDevice::IsGPU() const {return (device_->getInfo<CL_DEVICE_TYPE>() & CL_DEVICE_TYPE_GPU);}
 std::size_t I3CLSimOpenCLDevice::GetMaxComputeUnits() const {return device_->getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();}
 std::size_t I3CLSimOpenCLDevice::GetMaxWorkItemSize() const {return device_->getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[0];}
 std::size_t I3CLSimOpenCLDevice::GetMaxWorkGroupSize() const {return device_->getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>();}
