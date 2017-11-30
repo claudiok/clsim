@@ -34,6 +34,7 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+#include "G4Allocator.hh"
 #include "G4ios.hh"
 #include "G4Poisson.hh"
 #include "G4EmProcessSubType.hh"

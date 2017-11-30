@@ -54,8 +54,12 @@ def AutoSetGeant4Environment(force=True):
             geant4_script = os.path.expandvars("$I3_PORTS/bin/geant4.sh")
         elif os.path.isfile(os.path.expandvars("$SROOT/bin/geant4.sh")):
             geant4_script = os.path.expandvars("$SROOT/bin/geant4.sh")
-        elif os.path.isfile(os.path.expandvars("/usr/local/bin/geant4.sh")):  ## fall back to homebrew
+        elif os.path.isfile(os.path.expandvars("/usr/local/bin/geant4.sh")):        ## fall back to homebrew
             geant4_script = os.path.expandvars("/usr/local/bin/geant4.sh")
+        elif os.path.isfile(os.path.expandvars("/opt/linuxbrew/bin/geant4.sh")):    ## fall back to homebrew
+            geant4_script = os.path.expandvars("/opt/linuxbrew/bin/geant4.sh")
+        elif os.path.isfile(os.path.expandvars("/build/linuxbrew/bin/geant4.sh")):  ## fall back to homebrew
+            geant4_script = os.path.expandvars("/build/linuxbrew/bin/geant4.sh")
         elif force:
             print("cannot forcibly overwrite the Geant4 environment variables because geant4.sh is not available. Using what's available.")
             force = False
