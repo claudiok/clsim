@@ -8,6 +8,9 @@ Release Notes
 trunk
 -----
 
+Dec 7, 2017 Juan Carlos Diaz-Velez (juancarlos@icecube.umd.edu)
+-------------------------------------------------------------------
+Release V04-03-01
 * update geant4 detection script for py2-v3 support
 
 Nov 3, 2017 Juan Carlos Diaz-Velez (juancarlos@icecube.umd.edu)
