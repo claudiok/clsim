@@ -79,6 +79,9 @@ def I3CLSimMakeHitsFromPhotons(tray, name,
     """
 
     from icecube import icetray, dataclasses, clsim
+    
+    if UnshadowedFraction<=0:
+        raise RuntimeError("UnshadowedFraction must be a positive number")
 
     # some constants
     DOMRadius = 0.16510*icetray.I3Units.m # 13" diameter

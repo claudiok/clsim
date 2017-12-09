@@ -273,6 +273,9 @@ def I3CLSimMakePhotons(tray, name,
         print("\"DOMOversizeFactor=1.\" will still apply a constant weighting factor of DOMOversizeFactor**2.")
         print("If this is what you want, you can safely ignore this warning.")
         print("********************")
+        
+    if UnshadowedFraction<=0:
+        raise RuntimeError("UnshadowedFraction must be a positive number")
 
     # a constant
     Jitter = 2.*icetray.I3Units.ns
