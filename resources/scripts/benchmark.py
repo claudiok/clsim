@@ -249,8 +249,8 @@ class injectFakeGCD(icetray.I3Module):
 
 tray = I3Tray()
 
-tray.AddService("I3XMLSummaryServiceFactory","summary",
-    OutputFileName = options.XMLFILE)
+summary = dataclasses.I3MapStringDouble()
+tray.context['I3SummaryService'] = summary
 
 # a random number generator
 randomService = phys_services.I3SPRNGRandomService(
@@ -321,16 +321,11 @@ tray.Execute()
 
 del tray
 
-########### this is optional and just parses the generated XML file
+########### this is optional and just parses the generated summary
 
-# retrieve the XML file and parse it
-
-import xml.etree.ElementTree as ET
-tree = ET.parse(options.XMLFILE)
-root = tree.getroot()
-ns_per_photon = [float(item.find('second').text) for item in root.find('I3XMLSummaryService').find('map').findall('item') if item.find('first').text=="I3CLSimModule_makeCLSimHits_makePhotons_clsim_AverageDeviceTimePerPhoton"][0]
-ns_per_photon_with_util = [float(item.find('second').text) for item in root.find('I3XMLSummaryService').find('map').findall('item') if item.find('first').text=="I3CLSimModule_makeCLSimHits_makePhotons_clsim_AverageHostTimePerPhoton"][0]
-device_util = [float(item.find('second').text) for item in root.find('I3XMLSummaryService').find('map').findall('item') if item.find('first').text=="I3CLSimModule_makeCLSimHits_makePhotons_clsim_DeviceUtilization"][0]
+ns_per_photon = summary['I3CLSimModule_makeCLSimHits_makePhotons_clsim_AverageDeviceTimePerPhoton']
+ns_per_photon_with_util = summary['I3CLSimModule_makeCLSimHits_makePhotons_clsim_AverageHostTimePerPhoton']
+device_util = summary['I3CLSimModule_makeCLSimHits_makePhotons_clsim_DeviceUtilization']
 
 print(" ")
 print("# these numbers are performance figures for the GPU:")
