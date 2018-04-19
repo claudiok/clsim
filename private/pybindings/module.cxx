@@ -73,7 +73,7 @@ BOOST_PP_SEQ_FOR_EACH(I3_REGISTRATION_FN_DECL, ~, REGISTER_CLSIM_TABULATOR)
 
 BOOST_PYTHON_MODULE(clsim)
 {
-    load_project("libclsim", false);
+    load_project("clsim", false);
 
     if (!PyEval_ThreadsInitialized()) {
         log_info("Python threading not initialized. Doing it now.");
