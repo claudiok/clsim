@@ -7,6 +7,11 @@ Release Notes
 
 trunk
 -----
+June 22, 2018 Juan Carlos Diaz-Velez (juancarlos@icecube.umd.edu)
+-------------------------------------------------------------------
+Release V04-03-02
+* Changes default hole-ice model to 
+* Changes Summary service to XML agnostic version
 
 Dec 7, 2017 Juan Carlos Diaz-Velez (juancarlos@icecube.umd.edu)
 -------------------------------------------------------------------
