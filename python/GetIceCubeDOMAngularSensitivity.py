@@ -33,7 +33,7 @@ import numpy, math
 from os.path import expandvars
 
 
-def GetIceCubeDOMAngularSensitivity(holeIce=expandvars("$I3_SRC/ice-models/resources/models/angsens/as.nominal")):
+def GetIceCubeDOMAngularSensitivity(holeIce=expandvars("$I3_BUILD/ice-models/resources/models/angsens/as.nominal")):
     """
     The relative collection efficiency of the DOM as a polynomial in the
     cosine of the photon's impact angle with respect to the DOM orientation

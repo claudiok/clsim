@@ -75,7 +75,7 @@ def GetDEggAngularSensitivity(pmt='both'):
     import numpy
     from icecube.clsim import GetIceCubeDOMAngularSensitivity
     
-    angularAcceptance = GetIceCubeDOMAngularSensitivity(holeIce=expandvars("$I3_SRC/ice-models/resources/models/angsens/as.nominal"))
+    angularAcceptance = GetIceCubeDOMAngularSensitivity(holeIce=expandvars("$I3_BUILD/ice-models/resources/models/angsens/as.nominal"))
     
     # mirror the function in cos(eta) by inverting the odd components
     coeffs = numpy.array(angularAcceptance.GetCoefficients())

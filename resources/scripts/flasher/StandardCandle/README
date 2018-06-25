@@ -1,3 +1,3 @@
 These are example scripts similar to the ones one directory level below, only that
 these are used for Standard Candle simulation. The output of applyCLSimSC.py should
-be compatible to the detector simulation scripts in $I3_SRC/clsim/resources/scripts/flasher .
+be compatible to the detector simulation scripts in $I3_BUILD/clsim/resources/scripts/flasher .

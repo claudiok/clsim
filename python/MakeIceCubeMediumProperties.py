@@ -47,7 +47,7 @@ from os.path import expandvars
 
 
 def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m,
-                                iceDataDirectory=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
+                                iceDataDirectory=expandvars("$I3_BUILD/ice-models/resources/models/spice_mie"),
                                 useTiltIfAvailable=True,
                                 returnParameters=False):
     ### read ice information from PPC-compatible tables

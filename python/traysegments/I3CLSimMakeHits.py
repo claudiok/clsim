@@ -58,7 +58,7 @@ def I3CLSimMakeHits(tray, name,
                     ParallelEvents=1000,
                     TotalEnergyToProcess=0.,
                     RandomService=None,
-                    IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
+                    IceModelLocation=expandvars("$I3_BUILD/ice-models/resources/models/spice_mie"),
                     DisableTilt=False,
                     UnWeightedPhotons=False,
                     UseGeant4=False,
@@ -70,7 +70,7 @@ def I3CLSimMakeHits(tray, name,
                     DoNotParallelize=False,
                     DOMOversizeFactor=5.,
                     UnshadowedFraction=0.9,
-                    HoleIceParameterization=expandvars("$I3_SRC/ice-models/resources/models/angsens/as.h2-50cm"),
+                    HoleIceParameterization=expandvars("$I3_BUILD/ice-models/resources/models/angsens/as.h2-50cm"),
                     MergeHits=False,
                     IgnoreSubdetectors=['IceTop'],
                     ExtraArgumentsToI3CLSimModule=dict(),
@@ -225,7 +225,7 @@ def I3CLSimMakeHits(tray, name,
     :param HoleIceParameterization:
         Set this to a hole ice parameterization file. The default file contains the 
         coefficients for nominal angular acceptance correction due to hole ice (ice-models 
-        project is required). Use file $I3_SRC/ice-models/resources/models/angsens/as.nominal 
+        project is required). Use file $I3_BUILD/ice-models/resources/models/angsens/as.nominal 
         for no hole ice parameterization.
     :param MergeHits:
     	Set to true to perform time merging on the MCPE as they are produced. This is useful for 

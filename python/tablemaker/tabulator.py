@@ -152,7 +152,7 @@ def I3CLSimTabulatePhotons(tray, name,
                        MMCTrackListName="MMCTrackList",
                        ParallelEvents=1000,
                        RandomService=None,
-                       MediumProperties=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
+                       MediumProperties=expandvars("$I3_BUILD/ice-models/resources/models/spice_mie"),
                        UseGeant4=False,
                        CrossoverEnergyEM=None,
                        CrossoverEnergyHadron=None,
@@ -382,7 +382,7 @@ def I3CLSimTabulatePhotons(tray, name,
     else:
         domAcceptance = WavelengthAcceptance
     if AngularAcceptance is None:
-        angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=expandvars("$I3_SRC/ice-models/resources/models/angsens/as.h2-50cm"))
+        angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=expandvars("$I3_BUILD/ice-models/resources/models/angsens/as.h2-50cm"))
     else:
         angularAcceptance = AngularAcceptance
 
@@ -481,10 +481,8 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
     :param Seed: the seed for the random number service
     :param NEvents: the number of events to simulate
     :param RecordErrors: record the squares of weights as well (useful for error bars)
-    :param IceModel: the path to an ice model in $I3_SRC/clsim/resources/ice. Likely values include:
+    :param IceModel: the path to an ice model in $I3_BUILD/ice-models/resources/models. Likely values include:
         'spice_mie' ppc-style SPICE-Mie parametrization
-        'photonics_spice_1/Ice_table.spice.i3coords.cos080.10feb2010.txt' Photonics-style SPICE1 table
-        'photonics_wham/Ice_table.wham.i3coords.cos094.11jul2011.txt' Photonics-style WHAM! table
     :param DisableTilt: if true, disable tilt in ice model
     :param Filename: the name of the FITS file to write
     :param TabulateImpactAngle: if True, tabulate the impact position of the
@@ -662,7 +660,7 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
     domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius=math.sqrt(PhotonPrescale)*DOMRadius)
     
     if Sensor.lower() == 'dom':
-        angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=expandvars("$I3_SRC/ice-models/resources/models/angsens/as.h2-50cm"))
+        angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=expandvars("$I3_BUILD/ice-models/resources/models/angsens/as.h2-50cm"))
     elif Sensor.lower() == 'degg':
         referenceArea = dataclasses.I3Constants.pi*(300.*I3Units.mm/2)**2
         angularAcceptance = Gen2Sensors.GetDEggAngularSensitivity(pmt='both')
@@ -693,5 +691,5 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
         OverrideApproximateNumberOfWorkItems=1,     # if you *would* use multi-threading, this would be the maximum number of jobs to run in parallel (OpenCL is free to split them)
         ExtraArgumentsToI3CLSimModule=dict(Filename=Filename, TableHeader=header,
             Axes=Axes, PhotonsPerBunch=200, EntriesPerPhoton=5000, RecordErrors=RecordErrors),
-        MediumProperties=parseIceModel(expandvars("$I3_SRC/clsim/resources/ice/" + IceModel), disableTilt=DisableTilt),
+        MediumProperties=parseIceModel(expandvars("$I3_BUILD/ice-models/resources/models/" + IceModel), disableTilt=DisableTilt),
     )
