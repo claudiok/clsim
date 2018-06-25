@@ -72,12 +72,12 @@ supplying either a *photonics*-compatible ice description file or a
 parameter::
 
    tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
-                   IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/ppc_aha_0.80"))
+                   IceModelLocation=expandvars("$I3_BUILD/clsim/resources/ice/ppc_aha_0.80"))
 
 Another example (using a *photonics* file) would be::
 
    tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
-                   IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos090.11jul2011.txt"))
+                   IceModelLocation=expandvars("$I3_BUILD/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos090.11jul2011.txt"))
 
 Example Script
 --------------
@@ -115,7 +115,7 @@ a python object (instead of a I3Service) is demonstrated.
        UseGPUs=False,
        UseCPUs=True, 
        UseGeant4=True,
-       IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"))
+       IceModelLocation=expandvars("$I3_BUILD/clsim/resources/ice/spice_mie"))
 
    tray.AddModule("I3Writer","writer",
        Filename = "output.i3")
