@@ -25,8 +25,6 @@ parser.add_option("-s", "--seed",type="int",default=12345,
                   dest="SEED", help="Initial seed for the random number generator")
 parser.add_option("--keep-mcpes", action="store_true", default=False,
                   dest="KEEPMCPES", help="Keep I3MCPEs before writing the output file")
-parser.add_option("--use-domlauncher", action="store_true", default=False,
-                  dest="USEDOMLAUNCHER", help="Use DOMLauncher instead of PMTsimulator/DOMsimulator")
 
 # parse cmd line args, bail out if anything is not understood
 (options,args) = parser.parse_args()
@@ -92,102 +90,42 @@ from os.path import expandvars
 import os
 import sys
 
-from icecube import icetray, dataclasses, dataio, phys_services
-from icecube import noise_generator, trigger_sim
-from icecube.sim_services import bad_dom_list_static
-
-if options.USEDOMLAUNCHER:
-    from icecube import DOMLauncher
-else:
-    from icecube import pmt_simulator, DOMsimulator
+from icecube import icetray, dataclasses, dataio, phys_services, trigger_sim, vuvuzela
+from icecube import DOMLauncher
 
 tray = I3Tray()
 
-tray.AddService("I3SPRNGRandomServiceFactory","random",
+tray.Add("I3SPRNGRandomServiceFactory",
     seed = options.SEED,
     nstreams = 10000,
     streamnum = options.RUNNUMBER)
 
-tray.AddModule("I3Reader","reader",
-               Filename=infile)
+tray.Add("I3Reader", Filename = infile)
+                
+# Add noise parameters
+noise_file = expandvars("$I3_SRC/vuvuzela/resources/data/parameters.dat")
+tray.Add("Inject", InputNoiseFile = noise_file)
 
-# stolen from http://x2100.icecube.wisc.edu/svn/projects/simprod-scripts/trunk/python/simulation/detector.py [ IC86() ],
-# bad DOM list changed to IC86, parameters inlined (ScaleFactor=1.0, FilterMode=True)
-#
-# don't trust this blindly for IC86 detector simulation, always compare to simprod scripts!
+tray.Add("Vuvuzela", 
+	 InputHitSeriesMapName  = "",
+	 OutputHitSeriesMapName = "I3MCPESeriesMap",
+	 StartWindow            = 0,
+	 EndWindow              = 25*I3Units.millisecond,
+	 IceTop                 = False,
+	 InIce                  = True,
+	 RandomServiceName      = "I3RandomService",
+	 UseIndividual          = True,
+	 DisableLowDTCutoff     = True,
+)
 
-tray.AddModule("I3NoiseGeneratorModule","noiseic",
-    ScaleFactor = 1.0,
-    InIce = True,
-    IceTop = False,
-    EndWindow = 10.*I3Units.microsecond,
-    StartWindow = 10.*I3Units.microsecond,
-    IndividualRates = True, 
-    InputHitSeriesMapName = "MCPESeriesMap")
-
-if options.USEDOMLAUNCHER:
-    tray.AddModule("PMTResponseSimulator","rosencrantz",
-        Input="MCPESeriesMap",
-        Output="weightedMCHitSeriesMap")
-    tray.AddModule("DOMLauncher", "guildenstern",
-        Input="weightedMCHitSeriesMap",
-        Output="InIceRawData")
-else:
-    tray.AddModule("I3PMTSimulator","pmt")
-    tray.AddModule("I3DOMsimulator","domsimulator")
-
-## The usual SMT8
-tray.AddModule("SimpleMajorityTrigger","IISMT8",
-     TriggerConfigID = 1006)
-
-####### The simprod script has this commented out:
-# 
-# ## The new SMT3 w/ the reduced DomSet
-# tray.AddModule("SimpleMajorityTrigger","DCSMT3",
-#      TriggerConfigID = 1011)
-
-## The usual 5/7 string trigger a.k.a. ClusterTrigger
-tray.AddModule("ClusterTrigger","string",
-     TriggerConfigID = 1007)
-
-tray.AddModule("I3GlobalTriggerSim","globaltrigger",
-    FilterMode = True)
-
-tray.AddModule("I3Pruner","pruner",
-    GlobalTriggerName = "I3TriggerHierarchy",
-    DOMLaunchSeriesMapNames = ["InIceRawData"])
-
-if options.USEDOMLAUNCHER:
-    MCPMTResponseMapNames = []
-    MCHitSeriesMapNames = ["MCPESeriesMap", "weightedMCHitSeriesMap"]
-else:
-    MCPMTResponseMapNames = ["MCPMTResponseMap"]
-    MCHitSeriesMapNames = ["MCHitSeriesMap"]
-
-tray.AddModule("I3TimeShifter","timeshifter",
-    I3DOMLaunchSeriesMapNames = ["InIceRawData"],
-    I3MCPMTResponseMapNames = MCPMTResponseMapNames,
-    FlasherInfoName = "I3FlasherInfo", # the flasher info object needs to be time-shifted
-    I3MCTreeNames = [],
-    I3MCHitSeriesMapNames = MCHitSeriesMapNames,
-    ShiftUntriggeredEvents = False)
-
-
-# clean up
-tray.AddModule("Delete", "cleanup",
-    Keys = ["MCTimeIncEventID",
-            "MCPMTResponseMap",
-            "weightedMCHitSeriesMap"])
-
+tray.Add("PMTResponseSimulator")
+tray.Add("DOMLauncher")
+tray.Add(trigger_sim.TriggerSim)
+    
 if not options.KEEPMCPES:
-    tray.AddModule("Delete", "cleanup_I3MCHits",
-        Keys = ["MCPESeriesMap"])
+    tray.Add("Delete", Keys = ["I3MCPESeriesMap"])        
 
-
-tray.AddModule("I3Writer","writer",
-    Filename = outdir+outfile)
-
-
+tray.Add("I3Writer", Filename = outdir+outfile)    
 
 tray.Execute()
 
