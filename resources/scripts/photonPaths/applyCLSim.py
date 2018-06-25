@@ -151,7 +151,7 @@ tray.AddSegment(clsim.I3CLSimMakePhotons, "makeCLSimPhotons",
     StopDetectedPhotons = False,
     UseGPUs=False,
     UseCPUs=True,
-    IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_lea"),
+    IceModelLocation=expandvars("$I3_BUILD/ice-models/resources/models/spice_lea"),
     # IceModelLocation="ANTARES",
     PhotonHistoryEntries = 1000,
 

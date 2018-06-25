@@ -83,7 +83,7 @@ tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
                 PhotonSeriesName="PhotonsOnDOMs",
 
                 MMCTrackListName=None,  # no MMC!
-                IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
+                IceModelLocation=expandvars("$I3_BUILD/ice-models/resources/models/spice_mie"),
                 ExtraArgumentsToI3CLSimModule = dict(StatisticsName="CLSimStatistics")
                 )
 

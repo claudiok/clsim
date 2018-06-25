@@ -104,7 +104,7 @@ if options.DYNAMICBADDOMS:
     username="www"
 
     from icecube.sim_services.bad_dom_list_static import IC86_static_bad_dom_list, IC86_static_bad_dom_list_HLC
-    xmlfile = os.path.expandvars('$I3_SRC') + '/BadDomList/resources/scripts/QueryConfiguration.xml'
+    xmlfile = os.path.expandvars('$I3_BUILD') + '/BadDomList/resources/scripts/QueryConfiguration.xml'
     staticBadDomListOnly = False
 
     tray.AddService( 'I3BadDomListFactory', 'BadDomListServiceHLC',

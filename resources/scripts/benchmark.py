@@ -17,7 +17,7 @@ parser.add_option("-x", "--xmlfile", default="benchmark.xml",
                   dest="XMLFILE", help="Write statistics to XMLFILE")
 parser.add_option("-p", "--max-parallel-events", type="int", default=100,
                   dest="MAXPARALLELEVENTS", help="maximum number of events(==frames) that will be processed in parallel")
-parser.add_option("--icemodel", default=expandvars("$I3_SRC/clsim/resources/ice/spice_lea"),
+parser.add_option("--icemodel", default=expandvars("$I3_BUILD/ice-models/resources/models/spice_lea"),
                   dest="ICEMODEL", help="A clsim ice model file/directory (ice models *will* affect performance metrics, always compare using the same model!)")
 parser.add_option("--use-cpu",  action="store_true", default=False,
                   dest="USECPU", help="simulate using CPU instead of GPU")

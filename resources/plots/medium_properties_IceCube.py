@@ -164,7 +164,7 @@ def applyOpenCLMediumPropertyFunction(xValues, layer, mediumProps, mode):
     return yValues
 
 
-#mediumProps = clsim.MakeIceCubeMediumPropertiesPhotonics(tableFile=os.path.expandvars("$I3_SRC/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos090.11jul2011.txt"))
+#mediumProps = clsim.MakeIceCubeMediumPropertiesPhotonics(tableFile=os.path.expandvars("$I3_BUILD/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos090.11jul2011.txt"))
 mediumProps = clsim.MakeIceCubeMediumProperties()
 print("numer of layers =", mediumProps.LayersNum)
 currentLayer = mediumProps.LayersNum/2

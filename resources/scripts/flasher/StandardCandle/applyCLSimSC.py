@@ -116,7 +116,7 @@ tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
     RandomService = randomService,
     UseGPUs=False,
     UseCPUs=True,
-    IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
+    IceModelLocation=expandvars("$I3_BUILD/ice-models/resources/models/spice_mie"),
     FlasherPulseSeriesName="SCFlashes")
 
 tray.AddModule("I3Writer","writer",

@@ -129,12 +129,12 @@ color_WHAM='b'
 
 
 
-#mediumPropsSPICE = clsim.MakeIceCubeMediumProperties(iceDataDirectory=expandvars("$I3_SRC/clsim/resources/ice/spice_mie/"))
-mediumPropsSPICE = clsim.MakeIceCubeMediumPropertiesPhotonics(tableFile=expandvars("$I3_SRC/clsim/resources/ice/photonics_spice_mie/Ice_table.mie.i3coords.cos090.08Apr2011.txt"))
+#mediumPropsSPICE = clsim.MakeIceCubeMediumProperties(iceDataDirectory=expandvars("$I3_BUILD/ice-models/resources/models/spice_mie/"))
+mediumPropsSPICE = clsim.MakeIceCubeMediumPropertiesPhotonics(tableFile=expandvars("$I3_BUILD/clsim/resources/ice/photonics_spice_mie/Ice_table.mie.i3coords.cos090.08Apr2011.txt"))
 name_SPICE="SPICE-Mie"
 meanCos_SPICE = 0.9
 
-#mediumPropsSPICE  = clsim.MakeIceCubeMediumPropertiesPhotonics(tableFile=expandvars("$I3_SRC/clsim/resources/ice/photonics_aha/Ice_table.aha.i3coords.cos080.17may2007.txt"))
+#mediumPropsSPICE  = clsim.MakeIceCubeMediumPropertiesPhotonics(tableFile=expandvars("$I3_BUILD/clsim/resources/ice/photonics_aha/Ice_table.aha.i3coords.cos080.17may2007.txt"))
 #name_SPICE="AHA080"
 #meanCos_SPICE = 0.80
 
@@ -142,25 +142,25 @@ meanCos_SPICE = 0.9
 
 
 
-mediumPropsWHAM  = clsim.MakeIceCubeMediumPropertiesPhotonics(tableFile=expandvars("$I3_SRC/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos094.11jul2011.txt"))
+mediumPropsWHAM  = clsim.MakeIceCubeMediumPropertiesPhotonics(tableFile=expandvars("$I3_BUILD/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos094.11jul2011.txt"))
 name_WHAM="WHAM094"
 meanCos_WHAM = 0.94
 
-#mediumPropsWHAM  = clsim.MakeIceCubeMediumPropertiesPhotonics(tableFile=expandvars("$I3_SRC/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos090.11jul2011.txt"))
+#mediumPropsWHAM  = clsim.MakeIceCubeMediumPropertiesPhotonics(tableFile=expandvars("$I3_BUILD/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos090.11jul2011.txt"))
 #name_WHAM="WHAM090"
 #meanCos_WHAM = 0.90
 
-#mediumPropsWHAM  = clsim.MakeIceCubeMediumPropertiesPhotonics(tableFile=expandvars("$I3_SRC/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos080.11jul2011.txt"))
+#mediumPropsWHAM  = clsim.MakeIceCubeMediumPropertiesPhotonics(tableFile=expandvars("$I3_BUILD/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos080.11jul2011.txt"))
 #name_WHAM="WHAM080"
 #meanCos_WHAM = 0.80
 
 
-#mediumPropsWHAM  = clsim.MakeIceCubeMediumPropertiesPhotonics(tableFile=expandvars("$I3_SRC/clsim/resources/ice/photonics_aha/Ice_table.aha.i3coords.cos080.17may2007.txt"))
+#mediumPropsWHAM  = clsim.MakeIceCubeMediumPropertiesPhotonics(tableFile=expandvars("$I3_BUILD/clsim/resources/ice/photonics_aha/Ice_table.aha.i3coords.cos080.17may2007.txt"))
 #name_WHAM="AHA080"
 #meanCos_WHAM = 0.80
 
 
-#mediumPropsWHAM  = clsim.MakeIceCubeMediumPropertiesPhotonics(tableFile=expandvars("$I3_SRC/clsim/resources/ice/photonics_aha/Ice_table.aha.i3coords.cos094.17may2007.txt"))
+#mediumPropsWHAM  = clsim.MakeIceCubeMediumPropertiesPhotonics(tableFile=expandvars("$I3_BUILD/clsim/resources/ice/photonics_aha/Ice_table.aha.i3coords.cos094.17may2007.txt"))
 #name_WHAM="AHA094"
 #meanCos_WHAM = 0.94
 

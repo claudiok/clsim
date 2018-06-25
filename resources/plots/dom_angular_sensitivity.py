@@ -79,8 +79,8 @@ def applyOpenCLWlenDependentFunction(xValues, functionOpenCL, useReferenceFuncti
     return yValues
 
 
-domAngularAcceptance_holeIce = clsim.GetIceCubeDOMAngularSensitivity(holeIce=expandvars("$I3_SRC/ice-models/resources/models/angsens/as.h2-50cm"))
-domAngularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=expandvars("$I3_SRC/ice-models/resources/models/angsens/as.nominal"))
+domAngularAcceptance_holeIce = clsim.GetIceCubeDOMAngularSensitivity(holeIce=expandvars("$I3_BUILD/ice-models/resources/models/angsens/as.h2-50cm"))
+domAngularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=expandvars("$I3_BUILD/ice-models/resources/models/angsens/as.nominal"))
 
 ####
 

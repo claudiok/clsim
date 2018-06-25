@@ -29,8 +29,8 @@ matplotlib.rc('font',**{'family':'serif','serif':['Computer Modern']})
 
 
 #Get the implementations of the acceptance
-acceptance = GetIceCubeDOMAngularSensitivity(holeIce=expandvars("$I3_SRC/ice-models/resources/models/angsens/as.nominal"))
-acceptance_holeIce = GetIceCubeDOMAngularSensitivity(holeIce=expandvars("$I3_SRC/ice-models/resources/models/angsens/as.h2-50cm"))
+acceptance = GetIceCubeDOMAngularSensitivity(holeIce=expandvars("$I3_BUILD/ice-models/resources/models/angsens/as.nominal"))
+acceptance_holeIce = GetIceCubeDOMAngularSensitivity(holeIce=expandvars("$I3_BUILD/ice-models/resources/models/angsens/as.h2-50cm"))
 
 
 

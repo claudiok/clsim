@@ -141,8 +141,8 @@ tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
     MCPESeriesName = "I3MCPESeriesMap_clsim",
     UseGPUs=True,
     UseCPUs=False,
-    #IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos090.11jul2011.txt"))
-    IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_lea"),
+    #IceModelLocation=expandvars("$I3_BUILD/clsim/resources/ice/photonics_wham/Ice_table.wham.i3coords.cos090.11jul2011.txt"))
+    IceModelLocation=expandvars("$I3_BUILD/ice-models/resources/models/spice_lea"),
     #DisableTilt=True,
     )
     

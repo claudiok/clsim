@@ -170,7 +170,7 @@ tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
     UseGeant4=False, # never use this with Geant4!
     UseGPUs=False,
     UseCPUs=True,
-    IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_1"),
+    IceModelLocation=expandvars("$I3_BUILD/clsim/resources/ice/spice_1"),
     DisableTilt=True, # cannot use tilted ice layers with tables (tables cannot describe tilt)
     )
 

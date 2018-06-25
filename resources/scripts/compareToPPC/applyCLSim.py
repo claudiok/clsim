@@ -143,7 +143,7 @@ tray.AddSegment(clsim.I3CLSimMakeHits, "makeCLSimHits",
     UnshadowedFraction = 0.9,
     UseGPUs=True,
     UseCPUs=False,
-    IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_lea"),
+    IceModelLocation=expandvars("$I3_BUILD/ice-models/resources/models/spice_lea"),
     # DisableTilt=True,
     )
     

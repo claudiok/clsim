@@ -47,9 +47,9 @@ wlens=numpy.linspace(300.,600.,num=100)
 detectorCenterDepth = 1948.07*I3Units.m
 
 
-tilt_distance_from_origin_in_tilt_dir = numpy.loadtxt(expandvars("$I3_SRC/clsim/resources/ice/TILT_data/tilt.par"), unpack=True)[1]*I3Units.m
+tilt_distance_from_origin_in_tilt_dir = numpy.loadtxt(expandvars("$I3_BUILD/clsim/resources/ice/TILT_data/tilt.par"), unpack=True)[1]*I3Units.m
 
-tilt_dat = numpy.loadtxt(expandvars("$I3_SRC/clsim/resources/ice/TILT_data/tilt.dat"), unpack=True)
+tilt_dat = numpy.loadtxt(expandvars("$I3_BUILD/clsim/resources/ice/TILT_data/tilt.dat"), unpack=True)
 tilt_zcoords = (detectorCenterDepth-tilt_dat[0])[::-1]
 
 tilt_zcoord_diffs = tilt_zcoords[1:]-tilt_zcoords[:-1]

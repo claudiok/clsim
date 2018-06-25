@@ -123,18 +123,18 @@ modelName="SPICE-Mie"
 if modelName=="AHA":
     meanCosString = "%4.2f" % meanCos
     meanCosString2 = "%03.0f" % (meanCos*100)
-    mediumPropsPPC = clsim.MakeIceCubeMediumProperties(iceDataDirectory=expandvars("$I3_SRC/clsim/resources/ice/ppc_aha_%s/" % meanCosString))
+    mediumPropsPPC = clsim.MakeIceCubeMediumProperties(iceDataDirectory=expandvars("$I3_BUILD/clsim/resources/ice/ppc_aha_%s/" % meanCosString))
 
     photonicsFilename = "Ice_table.aha.i3coords.cos%s.17may2007.txt" % meanCosString2
     photonicsFilenameLatex = "Ice\_table.aha.i3coords.cos%s.17may2007.txt" % meanCosString2
-    mediumPropsPhotonics = clsim.MakeIceCubeMediumPropertiesPhotonics(tableFile=expandvars("$I3_SRC/clsim/resources/ice/photonics_aha/" + photonicsFilename))
+    mediumPropsPhotonics = clsim.MakeIceCubeMediumPropertiesPhotonics(tableFile=expandvars("$I3_BUILD/clsim/resources/ice/photonics_aha/" + photonicsFilename))
 elif modelName=="SPICE-Mie":
     meanCos=0.9 # override the cosine theta
-    mediumPropsPPC = clsim.MakeIceCubeMediumProperties(iceDataDirectory=expandvars("$I3_SRC/clsim/resources/ice/spice_mie/"))
+    mediumPropsPPC = clsim.MakeIceCubeMediumProperties(iceDataDirectory=expandvars("$I3_BUILD/ice-models/resources/models/spice_mie/"))
 
     photonicsFilename = "Ice_table.mie.i3coords.cos090.08Apr2011.txt"
     photonicsFilenameLatex = "Ice\_table.mie.i3coords.cos090.08Apr2011.txt"
-    mediumPropsPhotonics = clsim.MakeIceCubeMediumPropertiesPhotonics(tableFile=expandvars("$I3_SRC/clsim/resources/ice/photonics_spice_mie/" + photonicsFilename))
+    mediumPropsPhotonics = clsim.MakeIceCubeMediumPropertiesPhotonics(tableFile=expandvars("$I3_BUILD/clsim/resources/ice/photonics_spice_mie/" + photonicsFilename))
 else:
     raise RuntimeError("unknown model:", modelName)
 

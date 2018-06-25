@@ -169,7 +169,7 @@ tray.AddSegment(clsim.I3CLSimMakePhotons, "makeCLSimPhotons",
                 RandomService = randomService,
                 UseGPUs=True,
                 UseCPUs=False,
-                IceModelLocation=expandvars("$I3_SRC/clsim/resources/ice/spice_mie"),
+                IceModelLocation=expandvars("$I3_BUILD/ice-models/resources/models/spice_mie"),
                 ExtraArgumentsToI3CLSimModule={"EnableDoubleBuffering":True,            # will sligthly speed up things (and still work on Teslas)
                                                "UseHardcodedDeepCoreSubdetector":True}, # needed for PINGU in order to squeeze all geometry
                 DOMOversizeFactor=1.,                                                   # PINGU needs this (no oversizing, DOMs on strings are too dense)
