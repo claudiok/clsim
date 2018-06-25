@@ -36,8 +36,8 @@ namespace {
 std::string 
 loadKernel(const std::string& name, bool header=false)
 {
-    const std::string I3_SRC(getenv("I3_SRC"));
-    const std::string kernelBaseDir = I3_SRC+"/clsim/resources/kernels/";
+    const std::string I3_BUILD(getenv("I3_BUILD"));
+    const std::string kernelBaseDir = I3_BUILD+"/clsim/resources/kernels/";
     const std::string ext = header ? ".h.cl" : ".c.cl";
     return I3CLSimHelper::LoadProgramSource(kernelBaseDir+name+ext);
 }

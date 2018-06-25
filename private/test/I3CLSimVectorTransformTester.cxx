@@ -61,8 +61,8 @@ void I3CLSimVectorTransformTester::FillSource(
     source.clear();
     
     // load program source from files
-    const std::string I3_SRC(getenv("I3_SRC"));
-    const std::string kernelBaseDir = I3_SRC+"/clsim/resources/kernels";
+    const std::string I3_BUILD(getenv("I3_BUILD"));
+    const std::string kernelBaseDir = I3_BUILD+"/clsim/resources/kernels";
     
     std::string functionSource = theTransform->GetOpenCLFunction("evaluateVectorTransform");
     

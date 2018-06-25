@@ -96,8 +96,8 @@ maxNumWorkitems_(10240)
     if (!randomService_) log_fatal("You need to supply a I3RandomService.");
     
     // load program source from files
-    const std::string I3_SRC(getenv("I3_SRC"));
-    const std::string kernelBaseDir = I3_SRC+"/clsim/resources/kernels";
+    const std::string I3_BUILD(getenv("I3_BUILD"));
+    const std::string kernelBaseDir = I3_BUILD+"/clsim/resources/kernels";
     
     try {
         mwcrngKernelSource_ = I3CLSimHelper::LoadProgramSource(kernelBaseDir+"/mwcrng_kernel.cl");
@@ -444,8 +444,8 @@ std::string I3CLSimStepToPhotonConverterOpenCL::GetGeometrySource()
 static std::string 
 loadKernel(const std::string& name, bool header)
 {
-    const std::string I3_SRC(getenv("I3_SRC"));
-    const std::string kernelBaseDir = I3_SRC+"/clsim/resources/kernels/";
+    const std::string I3_BUILD(getenv("I3_BUILD"));
+    const std::string kernelBaseDir = I3_BUILD+"/clsim/resources/kernels/";
     const std::string ext = header ? ".h.cl" : ".c.cl";
     return I3CLSimHelper::LoadProgramSource(kernelBaseDir+name+ext);
 }
