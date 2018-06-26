@@ -367,8 +367,8 @@ void I3CLSimLightSourceToStepConverterPPC::EnqueueLightSource(const I3CLSimLight
                   particle.GetMajorID(), particle.GetMinorID(),
                   E*I3Units::GeV/I3Units::TeV, length/I3Units::m);
         
-        // calculation the way it's done by PPC (I hope)
-        const double extr = 1. + std::max(0.0, 0.1720+0.0324*logE);
+        // calculation the way it's done by PPC (updated June 2018)
+        const double extr=1+max(0.0f, 0.1880f+0.0206f*logE);
         const double muonFraction = 1./extr;
         
         const double meanNumPhotonsTotal = meanPhotonsPerMeter*(length/I3Units::m)*extr;
