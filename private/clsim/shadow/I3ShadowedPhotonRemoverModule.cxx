@@ -151,8 +151,8 @@ void I3ShadowedPhotonRemoverModule::DAQ(I3FramePtr frame)
 
 void I3ShadowedPhotonRemoverModule::Geometry(I3FramePtr frame)
 {
-  log_trace("%s", __PRETTY_FUNCTION__)
+  log_trace("%s", __PRETTY_FUNCTION__);
   const I3ExtraGeometryItemCylinder& cylinder = frame ->Get<I3ExtraGeometryItemCylinder>(cylinder_name_);
-    shadowedPhotonRemover_ = I3ShadowedPhotonRemoverPtr(new I3ShadowedPhotonRemover(cylinder , distance ));
+  shadowedPhotonRemover_ = I3ShadowedPhotonRemoverPtr(new I3ShadowedPhotonRemover(cylinder , distance ));
 };
   
