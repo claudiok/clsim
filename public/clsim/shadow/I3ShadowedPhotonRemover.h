@@ -31,6 +31,7 @@
 
 #include <string>
 
+#include "I3ExtraGeometryItem.h"
 
 /**
  * @brief This class checks if a photon path intersects with 
@@ -40,26 +41,27 @@
 class I3ShadowedPhotonRemover
 {
 public:
-    I3ShadowedPhotonRemover();
+  I3ShadowedPhotonRemover(const I3ExtraGeometryItem &cylinder , const double &distance);
     ~I3ShadowedPhotonRemover();
     
     
     /**
      * returns true if the photon hits any of the extra geometry
      */
-    bool IsPhotonShadowed(const I3Photon &photon) const;
-    
+    bool IsPhotonShadowed(const I3Photon &photon);
+    double direction_azimuth;
+    double direction_zenith;
+    double dx;
+    double dy;
+    double dz;
+    I3Position start_position;
 
     
 private:
+    const I3ExtraGeometryItem& cylinder_;
+    const double& distance_;
     // parameters
-    
-private:
-    // assignment and copy constructor declared private
-    //I3ShadowedPhotonRemover();
-    I3ShadowedPhotonRemover(const I3ShadowedPhotonRemover&);
-    I3ShadowedPhotonRemover& operator=(const I3ShadowedPhotonRemover&);
-    
+
     SET_LOGGER("I3ShadowedPhotonRemover");
 };
 

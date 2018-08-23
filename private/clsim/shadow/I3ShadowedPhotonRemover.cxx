@@ -31,15 +31,21 @@
 
 #include <limits>
 
+#include "simclasses/I3Photon.h"
+
 #include "clsim/shadow/I3ShadowedPhotonRemover.h"
 
 #include "dataclasses/I3Constants.h"
 
-I3ShadowedPhotonRemover::I3ShadowedPhotonRemover() //(I3ExtraGeometry extraGeometry) 
+#include "clsim/shadow/I3ExtraGeometryItem.h"
+
+#include <cmath>
+
+I3ShadowedPhotonRemover::I3ShadowedPhotonRemover(const I3ExtraGeometryItem &cylinder , const double &distance) : cylinder_(cylinder) , distance_(distance) //(I3ExtraGeometry extraGeometry) 
 //:
 //extraGeometry_(extraGeometry)
 {
-    log_trace("%s", __PRETTY_FUNCTION__);
+  log_trace("%s", __PRETTY_FUNCTION__);
 
 }
 
@@ -49,10 +55,14 @@ I3ShadowedPhotonRemover::~I3ShadowedPhotonRemover()
 }
 
 
-
-bool I3ShadowedPhotonRemover::IsPhotonShadowed(const I3Photon &photon) const
+//This is a boolean that will return if the photon hits the cable or cylinder
+bool I3ShadowedPhotonRemover::IsPhotonShadowed(const I3Photon &photon) 
 {
-
-    
-    return false;
+  direction_azimuth = photon.GetDir().GetAzimuth();
+  direction_zenith = photon.GetDir().GetZenith();
+  dx = distance_ * sin ( direction_zenith ) * cos ( direction_azimuth );
+  dy = distance_ * sin ( direction_zenith ) * cos ( direction_azimuth );
+  dz = distance_ * cos ( direction_zenith );
+  start_position = photon.GetPos() + I3Position(dx , dy , dz);
+  return cylinder_.DoesLineIntersect( start_position , photon.GetPos());
 }

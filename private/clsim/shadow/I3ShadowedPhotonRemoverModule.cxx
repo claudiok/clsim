@@ -31,9 +31,13 @@
 
 #include "clsim/shadow/I3ShadowedPhotonRemoverModule.h"
 
+#include "clsim/shadow/I3ExtraGeometryItemCylinder.h"
+
 #include <boost/foreach.hpp>
 
 #include "simclasses/I3Photon.h"
+
+#include "dataclasses/I3Double.h"
 
 //#include "dataclasses/geometry/I3Geometry.h"
 
@@ -42,9 +46,7 @@
 // The module
 I3_MODULE(I3ShadowedPhotonRemoverModule);
 
-/**
- * This module is not ready for use yet.
- */
+
 I3ShadowedPhotonRemoverModule::I3ShadowedPhotonRemoverModule(const I3Context& context) 
 : I3ConditionalModule(context)
 {
@@ -57,7 +59,14 @@ I3ShadowedPhotonRemoverModule::I3ShadowedPhotonRemoverModule(const I3Context& co
     AddParameter("OutputPhotonSeriesMapName",
                  "Name of the output I3PhotonSeriesMap frame object.",
                  outputPhotonSeriesMapName_);
-
+    cylinder_name_="Cylinder that corresponds to cable";
+    AddParameter("Cable" , 
+		 "Cable that is represented as a cylinder" , 
+		 cylinder_name_ );
+    distance = 10.0;
+    AddParameter("Distance" ,
+		 "Distance from where photon hits DOM to extended distance to last scatter" , 
+		 distance) ;
     // add an outbox
     AddOutBox("OutBox");
 
@@ -75,10 +84,10 @@ void I3ShadowedPhotonRemoverModule::Configure()
 
     GetParameter("InputPhotonSeriesMapName", inputPhotonSeriesMapName_);
     GetParameter("OutputPhotonSeriesMapName", outputPhotonSeriesMapName_);
+    GetParameter("Cable" , cylinder_name_);
+    GetParameter("Distance",distance);
 
     // set up the worker class
-    shadowedPhotonRemover_ = I3ShadowedPhotonRemoverPtr(new I3ShadowedPhotonRemover());
-
 }
 
 
@@ -87,6 +96,8 @@ void I3ShadowedPhotonRemoverModule::DAQ(I3FramePtr frame)
     log_trace("%s", __PRETTY_FUNCTION__);
     
     //const I3Geometry& geometry = frame->Get<I3Geometry>();
+
+
 
     I3PhotonSeriesMapConstPtr inputPhotonSeriesMap = frame->Get<I3PhotonSeriesMapConstPtr>(inputPhotonSeriesMapName_);
     if (!inputPhotonSeriesMap) log_fatal("Frame does not contain an I3PhotonSeriesMap named \"%s\".",
@@ -130,10 +141,18 @@ void I3ShadowedPhotonRemoverModule::DAQ(I3FramePtr frame)
         
         
     }
-    
+
     // store the output I3MCHitSeriesMap
     frame->Put(outputPhotonSeriesMapName_, outputPhotonSeriesMap);
     
     // that's it!
     PushFrame(frame);
 }
+
+void I3ShadowedPhotonRemoverModule::Geometry(I3FramePtr frame)
+{
+  log_trace("%s", __PRETTY_FUNCTION__)
+  const I3ExtraGeometryItemCylinder& cylinder = frame ->Get<I3ExtraGeometryItemCylinder>(cylinder_name_);
+    shadowedPhotonRemover_ = I3ShadowedPhotonRemoverPtr(new I3ShadowedPhotonRemover(cylinder , distance ));
+};
+  

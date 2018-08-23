@@ -64,6 +64,7 @@ public:
      * The module needs to process Physics frames
      */
     void DAQ(I3FramePtr frame);
+    void Geometry(I3FramePtr frame);
 
     
 private:
@@ -74,7 +75,8 @@ private:
 
     /// Parameter: Name of the output I3PhotonSeriesMap frame object. 
     std::string outputPhotonSeriesMapName_;
-
+    std::string cylinder_name_;
+    double distance;
     I3ShadowedPhotonRemoverPtr shadowedPhotonRemover_;
     
 private:

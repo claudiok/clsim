@@ -40,7 +40,14 @@ void register_I3ShadowedPhotonRemover()
         bp::scope I3ShadowedPhotonRemover_scope = 
         bp::class_<I3ShadowedPhotonRemover, boost::shared_ptr<I3ShadowedPhotonRemover>, boost::noncopyable>
         ("I3ShadowedPhotonRemover", 
-         bp::init<>()
+         bp::init<
+	 const I3ExtraGeometryItem & ,
+	 const double &
+	 >(
+	   (
+	    bp::arg("cylinder"),
+	    bp::arg("distance")
+	   )
          //(
          // (
          //  bp::arg("random"),
@@ -51,7 +58,8 @@ void register_I3ShadowedPhotonRemover()
          //  bp::arg("holeIceScatteringLength")
          // )
          //)
-        )
+	  )
+	 )
 
         .def("IsPhotonShadowed", &I3ShadowedPhotonRemover::IsPhotonShadowed)
         ;
