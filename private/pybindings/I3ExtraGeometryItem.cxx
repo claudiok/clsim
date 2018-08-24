@@ -104,7 +104,9 @@ void register_I3ExtraGeometryItem()
 {
     {
         bp::scope I3ExtraGeometryItem_scope = 
-        bp::class_<I3ExtraGeometryItemWrapper, boost::shared_ptr<I3ExtraGeometryItemWrapper>, boost::noncopyable>
+        bp::class_<I3ExtraGeometryItemWrapper,
+		   bases<I3FrameObject>,
+		   boost::shared_ptr<I3ExtraGeometryItemWrapper>, boost::noncopyable>
         ("I3ExtraGeometryItem",
          bp::init<>()
         )
