@@ -11,7 +11,7 @@ def MakePropagator(
     length=1600*I3Units.m,
     particleType=dataclasses.I3Particle.ParticleType.MuMinus,
     impl='proposal',
-    mediadef=expandvars('$I3_BUILD/PROPOSAL/resources/mediadef')):
+    mediadef=None):
         """
         Create a muon propagator service.
 
@@ -25,6 +25,8 @@ def MakePropagator(
 
         if impl.lower() == 'mmc':
             from icecube import sim_services, c2j_icetray, mmc_icetray, icetray
+            if mediadef is None:
+                mediadef=expandvars('$I3_BUILD/PROPOSAL/resources/mediadef')
             jvmOpts = icetray.vector_string()    # fill this with parameters passed directly to the JavaVM
             jvmOpts.append(expandvars("-Djava.class.path=$I3_BUILD/lib/mmc.jar"))
             jvmOpts.append("-Xms256m")
@@ -52,11 +54,11 @@ def MakePropagator(
             return mmc_icetray.I3PropagatorServiceMMC(jvm,mmcOpts)
         elif impl.lower() == 'proposal':
             from icecube import sim_services, PROPOSAL
+            # in PROPOSAL everything can be defined in the configuration file
+            if mediadef is None:
+                mediadef=expandvars('$I3_BUILD/PROPOSAL/resources/config_icesim.json')
             return PROPOSAL.I3PropagatorServicePROPOSAL(
-                mediadef=mediadef,
-                cylinderRadius=radius,
-                cylinderHeight=length,
-                type=particleType)
+                config_file=mediadef)
         else:
             raise RuntimeError("unknown propagator: %s" % impl)
 
@@ -129,7 +131,7 @@ if __name__=="__main__":
     from icecube import icetray, dataclasses, dataio, phys_services
 
     tray = I3Tray()
-    
+
     # set up a random number generator
     randomService = phys_services.I3SPRNGRandomService(
         seed = options.SEED*2,
@@ -138,17 +140,15 @@ if __name__=="__main__":
 
     # re-use the same RNG for modules that need it on the context
     tray.context['I3RandomService'] = randomService
-    
+
     tray.AddSegment(PropagateMuons, "PropagateMuons",
         RandomService = randomService)
 
     tray.AddModule("I3Writer","writer",
         Filename = options.OUTFILE)
 
-    
 
     tray.Execute()
-    
 
 
 
