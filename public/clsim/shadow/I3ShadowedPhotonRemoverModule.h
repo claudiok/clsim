@@ -36,7 +36,7 @@
 
 #include <string>
 
-
+#include "simclasses/I3CylinderMap.h"
 /**
  * @brief This module removes photons that have paths intersecting 
  *   with any shadowing part of the detecor (such as cables).
@@ -76,6 +76,7 @@ private:
     /// Parameter: Name of the output I3PhotonSeriesMap frame object. 
     std::string outputPhotonSeriesMapName_;
     std::string cylinder_name_;
+    std::string cylinder_map_name_;
     double distance;
     I3ShadowedPhotonRemoverPtr shadowedPhotonRemover_;
     

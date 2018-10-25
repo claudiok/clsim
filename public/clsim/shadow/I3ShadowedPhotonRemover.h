@@ -27,11 +27,13 @@
 #ifndef I3SHADOWEDPHOTONREMOVER_H_INCLUDED
 #define I3SHADOWEDPHOTONREMOVER_H_INCLUDED
 
-#include "simclasses/I3Photon.h"
+#include "simclasses/I3CompressedPhoton.h"
 
 #include <string>
 
 #include "I3ExtraGeometryItem.h"
+
+#include "dataclasses/geometry/I3OMGeo.h"
 
 /**
  * @brief This class checks if a photon path intersects with 
@@ -48,13 +50,16 @@ public:
     /**
      * returns true if the photon hits any of the extra geometry
      */
-    bool IsPhotonShadowed(const I3Photon &photon);
+    bool IsPhotonShadowed(const I3CompressedPhoton &photon);
     double direction_azimuth;
     double direction_zenith;
     double dx;
     double dy;
     double dz;
     I3Position start_position;
+    I3Position calculate_position(const I3OMGeo& dom_position, double cable_orientation , double radius_of_cable );
+    double position_x;
+    double position_y;
 
     
 private:

@@ -43,26 +43,10 @@ void register_I3ShadowedPhotonRemover()
          bp::init<
 	 const I3ExtraGeometryItem & ,
 	 const double &
-	 >(
-	   (
-	    bp::arg("cylinder"),
-	    bp::arg("distance")
-	   )
-         //(
-         // (
-         //  bp::arg("random"),
-         //  bp::arg("DOMRadius"),
-         //  bp::arg("holeRadius"),
-         //  bp::arg("mediumProperties"),
-         //  bp::arg("holeIceAbsorptionLength"),
-         //  bp::arg("holeIceScatteringLength")
-         // )
-         //)
-	  )
+	 >( (bp::arg("cylinder") , bp::arg("distance")) )
 	 )
-
         .def("IsPhotonShadowed", &I3ShadowedPhotonRemover::IsPhotonShadowed)
-        ;
+	.def("calculate_position", &I3ShadowedPhotonRemover::calculate_position);
     }
     
     bp::implicitly_convertible<boost::shared_ptr<I3ShadowedPhotonRemover>, boost::shared_ptr<const I3ShadowedPhotonRemover> >();
