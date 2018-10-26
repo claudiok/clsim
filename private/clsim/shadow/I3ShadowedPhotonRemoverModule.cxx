@@ -47,6 +47,7 @@
 
 #include "simclasses/I3CylinderMap.h"
 
+#include <iostream>
 // The module
 I3_MODULE(I3ShadowedPhotonRemoverModule);
 
@@ -65,13 +66,9 @@ I3ShadowedPhotonRemoverModule::I3ShadowedPhotonRemoverModule(const I3Context& co
                  "Name of the output I3PhotonSeriesMap frame object.",
                  outputPhotonSeriesMapName_);
 
-    AddParameter("Cable" , 
-		 "Cable that is represented as a cylinder" , 
-		 cylinder_name_ );
-
     AddParameter("Cable_Map",
 		 "Map containing all the cables found in the geometry",
-		 cylinder_map_name_);
+		 cylinder_map_);
 
     distance = 10.0;
 
@@ -81,7 +78,6 @@ I3ShadowedPhotonRemoverModule::I3ShadowedPhotonRemoverModule(const I3Context& co
 
     // add an outbox
     AddOutBox("OutBox");
-
 }
 
 I3ShadowedPhotonRemoverModule::~I3ShadowedPhotonRemoverModule()
@@ -96,9 +92,9 @@ void I3ShadowedPhotonRemoverModule::Configure()
 
     GetParameter("InputPhotonSeriesMapName", inputPhotonSeriesMapName_);
     GetParameter("OutputPhotonSeriesMapName", outputPhotonSeriesMapName_);
-    GetParameter("Cable" , cylinder_name_);
-    GetParameter("Cable_Map" , cylinder_map_name_);
+    GetParameter("Cable_Map" , cylinder_map_);
     GetParameter("Distance",distance);
+
 
     // set up the worker class
 }
@@ -164,25 +160,10 @@ void I3ShadowedPhotonRemoverModule::DAQ(I3FramePtr frame)
 
 void I3ShadowedPhotonRemoverModule::Geometry(I3FramePtr frame)
 {
-  if (!cylinder_map_name_.empty() && !cylinder_name_.empty() )
-    log_fatal("Both Cylinder and Cylinder Map Name were specified.");
-
-  if (cylinder_map_name_.empty() && cylinder_name_.empty() )
-    log_fatal("Both Cylinder and Cyilnder Map were not specified.");
-
   log_trace("%s", __PRETTY_FUNCTION__);
   
-  if(!cylinder_name_.empty()){
-    const I3ExtraGeometryItemCylinder& cylinder = frame ->Get<I3ExtraGeometryItemCylinder>(cylinder_name_);
-    shadowedPhotonRemover_ = I3ShadowedPhotonRemoverPtr(new I3ShadowedPhotonRemover(cylinder , distance ));
-  }
-  else if (!cylinder_map_name_.empty()){
-    const I3CylinderMap& cylinder_map = frame ->Get<I3CylinderMap>(cylinder_map_name_);
-    I3CylinderMap::const_iterator it2 = cylinder_map.begin();
-      while (it2 != cylinder_map.end()){
-      shadowedPhotonRemover_ = I3ShadowedPhotonRemoverPtr(new I3ShadowedPhotonRemover(it2->second , distance));
-    }
-  }
+  const I3CylinderMap& cylinder_map = cylinder_map_;
+  shadowedPhotonRemover_ = I3ShadowedPhotonRemoverPtr(new I3ShadowedPhotonRemover(cylinder_map , distance ));
 
   PushFrame(frame);
 };

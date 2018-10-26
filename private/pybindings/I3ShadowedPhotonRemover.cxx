@@ -30,6 +30,8 @@
 
 #include <boost/preprocessor/seq.hpp>
 
+#include "simclasses/I3CylinderMap.h"
+
 using namespace boost::python;
 namespace bp = boost::python;
 
@@ -41,12 +43,11 @@ void register_I3ShadowedPhotonRemover()
         bp::class_<I3ShadowedPhotonRemover, boost::shared_ptr<I3ShadowedPhotonRemover>, boost::noncopyable>
         ("I3ShadowedPhotonRemover", 
          bp::init<
-	 const I3ExtraGeometryItem & ,
+	 const I3CylinderMap & ,
 	 const double &
-	 >( (bp::arg("cylinder") , bp::arg("distance")) )
+	 >( (bp::arg("cylinder_map") , bp::arg("distance")) )
 	 )
-        .def("IsPhotonShadowed", &I3ShadowedPhotonRemover::IsPhotonShadowed)
-	.def("calculate_position", &I3ShadowedPhotonRemover::calculate_position);
+	  .def("IsPhotonShadowed", &I3ShadowedPhotonRemover::IsPhotonShadowed);
     }
     
     bp::implicitly_convertible<boost::shared_ptr<I3ShadowedPhotonRemover>, boost::shared_ptr<const I3ShadowedPhotonRemover> >();

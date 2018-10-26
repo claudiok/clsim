@@ -43,7 +43,9 @@
 
 #include "dataclasses/geometry/I3OMGeo.h"
 
-I3ShadowedPhotonRemover::I3ShadowedPhotonRemover(const I3ExtraGeometryItem &cylinder , const double &distance) : cylinder_(cylinder) , distance_(distance) //(I3ExtraGeometry extraGeometry) 
+#include "simclasses/I3CylinderMap.h"
+
+I3ShadowedPhotonRemover::I3ShadowedPhotonRemover(const I3CylinderMap &cylinder_map , const double &distance) : cylinder_map_(cylinder_map) , distance_(distance) //(I3ExtraGeometry extraGeometry) 
 //:
 //extraGeometry_(extraGeometry)
 {
@@ -66,12 +68,15 @@ bool I3ShadowedPhotonRemover::IsPhotonShadowed(const I3CompressedPhoton &photon)
   dy = distance_ * sin ( direction_zenith ) * cos ( direction_azimuth );
   dz = distance_ * cos ( direction_zenith );
   start_position = photon.GetPos() + I3Position(dx , dy , dz);
-  return cylinder_.DoesLineIntersect( start_position , photon.GetPos());
+  bool check = false;
+  I3CylinderMap::const_iterator it = cylinder_map_.begin();
+  while(it != cylinder_map_.end()){
+    check = it->second.DoesLineIntersect( start_position , photon.GetPos());
+    if(check == true){
+      return check;
+    }
+    it++;
+  }
+  return check;
 }
 
-I3Position I3ShadowedPhotonRemover::calculate_position(const I3OMGeo& dom_position, double cable_orientation , double radius_of_cable)
-{
-  position_x = dom_position.position.GetX() + radius_of_cable * cos( cable_orientation ) + 0.5;
-  position_y = dom_position.position.GetY() + radius_of_cable * sin( cable_orientation ) + 0.5;
-  return I3Position(position_x , position_y , dom_position.position.GetZ() );
-}
