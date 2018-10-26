@@ -35,6 +35,8 @@
 
 #include "dataclasses/geometry/I3OMGeo.h"
 
+#include "simclasses/I3CylinderMap.h"
+
 /**
  * @brief This class checks if a photon path intersects with 
  *   any shadowing part of the detecor (such as cables).
@@ -43,7 +45,7 @@
 class I3ShadowedPhotonRemover
 {
 public:
-  I3ShadowedPhotonRemover(const I3ExtraGeometryItem &cylinder , const double &distance);
+  I3ShadowedPhotonRemover(const I3CylinderMap &cylinder_map , const double &distance);
     ~I3ShadowedPhotonRemover();
     
     
@@ -57,13 +59,9 @@ public:
     double dy;
     double dz;
     I3Position start_position;
-    I3Position calculate_position(const I3OMGeo& dom_position, double cable_orientation , double radius_of_cable );
-    double position_x;
-    double position_y;
 
-    
 private:
-    const I3ExtraGeometryItem& cylinder_;
+    const I3CylinderMap& cylinder_map_;
     const double& distance_;
     // parameters
 
