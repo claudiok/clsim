@@ -177,6 +177,9 @@ def MakeIceCubeMediumProperties(detectorCenterDepth = 1948.07*I3Units.m,
     # This seems to be the definition range of the DOM wavelength acceptance:
     m.ForcedMinWlen = 265.*I3Units.nanometer
     m.ForcedMaxWlen = 675.*I3Units.nanometer
+
+    # IceModel-dependent efficiency
+    m.efficiency = efficiencyCorrection 
     
     iceCubeScatModel = I3CLSimRandomValueMixed(
         firstDistribution=I3CLSimRandomValueSimplifiedLiu(meanCosine=meanCosineTheta),

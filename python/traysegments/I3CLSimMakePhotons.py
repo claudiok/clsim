@@ -31,7 +31,8 @@ import numpy
 
 from os.path import expandvars, exists, isdir, isfile
 
-from icecube import icetray, dataclasses
+from icecube import icetray, dataclasses, dataio
+from icecube.icetray import logging
 
 from icecube.clsim import GetDefaultParameterizationList
 from icecube.clsim import GetFlasherParameterizationList
@@ -40,6 +41,25 @@ from icecube.clsim import GetHybridParameterizationList
 from icecube.clsim import AutoSetGeant4Environment
 
 from icecube.clsim.traysegments.common import configureOpenCLDevices, parseIceModel
+
+def get_compensation_factor(gcd_file):
+    fr = gcd_file.pop_frame()
+    while "I3Calibration" not in fr :
+        fr = gcd_file.pop_frame()
+    domcal = fr.Get("I3Calibration").dom_cal
+    max_compensation_factor = 0
+    for om, i3domcal in domcal.items():
+        if not hasattr(i3domcal,"combined_spe_charge_distribution"):
+            logging.log_error("I3Calibration has no element 'combined_spe_charge_distribution'!!!")
+            logging.log_warn("Setting max_compensation_factor to 1.0")
+            max_compensation_factor = 1.0
+            break
+        max_compensation_factor = max(max_compensation_factor,
+            i3domcal.combined_spe_charge_distribution.compensation_factor) 
+    print ("compensation factor", max_compensation_factor) 
+    return max_compensation_factor 
+
+
 
 # use this instead of a simple "@icetray.traysegment" to support
 # ancient versions of IceTray that do not have tray segments.
@@ -78,6 +98,7 @@ def I3CLSimMakePhotons(tray, name,
                        OverrideApproximateNumberOfWorkItems=None,
                        IgnoreSubdetectors=['IceTop'],
                        ExtraArgumentsToI3CLSimModule=dict(),
+                       GCDFile=None,
                        If=lambda f: True
                        ):
     """Do standard clsim processing up to the I3Photon level.
@@ -347,19 +368,33 @@ def I3CLSimMakePhotons(tray, name,
             clSimMCTreeName = clSimMCTreeName
 
     # ice properties
+    icemodel_efficiency_factor = 1.0
+    max_compensation_factor = 1.0
+    if GCDFile is None:
+        logging.log_warn("No GCD file given. Setting compensation factor to 1.0!!!!")
+    else:
+        max_compensation_factor = get_compensation_factor(dataio.I3File(GCDFile))
+
     if isinstance(IceModelLocation, str):
         mediumProperties = parseIceModel(IceModelLocation, disableTilt=DisableTilt)
     else:
         # get ice model directly if not a string
         mediumProperties = IceModelLocation
 
+
+    # IceModel-dependent efficiency
+    icemodel_efficiency_factor = mediumProperties.efficiency 
+ 
     # detector properties
     if WavelengthAcceptance is None:
         # the hole ice acceptance curve peaks at a value different than 1
         peak = numpy.loadtxt(HoleIceParameterization)[0] # The value at which the hole ice acceptance curve peaks
-        domEfficiencyCorrection = UnshadowedFraction*peak*1.35 * 1.01 # DeepCore DOMs have a relative efficiency of 1.35 plus security margin of +1%
+        domEfficiencyCorrection = UnshadowedFraction * peak * 1.35 * 1.01 * max_compensation_factor # DeepCore DOMs have a relative efficiency of 1.35 plus security margin of +1%
+
                                                                 
-        domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius = DOMRadius*DOMOversizeFactor, efficiency=domEfficiencyCorrection)
+        domAcceptance = clsim.GetIceCubeDOMAcceptance(
+                            domRadius = DOMRadius*DOMOversizeFactor, 
+                            efficiency=icemodel_efficiency_factor*domEfficiencyCorrection)
     else:
         domAcceptance = WavelengthAcceptance
 

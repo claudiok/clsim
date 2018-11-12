@@ -111,6 +111,9 @@ public:
     inline double GetForcedMaxWlen() const {return forcedMaxWlen_;}
     inline void SetForcedMinWlen(double val) {forcedMinWlen_=val;}
     inline void SetForcedMaxWlen(double val) {forcedMaxWlen_=val;}
+
+    inline double GetEfficiency() const {return efficiency_;}
+    inline void SetEfficiency(double val) {efficiency_=val;}
     
     
 private:
@@ -124,6 +127,8 @@ private:
     
     double forcedMinWlen_;
     double forcedMaxWlen_;
+
+    double efficiency_;
     
     std::vector<I3CLSimFunctionConstPtr> absorptionLength_;
     std::vector<I3CLSimFunctionConstPtr> scatteringLength_;

@@ -72,6 +72,7 @@ def I3CLSimMakeHits(tray, name,
                     UnshadowedFraction=0.9,
                     HoleIceParameterization=expandvars("$I3_BUILD/ice-models/resources/models/angsens/as.h2-50cm"),
                     MergeHits=False,
+                    GCDFile=None,
                     IgnoreSubdetectors=['IceTop'],
                     ExtraArgumentsToI3CLSimModule=dict(),
                     If=lambda f: True
@@ -307,6 +308,7 @@ def I3CLSimMakeHits(tray, name,
                                      UnshadowedFraction=UnshadowedFraction,
                                      HoleIceParameterization=HoleIceParameterization,
                                      IgnoreSubdetectors=IgnoreSubdetectors,
+                                     GCDFile=GCDFile,
                                      If=If,
                                      **kwargs)
 
@@ -324,7 +326,9 @@ def I3CLSimMakeHits(tray, name,
                                                  RandomService=RandomService,
                                                  DOMOversizeFactor=DOMOversizeFactor,
                                                  UnshadowedFraction=UnshadowedFraction,
+                                                 IceModelLocation=IceModelLocation,
                                                  HoleIceParameterization=HoleIceParameterization,
+                                                 GCDFile=GCDFile,
                                                  MergeHits=MergeHits,
                                                  If=If)
         

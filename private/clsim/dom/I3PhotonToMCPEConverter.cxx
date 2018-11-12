@@ -357,8 +357,16 @@ I3PhotonToMCPEConverter::Convert(I3FramePtr frame)
                     }
                 } else {
                     const I3DOMCalibration &domCalibration = cal_it->second;
+                    double spe_compensation_factor = 1.0;
+
+                    SPEChargeDistribution spe_charge_dist = domCalibration.GetCombinedSPEChargeDistribution();
+                    if (!std::isnan(spe_charge_dist.compensation_factor)) {
+                       spe_compensation_factor = spe_charge_dist.compensation_factor;
+                        //std::cout<<spe_compensation_factor<<std::endl;
+                    }
+    
+
                     efficiency_from_calibration=domCalibration.GetRelativeDomEff();
-                    
                     if (std::isnan(efficiency_from_calibration)) {
                         if (std::isnan(defaultRelativeDOMEfficiency_)) {
                             log_fatal("OM (%i/%u) found in the current calibration map, but it is NaN! (Consider setting \"DefaultRelativeDOMEfficiency\" != NaN)", key.GetString(), key.GetOM());
@@ -369,10 +377,12 @@ I3PhotonToMCPEConverter::Convert(I3FramePtr frame)
                                       efficiency_from_calibration);
                         }
                     } else {
+                        efficiency_from_calibration *= spe_compensation_factor;
                         log_debug("OM (%i/%u): efficiency_from_calibration=%g",
                                   key.GetString(), key.GetOM(),
                                   efficiency_from_calibration);
                     }
+
                 }
             }
         }

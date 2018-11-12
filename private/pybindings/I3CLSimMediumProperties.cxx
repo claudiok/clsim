@@ -108,6 +108,10 @@ void register_I3CLSimMediumProperties()
         .add_property("ForcedMinWlen", &I3CLSimMediumProperties::GetForcedMinWlen, &I3CLSimMediumProperties::SetForcedMinWlen)
         .add_property("ForcedMaxWlen", &I3CLSimMediumProperties::GetForcedMaxWlen, &I3CLSimMediumProperties::SetForcedMaxWlen)
 
+        .def("GetEfficiency", &I3CLSimMediumProperties::GetEfficiency)
+        .def("SetEfficiency", &I3CLSimMediumProperties::SetEfficiency)
+        .add_property("efficiency", &I3CLSimMediumProperties::GetEfficiency, &I3CLSimMediumProperties::SetEfficiency)
+
         .def(dataclass_suite<I3CLSimMediumProperties>())
         ;
     }
