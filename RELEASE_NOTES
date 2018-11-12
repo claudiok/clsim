@@ -7,24 +7,31 @@ Release Notes
 
 trunk
 -----
-June 22, 2018 Juan Carlos Diaz-Velez (juancarlos@icecube.umd.edu)
+Nov. 12, 2018 Juan Carlos Diaz-Velez (juancarlos@icecube.wisc.edu)
+-------------------------------------------------------------------
+Release V04-04-00
+* Individual SPE template correction factors and RDE
+* Reads DOMefficiency from icemodel cfg.
+* Unshadowed fraction parameter multiplies by IceModel DOMefficiency
+
+June 22, 2018 Juan Carlos Diaz-Velez (juancarlos@icecube.wisc.edu)
 -------------------------------------------------------------------
 Release V04-03-02
 * Changes default hole-ice model to 
 * Changes Summary service to XML agnostic version
 
-Dec 7, 2017 Juan Carlos Diaz-Velez (juancarlos@icecube.umd.edu)
+Dec 7, 2017 Juan Carlos Diaz-Velez (juancarlos@icecube.wisc.edu)
 -------------------------------------------------------------------
 Release V04-03-01
 * update geant4 detection script for py2-v3 support
 
-Nov 3, 2017 Juan Carlos Diaz-Velez (juancarlos@icecube.umd.edu)
+Nov 3, 2017 Juan Carlos Diaz-Velez (juancarlos@icecube.wisc.edu)
 -------------------------------------------------------------------
 Release V04-03-00
 * @157950 GPU optimization: Fix double buffering in TotalEnergyToProcess? mode Resetting 
 	maxNumParallelEvents_ and maxNumParallelEventsSecondFlush_ Fixes bug #1461
 
-August 22, 2017 Juan Carlos Diaz-Velez (juancarlos@icecube.umd.edu)
+August 22, 2017 Juan Carlos Diaz-Velez (juancarlos@icecube.wisc.edu)
 -------------------------------------------------------------------
 Release V04-02-02
  * generation of compressed MCPEs. 
