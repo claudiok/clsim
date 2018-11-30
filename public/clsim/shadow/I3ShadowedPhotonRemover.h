@@ -31,7 +31,7 @@
 
 #include <string>
 
-#include "I3ExtraGeometryItem.h"
+#include "simclasses/I3ExtraGeometryItem.h"
 
 #include "dataclasses/geometry/I3OMGeo.h"
 

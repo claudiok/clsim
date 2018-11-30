@@ -75,7 +75,7 @@ private:
 
     /// Parameter: Name of the output I3PhotonSeriesMap frame object. 
     std::string outputPhotonSeriesMapName_;
-    I3CylinderMap cylinder_map_;
+    std::string cylinder_map_;
     double distance;
     I3ShadowedPhotonRemoverPtr shadowedPhotonRemover_;
 
