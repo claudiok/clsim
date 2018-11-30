@@ -33,7 +33,7 @@
 
 #include "clsim/shadow/I3ShadowedPhotonRemoverModule.h"
 
-#include "clsim/shadow/I3ExtraGeometryItemCylinder.h"
+#include "simclasses/I3ExtraGeometryItemCylinder.h"
 
 #include <boost/foreach.hpp>
 
@@ -162,7 +162,7 @@ void I3ShadowedPhotonRemoverModule::Geometry(I3FramePtr frame)
 {
   log_trace("%s", __PRETTY_FUNCTION__);
   
-  const I3CylinderMap& cylinder_map = cylinder_map_;
+  const I3CylinderMap& cylinder_map = frame->Get<I3CylinderMap>(cylinder_map_);
   shadowedPhotonRemover_ = I3ShadowedPhotonRemoverPtr(new I3ShadowedPhotonRemover(cylinder_map , distance ));
 
   PushFrame(frame);

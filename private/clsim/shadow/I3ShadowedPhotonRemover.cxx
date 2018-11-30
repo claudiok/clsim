@@ -37,7 +37,7 @@
 
 #include "dataclasses/I3Constants.h"
 
-#include "clsim/shadow/I3ExtraGeometryItem.h"
+#include "simclasses/I3ExtraGeometryItem.h"
 
 #include <cmath>
 
