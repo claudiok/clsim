@@ -229,6 +229,35 @@ void I3CLSimStepToPhotonConverterOpenCL::Initialize()
     if (workgroupSize_>maxWorkgroupSize_)
         throw I3CLSimStepToPhotonConverter_exception("Workgroup size too large!");
     
+    const unsigned int numBuffers = disableDoubleBuffering_?1:2;
+    
+    // For GPUs, choose the largest number of work items such that they still
+    // fit in device memory
+    if (device_->IsGPU()) {
+      size_t sizePerWorkitem = numBuffers*(
+        sizeof(I3CLSimStep)  // the input step
+        + 2*sizeof(uint64_t) // MWC multipliers
+        + std::max(10u,
+          unsigned(10000.*(saveAllPhotons_ ? saveAllPhotonsPrescale_ : 0)))
+          *sizeof(I3CLSimPhoton) // the output buffer
+        )
+        + kernel_[0]->getWorkGroupInfo<CL_KERNEL_LOCAL_MEM_SIZE>(
+          *device_->GetDeviceHandle()) // the kernel itself
+        ;
+      maxNumWorkitems_ = (device_->GetGlobalMemSize()
+        - geoLayerToOMNumIndexPerStringSetInfo_.size()*sizeof(unsigned short)
+        - numBuffers*sizeof(uint32_t))/sizePerWorkitem;
+      size_t numMultipliers = 6139850;
+      if (maxNumWorkitems_ > numMultipliers) {
+        log_info_stream("Limiting number of work items to "<<numMultipliers<<" (maximum number of prime multipliers)");
+        maxNumWorkitems_ = numMultipliers;
+      }
+      // Choose a bunch size that is a multiple of both the number of cores
+      // and the workgroup size
+      size_t granularity = device_->GetMaxComputeUnits()*workgroupSize_;
+      maxNumWorkitems_ = (maxNumWorkitems_/granularity)*granularity;
+    }
+    
     if (maxNumWorkitems_%workgroupSize_ != 0)
         throw I3CLSimStepToPhotonConverter_exception("The maximum number of work items (" + boost::lexical_cast<std::string>(maxNumWorkitems_) + ") must be a multiple of the workgroup size (" + boost::lexical_cast<std::string>(workgroupSize_) + ").");
     
@@ -283,8 +312,6 @@ void I3CLSimStepToPhotonConverterOpenCL::Initialize()
         deviceBuffer_GeoLayerToOMNumIndexPerStringSet = boost::shared_ptr<cl::Buffer>
         (new cl::Buffer(*context_, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, geoLayerToOMNumIndexPerStringSetInfo_.size() * sizeof(unsigned short), &(geoLayerToOMNumIndexPerStringSetInfo_[0])));
     }
-    
-    const unsigned int numBuffers = disableDoubleBuffering_?1:2;
     
     // allocate empty buffers on the device
     for (unsigned int i=0;i<numBuffers;++i)

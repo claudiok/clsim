@@ -19,29 +19,6 @@ def configureOpenCLDevices(UseGPUs=True, UseCPUs=False, OverrideApproximateNumbe
             # skip all devices except for the selected one (if there is a selection)
             continue
 
-        if str.count(device.device, 'Tesla') > 0 or str.count(device.device, 'GTX') > 0 or str.count(device.device, 'TITAN') > 0:
-            # assume these are "fast", all others are "slow"
-            device.useNativeMath=True
-            if str.count(device.device, '1080') > 0 or str.count(device.device, 'TITAN') > 0:
-                # These things have 8GB of memory, so use more of it (because why not)
-                device.approximateNumberOfWorkItems=1024000*2
-            elif str.count(device.device, 'Tesla') > 0 or str.count(device.device, '580') > 0 or str.count(device.device, '680') > 0 or str.count(device.device, '980') > 0:
-                # these cards should have enough ram to support this
-                device.approximateNumberOfWorkItems=1024000
-            else:
-                device.approximateNumberOfWorkItems=102400
-        elif str.count(device.device, 'Graphics Device') > 0:
-            # with nVidia's driver version 367.18, a GTX 1080 shows up as just "Graphics Devices"
-            # These things have 8GB of memory, so use more of it (because why not)
-            device.useNativeMath=True
-            device.approximateNumberOfWorkItems=1024000*2
-        elif str.count(device.device, 'Tahiti') > 0:
-            device.useNativeMath=True
-            device.approximateNumberOfWorkItems=102400*2
-        else:
-            device.useNativeMath=False
-            device.approximateNumberOfWorkItems=10240
-            
         if OverrideApproximateNumberOfWorkItems is not None:
             device.approximateNumberOfWorkItems=OverrideApproximateNumberOfWorkItems
 
@@ -58,8 +35,6 @@ def configureOpenCLDevices(UseGPUs=True, UseCPUs=False, OverrideApproximateNumbe
                 if len(subDevices) > 0:
                     if OverrideApproximateNumberOfWorkItems is not None:
                         subDevices[0].approximateNumberOfWorkItems=OverrideApproximateNumberOfWorkItems
-                    else:
-                        subDevices[0].approximateNumberOfWorkItems=10240
                     openCLDevices.append(subDevices[0])
                 else:
                     logging.log_warn("failed to split CPU device into individual cores %s %s [using full device with minimal number of work-items to (hopefully) disable parallelization]" % (device.platform, device.device), unit="clsim")
