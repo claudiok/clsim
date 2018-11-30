@@ -28,9 +28,10 @@ class AddCylinder(icetray.I3Module):
         self.top = self.GetParameter('TopCylinder')
         self.bottom = self.GetParameter('BottomCylinder')
         self.radius = self.GetParameter('Radius')
+        
 
     def Geometry(self,frame):
-        frame['Cable'] = clsim.I3ExtraGeometryItemCylinder(self.top , self.bottom , self.radius)
+        frame['Cable'] = simclasses.I3ExtraGeometryItemCylinder(self.top , self.bottom , self.radius)
         self.PushFrame(frame)
 
             
@@ -40,25 +41,27 @@ class AddCylinders(icetray.I3Module):
         self.AddParameter( "Length_of_cylinder", "Length of the cable" , 1.0 )
         self.AddParameter( "Radius_of_cylinder" , "Radius of the cable" , 0.023 ) #The radius of the cables is 23 mm
         self.AddParameter( "Cable_map" , "Map of cables in geometry" , " " )
+        self.AddParameter( "Radius_of_DOM" , "Radius of the DOM" , 0.5 )
         
     def Configure(self):
         self.height = self.GetParameter("Length_of_cylinder")
         self.radius = self.GetParameter("Radius_of_cylinder")
         self.cable_map = self.GetParameter("Cable_map")
+        self.dom_radius = self.GetParameter("Radius_of_DOM")
        
     def Geometry(self,frame):
         geometry = frame["I3Geometry"]
-        self.cable_map = I3CylinderMap()
         for i in DOMs:
             om_key = i[0]
             orientation = i[1] * (np.pi/180.0)
-            position_x = geometry.omgeo[ om_key ].position.x + 0.5 + self.radius * np.cos( orientation )
-            position_y = geometry.omgeo[ om_key ].position.y + 0.5 + self.radius * np.sin( orientation )
+            position_x = geometry.omgeo[ om_key ].position.x + self.dom_radius + self.radius * np.cos( orientation )
+            position_y = geometry.omgeo[ om_key ].position.y + 0.5 + self.dom_radius * np.sin( orientation )
             position_z = geometry.omgeo[ om_key ].position.z
-            self.cable_map[om_key] = clsim.I3ExtraGeometryItemCylinder(dataclasses.I3Position( position_x , position_y , position_z + self.height/2.0),
-                                                                    dataclasses.I3Position( position_x , position_y , position_z - self.height/2.0),
-                                                                    self.radius)
+            self.cable_map[om_key] = simclasses.I3ExtraGeometryItemCylinder(dataclasses.I3Position( position_x , position_y , position_z + self.height/2.0),
+                                                                       dataclasses.I3Position( position_x , position_y , position_z - self.height/2.0),
+                                                                       self.radius)
 
+        frame['CableMap'] = self.cable_map
         self.PushFrame(frame)
 
 
