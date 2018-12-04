@@ -83,10 +83,6 @@ SET(LIB_${PROJECT_NAME}_SOURCEFILES
   # private/clsim/dom/I3PhotonToMCHitConverterForMDOMs.cxx
   private/clsim/shadow/I3ShadowedPhotonRemover.cxx
   private/clsim/shadow/I3ShadowedPhotonRemoverModule.cxx
-  private/clsim/shadow/I3ExtraGeometryItem.cxx
-  private/clsim/shadow/I3ExtraGeometryItemUnion.cxx
-  private/clsim/shadow/I3ExtraGeometryItemMove.cxx
-  private/clsim/shadow/I3ExtraGeometryItemCylinder.cxx
 
   # tableio converters
   # private/clsim/converter/I3PhotonConverter.cxx
@@ -130,7 +126,6 @@ SET(LIB_${PROJECT_NAME}_PYBINDINGS_SOURCEFILES
   private/pybindings/I3CLSimFlasherPulse.cxx
   # private/pybindings/I3Converters.cxx
   private/pybindings/I3ShadowedPhotonRemover.cxx
-  private/pybindings/I3ExtraGeometryItem.cxx
   private/pybindings/module.cxx
 )
 
