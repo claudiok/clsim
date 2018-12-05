@@ -40,6 +40,7 @@
 #include "phys-services/I3RandomService.h"
 
 #include "clsim/function/I3CLSimFunction.h"
+#include "clsim/dom/I3CLSimPhotonToMCPEConverter.h"
 
 #include <string>
 
@@ -149,5 +150,17 @@ private:
     
     SET_LOGGER("I3PhotonToMCPEConverter");
 };
+
+class I3CLSimPhotonToMCPEConverterForDOMs : public I3CLSimPhotonToMCPEConverter {
+ public:
+  I3CLSimPhotonToMCPEConverterForDOMs(I3RandomServicePtr, boost::shared_ptr<const std::map<OMKey, I3CLSimFunctionConstPtr>>, I3CLSimFunctionConstPtr);
+  virtual ~I3CLSimPhotonToMCPEConverterForDOMs();
+  virtual std::tuple<OMKey,I3MCPE,bool> Convert(const ModuleKey&, const I3CompressedPhoton &) const;
+ private:
+  I3RandomServicePtr randomService_;
+  boost::shared_ptr<const std::map<OMKey, I3CLSimFunctionConstPtr>> wavelengthAcceptance_;
+  I3CLSimFunctionConstPtr angularAcceptance_;
+};
+
 
 #endif //I3PHOTONTOMCPECONVERTER_H_INCLUDED

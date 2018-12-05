@@ -152,6 +152,7 @@ else(BUILD_CLSIM_DATACLASSES_ONLY)
     private/pybindings/I3CLSimOpenCLDevice.cxx
     private/pybindings/I3CLSimLightSource.cxx
     private/pybindings/I3CLSimSpectrumTable.cxx
+    private/pybindings/I3CLSimPhotonToMCPEConverter.cxx
   )
 endif(BUILD_CLSIM_DATACLASSES_ONLY)
 
