@@ -26,9 +26,6 @@
 
 #include <sstream>
 
-#include <icetray/OMKey.h>
-#include <icetray/python/std_map_indexing_suite.hpp>
-
 #include <clsim/function/I3CLSimFunction.h>
 
 #include <clsim/function/I3CLSimFunctionConstant.h>
@@ -100,18 +97,6 @@ void register_I3CLSimFunction()
     bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionWrapper>, boost::shared_ptr<I3CLSimFunction> >();
     bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionWrapper>, boost::shared_ptr<const I3CLSimFunctionWrapper> >();
     utils::register_const_ptr<I3CLSimFunction>();
-
-    // values that are different for each DOM
-
-    { 
-      typedef std::map<OMKey, I3CLSimFunctionConstPtr> I3CLSimFunctionPtrMap; 
-      I3_POINTER_TYPEDEFS(I3CLSimFunctionPtrMap); 
-      bp::class_<I3CLSimFunctionPtrMap, I3CLSimFunctionPtrMapPtr>("I3CLSimFunctionMap") 
-	.def(bp::std_map_indexing_suite<I3CLSimFunctionPtrMap>()) 
-	; 
-      bp::implicitly_convertible<boost::shared_ptr<I3CLSimFunctionPtrMap>, boost::shared_ptr<const I3CLSimFunctionPtrMap> >(); 
-      utils::register_const_ptr<I3CLSimFunctionPtrMap>(); 
-    } 
 
     // constant value
     {
