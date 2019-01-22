@@ -57,7 +57,7 @@ def I3CLSimMakeHitsFromPhotons(tray, name,
                                MCPESeriesName="MCPESeriesMap",
                                RandomService=None,
                                DOMOversizeFactor=5.,
-                               UnshadowedFraction=0.9,
+                               UnshadowedFraction=1.0,
                                IceModelLocation=None, #Needed for icemodel-dependent efficiency
                                HoleIceParameterization=expandvars("$I3_BUILD/ice-models/resources/models/angsens/as.h2-50cm"),
                                MergeHits=False,
