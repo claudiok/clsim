@@ -1,0 +1,254 @@
+
+# Major changes in clsim/branches/multiprocess-server
+
+Jakob van Santen <jakob.van.santen@desy.de>, 2017-10-16
+
+Required branches: sim-services/branches/clsim-multiprocess-server
+Optional branches: simprod-scripts/branches/clsim-multiprocess-server
+                   ppc/branches/clsim-interface
+
+## Client-server structure
+
+A new class, I3CLSimServer, listens for serialized bunches of I3CLSimSteps on
+an ZeroMQ socket, passes these to an instance of I3CLSimStepToPhotonConverter,
+and returns the result to the source socket. A corresponding client class,
+I3CLSimClient, handles the other end of the communication. The client and
+server can be in different processes or even on different machines, allowing M
+IceTray instances to feed N GPUs instead of 1:N.
+
+I3CLSimModule has been replaced with I3CLSimClientModule, a vastly simplified
+implementation. Instead of instantiating its own
+I3CLSimStepToPhotonConverterOpenCL, it takes the address of an I3CLSimServer
+and communicates with it via an I3CLSimClient.
+
+The legacy I3CLSimModule is currently disabled entirely in
+clsim/branches/multiprocess-server pending integration of the Geant4 refactor
+(see below).
+
+## Minimal buffering
+
+I3CLSimModule consumed N frames (where N was either set explicitly with
+MaxNumParallelEvents or implicitly with MaxEnergyToProcess), sending them to
+its I3CLSimLightSourceToStepCoverterGeant4 followed by a barrier. Once the
+barrier was enqueued, I3CLSimModule started its worker thread to consume the
+output steps and send them to one of its I3CLSimStepToPhotonConverterOpenCL
+instances. The resulting photons were stored associated with their frames until
+the barrier was reached, at which point the thread was stopped and the
+now-final frames pushed to the I3Module outbox.
+
+I3CLSimClientModule takes a different approach. The worker thread runs
+continuously, light sources are fed to I3CLSimLightSourceToStepCoverterAsync
+continuously. Light sources are tracked through
+I3CLSimLightSourceToStepCoverterAsync so that frames can be pushed (in order)
+as soon as all light sources in the frame have been through the step generator
+and the last bunch of steps associated with the frame have been propagated. The
+output queue of I3CLSimLightSourceToStepCoverterAsync has zero size, so that
+steps are only emitted once they can be propagated. This means that frames are
+buffered dynamically based on the number of input photons they contain, with no
+need for client-side guesswork as with MaxNumParallelEvents or
+MaxEnergyToProcess.
+
+## Geant4 is actually optional
+
+I3CLSimLightSourceToStepCoverterGeant4 did 5 things:
+  
+  a) ran its work in a thread,
+  b) fed track segments/cascades/flashers to yield parameterizations,
+  c) fed those with no available parameterization to Geant4,
+  d) stored the results from both to an output stack sorted by the number of photons, and
+  e) pushed out steps bunches once the stack reaches a minimum size.
+
+Only (c) was actually specific to Geant4, but
+I3CLSimLightSourceToStepCoverterGeant4 needed to initialize Geant4 (and make
+sure that all 11 required environment variables were set) even if it was not
+going to be used. This was incredibly irritating.
+
+In the branch, the remaining functionality is factored out into
+I3CLSimLightSourceToStepCoverterAsync, and the Geant4 bits live in the
+(synchronous) I3CLSimLightSourceToStepPropagatorGeant4. Its base class,
+I3CLSimLightSourceToStepPropagator, models things like Geant4 that can both
+propagate initial states and convert them into final states (Cherenkov tracks).
+Another subclass, I3CLSimLightSourceToStepPropagatorFromI3PropagatorService,
+handles only the propagation part, and is useful for keeping potentially large
+numbers of intermediate particles like stochastic losses along a muon track
+from gumming up the frame (in fact, in limited testing, running PROPOSAL on the
+fly in this mode appears ~20% faster than deserializing the fully propagated
+MCTree). I3CLSimLightSourceParameterization continues to be a final stage that
+can only emit steps, but not secondary particles.
+
+The upshot is that I3CLSimLightSourceToStepCoverterAsync can be used without
+configuring Geant4 even if it is installed. Eventually
+I3CLSimLightSourceToStepPropagatorGeant4 should be factored out into its own
+project, as nothing in clsim (save for the currently-disabled I3CLSimModule)
+depends on it directly.
+
+## In-loop photon -> hit conversion
+
+Detected photons are the major memory overhead for bright events. In trunk
+clsim, the conversion from photons to MCPE is implemented as a separate
+I3Module. While this is great for modularity, it also requires that all photons
+for a single event (hundreds of millions for multi-PeV cascades near a string)
+be stored in memory before being down-converted to MCPE, limiting the
+effectiveness of easy space-saving optimizations like the coalescing of MCPE
+that are so close in time as to be completely indistinguishable.
+
+The branch contains a new base class, I3CLSimPhotonToMCPEConverter (a bad name,
+but I3PhotonToMCPEConverter is already taken), that models the conversion of a
+single ModuleKey/I3CompressedPhoton pair to an OMKey/I3MCPE pair (or nothing).
+The only existing implementation is the imaginately named
+I3CLSimPhotonToMCPEConverterForDOMs, which implements a vastly simplified
+version of the I3PhotonToMCPEConverter innermost loop, and also handles the QE
+of DeepCore DOMs more correctly (wavelength-dependent ratio instead of constant
+factor).
+
+If I3CLSimClientModule is configured with an instance of
+I3CLSimPhotonToMCPEConverter (and a key under which to store the results in the
+frame), it will convert each detected photon to MCPE and coalesce them in time
+incrementally. Detected photons will only be stored if there is an output key
+configured for them. This can save large amounts of memory for bright events
+where only the first bunch of photons converts to MCPE with unique times. The
+vast majority of photons in following bunches tend to convert to MCPE with
+times close to ones that have already been stored, so the additional memory
+required by each bunch falls nearly monotonically.
+
+This approach does require a choice of the angular and wavelength-dependent
+acceptance of the DOM. While the wavelength dependence was already mostly
+frozen in by the choice of wavelength bias in the generated photons, it was at
+least in principle possible to store photons and reweight them to a different
+angular sensitivity (and given more knowledge about each DOM, positional
+sensitivity and an angle-dependent cable shadow). The previous freedom could be
+emulated by modifying I3CLSimClientModule to run the conversion for N different
+sensitivity models at the expense of an N-fold increase in memory usage, or
+regained by implementing a binning scheme for photons. The latter is tricky to
+do efficiently, because the acceptance can in principle depend on 5 extra
+dimensions (2 angles each for impact position and direction, plus wavelength).
+
+## Running the ppc kernel in I3CLSimClientModule
+
+ppc will always have the latest and greatest ice model, but lacks the runtime
+configurability of clsim. To remedy this, ppc/branches/clsim-interface defines
+an implementation of I3CLSimStepToPhotonConverter that calls ppc. Some aspects
+of the configuration are as gross as you might expect. ppc wants its data
+tables (ice properties, wavelength acceptance of the DOM, angular acceptance)
+to be stored as text files in a directory whose name it reads from an
+environment variable, whereas clsim's correpsonding inputs are configured in
+code. ppc.MakeCLSimPropagator() takes inputs as clsim objects, writes their
+content as text files in a temporary directory, sets the appropriate
+environment variables, calls ppc's setup routines, and then removes the
+temporary directory. At the moment the Python configuration wrapper supports
+the set of things needed to configure ppc for ice models of the Spice-Lea
+family and earlier.
+
+Additional work would be needed to support fancy new things like (at the time
+of writing) depth-dependent anisotropy, cable shadow, and direct treatment of
+scattering in the bubble column. The wrapper would then also be useful for
+verifying a future implementation of these features in clsim.
+
+## Remaining work (required)
+
+### IceProd2 support for CLSim server
+
+If the client/server model is going to be used in production, then IceProd2
+needs to learn how to spawn a server with a given configuration, keep it alive,
+connect client processes to it, and kill it when the last client process
+finishes. The clients need to be assigned a server address automatically, since
+there's no provision in the simple protocol for verifying that the client and
+server are compatible, e.g. if they are running the same version of the code,
+or the same ice model, or even the same geometry.
+
+(If someone wants to write a BitCoin miner that encodes its work as a bunch of
+I3CLSimSteps and receives work as a properly sized buffer of detected photons,
+the server will also happily work with it.)
+
+For maximum efficiency, however, the tray:GPU ratio would have to take the
+relative speed of CPU cores (under a given workload) and GPUs, e.g. at least
+3:1 for (Sandy Bridge):(GTX 1080), closer to 1:2 for (Kaby Lake):(Tesla K20).
+Alternatively, one could start a server, monitor its GPU utilization, and add a
+client whenever the utilization has been below some target value for a long
+enough time. An interface currently exists for querying integrated utilization,
+but this could easily be extended to take a time window.
+
+## Remaining work (optional)
+
+### Integrate more of the simulation chain into the photon propagation tray
+
+When multiple trays feed a single GPU, the individual trays can have
+significantly higher latency between step bunches than would be acceptable in
+the usual 1:1 case. This means that at the very least, fast generators like
+NuGen and MuonGun can be put directly in the photon propagation tray, saving an
+intermediate copy operation (that can fail due to GridFTP overload) and an
+update to the IceProd tracking database (that can bog down the central
+scheduler). Then, the detector simulation could be added to the end of the tray
+to save another copy and update step. With a sufficiently large number of
+feeder trays, CORSIKA could even feed photon propagation without an
+intermediate step. This should at least be explored.
+
+### Banish I3CLSimLightSourceToStepCoverterGeant4 to its own project
+
+See above.
+
+### Optimize photons per step (possibly based on workload)
+
+Both ppc and clsim work by breaking muons and cascades into segments of
+Cherenkov track (I3CLSimStep in clsim) that emit N photons. In ppc 128 <= N <=
+1024, whereas in clsim 1 <= N <= 200. Segments with fewer photons come from
+padding out the ends of light sources. A GPU thread group works on M of these
+tracks simulaneously, with each thread propagating N photons from its input
+step. Each thread consumes its own random number stream from a compiled-in
+multiply-with-carry pseudo-RNG. If more than 1 block of M steps is sent to the
+GPU, it will execute these one after the other. M is chosen by the OpenCL
+compiler at runtime based on the number of available registers on the target
+device, but N can be chosen more or less freely.
+
+ppc chooses N_max so that the total size of the buffers used to store detected
+photons fits in the target device's memory, conservatively assuming that every
+photon will be detected. clsim, on the other hand, uses hard-coded maximum
+block sizes for known GPU models, sets N_max to 200, and allocates output
+buffers assuming that no more than 10% of photons will be detected.
+
+Smaller N_max potentially decreases the cycles wasted to threads with numbers
+of photons smaller than the maximum, but also increases frequency of
+performance-killing copy operations. Larger N_max has the opposite effect, and
+there may be some potential for optimization here.
+
+### Coalescing detected photons
+
+See photon -> hit conversion section above.
+
+### In-loop muon propagation
+
+As briefly mentioned above, muon propagation is fast enough that it can be
+cheaper to do it in I3CLSimClientModule loop than to deserialize a previously
+propagated MCTree. Doing so also makes the rest of the propagation tray faster,
+as neither I3MuonSlicer nor I3MuonSliceRemoverAndPulseRelabeler are necessary
+anymore (all secondaries from a muon inherit its light source ID, so all pulses
+are automatically associated with the parent muon, and also the standard
+rounding-error-induced "particle stops before it starts" warnings are no longer
+necessary). Someone should measure the performance and resource efficiency
+improvements on high-multiplicity/low-yield events (e.g. megabundles with tens
+of thousands of minimum-ionizing muons). If it's significant, then in-loop
+propagation should become a standard option in simprod-scripts.
+
+Doing this in-loop also opens up the possibility to remove the artificial
+division between stochastic and continuous losses by lowering the threshold for
+stochastic losses all the way to the pair-production threshold.
+
+If this became standard practice, though, information about the energy loss
+patterns of muons would be lost entirely. While not strictly necessary for
+simulating the detector response, it can be useful in event selection and
+reconstruction development. One way to get it back would be to store some
+summary information about the distribution of generated steps for each event,
+e.g. the visible deposited energy along the track could be recovered nearly
+exactly from the photon-count-weighted distribution of steps along the track.
+
+### Do everything in-loop (or: I3CLSimClientModule replaces most of IceTray for simulation)
+
+There are other places in the simulation chain that have memory bottlenecks,
+e.g. PMT and DOM simulation. If these can be converted to a form that can
+incrementally consume unsorted inputs, then they too can be rolled into the
+loop, and long/bright events can be simulated in the more or less the same
+memory footprint that they would take in real data. The lack of sorting might
+be a problem for explicitly time-dependent processes like DOM launching and
+trigger formation, but these are also maybe not the primary memory hogs.
+
+

@@ -334,11 +334,31 @@ inline void saveHit(
         //    myIndex);
 #endif
 
+        // Emit photon position relative to the hit DOM
+        floating_t domPosX, domPosY, domPosZ;
+        geometryGetDomPosition(hitOnString, hitOnDom, &domPosX, &domPosY, &domPosZ);
+#ifdef PANCAKE_FACTOR
+        {
+            // undo pancaking by scaling the distance of closest approach to the
+            // DOM center
+            floating_t px = photonPosAndTime.x - domPosX;
+            floating_t py = photonPosAndTime.y - domPosY;
+            floating_t pz = photonPosAndTime.z - domPosZ;
+            floating_t parallel = px*photonDirAndWlen.x + py*photonDirAndWlen.y + pz*photonDirAndWlen.z;
+            floating_t nx = px - parallel*photonDirAndWlen.x;
+            floating_t ny = py - parallel*photonDirAndWlen.y;
+            floating_t nz = pz - parallel*photonDirAndWlen.z;
+            domPosX += ((PANCAKE_FACTOR - ONE)/PANCAKE_FACTOR)*nx;
+            domPosY += ((PANCAKE_FACTOR - ONE)/PANCAKE_FACTOR)*ny;
+            domPosZ += ((PANCAKE_FACTOR - ONE)/PANCAKE_FACTOR)*nz;
+        }
+#endif
+
         outputPhotons[myIndex].posAndTime = (float4)
             (
-            photonPosAndTime.x+thisStepLength*photonDirAndWlen.x,
-            photonPosAndTime.y+thisStepLength*photonDirAndWlen.y,
-            photonPosAndTime.z+thisStepLength*photonDirAndWlen.z,
+            photonPosAndTime.x+thisStepLength*photonDirAndWlen.x-domPosX,
+            photonPosAndTime.y+thisStepLength*photonDirAndWlen.y-domPosY,
+            photonPosAndTime.z+thisStepLength*photonDirAndWlen.z-domPosZ,
             photonPosAndTime.w+thisStepLength*inv_groupvel
             );
 

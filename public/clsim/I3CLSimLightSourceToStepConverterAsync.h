@@ -18,17 +18,19 @@
  *
  * $Id$
  *
- * @file I3CLSimLightSourceToStepConverterGeant4.h
+ * @file I3CLSimLightSourceToStepConverterAsync.h
  * @version $Revision$
  * @date $Date$
  * @author Claudio Kopper
  */
 
-#ifndef I3CLSIMLIGHTSOURCETOSTEPCONVERTERGEANT4_H_INCLUDED
-#define I3CLSIMLIGHTSOURCETOSTEPCONVERTERGEANT4_H_INCLUDED
+#ifndef I3CLSIMLIGHTSOURCETOSTEPCONVERTERASYNC_H_INCLUDED
+#define I3CLSIMLIGHTSOURCETOSTEPCONVERTERASYNC_H_INCLUDED
 
 #include "clsim/I3CLSimLightSourceToStepConverter.h"
 #include "dataclasses/physics/I3Particle.h"
+
+I3_FORWARD_DECLARATION(I3CLSimLightSourcePropagator);
 
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
@@ -40,30 +42,18 @@
 #include <string>
 
 /**
- * @brief A particle-to-step converter using Geant4
- * for tracking.
+ * @brief A particle-to-step converter using a mix of MC propagators and
+ * parameterizations running in a thread.
  */
-struct I3CLSimLightSourceToStepConverterGeant4 : public I3CLSimLightSourceToStepConverter
+class I3CLSimLightSourceToStepConverterAsync : public I3CLSimLightSourceToStepConverter
 {
-private:
-    static boost::mutex thereCanBeOnlyOneGeant4_mutex;
-    static bool thereCanBeOnlyOneGeant4;
-    
 public:
-    typedef std::pair<I3CLSimStepSeriesConstPtr, bool> FromGeant4Pair_t;
+    typedef std::tuple<I3CLSimStepSeriesConstPtr, boost::shared_ptr<std::vector<uint32_t>>, bool> FromGeant4Pair_t;
     
-    static const std::string default_physicsListName;
-    static const double default_maxBetaChangePerStep;
-    static const uint32_t default_maxNumPhotonsPerStep;
     static const uint32_t default_maxQueueItems;
-    static const bool canUseGeant4;
     
-    I3CLSimLightSourceToStepConverterGeant4(std::string physicsListName=default_physicsListName,
-                                         double maxBetaChangePerStep=default_maxBetaChangePerStep,
-                                         uint32_t maxNumPhotonsPerStep=default_maxNumPhotonsPerStep,
-                                         uint32_t maxQueueItems=default_maxQueueItems
-                                         );
-    virtual ~I3CLSimLightSourceToStepConverterGeant4();
+    I3CLSimLightSourceToStepConverterAsync(uint32_t maxQueueItems=default_maxQueueItems);
+    virtual ~I3CLSimLightSourceToStepConverterAsync();
 
     // inherited:
     
@@ -98,6 +88,8 @@ public:
      * Will throw if used after the call to Initialize().
      */
     virtual void SetMediumProperties(I3CLSimMediumPropertiesConstPtr mediumProperties);
+    
+    virtual void SetPropagators(const std::vector<I3CLSimLightSourcePropagatorPtr> &);
     
     /**
      * Initializes the simulation.
@@ -169,30 +161,31 @@ public:
      */
     virtual I3CLSimStepSeriesConstPtr GetConversionResultWithBarrierInfo(bool &barrierWasReset, double timeout=NAN);
     
+    /**
+     * Like GetConversionResultWithBarrierInfo(), but also returns
+     * a vector of the identifiers that have finished processing.
+     */
+    virtual std::tuple<I3CLSimStepSeriesConstPtr, boost::shared_ptr<std::vector<uint32_t>>> GetConversionResultWithBarrierInfoAndMarkers(bool &barrierWasReset, double timeout=NAN);
+    
+    
 private:
-    void LogGeant4Messages(bool allAsWarn=false) const;
 
     typedef std::pair<uint32_t, I3CLSimLightSourceConstPtr> ToGeant4Pair_t;
 
-    void Geant4Thread();
-    void Geant4Thread_impl(boost::this_thread::disable_interruption &di);
-    boost::shared_ptr<boost::thread> geant4ThreadObj_;
-    boost::condition_variable_any geant4Started_cond_;
-    boost::mutex geant4Started_mutex_;
-    bool geant4Started_;
+    void WorkerThread();
+    void WorkerThread_impl(boost::this_thread::disable_interruption &di);
+    boost::shared_ptr<boost::thread> thread_;
+    boost::condition_variable_any threadStarted_cond_;
+    boost::mutex threadStarted_mutex_;
+    bool threadStarted_;
 
     mutable boost::mutex barrier_is_enqueued_mutex_;
     bool barrier_is_enqueued_;
 
     boost::shared_ptr<I3CLSimQueue<ToGeant4Pair_t> > queueToGeant4_;
     boost::shared_ptr<I3CLSimQueue<FromGeant4Pair_t> > queueFromGeant4_;
-    mutable boost::shared_ptr<I3CLSimQueue<boost::shared_ptr<std::pair<const std::string, bool> > > > queueFromGeant4Messages_;
     
     I3RandomServicePtr randomService_;
-    uint32_t randomSeed_;
-    std::string physicsListName_;
-    double maxBetaChangePerStep_;
-    uint32_t maxNumPhotonsPerStep_;
     
     bool initialized_;
     uint64_t bunchSizeGranularity_;
@@ -201,9 +194,11 @@ private:
     I3CLSimFunctionConstPtr wlenBias_;
     I3CLSimMediumPropertiesConstPtr mediumProperties_;
     
-    SET_LOGGER("I3CLSimLightSourceToStepConverterGeant4");
+    std::vector<I3CLSimLightSourcePropagatorPtr> propagators_;
+    
+    SET_LOGGER("I3CLSimLightSourceToStepConverterAsync");
 };
 
-I3_POINTER_TYPEDEFS(I3CLSimLightSourceToStepConverterGeant4);
+I3_POINTER_TYPEDEFS(I3CLSimLightSourceToStepConverterAsync);
 
-#endif //I3CLSIMLIGHTSOURCETOSTEPCONVERTERGEANT4_H_INCLUDED
+#endif //I3CLSIMLIGHTSOURCETOSTEPCONVERTERASYNC_H_INCLUDED

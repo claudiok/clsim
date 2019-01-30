@@ -30,13 +30,9 @@
 #include "G4VUserEventInformation.hh"
 #include "globals.hh"
 
-#include "clsim/I3CLSimStepStore.h"
-#include "clsim/I3CLSimStep.h"
-#include "clsim/I3CLSimQueue.h"
-#include "clsim/I3CLSimLightSourceToStepConverterGeant4.h"
+#include "geant4/I3CLSimLightSourcePropagatorGeant4.h"
 
 #include "clsim/I3CLSimLightSource.h"
-#include "clsim/I3CLSimLightSourceParameterization.h"
 
 #include <deque>
 #include <boost/tuple/tuple.hpp>
@@ -52,12 +48,8 @@
 class TrkUserEventInformation : public G4VUserEventInformation
 {
 public:
-    TrkUserEventInformation(uint64_t maxBunchSize_,
-                            I3CLSimStepStorePtr stepStore_,
-                            boost::shared_ptr<std::deque<boost::tuple<I3CLSimLightSourceConstPtr, uint32_t, const I3CLSimLightSourceParameterization> > > sendToParameterizationQueue_,
-                            const I3CLSimLightSourceParameterizationSeries &parameterizationAvailable_,
-                            boost::shared_ptr<I3CLSimQueue<I3CLSimLightSourceToStepConverterGeant4::FromGeant4Pair_t> > queueFromGeant4_,
-                            boost::this_thread::disable_interruption &threadDisabledInterruptionState_,
+    TrkUserEventInformation(const I3CLSimLightSourcePropagator::secondary_callback &emitSecondary_,
+                            const I3CLSimLightSourcePropagator::step_callback &emitStep_,
                             uint32_t currentExternalParticleID_,
                             double maxRefractiveIndex_);
     virtual ~TrkUserEventInformation();
@@ -65,14 +57,8 @@ public:
     
     bool abortRequested;
     
-    const uint64_t maxBunchSize;
-    I3CLSimStepStorePtr stepStore;
-    boost::shared_ptr<std::deque<boost::tuple<I3CLSimLightSourceConstPtr, uint32_t, const I3CLSimLightSourceParameterization> > > sendToParameterizationQueue;
-
-    const I3CLSimLightSourceParameterizationSeries &parameterizationAvailable;
-    
-    boost::shared_ptr<I3CLSimQueue<I3CLSimLightSourceToStepConverterGeant4::FromGeant4Pair_t> > queueFromGeant4;
-    boost::this_thread::disable_interruption &threadDisabledInterruptionState;
+    const I3CLSimLightSourcePropagator::secondary_callback &emitSecondary;
+    const I3CLSimLightSourcePropagator::step_callback &emitStep;
     
     uint32_t currentExternalParticleID;
     

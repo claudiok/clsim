@@ -41,21 +41,9 @@
 
 #include "G4ParticleTable.hh"
 
-TrkEventAction::TrkEventAction(uint64_t maxBunchSize,
-                               I3CLSimStepStorePtr stepStore,
-                               boost::shared_ptr<std::deque<boost::tuple<I3CLSimLightSourceConstPtr, uint32_t, const I3CLSimLightSourceParameterization> > > sendToParameterizationQueue,
-                               const I3CLSimLightSourceParameterizationSeries &parameterizationAvailable,
-                               boost::shared_ptr<I3CLSimQueue<I3CLSimLightSourceToStepConverterGeant4::FromGeant4Pair_t> > queueFromGeant4,
-                               boost::this_thread::disable_interruption &threadDisabledInterruptionState,
-                               double maxRefractiveIndex)
+TrkEventAction::TrkEventAction(double maxRefractiveIndex)
 :
 abortRequested_(false),
-maxBunchSize_(maxBunchSize),
-stepStore_(stepStore),
-sendToParameterizationQueue_(sendToParameterizationQueue),
-parameterizationAvailable_(parameterizationAvailable),
-queueFromGeant4_(queueFromGeant4),
-threadDisabledInterruptionState_(threadDisabledInterruptionState),
 maxRefractiveIndex_(maxRefractiveIndex)
 {
 }
@@ -68,12 +56,8 @@ void TrkEventAction::BeginOfEventAction(const G4Event* anEvent)
 {
     // New event, add the user information object
     TrkUserEventInformation* eventInformation = 
-    new TrkUserEventInformation(maxBunchSize_,
-                                stepStore_,
-                                sendToParameterizationQueue_,
-                                parameterizationAvailable_,
-                                queueFromGeant4_,
-                                threadDisabledInterruptionState_,
+    new TrkUserEventInformation(emitSecondary_,
+                                emitStep_,
                                 currentExternalParticleID_,
                                 maxRefractiveIndex_);
 

@@ -36,11 +36,11 @@ import pickle
 def AutoSetGeant4Environment(force=True):
     # older versions used these hard-coded locations:
     hardCodedForGeant4_9_3and4 = \
-        {"G4LEVELGAMMADATA" : os.path.expandvars("$I3_PORTS/share/geant4/data/PhotonEvaporation2.0"),
-         "G4RADIOACTIVEDATA" : os.path.expandvars("$I3_PORTS/share/geant4/data/RadioactiveDecay3.2"),
-         "G4LEDATA" : os.path.expandvars("$I3_PORTS/share/geant4/data/G4EMLOW6.9"),
-         "G4NEUTRONHPDATA" : os.path.expandvars("$I3_PORTS/share/geant4/data/G4NDL3.13"),
-         "G4ABLADATA" : os.path.expandvars("$I3_PORTS/share/geant4/data/G4ABLA3.0"),
+        {"G4LEVELGAMMADATA" : os.path.expandvars("$SROOT/share/geant4/data/PhotonEvaporation2.0"),
+         "G4RADIOACTIVEDATA" : os.path.expandvars("$SROOT/share/geant4/data/RadioactiveDecay3.2"),
+         "G4LEDATA" : os.path.expandvars("$SROOT/share/geant4/data/G4EMLOW6.9"),
+         "G4NEUTRONHPDATA" : os.path.expandvars("$SROOT/share/geant4/data/G4NDL3.13"),
+         "G4ABLADATA" : os.path.expandvars("$SROOT/share/geant4/data/G4ABLA3.0"),
          "G4NEUTRONXSDATA" : "(none)", # geant 4.9.3/4 does not have these
          "G4PIIDATA" : "(none)",       # geant 4.9.3/4 does not have these
          "G4REALSURFACEDATA" : "(none)",# geant 4.9.3/4 does not have these

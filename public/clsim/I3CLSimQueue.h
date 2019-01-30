@@ -51,7 +51,7 @@ public:
     I3CLSimQueue(std::size_t max_size) 
     : max_size_(max_size) {}
     
-    I3CLSimQueue() {;}
+    I3CLSimQueue() : max_size_(0) {}
     
     ~I3CLSimQueue() {;}
 
@@ -61,7 +61,8 @@ public:
         boost::unique_lock<boost::mutex> guard(mutex_);
         
         // as long as the queue is full, wait until something is taken off of it
-        while ((max_size_ > 0) && (queue_.size() >= max_size_))
+        // (or there is a thread waiting to consume immediately)
+        while ((queue_.size() >= max_size_))
         {
             cond_.wait(guard);
         }
@@ -79,6 +80,10 @@ public:
         // lock the mutex to ensure exclusive access to the queue
         boost::unique_lock<boost::mutex> guard(mutex_);
         
+        // notify the producer that we are waiting
+        ++max_size_;
+        cond_.notify_one();
+        
         // in case the queue is empty, sleep waiting for something to be put onto it
         while (queue_.empty())
         {
@@ -92,6 +97,7 @@ public:
         queue_.pop();
         
         // notify the producer that there is space on the queue now
+        --max_size_;
         cond_.notify_one();
         
         return msg;
@@ -99,11 +105,18 @@ public:
 
     bool GetNonBlocking(T &value)
     {
+        if (max_size_ == 0)
+            throw std::runtime_error("Non-blocking read from a zero-size queue is undefined");
+        
         // lock the mutex to ensure exclusive access to the queue
         boost::unique_lock<boost::mutex> guard(mutex_);
+        ++max_size_;
+        cond_.notify_one();
         
-        if (queue_.empty())
+        if (queue_.empty()) {
+            --max_size_;
             return false;
+        }
         
         // the queue is not empty anymore, read the value
         value = queue_.front();
@@ -112,6 +125,7 @@ public:
         queue_.pop();
         
         // notify the producer that there is space on the queue now
+        --max_size_;
         cond_.notify_one();
         
         return true;
@@ -121,6 +135,8 @@ public:
     {
         // lock the mutex to ensure exclusive access to the queue
         boost::unique_lock<boost::mutex> guard(mutex_);
+        ++max_size_;
+        cond_.notify_one();
         
         // in case the queue is empty, sleep waiting for something to be put onto it
         while (queue_.empty())
@@ -130,6 +146,7 @@ public:
             
             if (!ret) {
                 // timeout reached, return dummy
+                --max_size_;
                 return returnOnTimeout;
             }
         }
@@ -141,6 +158,7 @@ public:
         queue_.pop();
         
         // notify the producer that there is space on the queue now
+        --max_size_;
         cond_.notify_one();
         
         return msg;
@@ -169,10 +187,9 @@ public:
 
 private:
     mutable boost::mutex mutex_;
-    boost::condition_variable_any cond_;
+    boost::condition_variable cond_;
     std::queue<T> queue_;
     std::size_t max_size_;
 };
-
 
 #endif //I3CLSIMQUEUE_H_INCLUDED

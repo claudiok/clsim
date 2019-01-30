@@ -37,7 +37,6 @@
 #include "clsim/I3CLSimSimpleGeometryFromI3Geometry.h"
 
 #include "clsim/I3CLSimStepToPhotonConverterOpenCL.h"
-#include "clsim/I3CLSimLightSourceToStepConverterGeant4.h"
 
 #include "clsim/I3CLSimLightSourceParameterization.h"
 
@@ -63,18 +62,6 @@ namespace I3CLSimModuleHelper {
                      double pancakeFactor,
                      uint32_t photonHistoryEntries,
                      uint32_t limitWorkgroupSize);
-    
-    I3CLSimLightSourceToStepConverterGeant4Ptr
-    initializeGeant4(I3RandomServicePtr rng,
-                     I3CLSimMediumPropertiesConstPtr medium,
-                     I3CLSimFunctionConstPtr wavelengthGenerationBias,
-                     uint64_t bunchSizeGranularity,
-                     uint64_t maxBunchSize,
-                     const I3CLSimLightSourceParameterizationSeries &parameterizationList,
-                     const std::string &physicsListName,
-                     double maxBetaChangePerStep,
-                     uint32_t maxNumPhotonsPerStep,
-                     bool multiprocessor=false);
 
     I3CLSimRandomValueConstPtr
     makeCherenkovWavelengthGenerator(I3CLSimFunctionConstPtr wavelengthGenerationBias,

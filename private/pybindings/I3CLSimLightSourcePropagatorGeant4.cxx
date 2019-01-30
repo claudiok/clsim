@@ -18,28 +18,27 @@
  *
  * $Id$
  *
- * @file TrkUserEventInformation.cxx
+ * @file I3CLSimLightSourceToStepConverter.cxx
  * @version $Revision$
  * @date $Date$
  * @author Claudio Kopper
  */
 
-#include "TrkUserEventInformation.hh"
-#include "TrkDetectorConstruction.hh"
+#include <geant4/I3CLSimLightSourcePropagatorGeant4.h>
 
-TrkUserEventInformation::TrkUserEventInformation(const I3CLSimLightSourcePropagator::secondary_callback &emitSecondary_,
-                                                 const I3CLSimLightSourcePropagator::step_callback &emitStep_,
-                                                 uint32_t currentExternalParticleID_,
-                                                 double maxRefractiveIndex_)
-:
-emitSecondary(emitSecondary_),
-emitStep(emitStep_),
-currentExternalParticleID(currentExternalParticleID_),
-maxRefractiveIndex(maxRefractiveIndex_)
+namespace bp = boost::python;
+
+void register_I3CLSimLightSourcePropagatorGeant4()
 {
+    bp::class_<I3CLSimLightSourcePropagatorGeant4,
+               boost::shared_ptr<I3CLSimLightSourcePropagatorGeant4>,
+               bp::bases<I3CLSimLightSourcePropagator>,
+               boost::noncopyable>(
+                 "I3CLSimLightSourcePropagatorGeant4",
+                 bp::init<std::string,double,uint32_t>((
+                   bp::arg("physicsListName")=I3CLSimLightSourcePropagatorGeant4::default_physicsListName,
+                   bp::arg("maxBetaChangePerStep")=I3CLSimLightSourcePropagatorGeant4::default_maxBetaChangePerStep,
+                   bp::arg("maxNumPhotonsPerStep")=I3CLSimLightSourcePropagatorGeant4::default_maxNumPhotonsPerStep
+                ))
+    );
 }
-
-TrkUserEventInformation::~TrkUserEventInformation()
-{
-}
-

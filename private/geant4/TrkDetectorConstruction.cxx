@@ -190,7 +190,7 @@ void TrkDetectorConstruction::DefineMaterials(){
     
     std::map<double, double> wlenToRindexMap;
     
-    //std::cout << "map<wlen,rindex> (before):" << std::endl;
+    //G4cout << "map<wlen,rindex> (before):" << std::endl;
     for (unsigned int i=0;i<initialPoints;++i)
     {
         const double wlen = fromWlen + static_cast<double>(i)*(toWlen-fromWlen)/static_cast<double>(initialPoints-1);
@@ -198,9 +198,9 @@ void TrkDetectorConstruction::DefineMaterials(){
         
         wlenToRindexMap.insert(std::make_pair(wlen, rindex));
         
-        //std::cout << " " << wlen/I3Units::nanometer << "nm -> " << rindex << std::endl;
+        //G4cout << " " << wlen/I3Units::nanometer << "nm -> " << rindex << std::endl;
     }
-    //std::cout << std::endl;
+    //G4cout << std::endl;
     
     // check if any intermediate points are needed
     const double maxRelativeError = 1e-5; // no more than 1% deviation of interpolated result from real function
@@ -223,7 +223,7 @@ void TrkDetectorConstruction::DefineMaterials(){
             // do we need to insert a new data point?
             if (fabs(relativeError) > maxRelativeError)
             {
-                //std::cout << "relative error @ " << inbetween_wlen/I3Units::nanometer << "nm: " << relativeError << ", interp=" << interpolated_rindex << ", real=" << real_rindex << std::endl;
+                //G4cout << "relative error @ " << inbetween_wlen/I3Units::nanometer << "nm: " << relativeError << ", interp=" << interpolated_rindex << ", real=" << real_rindex << std::endl;
 
                 wlenToRindexMap.insert(std::make_pair(inbetween_wlen, real_rindex));
                 
@@ -239,18 +239,18 @@ void TrkDetectorConstruction::DefineMaterials(){
     std::vector<double> rindex;
     std::vector<double> rindex_ppckov;
 
-    //std::cout << "map<wlen,rindex>:" << std::endl;
+    //G4cout << "map<wlen,rindex>:" << std::endl;
     for (std::map<double, double>::reverse_iterator it=wlenToRindexMap.rbegin();
          it!=wlenToRindexMap.rend();++it)
     {
-        //std::cout << " " << it->first/I3Units::nanometer << "nm -> " << it->second << std::endl;
+        //G4cout << " " << it->first/I3Units::nanometer << "nm -> " << it->second << std::endl;
         
         const double wlenInG4Units = (it->first/I3Units::nanometer)*nanometer;
         
         rindex_ppckov.push_back((h_Planck*c_light)/wlenInG4Units);
         rindex.push_back(it->second);
     }
-    std::cout << std::endl;
+    G4cout << std::endl;
 
     
     // set up material properties table
@@ -269,7 +269,7 @@ G4VPhysicalVolume* TrkDetectorConstruction::Construct()
 
 G4VPhysicalVolume* TrkDetectorConstruction::ConstructDetector()
 {
-    std::cout << " ===---***---=== CONSTRUCTING DETECTOR" << std::endl;
+    G4cout << " ===---***---=== CONSTRUCTING DETECTOR" << std::endl;
     
     const double seaFloorZCoordinate = (mediumProperties_->GetRockZCoord()/I3Units::m)*m;
     const double airZCoordinate = (mediumProperties_->GetAirZCoord()/I3Units::m)*m;
@@ -282,7 +282,7 @@ G4VPhysicalVolume* TrkDetectorConstruction::ConstructDetector()
     const double simvolume_z = std::max(fabs(seaFloorZCoordinate)+1.*km, fabs(airZCoordinate)+1.*km);
     
     
-    std::cout << "world_r_x=+/-" << simvolume_x/km << "km, " 
+    G4cout << "world_r_x=+/-" << simvolume_x/km << "km, " 
            << "world_r_y=+/-" << simvolume_y/km << "km, " 
            << "world_r_z=+/-" << simvolume_z/km << "km"
            << std::endl; 
@@ -311,7 +311,7 @@ G4VPhysicalVolume* TrkDetectorConstruction::ConstructDetector()
 
     
     
-    std::cout << "Placing rock at z=" << seaFloorZCoordinate/m << "m." << std::endl;
+    G4cout << "Placing rock at z=" << seaFloorZCoordinate/m << "m." << std::endl;
 
     // place the sea floor rock box
     {
@@ -322,7 +322,7 @@ G4VPhysicalVolume* TrkDetectorConstruction::ConstructDetector()
         rock_phys = new G4PVPlacement(rot,G4ThreeVector(0.,0.,-simvolume_z+seafloor_rock_height/2.),rock_log,"rock_phys",world_log,false,0);
     }
     
-    std::cout << "Placing air at z=" << airZCoordinate/m << "m." << std::endl;
+    G4cout << "Placing air at z=" << airZCoordinate/m << "m." << std::endl;
 
     // place the air box
     {

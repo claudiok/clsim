@@ -382,7 +382,7 @@ def I3CLSimTabulatePhotons(tray, name,
     else:
         domAcceptance = WavelengthAcceptance
     if AngularAcceptance is None:
-        angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=expandvars("$I3_BUILD/ice-models/resources/models/angsens/as.h2-50cm"))
+        angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=expandvars("$I3_SRC/ice-models/resources/models/angsens/as.h2-50cm"))
     else:
         angularAcceptance = AngularAcceptance
 
@@ -660,7 +660,7 @@ def TabulatePhotonsFromSource(tray, name, PhotonSource="cascade", Zenith=0.*I3Un
     domAcceptance = clsim.GetIceCubeDOMAcceptance(domRadius=math.sqrt(PhotonPrescale)*DOMRadius)
     
     if Sensor.lower() == 'dom':
-        angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=expandvars("$I3_BUILD/ice-models/resources/models/angsens/as.h2-50cm"))
+        angularAcceptance = clsim.GetIceCubeDOMAngularSensitivity(holeIce=expandvars("$I3_SRC/ice-models/resources/models/angsens/as.h2-50cm"))
     elif Sensor.lower() == 'degg':
         referenceArea = dataclasses.I3Constants.pi*(300.*I3Units.mm/2)**2
         angularAcceptance = Gen2Sensors.GetDEggAngularSensitivity(pmt='both')

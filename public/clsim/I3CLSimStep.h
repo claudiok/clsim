@@ -74,6 +74,8 @@ public:
     
     ~I3CLSimStep();
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Waddress-of-packed-member"
     
     inline float GetPosX() const {return ((const cl_float *)&posAndTime)[0];}
     inline float GetPosY() const {return ((const cl_float *)&posAndTime)[1];}
@@ -129,7 +131,8 @@ public:
         ((cl_float *)&dirAndLengthAndBeta)[0]=dir.CalcTheta();
         ((cl_float *)&dirAndLengthAndBeta)[1]=dir.CalcPhi();
     }
-    
+
+#pragma clang diagnostic pop
     
     
     // cl_float4 is a struct consisting of 4 floats named .x, .y, .z, .w

@@ -224,8 +224,69 @@ private:
     std::size_t currentSize_;
 };
 
+class I3CLSimStepStore : public I3CLSimTemplateStore<uint32_t, I3CLSimStep>
+{
+    typedef I3CLSimStep T;
+    typedef uint32_t U;
+    typedef I3CLSimTemplateStore<U,T> Base;
+    using I3CLSimTemplateStore<U,T>::I3CLSimTemplateStore;
 
-typedef I3CLSimTemplateStore<uint32_t, I3CLSimStep> I3CLSimStepStore;
+public:
+    /**
+     * inserts a copy of 
+     */
+    inline void insert_copy(U index, const T &value)
+    {
+        insert_new(index, value.GetID()) = value;
+    }
+    
+    /**
+     * inserts a default-constructed instance of the class at a certain index and
+     * returns a reference to it
+     */
+    inline T &insert_new(U index, uint32_t id)
+    {
+        pendingIds_.insert(std::make_pair(id, 0)).first->second++;
+        return Base::insert_new(index);
+    }
+
+    
+    inline void pop_bunch_to_vector(std::size_t size, std::vector<T> &vect)
+    {
+        Base::pop_bunch_to_vector(size, vect);
+        for (const I3CLSimStep &step : vect) {
+            auto count = pendingIds_.find(step.GetID());
+            assert( count != pendingIds_.end() );
+            if (--(count->second) == 0) {
+                pendingIds_.erase(count);
+            }
+        }
+    }
+    
+    inline void pop_bunch_to_vector(std::size_t size, std::vector<T> &vect, const T &temp)
+    {
+        pop_bunch_to_vector(size, vect);
+        const std::size_t realEntries = vect.size();
+
+        // fill the remainder of the vector with copies
+        // of the template
+        for (std::size_t i=realEntries; i<size; ++i)
+        {
+            vect.push_back(temp);
+        }
+    }
+    
+    uint32_t count(uint32_t identifier) const
+    {
+        auto it = pendingIds_.find(identifier);
+        return it == pendingIds_.end() ? 0 : it->second;
+    }
+
+private:
+    std::map<uint32_t, uint32_t> pendingIds_;
+};
+
+// typedef I3CLSimTemplateStore<uint32_t, I3CLSimStep> I3CLSimStepStore;
 
 I3_POINTER_TYPEDEFS(I3CLSimStepStore);
 

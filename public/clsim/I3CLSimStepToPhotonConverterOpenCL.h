@@ -372,11 +372,13 @@ public:
      */
     virtual I3CLSimStepToPhotonConverter::ConversionResult_t GetConversionResult();
     
-    inline double GetTotalDeviceTime() {boost::unique_lock<boost::mutex> guard(statistics_mutex_); return static_cast<double>(statistics_total_device_duration_in_nanoseconds_);}
-    inline double GetTotalHostTime() {boost::unique_lock<boost::mutex> guard(statistics_mutex_); return static_cast<double>(statistics_total_host_duration_in_nanoseconds_);}
-    inline uint64_t GetNumKernelCalls() {boost::unique_lock<boost::mutex> guard(statistics_mutex_); return statistics_total_kernel_calls_;}
-    inline uint64_t GetTotalNumPhotonsGenerated() {boost::unique_lock<boost::mutex> guard(statistics_mutex_); return statistics_total_num_photons_generated_;}
-    inline uint64_t GetTotalNumPhotonsAtDOMs() {boost::unique_lock<boost::mutex> guard(statistics_mutex_); return statistics_total_num_photons_atDOMs_;}
+    virtual std::map<std::string, double> GetStatistics() const;
+    
+    inline double GetTotalDeviceTime() const {boost::unique_lock<boost::mutex> guard(statistics_mutex_); return static_cast<double>(statistics_total_device_duration_in_nanoseconds_);}
+    inline double GetTotalHostTime() const {boost::unique_lock<boost::mutex> guard(statistics_mutex_); return static_cast<double>(statistics_total_host_duration_in_nanoseconds_);}
+    inline uint64_t GetNumKernelCalls() const {boost::unique_lock<boost::mutex> guard(statistics_mutex_); return statistics_total_kernel_calls_;}
+    inline uint64_t GetTotalNumPhotonsGenerated() const {boost::unique_lock<boost::mutex> guard(statistics_mutex_); return statistics_total_num_photons_generated_;}
+    inline uint64_t GetTotalNumPhotonsAtDOMs() const {boost::unique_lock<boost::mutex> guard(statistics_mutex_); return statistics_total_num_photons_atDOMs_;}
     
 private:
     typedef std::pair<uint32_t, I3CLSimStepSeriesConstPtr> ToOpenCLPair_t;
@@ -411,7 +413,7 @@ private:
                                             const std::string &deviceName,
                                             uint64_t deviceProfilingResolution);
 
-    boost::mutex statistics_mutex_;
+    mutable boost::mutex statistics_mutex_;
     uint64_t statistics_total_device_duration_in_nanoseconds_;
     uint64_t statistics_total_host_duration_in_nanoseconds_;
     uint64_t statistics_total_kernel_calls_;

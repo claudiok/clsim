@@ -1617,3 +1617,25 @@ I3CLSimStepToPhotonConverter::ConversionResult_t I3CLSimStepToPhotonConverterOpe
     
     return result;
 }
+
+std::map<std::string, double> I3CLSimStepToPhotonConverterOpenCL::GetStatistics() const
+{
+    std::map<std::string, double> summary;
+    
+    const double totalNumPhotonsGenerated = GetTotalNumPhotonsGenerated();
+    const double totalDeviceTime = static_cast<double>(GetTotalDeviceTime())*I3Units::ns;
+    const double totalHostTime = static_cast<double>(GetTotalHostTime())*I3Units::ns;
+    
+    summary["TotalDeviceTime"]            = totalDeviceTime;
+    summary["TotalHostTime"]              = totalHostTime;
+    summary["NumKernelCalls"]             = GetNumKernelCalls();
+    summary["TotalNumPhotonsGenerated"]   = totalNumPhotonsGenerated;
+    summary["TotalNumPhotonsAtDOMs"]      = GetTotalNumPhotonsAtDOMs();
+    
+    summary["AverageDeviceTimePerPhoton"] = totalDeviceTime/totalNumPhotonsGenerated;
+    summary["AverageHostTimePerPhoton"]   = totalHostTime/totalNumPhotonsGenerated;
+    summary["DeviceUtilization"]          = totalDeviceTime/totalHostTime;
+    
+    return summary;
+}
+

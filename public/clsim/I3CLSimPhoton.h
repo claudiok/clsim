@@ -73,6 +73,8 @@ public:
     
     ~I3CLSimPhoton();
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Waddress-of-packed-member"
     
     inline float GetPosX() const {return ((const cl_float *)&posAndTime)[0];}
     inline float GetPosY() const {return ((const cl_float *)&posAndTime)[1];}
@@ -159,16 +161,16 @@ public:
         ((cl_float *)&startPosAndTime)[2]=pos.GetZ();
     }
 
-    inline void SetDir(const I3Direction &dir) 
+    inline void SetDir(const I3Direction &d) 
     {
-        ((cl_float *)&dir)[0]=dir.CalcTheta();
-        ((cl_float *)&dir)[1]=dir.CalcPhi();
+        ((cl_float *)&dir)[0]=d.CalcTheta();
+        ((cl_float *)&dir)[1]=d.CalcPhi();
     }
-    inline void SetDir(const double &x, const double &y, const double &z) 
+    inline void SetDir(double x, double y, double z) 
     {
-        const I3Direction dir(x,y,z);
-        ((cl_float *)&dir)[0]=dir.CalcTheta();
-        ((cl_float *)&dir)[1]=dir.CalcPhi();
+        I3Direction d(x,y,z);
+        ((cl_float *)&dir)[0]=d.CalcTheta();
+        ((cl_float *)&dir)[1]=d.CalcPhi();
     }
 
     inline void SetStartDir(const I3Direction &dir) 
@@ -183,6 +185,7 @@ public:
         ((cl_float *)&startDir)[1]=dir.CalcPhi();
     }
 
+#pragma clang diagnostic pop
     
     
     // cl_float4 is a struct consisting of 4 floats named .x, .y, .z, .w

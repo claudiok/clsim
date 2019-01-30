@@ -147,6 +147,16 @@ public:
     virtual void EnqueueSteps(I3CLSimStepSeriesConstPtr steps, uint32_t identifier) = 0;
 
     /**
+     * Gets the current workgroup size.
+     */
+    virtual std::size_t GetWorkgroupSize() const = 0;
+
+    /**
+     * Gets the number of parallel work items.
+     */
+    virtual std::size_t GetMaxNumWorkitems() const = 0;
+
+    /**
      * Reports the current queue size. The queue works asynchronously,
      * so this value will probably have changed once you use it.
      *
@@ -175,6 +185,8 @@ public:
      * Will throw if not initialized.
      */
     virtual ConversionResult_t GetConversionResult() = 0;
+    
+    virtual std::map<std::string, double> GetStatistics() const { return std::map<std::string, double>(); };
     
 protected:
 };

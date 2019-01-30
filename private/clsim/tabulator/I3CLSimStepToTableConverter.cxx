@@ -60,6 +60,8 @@ struct I3CLSimTableEntry {
 	float weight;
 } __attribute__ ((packed));
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Waddress-of-packed-member"
 struct I3CLSimReferenceParticle {
 	I3CLSimReferenceParticle(const I3Particle &source) {
 		((cl_float *)(&posAndTime))[0] = source.GetPos().GetX();
@@ -87,6 +89,7 @@ struct I3CLSimReferenceParticle {
 	cl_float4 dir;          // dx,dy,dz,0
 	cl_float4 perpDir;
 } __attribute__ ((packed));
+#pragma clang diagnostic pop
 
 // Brute-force search for the minimum refractive index
 std::pair<double, double>

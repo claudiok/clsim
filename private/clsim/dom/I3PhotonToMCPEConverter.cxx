@@ -589,3 +589,81 @@ void I3PhotonToMCPEConverter::Finish()
     }
     
 }
+
+I3CLSimPhotonToMCPEConverter::~I3CLSimPhotonToMCPEConverter() {}
+
+I3CLSimPhotonToMCPEConverterForDOMs::I3CLSimPhotonToMCPEConverterForDOMs(I3RandomServicePtr random,
+    boost::shared_ptr<const std::map<OMKey, I3CLSimFunctionConstPtr>> wavelengthAcceptance, I3CLSimFunctionConstPtr angularAcceptance)
+    : randomService_(random), wavelengthAcceptance_(wavelengthAcceptance), angularAcceptance_(angularAcceptance)
+{}
+
+I3CLSimPhotonToMCPEConverterForDOMs::~I3CLSimPhotonToMCPEConverterForDOMs() {}
+
+std::tuple<OMKey,I3MCPE,bool>
+I3CLSimPhotonToMCPEConverterForDOMs::Convert(const ModuleKey &mkey, const I3CompressedPhoton &photon) const
+{
+    double hitProbability = photon.GetWeight();
+    if (hitProbability < 0.) log_fatal("Photon with negative weight found.");
+    if (hitProbability == 0.) return std::make_tuple(OMKey(),I3MCPE(),false);
+    
+    // Only treat DOM-sized DOMs for now
+    const double domRadius = 165.1*I3Units::mm;
+    const double distFromDOMCenter = photon.GetPos().Magnitude();
+    if (std::abs(distFromDOMCenter - domRadius) > 3*I3Units::cm) {
+        log_fatal("distance not %fmm.. it is %fmm (diff=%gmm) (OMKey=(%i,%u) (photon @ pos=(%g,%g,%g)mm))",
+                  domRadius/I3Units::mm,
+                  distFromDOMCenter/I3Units::mm,
+                  (distFromDOMCenter-domRadius)/I3Units::mm,
+                  mkey.GetString(), mkey.GetOM(),
+                  photon.GetPos().GetX()/I3Units::mm,
+                  photon.GetPos().GetY()/I3Units::mm,
+                  photon.GetPos().GetZ()/I3Units::mm
+                  );
+    }
+    
+    double photonCosAngle = -photon.GetDir().GetZ();
+    photonCosAngle = std::max(-1., std::min(1., photonCosAngle));
+    
+    OMKey omkey(mkey.GetString(),mkey.GetOM());
+    auto domAcceptance = wavelengthAcceptance_->find(omkey);
+    if (domAcceptance == wavelengthAcceptance_->end())
+        log_fatal_stream("No wavelength acceptance configured for "<<omkey);
+    hitProbability *= domAcceptance->second->GetValue(photon.GetWavelength());
+    log_trace("After wlen acceptance: prob=%g (wlen acceptance is %f)",
+             hitProbability, domAcceptance->second->GetValue(photon.GetWavelength()));
+
+    hitProbability *= angularAcceptance_->GetValue(photonCosAngle);
+    log_trace("After wlen&angular acceptance: prob=%g (angular acceptance is %f)",
+              hitProbability, angularAcceptance_->GetValue(photonCosAngle));
+
+    if (hitProbability > 1.) {
+        log_warn("hitProbability==%f > 1: your hit weights are too high. (hitProbability-1=%f)", hitProbability, hitProbability-1.);
+
+        double hitProbability = photon.GetWeight();
+
+        const double photonAngle = std::acos(photonCosAngle);
+        log_warn("Photon (lambda=%fnm, angle=%fdeg, dist=%fm) has weight %g, 1/weight %g",
+                 photon.GetWavelength()/I3Units::nanometer,
+                 photonAngle/I3Units::deg,
+                 distFromDOMCenter/I3Units::m,
+                 hitProbability,
+                 1./hitProbability);
+
+        hitProbability *= domAcceptance->second->GetValue(photon.GetWavelength());
+        log_warn("After wlen acceptance: prob=%g (wlen acceptance is %f)",
+                 hitProbability, domAcceptance->second->GetValue(photon.GetWavelength()));
+
+        hitProbability *= angularAcceptance_->GetValue(photonCosAngle);
+        log_warn("After wlen&angular acceptance: prob=%g (angular acceptance is %f)",
+                  hitProbability, angularAcceptance_->GetValue(photonCosAngle));
+        
+        log_fatal("cannot continue.");
+    }
+    
+    // does it survive?
+    if (hitProbability <= randomService_->Uniform()) return std::make_tuple(OMKey(),I3MCPE(),false);
+    
+    // FIXME: roll arrival time correction into kernel
+    
+    return std::make_tuple(omkey,I3MCPE(photon.GetParticleID(), 1, photon.GetTime()),true);
+}

@@ -80,7 +80,7 @@ void register_I3CLSimPhoton()
 {
     {
         void (I3CLSimPhoton::* SetDir_oneary)(const I3Direction&) = &I3CLSimPhoton::SetDir; 
-        void (I3CLSimPhoton::* SetDir_threeary)(const double &x, const double &y, const double &z) = &I3CLSimPhoton::SetDir;
+        void (I3CLSimPhoton::* SetDir_threeary)(double,double,double) = &I3CLSimPhoton::SetDir;
 
         void (I3CLSimPhoton::* SetStartDir_oneary)(const I3Direction&) = &I3CLSimPhoton::SetStartDir; 
         void (I3CLSimPhoton::* SetStartDir_threeary)(const double &x, const double &y, const double &z) = &I3CLSimPhoton::SetStartDir;

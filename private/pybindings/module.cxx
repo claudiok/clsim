@@ -46,6 +46,7 @@ namespace bp = boost::python;
     (I3CLSimFunction)                               \
     (I3CLSimMediumProperties)(I3CLSimRandomValue)   \
     (I3CLSimLightSourceToStepConverter)             \
+    (I3CLSimLightSourcePropagator)                  \
     (I3CLSimStepToPhotonConverter)                  \
     (I3CLSimSimpleGeometry)                         \
     (I3CLSimLightSourceParameterization)            \
@@ -53,7 +54,9 @@ namespace bp = boost::python;
     (I3CLSimLightSourceToStepConverterUtils)        \
     (I3CLSimOpenCLDevice)(I3CLSimLightSource)       \
     (I3CLSimSpectrumTable)(I3CLSimScalarField)      \
-    (I3CLSimVectorTransform)                        
+    (I3CLSimVectorTransform)(I3CLSimServer)         \
+    (I3CLSimPhotonToMCPEConverter)                  \
+    (I3CLSimPhotonToMCPEConverterForDOMs)
 #endif
 
 
@@ -68,6 +71,10 @@ BOOST_PP_SEQ_FOR_EACH(I3_REGISTRATION_FN_DECL, ~, REGISTER_THESE_THINGS_TOO)
 #ifdef BUILD_CLSIM_TABULATOR
 #define REGISTER_CLSIM_TABULATOR (tabulator)
 BOOST_PP_SEQ_FOR_EACH(I3_REGISTRATION_FN_DECL, ~, REGISTER_CLSIM_TABULATOR)
+#endif
+
+#ifdef HAS_GEANT4
+void register_I3CLSimLightSourcePropagatorGeant4();
 #endif
 
 BOOST_PYTHON_MODULE(clsim)
@@ -88,6 +95,10 @@ BOOST_PYTHON_MODULE(clsim)
 
 #ifdef BUILD_CLSIM_TABULATOR
 BOOST_PP_SEQ_FOR_EACH(I3_REGISTER, ~, REGISTER_CLSIM_TABULATOR)
+#endif
+    
+#ifdef HAS_GEANT4
+    register_I3CLSimLightSourcePropagatorGeant4();
 #endif
     
 }

@@ -50,6 +50,7 @@
 #include "TrkCerenkov.hh"
 
 #include "icetray/I3Units.h"
+#include "clsim/I3CLSimStep.h"
 
 #include <boost/thread.hpp>
 
@@ -205,14 +206,10 @@ TrkCerenkov::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
     TrkUserEventInformation* eventInformation
     =(TrkUserEventInformation*)G4EventManager::GetEventManager()
     ->GetConstCurrentEvent()->GetUserInformation();
-    
-    
-    // add this step to the step store
-    I3CLSimStepStorePtr stepStore = eventInformation->stepStore;
 
+    // add this step to the step store
     {
-        // insert a new step
-        I3CLSimStep &newStep = stepStore->insert_new(NumPhotons); // insert @ NumPhotons
+        I3CLSimStep newStep;
     
         // set all values
         newStep.SetPosX(x0.x()*I3Units::m/m);
@@ -227,50 +224,12 @@ TrkCerenkov::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
         newStep.SetBeta(beta);
         newStep.SetID(eventInformation->currentExternalParticleID);
         newStep.SetSourceType(0); // cherenkov emission
-    }
-    
-    // if the store size is large enough, flush some events to the external queue
-    if (stepStore->size() >= eventInformation->maxBunchSize*2)
-    {
-        I3CLSimStepSeriesPtr steps(new I3CLSimStepSeries());
-
-        stepStore->pop_bunch_to_vector(eventInformation->maxBunchSize, *steps);
         
+        // emit the step, possibly blocking
         eventInformation->StopClock();
-        
-        {
-            boost::this_thread::restore_interruption ri(eventInformation->threadDisabledInterruptionState);
-            try {
-                eventInformation->queueFromGeant4->Put(std::make_pair(steps, false));
-            } catch(boost::thread_interrupted &i) {
-                G4cout << "G4 thread was interrupted. shutting down Geant4!" << G4endl;
-                
-                eventInformation->abortRequested = true;
-                G4RunManager::GetRunManager()->AbortRun();
-            }
-        }
-        
-        //const double stepsPerTime = static_cast<double>(eventInformation->maxBunchSize)/eventInformation->GetElapsedWallTime();
-        //G4cout << "Geant4 just sent " << eventInformation->maxBunchSize<< " steps. => " << stepsPerTime/(1./I3Units::s) << " steps/second" << G4endl;
-        
+        eventInformation->emitStep(newStep);
         eventInformation->StartClock();
     }
-    else 
-    {
-        // check if the thread was interrupted
-        {
-            boost::this_thread::restore_interruption ri(eventInformation->threadDisabledInterruptionState);
-            try {
-                boost::this_thread::interruption_point();
-            } catch(boost::thread_interrupted &i) {
-                G4cout << "G4 thread was interrupted. shutting down Geant4!" << G4endl;
-
-                eventInformation->abortRequested = true;
-                G4RunManager::GetRunManager()->AbortRun();
-            }
-        }
-    }
-    stepStore.reset();
     
     // changed Apr 19, 2012: do not automatically assume a particle
     // below the Cherenkov threshold should be killed. It might decay

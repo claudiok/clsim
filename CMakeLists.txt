@@ -95,28 +95,20 @@ phys-services tableio simclasses sim-services)
 SET(LIB_${PROJECT_NAME}_TOOLS python boost gsl)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse -msse2 -msse3")
 
-# check for Geant4
-if (GEANT4_FOUND AND OPENCL_FOUND AND NOT DISABLE_GEANT4_IN_CLSIM)
-    ADD_DEFINITIONS(-DHAS_GEANT4)
-
-    LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
-        private/geant4/TrkCerenkov.cxx
-        private/geant4/TrkDetectorConstruction.cxx
-        private/geant4/TrkEventAction.cxx
-        private/geant4/TrkOpticalPhysics.cxx
-        private/geant4/TrkPrimaryGeneratorAction.cxx
-        private/geant4/TrkStackingAction.cxx
-        private/geant4/TrkUISessionToQueue.cxx
-        private/geant4/TrkUserEventInformation.cxx
-    )
-    LIST(APPEND LIB_${PROJECT_NAME}_TOOLS clhep geant4)
-
-    colormsg(GREEN "+-- Geant4 support")
-elseif (GEANT4_FOUND AND OPENCL_FOUND AND DISABLE_GEANT4_IN_CLSIM)
-    colormsg(YELLOW "+-- Geant4 is installed on your system but has been explicitly disabled using -DDISABLE_GEANT4_IN_CLSIM. clsim will fail if it is not used with parameterizations.")
-else (GEANT4_FOUND AND OPENCL_FOUND AND NOT DISABLE_GEANT4_IN_CLSIM)
-    colormsg(RED   "+-- Geant4 or OpenCL is not installed on your system. clsim will fail if it is not used with parameterizations.")
-endif (GEANT4_FOUND AND OPENCL_FOUND AND NOT DISABLE_GEANT4_IN_CLSIM)
+if (ZMQ_FOUND AND OPENCL_FOUND)
+  
+  LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
+      private/clsim/I3CLSimServer.cxx
+      private/clsim/I3CLSimClientModule.cxx
+      private/pybindings/I3CLSimStepToPhotonConverter.cxx
+  )
+  LIST(APPEND LIB_${PROJECT_NAME}_PROJECTS corsika-reader)  
+  LIST(APPEND LIB_${PROJECT_NAME}_TOOLS zmq)
+  colormsg(GREEN "+-- CLSim server")
+else()
+  colormsg(RED "--- Skipping client/server (cppzmq not found)")
+  
+endif ()
 
 # these files will be compiled in any case (with or without OpenCL/Geant4)
 SET(LIB_${PROJECT_NAME}_PYBINDINGS_SOURCEFILES
@@ -143,7 +135,7 @@ else(BUILD_CLSIM_DATACLASSES_ONLY)
     private/pybindings/I3CLSimRandomValue.cxx
     private/pybindings/I3CLSimMediumProperties.cxx
     private/pybindings/I3CLSimLightSourceToStepConverter.cxx
-    private/pybindings/I3CLSimStepToPhotonConverter.cxx
+    private/pybindings/I3CLSimLightSourcePropagator.cxx
     private/pybindings/I3CLSimSimpleGeometry.cxx
     private/pybindings/I3CLSimLightSourceParameterization.cxx
     private/pybindings/I3CLSimTester.cxx
@@ -152,6 +144,7 @@ else(BUILD_CLSIM_DATACLASSES_ONLY)
     private/pybindings/I3CLSimOpenCLDevice.cxx
     private/pybindings/I3CLSimLightSource.cxx
     private/pybindings/I3CLSimSpectrumTable.cxx
+    private/pybindings/I3CLSimPhotonToMCPEConverter.cxx
   )
 endif(BUILD_CLSIM_DATACLASSES_ONLY)
 
@@ -165,7 +158,7 @@ endif(USE_BACKPORTED_I3MATRIX)
 if(OPENCL_VERSION_STRING VERSION_GREATER 1.1)
   ADD_DEFINITIONS(-DBUILD_CLSIM_TABULATOR)
   LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
-    private/clsim/tabulator/I3CLSimTabulatorModule.cxx
+    #private/clsim/tabulator/I3CLSimTabulatorModule.cxx
     private/clsim/tabulator/I3CLSimStepToTableConverter.cxx
     private/clsim/tabulator/Axis.cxx
     private/clsim/tabulator/Axes.cxx
@@ -195,7 +188,7 @@ if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
   LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
     # private/clsim
     private/clsim/I3CLSimMediumProperties.cxx
-    private/clsim/I3CLSimModule.cxx
+    #private/clsim/I3CLSimModule.cxx
     private/clsim/I3CLSimModuleHelper.cxx
     private/clsim/I3CLSimLightSourceParameterization.cxx
     private/clsim/I3CLSimLightSourceToStepConverterPPC.cxx
@@ -241,7 +234,8 @@ if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
     private/clsim/I3CLSimLightSourceToStepConverterFlasher.cxx
 
     # private/geant4
-    private/geant4/I3CLSimLightSourceToStepConverterGeant4.cxx
+    private/clsim/I3CLSimLightSourceToStepConverterAsync.cxx
+    private/clsim/I3CLSimLightSourcePropagatorFromI3PropagatorService.cxx
 
     # private/opencl/
     private/opencl/I3CLSimHelperMath.cxx
@@ -275,6 +269,34 @@ if(NOT BUILD_CLSIM_DATACLASSES_ONLY)
     colormsg(CYAN  "+-- safeprimes_base32.gz already downloaded")
   endif(EXISTS $ENV{I3_DATA}/safeprimes_base32.gz)
 endif(NOT BUILD_CLSIM_DATACLASSES_ONLY)
+
+# check for Geant4
+if (GEANT4_FOUND AND OPENCL_FOUND AND NOT DISABLE_GEANT4_IN_CLSIM)
+    ADD_DEFINITIONS(-DHAS_GEANT4)
+
+    LIST(APPEND LIB_${PROJECT_NAME}_SOURCEFILES
+        private/geant4/TrkCerenkov.cxx
+        private/geant4/TrkDetectorConstruction.cxx
+        private/geant4/TrkEventAction.cxx
+        private/geant4/TrkOpticalPhysics.cxx
+        private/geant4/TrkPrimaryGeneratorAction.cxx
+        private/geant4/TrkStackingAction.cxx
+        private/geant4/TrkUISessionToQueue.cxx
+        private/geant4/TrkUserEventInformation.cxx
+        private/geant4/I3CLSimLightSourcePropagatorGeant4.cxx
+    )
+    LIST(APPEND LIB_${PROJECT_NAME}_TOOLS clhep geant4)
+    
+    LIST(APPEND LIB_${PROJECT_NAME}_PYBINDINGS_SOURCEFILES
+        private/pybindings/I3CLSimLightSourcePropagatorGeant4.cxx
+    )
+    
+    colormsg(GREEN "+-- Geant4 support")
+elseif (GEANT4_FOUND AND OPENCL_FOUND AND DISABLE_GEANT4_IN_CLSIM)
+    colormsg(YELLOW "+-- Geant4 is installed on your system but has been explicitly disabled using -DDISABLE_GEANT4_IN_CLSIM. clsim will fail if it is not used with parameterizations.")
+else (GEANT4_FOUND AND OPENCL_FOUND AND NOT DISABLE_GEANT4_IN_CLSIM)
+    colormsg(RED   "+-- Geant4 or OpenCL is not installed on your system. clsim will fail if it is not used with parameterizations.")
+endif (GEANT4_FOUND AND OPENCL_FOUND AND NOT DISABLE_GEANT4_IN_CLSIM)
 
 # the clsim library definition
 i3_add_library(${PROJECT_NAME}

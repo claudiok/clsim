@@ -354,6 +354,10 @@ namespace I3CLSimModuleHelper {
         
         conv->SetMaxNumWorkitems(maxNumWorkitems);
 
+        log_info("Using OpenCL device: platform=%s device=%s isgpu=%d",                  
+                  device.GetPlatformName().c_str(),
+                  device.GetDeviceName().c_str(),
+                  device.IsGPU());
         log_info("maximum workgroup size is %zu", maxWorkgroupSize);
         log_info("configured workgroup size is %zu", workgroupSize);
         if (maxNumWorkitems != device.GetApproximateNumberOfWorkItems()) {
@@ -362,40 +366,6 @@ namespace I3CLSimModuleHelper {
             log_debug("maximum number of work items is %zu (user configured was %" PRIu32 ")", maxNumWorkitems, device.GetApproximateNumberOfWorkItems());
         }
 
-        conv->Initialize();
-        
-        return conv;
-    }
-
-    I3CLSimLightSourceToStepConverterGeant4Ptr initializeGeant4(I3RandomServicePtr rng,
-                                                             I3CLSimMediumPropertiesConstPtr medium,
-                                                             I3CLSimFunctionConstPtr wavelengthGenerationBias,
-                                                             uint64_t bunchSizeGranularity,
-                                                             uint64_t maxBunchSize,
-                                                             const I3CLSimLightSourceParameterizationSeries &parameterizationList,
-                                                             const std::string &physicsListName,
-                                                             double maxBetaChangePerStep,
-                                                             uint32_t maxNumPhotonsPerStep,
-                                                             bool multiprocessor)
-    {
-        I3CLSimLightSourceToStepConverterGeant4Ptr conv
-        (
-         new I3CLSimLightSourceToStepConverterGeant4
-         (
-          physicsListName,
-          maxBetaChangePerStep,
-          maxNumPhotonsPerStep
-         )
-        );
-        
-        conv->SetRandomService(rng);
-        conv->SetWlenBias(wavelengthGenerationBias);
-        conv->SetMediumProperties(medium);
-        conv->SetMaxBunchSize(maxBunchSize);
-        conv->SetBunchSizeGranularity(bunchSizeGranularity);
-        
-        conv->SetLightSourceParameterizationSeries(parameterizationList);
-        
         conv->Initialize();
         
         return conv;

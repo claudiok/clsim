@@ -27,7 +27,7 @@
 #include <sstream>
 
 #include <clsim/I3CLSimLightSourceToStepConverter.h>
-#include <clsim/I3CLSimLightSourceToStepConverterGeant4.h>
+#include <clsim/I3CLSimLightSourceToStepConverterAsync.h>
 #include <clsim/I3CLSimLightSourceToStepConverterPPC.h>
 #include <clsim/I3CLSimLightSourceToStepConverterFlasher.h>
 
@@ -142,11 +142,19 @@ struct I3CLSimLightSourceToStepConverter_ConversionResult_t_to_python
 };
 */
 
+bp::tuple GetConversionResultWithBarrierInfoAndMarkers(I3CLSimLightSourceToStepConverterAsync &obj, double timeout)
+{
+    bool barrierWasReset = false;
+    auto ret = obj.GetConversionResultWithBarrierInfoAndMarkers(barrierWasReset, timeout);
+    
+    return bp::make_tuple(std::get<0>(ret), std::get<1>(ret) ? bp::list(*std::get<1>(ret)) : bp::list(), barrierWasReset);
+}
+
 void register_I3CLSimLightSourceToStepConverter()
 {
     {
         bp::scope I3CLSimLightSourceToStepConverter_scope = 
-        bp::class_<I3CLSimLightSourceToStepConverterWrapper, boost::shared_ptr<I3CLSimLightSourceToStepConverterWrapper>, boost::noncopyable>("I3CLSimLightSourceToStepConverter", bp::no_init)
+        bp::class_<I3CLSimLightSourceToStepConverter, boost::shared_ptr<I3CLSimLightSourceToStepConverter>, boost::noncopyable>("I3CLSimLightSourceToStepConverter", bp::no_init)
         .def("SetBunchSizeGranularity", bp::pure_virtual(&I3CLSimLightSourceToStepConverter::SetBunchSizeGranularity))
         .def("SetMaxBunchSize", bp::pure_virtual(&I3CLSimLightSourceToStepConverter::SetMaxBunchSize))
         .def("SetRandomService", bp::pure_virtual(&I3CLSimLightSourceToStepConverter::SetRandomService))
@@ -178,40 +186,36 @@ void register_I3CLSimLightSourceToStepConverter()
     bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSourceToStepConverterWrapper>, boost::shared_ptr<const I3CLSimLightSourceToStepConverter> >();
     bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSourceToStepConverterWrapper>, boost::shared_ptr<I3CLSimLightSourceToStepConverter> >();
     bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSourceToStepConverterWrapper>, boost::shared_ptr<const I3CLSimLightSourceToStepConverterWrapper> >();
-    
     //bp::to_python_converter<I3CLSimLightSourceToStepConverter::ConversionResult_t, I3CLSimLightSourceToStepConverter_ConversionResult_t_to_python>();
     
-    // I3CLSimLightSourceToStepConverterGeant4
+    // I3CLSimLightSourceToStepConverterAsync
     {
+
+        
         bp::class_<
-        I3CLSimLightSourceToStepConverterGeant4, 
-        boost::shared_ptr<I3CLSimLightSourceToStepConverterGeant4>, 
+        I3CLSimLightSourceToStepConverterAsync, 
+        boost::shared_ptr<I3CLSimLightSourceToStepConverterAsync>, 
         bases<I3CLSimLightSourceToStepConverter>,
         boost::noncopyable
         >
         (
-         "I3CLSimLightSourceToStepConverterGeant4",
+         "I3CLSimLightSourceToStepConverterAsync",
          bp::init<
-         std::string,
-         double,
-         uint32_t,
          uint32_t
          >(
            (
-            bp::arg("physicsListName") = I3CLSimLightSourceToStepConverterGeant4::default_physicsListName,
-            bp::arg("maxBetaChangePerStep") = I3CLSimLightSourceToStepConverterGeant4::default_maxBetaChangePerStep,
-            bp::arg("maxNumPhotonsPerStep") = I3CLSimLightSourceToStepConverterGeant4::default_maxNumPhotonsPerStep,
-            bp::arg("maxQueueItems") = I3CLSimLightSourceToStepConverterGeant4::default_maxQueueItems
+            bp::arg("maxQueueItems") = I3CLSimLightSourceToStepConverterAsync::default_maxQueueItems
            )
           )
         )
-        .add_static_property("can_use_geant4",bp::make_getter(I3CLSimLightSourceToStepConverterGeant4::canUseGeant4))
+        .def("SetPropagators", &I3CLSimLightSourceToStepConverterAsync::SetPropagators)
+        .def("GetConversionResultWithBarrierInfoAndMarkers", &GetConversionResultWithBarrierInfoAndMarkers, (bp::arg("timeout")=NAN))
         ;
     }
     
-    bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSourceToStepConverterGeant4>, boost::shared_ptr<const I3CLSimLightSourceToStepConverterGeant4> >();
-    bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSourceToStepConverterGeant4>, boost::shared_ptr<I3CLSimLightSourceToStepConverter> >();
-    bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSourceToStepConverterGeant4>, boost::shared_ptr<const I3CLSimLightSourceToStepConverter> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSourceToStepConverterAsync>, boost::shared_ptr<const I3CLSimLightSourceToStepConverterAsync> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSourceToStepConverterAsync>, boost::shared_ptr<I3CLSimLightSourceToStepConverter> >();
+    bp::implicitly_convertible<boost::shared_ptr<I3CLSimLightSourceToStepConverterAsync>, boost::shared_ptr<const I3CLSimLightSourceToStepConverter> >();
     
     
     // I3CLSimLightSourceToStepConverterPPC
