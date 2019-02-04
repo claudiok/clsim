@@ -27,6 +27,7 @@
 #ifndef I3CLSIMCLIENTMODULE_H_INCLUDED
 #define I3CLSIMCLIENTMODULE_H_INCLUDED
 
+#include <atomic>
 #include <deque>
 #include <boost/bimap/bimap.hpp>
 #include <boost/bimap/multiset_of.hpp>
